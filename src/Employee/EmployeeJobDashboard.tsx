@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BriefcaseBusiness,
@@ -126,6 +128,19 @@ const EmployeeJobDashboard: React.FC = () => {
 
   return (
     <main className="ejd-page">
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        pauseOnHover
+        draggable
+        limit={3}
+        theme="dark"
+        aria-label="Employee notifications"
+      />
       <div className="ejd-ambient ejd-ambient-one" aria-hidden="true" />
       <div className="ejd-ambient ejd-ambient-two" aria-hidden="true" />
 

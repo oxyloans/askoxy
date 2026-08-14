@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -116,6 +118,52 @@ const extractApiError = (result: unknown): string | undefined => {
 const hasLoginTokens = (result: EmailCheckResponse | null): boolean =>
   Boolean(result && (result.token || result.accessToken) && (result.id || result.userId));
 
+// Email provider classification used to identify common personal providers
+// and to distinguish them from company domains.
+type EmailProvider =
+  | 'Gmail'
+  | 'Yahoo'
+  | 'iCloud'
+  | 'Rediffmail'
+  | 'Proton'
+  | 'AOL'
+  | 'Outlook'
+  | 'Zoho'
+  | 'Yandex'
+  | 'GMX'
+  | 'Mail'
+  | 'Fastmail'
+  | 'Company'
+  | 'Unknown';
+
+const classifyEmailProvider = (email: string): EmailProvider => {
+  if (!email || typeof email !== 'string') return 'Unknown';
+  const at = email.lastIndexOf('@');
+  if (at < 0) return 'Unknown';
+  const domain = email.slice(at + 1).toLowerCase();
+
+  // Helper for simple suffix checks
+  const endsWithAny = (d: string, list: string[]) => list.some((s) => d === s || d.endsWith(`.${s}`) || d.endsWith(s));
+
+  if (endsWithAny(domain, ['gmail.com', 'googlemail.com'])) return 'Gmail';
+  if (endsWithAny(domain, ['yahoo.com', 'ymail.com', 'rocketmail.com']) || domain.startsWith('yahoo')) return 'Yahoo';
+  if (endsWithAny(domain, ['icloud.com', 'me.com', 'mac.com'])) return 'iCloud';
+  if (endsWithAny(domain, ['rediffmail.com', 'rediff.com'])) return 'Rediffmail';
+  if (endsWithAny(domain, ['protonmail.com', 'proton.me'])) return 'Proton';
+  if (endsWithAny(domain, ['aol.com'])) return 'AOL';
+  if (endsWithAny(domain, ['outlook.com', 'hotmail.com', 'live.com', 'msn.com'])) return 'Outlook';
+  if (endsWithAny(domain, ['zoho.com', 'zoho.in', 'zoho.eu'])) return 'Zoho';
+  if (endsWithAny(domain, ['yandex.com', 'yandex.ru'])) return 'Yandex';
+  if (endsWithAny(domain, ['gmx.com', 'gmx.co.uk'])) return 'GMX';
+  if (endsWithAny(domain, ['mail.com'])) return 'Mail';
+  if (endsWithAny(domain, ['fastmail.com'])) return 'Fastmail';
+
+  // If domain doesn't match any of the known personal providers, treat it as a company domain
+  // unless it's malformed (then Unknown).
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain)) return 'Company';
+  return 'Unknown';
+};
+
 // Central place that decides whether an authenticated response is actually
 // allowed into the Employee Workspace. Anything that isn't primaryType
 // "JOBS" is rejected here, before a cookie is ever written.
@@ -142,6 +190,32 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
   const [feedback, setFeedback] = useState<LoginFeedback | null>(null);
   const [mismatch, setMismatch] = useState<IntentMismatch | null>(null);
 
+  useEffect(() => {
+    if (!feedback) return;
+
+    const options = {
+      toastId: `employee-login-${feedback.type}-${feedback.message}`,
+      autoClose: feedback.type === 'server' ? 5000 : 4000,
+    };
+
+    if (feedback.type === 'server') {
+      toast.error('We could not complete your request. Please try again.', options);
+    } else {
+      toast.warning(feedback.message, options);
+    }
+  }, [feedback]);
+
+  useEffect(() => {
+    if (!mismatch) return;
+
+    toast.info(
+      mismatch.actual === 'exists'
+        ? 'An account already exists for this email. Please sign in instead.'
+        : 'No employee account was found. Continue with email verification to register.',
+      { toastId: `employee-login-mismatch-${mismatch.actual}` }
+    );
+  }, [mismatch]);
+
   // Carried over from the email-check response, needed to complete OTP
   // verification for a brand-new employee.
   const [otpSession, setOtpSession] = useState('');
@@ -150,6 +224,10 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [successEmployee, setSuccessEmployee] = useState<EmployeeData | null>(null);
   const [passwordChangeEmployee, setPasswordChangeEmployee] = useState<EmployeeData | null>(null);
+
+  // Classify current email for UI hints and restrictions
+  const emailProvider = classifyEmailProvider(email.trim());
+  const isPersonalEmail = emailProvider !== 'Company' && emailProvider !== 'Unknown';
 
   const buildEmployee = (result: EmailCheckResponse, fallbackName?: string): EmployeeData => ({
     id: (result.id || result.userId) as string,
@@ -243,6 +321,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
         setOtpSalt(otpResult.salt || '');
 
         if (intent === 'register') {
+          toast.info('Verification code sent to your email.', { toastId: 'employee-otp-sent' });
           setShowOtpModal(true);
         } else {
           // They were on the Login tab, but there's no account to log into.
@@ -290,6 +369,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
 
   const handleOtpRegistrationSuccess = (employee: EmployeeData) => {
     setShowOtpModal(false);
+    toast.success('Employee account created successfully.');
     finishLogin(employee);
   };
 
@@ -297,6 +377,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
     if (!passwordChangeEmployee) return;
     const employee = passwordChangeEmployee;
     setPasswordChangeEmployee(null);
+    toast.success('Password updated successfully.');
     finishLogin(employee);
   };
 
@@ -310,7 +391,21 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
 
   return (
     <main className="cel-page">
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        pauseOnHover
+        draggable
+        limit={3}
+        theme="dark"
+        aria-label="Employee notifications"
+      />
       <style>{loginStyles}</style>
+      <style>{toastResponsiveStyles}</style>
 
       <div className="cel-orb cel-orb-one" aria-hidden="true" />
       <div className="cel-orb cel-orb-two" aria-hidden="true" />
@@ -411,6 +506,22 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
                 />
               </div>
 
+              {email.trim() && (
+                <p className={`cel-email-provider ${isPersonalEmail ? 'cel-email-provider-personal' : 'cel-email-provider-company'}`}>
+                  {isPersonalEmail ? (
+                    <>
+                      <strong>{emailProvider} email is not allowed.</strong>
+                      <small>Please use your company email address.</small>
+                    </>
+                  ) : (
+                    <>
+                      <strong>Company email recognised.</strong>
+                      <small>You may proceed.</small>
+                    </>
+                  )}
+                </p>
+              )}
+
               {intent === 'login' && (
                 <>
                   <label htmlFor="company-password">Password</label>
@@ -484,7 +595,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
                   isSubmitting ||
                   !email.trim() ||
                   (intent === 'login' && !password) ||
-                  Boolean(mismatch)
+                  Boolean(mismatch) || (intent === 'register' && isPersonalEmail)
                 }
               >
                 <span>
@@ -959,6 +1070,34 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   </>
 );
 
+const toastResponsiveStyles = `
+  .Toastify__toast-container {
+    z-index: 99999;
+  }
+
+  .Toastify__toast {
+    border-radius: 14px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+  }
+
+  @media (max-width: 640px) {
+    .Toastify__toast-container {
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      width: auto;
+      padding: 0;
+    }
+
+    .Toastify__toast {
+      min-height: 58px;
+      margin: 0 0 10px;
+      border-radius: 12px;
+    }
+  }
+`;
+
 const loginStyles = `
   /* All login theme rules stay below .cel-page so this screen cannot
      override the application's theme after navigation. */
@@ -1198,6 +1337,35 @@ const loginStyles = `
     font-weight: 800;
     letter-spacing: 0.11em;
     text-transform: uppercase;
+  }
+
+  .cel-email-provider {
+    margin: 8px 0 16px 0;
+    color: rgba(235, 239, 255, 0.78);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .cel-email-provider strong {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+
+  .cel-email-provider small {
+    display: block;
+    font-size: 0.76rem;
+    opacity: 0.88;
+    line-height: 1.5;
+  }
+
+  .cel-email-provider-personal {
+    color: #ffd2c2;
+  }
+
+  .cel-email-provider-company {
+    color: #b7ffd6;
   }
 
   .cel-copy h1 {

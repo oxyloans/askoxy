@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -304,11 +305,13 @@ export default function JobPostForm(): JSX.Element {
 
     if (!form.jobTitle.trim()) {
       setAiError("Add the job title before generating a description.");
+      toast.warning("Add the job title before generating a description.");
       return;
     }
 
     if (!form.minExperience.trim() || !form.maxExperience.trim()) {
       setAiError("Add the minimum and maximum experience first.");
+      toast.warning("Add the minimum and maximum experience first.");
       return;
     }
 
@@ -318,11 +321,13 @@ export default function JobPostForm(): JSX.Element {
       Number(form.maxExperience) < Number(form.minExperience)
     ) {
       setAiError("Check the experience range before generating a description.");
+      toast.warning("Check the experience range before generating a description.");
       return;
     }
 
     if (!form.skills.trim()) {
       setAiError("Add the required skills before generating a description.");
+      toast.warning("Add the required skills before generating a description.");
       return;
     }
 
@@ -339,10 +344,11 @@ export default function JobPostForm(): JSX.Element {
 
       setForm((previous) => ({ ...previous, description }));
       setErrors((previous) => ({ ...previous, description: undefined }));
+      toast.success("Job description generated. You can review and edit it before publishing.");
     } catch (error) {
-      setAiError(
-        error instanceof Error ? error.message : "Failed to generate the description."
-      );
+      const message = error instanceof Error ? error.message : "Failed to generate the description.";
+      setAiError(message);
+      toast.error('Could not generate the job description. Please try again.');
     } finally {
       setAiGenerating(false);
     }
@@ -358,6 +364,7 @@ export default function JobPostForm(): JSX.Element {
     // request with a stale/invalid companyContactPersonId.
     const auth = getEmployeeAuth();
     if (!auth) {
+      toast.warning("Your employee session has expired. Please sign in again.");
       navigate(LOGIN_ROUTE, { replace: true });
       return;
     }
@@ -366,6 +373,7 @@ export default function JobPostForm(): JSX.Element {
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length) {
+      toast.warning("Please review the highlighted fields before publishing the job.");
       const firstInvalidField = Object.keys(validationErrors)[0];
       document.querySelector<HTMLElement>(`[name="${firstInvalidField}"]`)?.focus();
       return;
@@ -405,12 +413,15 @@ export default function JobPostForm(): JSX.Element {
         title: "Job published",
         message: result.message,
       });
+      toast.success(result.message || "Job published successfully.");
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Please try again.";
       setPopup({
         type: "error",
         title: "Unable to publish",
-        message: error instanceof Error ? error.message : "Please try again.",
+        message,
       });
+      toast.error('Could not publish the job. Please try again.');
     } finally {
       setSubmitting(false);
     }

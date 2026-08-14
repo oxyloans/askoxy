@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 import {
   CalendarDays,
   CheckCircle2,
@@ -110,6 +111,7 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
     const auth = getEmployeeAuth();
     if (!auth) {
       setError("Your employee session has expired. Please sign in again.");
+      toast.warning("Your employee session has expired. Please sign in again.", { toastId: "applications-session-expired" });
       setLoading(false);
       setRefreshing(false);
       return;
@@ -140,7 +142,7 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
       if (!applicantsResponse.ok || applicantsResult?.status === false) {
         throw new Error(
           applicantsResult?.message ||
-            `Unable to load applications. Server returned ${applicantsResponse.status}.`
+          `Unable to load applications. Server returned ${applicantsResponse.status}.`
         );
       }
 
@@ -153,16 +155,19 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
       } else {
         setApplicantCount(typeof receivedPage.totalElements === "number" ? receivedPage.totalElements : null);
       }
+
+      if (isRefresh) toast.success("Applications refreshed successfully.");
     } catch (requestError) {
       if (requestError instanceof DOMException && requestError.name === "AbortError") return;
       setApplicants([]);
       setPageData({});
       setApplicantCount(null);
-      setError(
+      const message =
         requestError instanceof Error
           ? requestError.message
-          : "Unable to load applications. Please try again."
-      );
+          : "Unable to load applications. Please try again.";
+      setError(message);
+      if (isRefresh) toast.error('Could not refresh applications. Please try again.');
     } finally {
       if (!signal?.aborted) {
         setLoading(false);
@@ -212,12 +217,14 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
 
       setResultsModal({ applicant, loading: false, error: "", result });
     } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "Unable to load exam results.";
       setResultsModal({
         applicant,
         loading: false,
-        error: requestError instanceof Error ? requestError.message : "Unable to load exam results.",
+        error: message,
         result: null,
       });
+      toast.error('Could not load exam results. Please try again.');
     }
   };
 
@@ -309,7 +316,7 @@ const ExamResultsModal = ({ state, onClose, onRetry }: { state: ResultsModalStat
   const data = state.result?.data;
   const attempt = data?.examAttempt ?? null;
   const questions = attempt && Array.isArray(attempt.examQuestions) ? attempt.examQuestions : [];
-const atsHistory = data?.atsHistory ?? [];  const isEligible = data?.isEligible === true;
+  const atsHistory = data?.atsHistory ?? []; const isEligible = data?.isEligible === true;
   const questionTotal = attempt?.totalQuestions ?? (questions.length || "-");
 
   return (

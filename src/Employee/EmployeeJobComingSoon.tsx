@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import {
   BriefcaseBusiness,
@@ -123,15 +124,19 @@ const EmployeeJobComingSoon: React.FC = () => {
           : [];
 
         setJobs(receivedJobs);
+        if (isRefresh) {
+          toast.success(`Jobs refreshed. ${receivedJobs.length} ${receivedJobs.length === 1 ? 'job' : 'jobs'} loaded.`);
+        }
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return;
 
         setJobs([]);
-        setError(
+        const message =
           requestError instanceof Error
             ? requestError.message
-            : 'Unable to load jobs. Please try again.'
-        );
+            : 'Unable to load jobs. Please try again.';
+        setError(message);
+        if (isRefresh) toast.error('Could not refresh jobs. Please try again.');
       } finally {
         if (!signal?.aborted) {
           setLoading(false);
@@ -244,14 +249,17 @@ const EmployeeJobComingSoon: React.FC = () => {
           job.id === jobId ? { ...job, jobStatus: nextStatus } : job
         )
       );
+      toast.success(nextStatus ? 'Job activated successfully.' : 'Job deactivated successfully.');
     } catch (requestError) {
+      const message =
+        requestError instanceof Error
+          ? requestError.message
+          : 'Unable to update the job status. Please try again.';
       setStatusErrors((current) => ({
         ...current,
-        [jobId]:
-          requestError instanceof Error
-            ? requestError.message
-            : 'Unable to update the job status. Please try again.',
+        [jobId]: message,
       }));
+      toast.error('Could not update the job status. Please try again.');
     } finally {
       setUpdatingStatusIds((current) => {
         const next = new Set(current);

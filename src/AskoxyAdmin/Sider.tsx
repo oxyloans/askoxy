@@ -193,12 +193,6 @@ const Sidebar: React.FC = () => {
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
           {
-            title: "League Journey Users",
-            icon: <FaGraduationCap className="text-cyan-400" />,
-            link: "/admin/leaguejourneyusers",
-            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-          },
-          {
             title: "FD Bucket Data",
             icon: <FaDatabase className="text-emerald-500" />,
             link: "/admin/fd-bucket-data",
@@ -317,6 +311,38 @@ const Sidebar: React.FC = () => {
         ],
       },
       {
+        title: "League Journey",
+        icon: <FaGraduationCap className="text-cyan-400" />,
+        roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        items: [
+          {
+            title: "Journey Scorecard",
+            icon: <FaChartBar className="text-emerald-400" />,
+            link: "/admin/journeyscorecard",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "League Journey Users",
+            icon: <FaUsers className="text-cyan-400" />,
+            link: "/admin/leaguejourneyusers",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Add League Journey",
+            icon: <FaPlusCircle className="text-yellow-400" />,
+            link: "/admin/addleaguejourney",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          
+          {
+            title: "Journey vs Campaigns vs Interested Users",
+            icon: <FaUsers className="text-sky-400" />,
+            link: "/admin/journeyvscampaignsvsinteresteusers",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+        ],
+      },
+      {
         title: "Services/Blogs & Jobs",
         icon: <FaServer className="text-orange-400" />,
         roles: ["HELPDESKSUPERADMIN"],
@@ -331,19 +357,6 @@ const Sidebar: React.FC = () => {
             title: "Add We are hiring",
             icon: <FaBriefcase className="text-green-400" />,
             link: "/admin/wearehiringadd",
-            roles: ["HELPDESKSUPERADMIN"],
-          },
-
-          {
-            title: "Add League Journey",
-            icon: <FaPlusCircle className="text-yellow-400" />,
-            link: "/admin/addleaguejourney",
-            roles: ["HELPDESKSUPERADMIN"],
-          },
-          {
-            title: "Journey vs Campaigns vs Interested Users",
-            icon: <FaUsers className="text-sky-400" />,
-            link: "/admin/journeyvscampaignsvsinteresteusers",
             roles: ["HELPDESKSUPERADMIN"],
           },
 

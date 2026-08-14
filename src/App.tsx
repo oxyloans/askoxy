@@ -316,6 +316,7 @@ const CeoDetailsListPage = lazy(
   () => import("./BusinessCard/CeoDetailsListPage"),
 );
 const AddLeagueJourney = lazy(() => import("./AskoxyAdmin/AddLeagueJourney"));
+const LeagueJourneyScorecard = lazy(() => import("./AskoxyAdmin/LeagueJourneyScorecard"));
 const BorrowerChatPage = lazy(() => import("./components/BorrowerChatPage"));
 const AdminDashboardPage = lazy(
   () => import("./components/Admindashboardpage"),
@@ -2175,6 +2176,10 @@ const App: React.FC = () => {
                 <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />
+                <Route
+                  path="journeyscorecard"
+                  element={<LeagueJourneyScorecard />}
+                />
                 <Route
                   path="journeyvscampaignsvsinteresteusers"
                   element={<JourneysVsCampaignsVsInterestedUsers />}
