@@ -13,6 +13,7 @@ import {
   Empty,
   message,
   Select,
+  Popover,
 } from "antd";
 import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -22,6 +23,19 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 /* ---------- Types ---------- */
+interface RotaryProductService {
+  id: string;
+  memberId: string;
+  name: string;
+  membersType: "PRODUCT" | "SERVICE";
+  category: string;
+  price: number;
+  description: string;
+  availability?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface RotaryApiMember {
   id: string;
   rotaryId: string | null;
@@ -41,6 +55,8 @@ interface RotaryApiMember {
   businessPhone: string | null;
   businessAddress: string | null;
   anniversary: string | null;
+  products?: RotaryProductService[] | null;
+  services?: RotaryProductService[] | null;
 }
 
 interface RotaryListResponse {
@@ -124,7 +140,7 @@ const theme = {
 };
 
 const PAGE_SIZE = 20;
-const TABLE_SCROLL_WIDTH = 2900;
+const TABLE_SCROLL_WIDTH = 3160;
 const DEFAULT_DISTRICT_ID = 3150;
 
 const RotaryDataAdmin: React.FC = () => {
@@ -142,9 +158,8 @@ const RotaryDataAdmin: React.FC = () => {
   );
 
   const [districtOptions, setDistrictOptions] = useState<number[]>([]);
-  const [selectedDistrictId, setSelectedDistrictId] = useState<number>(
-    DEFAULT_DISTRICT_ID,
-  );
+  const [selectedDistrictId, setSelectedDistrictId] =
+    useState<number>(DEFAULT_DISTRICT_ID);
   const [districtLoading, setDistrictLoading] = useState(false);
 
   /* ---- Fetch available district IDs ---- */
@@ -214,9 +229,9 @@ const RotaryDataAdmin: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const initialDistrictId = await fetchDistricts();
-      setSelectedDistrictId(initialDistrictId);
-      fetchList(0, initialDistrictId);
+      await fetchDistricts();
+      setSelectedDistrictId(DEFAULT_DISTRICT_ID);
+      fetchList(0, DEFAULT_DISTRICT_ID);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -299,11 +314,7 @@ const RotaryDataAdmin: React.FC = () => {
       align: "center",
       width: 130,
       render: (v: string | null) =>
-        v ? (
-          <Text strong>{v}</Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
+        v ? <Text strong>{v}</Text> : <Text type="secondary">-</Text>,
     },
     {
       title: <div style={{ textAlign: "center" }}>Name</div>,
@@ -379,11 +390,7 @@ const RotaryDataAdmin: React.FC = () => {
       align: "center",
       width: 110,
       render: (v: number | null) =>
-        isFilled(v) ? (
-          <Text>{v}</Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
+        isFilled(v) ? <Text>{v}</Text> : <Text type="secondary">-</Text>,
     },
     {
       title: <div style={{ textAlign: "center" }}>Secondary Mobile</div>,
@@ -540,11 +547,130 @@ const RotaryDataAdmin: React.FC = () => {
       align: "center",
       width: 130,
       render: (v: string | null) =>
-        v ? (
-          <Text>{v}</Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
+        v ? <Text>{v}</Text> : <Text type="secondary">-</Text>,
+    },
+    {
+      title: <div style={{ textAlign: "center" }}>Products</div>,
+      key: "products",
+      align: "center",
+      width: 130,
+      render: (_: unknown, r: RotaryApiMember) => {
+        const prodList = r.products || [];
+        if (prodList.length === 0) return <Text type="secondary">-</Text>;
+        return (
+          <Popover
+            trigger="click"
+            placement="left"
+            title={`Products (${prodList.length})`}
+            content={
+              <div
+                style={{
+                  maxWidth: 320,
+                  maxHeight: 320,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {prodList.map((p, idx) => (
+                  <div
+                    key={p.id || idx}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      background: "#F5F7FB",
+                      border: "1px solid #E5E7EB",
+                      fontSize: 13,
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Name:</strong> {p.name || "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Category:</strong> {p.category || "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Price:</strong> {p.price ? `₹${p.price}` : "-"}
+                    </div>
+                    <div>
+                      <strong>Desc:</strong> {p.description || "-"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }
+          >
+            <Tag color="green" style={{ cursor: "pointer", fontWeight: 600 }}>
+              {prodList.length} Product{prodList.length > 1 ? "s" : ""}
+            </Tag>
+          </Popover>
+        );
+      },
+    },
+    {
+      title: <div style={{ textAlign: "center" }}>Services</div>,
+      key: "services",
+      align: "center",
+      width: 130,
+      render: (_: unknown, r: RotaryApiMember) => {
+        const servList = r.services || [];
+        if (servList.length === 0) return <Text type="secondary">-</Text>;
+        return (
+          <Popover
+            trigger="click"
+            placement="left"
+            title={`Services (${servList.length})`}
+            content={
+              <div
+                style={{
+                  maxWidth: 320,
+                  maxHeight: 320,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {servList.map((s, idx) => (
+                  <div
+                    key={s.id || idx}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      background: "#FAF6EE",
+                      border: "1px solid #EEE4D1",
+                      fontSize: 13,
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Name:</strong> {s.name || "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Category:</strong> {s.category || "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Price:</strong> {s.price ? `₹${s.price}` : "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Availability:</strong> {s.availability || "-"}
+                    </div>
+                    <div>
+                      <strong>Desc:</strong> {s.description || "-"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }
+          >
+            <Tag color="gold" style={{ cursor: "pointer", fontWeight: 600 }}>
+              {servList.length} Service{servList.length > 1 ? "s" : ""}
+            </Tag>
+          </Popover>
+        );
+      },
     },
     {
       title: <div style={{ textAlign: "center" }}>Profile Completion</div>,
@@ -609,7 +735,11 @@ const RotaryDataAdmin: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Text
                   className="text-[18px]"
-                  style={{ color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}
+                  style={{
+                    color: "#6b7280",
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   Select District
                 </Text>
@@ -662,7 +792,11 @@ const RotaryDataAdmin: React.FC = () => {
               }}
               styles={{ body: { padding: "10px 18px" } }}
             >
-              <Text className="block text-[14px]" type="secondary" style={{ fontWeight: 700 }}>
+              <Text
+                className="block text-[14px]"
+                type="secondary"
+                style={{ fontWeight: 700 }}
+              >
                 Total Members
               </Text>
               <Text strong className="text-[18px]" style={{ color: "#0E6B4F" }}>
@@ -679,7 +813,11 @@ const RotaryDataAdmin: React.FC = () => {
               }}
               styles={{ body: { padding: "10px 18px" } }}
             >
-              <Text className="block text-[14px]" type="secondary" style={{ fontWeight: 700 }}>
+              <Text
+                className="block text-[14px]"
+                type="secondary"
+                style={{ fontWeight: 700 }}
+              >
                 Avg. Completion (this page)
               </Text>
               <Text strong className="text-[18px]" style={{ color: "#C9932B" }}>
@@ -696,7 +834,11 @@ const RotaryDataAdmin: React.FC = () => {
               }}
               styles={{ body: { padding: "10px 18px" } }}
             >
-              <Text className="block text-[14px]" type="secondary" style={{ fontWeight: 700 }}>
+              <Text
+                className="block text-[14px]"
+                type="secondary"
+                style={{ fontWeight: 700 }}
+              >
                 Fully Filled (this page)
               </Text>
               <Text strong className="text-[18px]" style={{ color: "#0E6B4F" }}>
@@ -713,7 +855,11 @@ const RotaryDataAdmin: React.FC = () => {
               }}
               styles={{ body: { padding: "10px 18px" } }}
             >
-              <Text className="block text-[14px]" type="secondary" style={{ fontWeight: 700 }}>
+              <Text
+                className="block text-[14px]"
+                type="secondary"
+                style={{ fontWeight: 700 }}
+              >
                 Incomplete (this page)
               </Text>
               <Text strong className="text-[18px]" style={{ color: "#A32642" }}>
