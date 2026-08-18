@@ -6,8 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 import aiImage from "../assets/img/gt.png";
 
-// Animation variants are stable — defined outside the component to avoid
-// recreating them on every render (framer-motion re-diffs on reference change).
+
 const cardAnimation = {
   hidden: { opacity: 0, y: 35 },
   visible: {
@@ -161,7 +160,7 @@ const FreeAiBook: React.FC = () => {
               className="flex h-full items-center justify-center"
             >
               <img
-                src={"https://i.ibb.co/BVDswt7X/book-independence.png"}
+                src={aiImage}
                 alt="AI Book"
                 onClick={openAmazon}
                 className={imageClass}

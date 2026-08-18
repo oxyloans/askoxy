@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+
 import {
   CalendarOutlined,
   RiseOutlined,
@@ -18,6 +19,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 
 const { RangePicker } = DatePicker;
@@ -40,6 +42,7 @@ interface JourneyScorecardResponse {
 const LeagueJourneyScorecard: React.FC = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.md;
+  const navigate = useNavigate();
 
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().subtract(30, "day"),
@@ -329,14 +332,23 @@ const LeagueJourneyScorecard: React.FC = () => {
               <div className="p-10">
                 <Empty description="No scorecard data available for this date range" />
               </div>
-            ) : (
+              ) : (
               <Table<JourneyScorecardRow>
                 rowKey="journeyId"
                 columns={columns}
                 dataSource={rows}
                 pagination={{ pageSize: 10, showSizeChanger: true }}
                 scroll={{ x: true }}
-               
+                onRow={(record) => ({
+                  onClick: () => {
+                    navigate(
+                      `/admin/journeyvscampaignsvsinteresteusers?journeyId=${encodeURIComponent(
+                        String(record.journeyId),
+                      )}`,
+                    );
+                  },
+                })}
+                rowClassName={() => "cursor-pointer"}
                 loading={loading}
                 className="ant-table-centered"
               />

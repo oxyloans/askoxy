@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import {
   ApartmentOutlined,
   CheckCircleFilled,
@@ -16,7 +16,6 @@ import {
   Grid,
   Input,
   Modal,
-  Progress,
   Select,
   Skeleton,
   Tag,
@@ -24,6 +23,7 @@ import {
   theme,
 } from "antd";
 import dayjs from "dayjs";
+import { useLocation, useNavigate } from "react-router-dom";
 import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
@@ -123,20 +123,20 @@ const csvCell = (value: unknown) => {
 const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.md;
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [journeys, setJourneys] = useState<JourneyCampaignApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchText, setSearchText] = useState("");
-  const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(
-    null,
-  );
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
-    null,
-  );
-  const [journeyInterestView, setJourneyInterestView] =
-    useState<JourneyInterestView>("ALL");
+  const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [journeyInterestView, setJourneyInterestView] = useState<JourneyInterestView>("ALL");
+  const journeyListRef = useRef<HTMLDivElement>(null);
+  // true while the URL-param effect is applying its selection — prevents auto-reset
+  const applyingUrlParam = useRef(false);
 
   const [commentPersonName, setCommentPersonName] = useState(
     () => localStorage.getItem("admin_userName") || "",
@@ -177,6 +177,32 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
   useEffect(() => {
     void fetchJourneyCampaigns();
   }, []);
+
+  // ── Apply URL params once data is loaded ──────────────────────────────────
+  useEffect(() => {
+    if (loading || !journeys.length) return;
+
+    const params = new URLSearchParams(location.search);
+    const journeyParam = params.get("journeyId");
+    const campaignParam = params.get("campaignId");
+
+    if (!journeyParam) return;
+
+    const matchedJourney = journeys.find((j) => j.journeyId === journeyParam);
+    if (!matchedJourney) return;
+
+    const campaigns = matchedJourney.campaigns || [];
+    const campaignToOpen =
+      (campaignParam ? campaigns.find((c) => c.campaignId === campaignParam) : null) ||
+      campaigns.find((c) => (c.interestedUsers || []).length > 0) ||
+      campaigns[0] ||
+      null;
+
+    applyingUrlParam.current = true;
+    setSelectedJourneyId(matchedJourney.journeyId);
+    setSelectedCampaignId(campaignToOpen?.campaignId ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, journeys]);
 
   const summaryRows = useMemo<JourneySummaryRow[]>(() => {
     return journeys.map((journey) => {
@@ -293,41 +319,47 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
     );
   }, [selectedJourney, selectedCampaignId]);
 
+  // ── Auto-select first journey when none is selected ───────────────────────
   useEffect(() => {
-    if (!filteredJourneys.length) {
-      setSelectedJourneyId(null);
-      setSelectedCampaignId(null);
-      return;
-    }
+    if (applyingUrlParam.current) return;
+    if (!filteredJourneys.length) { setSelectedJourneyId(null); return; }
+    const exists = filteredJourneys.some((j) => j.journeyId === selectedJourneyId);
+    if (!exists) setSelectedJourneyId(filteredJourneys[0].journeyId);
+  }, [filteredJourneys]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const currentExists = filteredJourneys.some(
-      (journey) => journey.journeyId === selectedJourneyId,
-    );
-
-    if (!currentExists) {
-      setSelectedJourneyId(filteredJourneys[0].journeyId);
-    }
-  }, [filteredJourneys, selectedJourneyId]);
-
+  // ── Reset campaign when journey changes (skip when URL param applied) ──────
   useEffect(() => {
+    if (applyingUrlParam.current) { applyingUrlParam.current = false; return; }
     setSelectedCampaignId(null);
   }, [selectedJourneyId]);
 
+  // ── Auto-select first campaign when none selected ──────────────────────────
   useEffect(() => {
-    if (!visibleCampaigns.length) {
-      setSelectedCampaignId(null);
-      return;
-    }
+    if (!visibleCampaigns.length) { setSelectedCampaignId(null); return; }
+    const exists = visibleCampaigns.some((c) => c.campaignId === selectedCampaignId);
+    if (!exists) setSelectedCampaignId(visibleCampaigns[0].campaignId);
+  }, [visibleCampaigns]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const selectedVisible = visibleCampaigns.some(
-      (campaign) => campaign.campaignId === selectedCampaignId,
-    );
+  // ── Sync selected journeyId into URL (admin manual click) ─────────────────
+  useEffect(() => {
+    if (loading) return;
+    const current = new URLSearchParams(location.search);
+    const urlJourneyId = current.get("journeyId");
+    if (urlJourneyId === selectedJourneyId) return; // already in sync
+    const next = new URLSearchParams();
+    if (selectedJourneyId) next.set("journeyId", selectedJourneyId);
+    navigate({ pathname: location.pathname, search: next.toString() ? `?${next}` : "" }, { replace: true });
+  }, [selectedJourneyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (!selectedVisible) {
-      setSelectedCampaignId(visibleCampaigns[0].campaignId);
-    }
-  }, [visibleCampaigns, selectedCampaignId]);
-
+  // ── Scroll selected journey into view in sidebar ───────────────────────────
+  useEffect(() => {
+    if (!selectedJourneyId || !journeyListRef.current) return;
+    const id = window.requestAnimationFrame(() => {
+      const el = journeyListRef.current?.querySelector<HTMLButtonElement>(`[data-journey-id="${selectedJourneyId}"]`);
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [selectedJourneyId]);
 
   const openWriteComment = (user: JourneyInterestedUser) => {
     setCommentModalUser(user);
@@ -520,10 +552,6 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const activePercent = totalCampaigns
-    ? Math.round((totalActiveCampaigns / totalCampaigns) * 100)
-    : 0;
-
   const metricCards = [
     {
       label: "Journeys",
@@ -579,7 +607,7 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
           <header className="   backdrop-blur">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-3 py-3 sm:px-5 md:flex-row md:items-center md:justify-between lg:px-7">
               <div className="min-w-0">
-                
+
                 <h1 className="mt-1 break-words text-xl font-black tracking-tight text-slate-950 sm:text-2xl lg:text-[28px]">
                   Journeys vs Campaigns vs Interested Users
                 </h1>
@@ -603,7 +631,7 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                   icon={<DownloadOutlined />}
                   disabled={!journeys.length}
                   onClick={handleExport}
-                  className="!h-10 !rounded-xl !border-blue-500 !bg-gradient-to-b !from-blue-500 !to-blue-600 !px-4 !font-semibold !shadow-[0_6px_16px_rgba(37,99,235,0.22)] hover:!from-blue-600 hover:!to-blue-700"
+                  className="!h-10 !rounded-xl !border-blue-500 !bg-gradient-to-b !from-[#008cba] !to-[#008cba] !px-4 !font-semibold !shadow-[0_6px_16px_rgba(37,99,235,0.22)] hover:!from-[#008cba] hover:!to-[#008cba]"
                 >
                   Export CSV
                 </Button>
@@ -817,7 +845,9 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                       showSearch
                       optionFilterProp="label"
                       value={selectedJourneyId || undefined}
-                      onChange={(value: string) => setSelectedJourneyId(value)}
+                      onChange={(value: string) => {
+                        setSelectedJourneyId(value);
+                      }}
                       className="w-full"
                       size="large"
                       options={filteredJourneys.map((journey) => ({
@@ -856,7 +886,7 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                         </Tag>
                       </div>
 
-                      <div className="max-h-[760px] overflow-y-auto">
+                      <div className="max-h-[760px] overflow-y-auto" ref={journeyListRef}>
                         {filteredJourneys.map((journey) => {
                           const selected =
                             journey.journeyId === selectedJourneyId;
@@ -866,9 +896,10 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                             <button
                               type="button"
                               key={journey.journeyId}
-                              onClick={() =>
-                                setSelectedJourneyId(journey.journeyId)
-                              }
+                              data-journey-id={journey.journeyId}
+                              onClick={() => {
+                                setSelectedJourneyId(journey.journeyId);
+                              }}
                               className={`w-full border-b border-slate-200 px-4 py-3.5 text-left transition ${selected
                                 ? "bg-white shadow-[inset_4px_0_0_#2563eb]"
                                 : "hover:bg-white"
@@ -990,11 +1021,9 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                                       <button
                                         type="button"
                                         key={campaign.campaignId}
-                                        onClick={() =>
-                                          setSelectedCampaignId(
-                                            campaign.campaignId,
-                                          )
-                                        }
+                                        onClick={() => {
+                                          setSelectedCampaignId(campaign.campaignId);
+                                        }}
                                         className={`w-full px-4 py-4 text-left transition sm:px-5 lg:px-6 ${selected
                                           ? "bg-blue-50/70"
                                           : "hover:bg-slate-50"
@@ -1169,7 +1198,7 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
 
                                           <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                                             <Button
-                                             style={{backgroundColor:"#008cba",color:"white",border:"#008cba"}}
+                                              style={{ backgroundColor: "#008cba", color: "white", border: "#008cba" }}
                                               size="small"
                                               onClick={() => openWriteComment(user)}
                                               className="!rounded-lg !font-semibold"
@@ -1183,11 +1212,11 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                                             >
                                               View Comments ({(user.comments || []).length})
                                             </Button>
-                                            {(user.comments || []).length > 0 && (
+                                            {/* {(user.comments || []).length > 0 && (
                                               <Tag color="green" className="m-0">
                                                 {(user.comments || []).length} saved
                                               </Tag>
-                                            )}
+                                            )} */}
                                           </div>
                                         </article>
                                       ),
@@ -1285,7 +1314,7 @@ const JourneysVsCampaignsVsInterestedUsers: React.FC = () => {
                 )}
               </div>
 
-            
+
             </div>
           )}
         </Modal>
