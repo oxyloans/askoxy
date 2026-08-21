@@ -6,8 +6,8 @@ import { useNavigate } from "react-router-dom";
 import Header1 from "../components/Header";
 import Footer from "../components/Footer";
 import Loader from "../components/Loader";
-import { fetchCampaigns, Campaign } from "../components/servicesapi";
-import { uploadurlwithId } from "../Config";
+import { Campaign } from "../components/servicesapi";
+import BASE_URL, { uploadurlwithId } from "../Config";
 
 type CampaignWithId = Campaign & {
   id: string;
@@ -36,73 +36,43 @@ const LeagueJourneysPage: React.FC = () => {
     "";
 
   useEffect(() => {
-    const loadCampaigns = async (): Promise<void> => {
+    const loadJourneys = async (): Promise<void> => {
       setLoading(true);
-
       try {
-        const data = await fetchCampaigns();
-
-        const mappedCampaigns: CampaignWithId[] = (data || [])
-          .map((campaign: Campaign & { id?: string }) => {
-            const campaignId = String(
-              campaign.campaignId || campaign.id || "",
-            ).trim();
-
-            return {
-              ...campaign,
-              id: campaignId,
-              campaignId,
-            } as CampaignWithId;
-          })
-          .filter((campaign) => Boolean(campaign.campaignId));
-
-        setCampaigns(mappedCampaigns);
+        const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
+        const json = await res.json();
+        const mapped: CampaignWithId[] = [];
+        if (json.status && Array.isArray(json.data)) {
+          json.data.forEach((journey: any) => {
+            (journey.campaigns || []).forEach((c: any) => {
+              const campaignId = String(c.campaignId || "").trim();
+              if (campaignId) {
+                mapped.push({ ...c, id: campaignId, campaignId } as CampaignWithId);
+              }
+            });
+          });
+        }
+        setCampaigns(mapped);
       } catch (error) {
-        console.error("Error loading campaigns:", error);
+        console.error("Error loading journeys:", error);
         message.error("Unable to load League Journeys.");
       } finally {
         setLoading(false);
       }
     };
 
-    void loadCampaigns();
+    void loadJourneys();
   }, []);
-
-  const leagueCampaigns = useMemo(() => {
-    return campaigns.filter((campaign) => {
-      const inputType = String(
-        campaign.campainInputType || "",
-      ).toUpperCase();
-
-      const serviceType = String(
-        campaign.addServiceType || "",
-      ).toUpperCase();
-
-      return (
-        campaign.campaignStatus !== false &&
-        inputType !== "BLOG" &&
-        serviceType === "LEAGUEJOURNEYS"
-      );
-    });
-  }, [campaigns]);
 
   const filteredCampaigns = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-
-    if (!query) {
-      return leagueCampaigns;
-    }
-
-    return leagueCampaigns.filter((campaign) => {
+    if (!query) return campaigns;
+    return campaigns.filter((campaign) => {
       const title = String(campaign.campaignType || "").toLowerCase();
-
-      const description = String(
-        campaign.campaignDescription || "",
-      ).toLowerCase();
-
+      const description = String(campaign.campaignDescription || "").toLowerCase();
       return title.includes(query) || description.includes(query);
     });
-  }, [leagueCampaigns, searchQuery]);
+  }, [campaigns, searchQuery]);
 
   const createSlug = (value?: string): string => {
     return String(value || "journey")

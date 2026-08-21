@@ -48,8 +48,19 @@ export default function ExternalNewsTicker({ sourceName }: { sourceName: string 
             <Link
               key={`${article.id}-${index}`}
               to={`/news/${sourceName.toLowerCase()}/${article.id}`}
-              className="shrink-0 flex items-center gap-2 whitespace-nowrap rounded-full border border-ink/10 bg-white/90 px-4 py-2 text-sm text-ink shadow-sm transition hover:border-plum hover:text-plum"
+              className="shrink-0 flex items-center gap-2 whitespace-nowrap rounded-full border border-ink/10 bg-white/90 px-3 py-2 text-sm text-ink shadow-sm transition hover:border-plum hover:text-plum"
             >
+              {article.imageUrl && (
+                <img
+                  src={article.imageUrl}
+                  alt=""
+                  className="w-6 h-6 rounded-full object-cover shrink-0"
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              )}
               <span className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
                 {formatDate(article.publishedDate)}
               </span>

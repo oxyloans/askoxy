@@ -620,7 +620,7 @@ const AllAIStore: React.FC = () => {
 
     try {
       const res = await axiosInstance.get(
-        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`,
+        `${BASE_URL}/marketing-service/campgin/getOnlyAllCampaignDetails`,
       );
 
       const json = res.data;

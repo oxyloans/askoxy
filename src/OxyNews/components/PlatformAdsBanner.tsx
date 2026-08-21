@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PLATFORMS } from "./ResourceNavBar";
 
+const ADS = [
+  ...PLATFORMS,
+  {
+    name: "Study Abroad",
+    url: "https://www.askoxy.ai/studyabroad",
+    image: "https://i.ibb.co/yngfgbdg/study-abroad-2.png",
+    description: "Explore global education opportunities",
+  },
+];
+
 const AD_ROTATE_MS = 4000;
 
 export default function PlatformAdsBanner() {
@@ -11,10 +21,10 @@ export default function PlatformAdsBanner() {
 
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (paused || PLATFORMS.length <= 1) return;
+    if (paused || ADS.length <= 1) return;
 
     timerRef.current = setInterval(() => {
-      setIndex((prev) => (prev + 1) % PLATFORMS.length);
+      setIndex((prev) => (prev + 1) % ADS.length);
     }, AD_ROTATE_MS);
 
     return () => {
@@ -22,9 +32,9 @@ export default function PlatformAdsBanner() {
     };
   }, [paused]);
 
-  if (!PLATFORMS.length) return null;
+  if (!ADS.length) return null;
 
-  const current = PLATFORMS[index];
+  const current = ADS[index];
 
   return (
     <div
@@ -54,7 +64,9 @@ export default function PlatformAdsBanner() {
 
             <div className="relative z-10 h-full flex flex-row items-center gap-3 px-10 sm:px-12">
               <span className="shrink-0">
-                {current.name === "ASKOXY.AI" ? (
+                {current.name === "Study Abroad" ? (
+                  <img src="https://i.ibb.co/WNYSppcc/study-abroad.png" className="h-12 object-contain" alt="Study Abroad" />
+                ) : current.name === "ASKOXY.AI" ? (
                   <img src="https://www.askoxy.ai/static/media/askoxylogonew.c34f3429a1c63f5f261b.png" className="h-6 object-contain" alt="ASKOXY.AI" />
                 ) : current.name === "OXYGOLD.AI" ? (
                   <img src="https://www.oxygold.ai/assets/oxygoldlogo-BhcbXH-W.png" className="h-6 object-contain" alt="OXYGOLD.AI" />
@@ -78,14 +90,14 @@ export default function PlatformAdsBanner() {
 
         {/* Prev / Next arrows */}
         <button
-          onClick={() => setIndex((i) => (i - 1 + PLATFORMS.length) % PLATFORMS.length)}
+          onClick={() => setIndex((i) => (i - 1 + ADS.length) % ADS.length)}
           className="focus-ring absolute left-1 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-sm text-plum shadow-md transition hover:bg-white"
           aria-label="Previous ad"
         >
           ‹
         </button>
         <button
-          onClick={() => setIndex((i) => (i + 1) % PLATFORMS.length)}
+          onClick={() => setIndex((i) => (i + 1) % ADS.length)}
           className="focus-ring absolute right-1 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-sm text-plum shadow-md transition hover:bg-white"
           aria-label="Next ad"
         >
@@ -94,7 +106,7 @@ export default function PlatformAdsBanner() {
 
         {/* Dots */}
         <div className="absolute bottom-1 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full bg-plum/60 px-2 py-1 backdrop-blur">
-          {PLATFORMS.map((p, i) => (
+          {ADS.map((p, i) => (
             <button
               key={p.name}
               onClick={() => setIndex(i)}

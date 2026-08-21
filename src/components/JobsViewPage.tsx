@@ -740,6 +740,8 @@ const JobViewPage: React.FC = () => {
     return formattedLines.join("\n");
   };
 
+  const jobDetailsPanelRef = useRef<HTMLDivElement>(null);
+
   const handleJobSelect = (job: Job) => {
     if (!userId) {
       message.warning("Please login to view job details.");
@@ -752,13 +754,11 @@ const JobViewPage: React.FC = () => {
       return;
     }
     const pathPrefix = "/main/viewjobdetails";
-
     navigate(`${pathPrefix}/${job.id}/${currentCompany}`);
     setSelectedJob(job);
-    window.scrollTo({
-      top: 200,
-      behavior: "smooth",
-    });
+    setTimeout(() => {
+      jobDetailsPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   const JobCard = ({
@@ -1338,7 +1338,7 @@ const JobViewPage: React.FC = () => {
         </div>
         {selectedJob ? (
           <div className={`grid grid-cols-1 lg:grid-cols-4 pt-2 gap-4`}>
-            <div className="lg:col-span-1">
+            <div className="hidden lg:block lg:col-span-1">
               <div className="bg-white rounded-xl p-4 shadow-sm border sticky top-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -1376,7 +1376,24 @@ const JobViewPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className={"lg:col-span-3"}>
+            <div ref={jobDetailsPanelRef} className={"lg:col-span-3"}>
+              <div className="flex lg:hidden justify-start mb-3">
+                <button
+                  onClick={() => {
+                    const accessToken = localStorage.getItem("accessToken");
+                    const userId = localStorage.getItem("userId");
+                    setSelectedJob(null);
+                    if (accessToken && userId) {
+                      navigate(`/main/viewjobdetails/default/${currentCompany}`);
+                    } else {
+                      navigate(`/viewjobdetails/default/${currentCompany}`);
+                    }
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                >
+                  ← Back to all jobs
+                </button>
+              </div>
               <JobDetailsComponent job={selectedJob} />
             </div>
           </div>

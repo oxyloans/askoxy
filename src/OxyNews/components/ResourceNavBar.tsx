@@ -3,12 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { RESOURCE_CATEGORIES } from "../data/resourceLinks";
 
-const EXTRA_CATEGORIES: typeof RESOURCE_CATEGORIES = [
-  { id: "jobs", label: "Jobs", links: [] },
-  { id: "investments", label: "Investments", links: [] },
-];
-
-const ALL_CATEGORIES = [...RESOURCE_CATEGORIES, ...EXTRA_CATEGORIES];
+const ALL_CATEGORIES = [...RESOURCE_CATEGORIES];
 
 export const PLATFORMS = [
   {

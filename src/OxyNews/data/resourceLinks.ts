@@ -49,6 +49,13 @@ export const RESOURCE_CATEGORIES: ResourceCategory[] = [
       { id: "leaderboard", name: "Model Leaderboard", url: "https://openrouter.ai/rankings#leaderboard-table", description: "Live cross-provider model rankings" },
     ],
   },
+  {
+    id: "jobs",
+    label: "Jobs",
+    links: [
+      { id: "sightsinplus-employment", name: "SightsInPlus Employment", url: "https://www.sightsinplus.com/category/news/employment/", description: "Latest employment news and job market updates", newsSource: "sightsinplus" },
+    ],
+  },
 ];
 
 export function findResource(categoryId: string, resourceId: string) {

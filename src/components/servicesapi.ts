@@ -1,5 +1,5 @@
 import axiosInstance from "../utils/axiosInstance";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 
 export interface Image {
   imageId?: string;
@@ -119,22 +119,29 @@ const buildPollOptions = (data: any): CampaignPollOption[] => {
   return options;
 };
 
+const resolveImageUrl = (url?: string): string => {
+  if (!url) return "";
+  const clean = url.trim();
+  if (/^https?:\/\//i.test(clean)) return clean;
+  return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
+};
+
 const normalizeCampaign = (item: any): Campaign => {
   const imageUrls: Image[] = Array.isArray(item?.imageUrls)
     ? item.imageUrls.map((img: any) =>
         typeof img === "string"
-          ? { imageUrl: img, status: true }
+          ? { imageUrl: resolveImageUrl(img), status: true }
           : {
               imageId: img?.imageId,
-              imageUrl: img?.imageUrl,
+              imageUrl: resolveImageUrl(img?.imageUrl),
               status: img?.status,
             }
       )
     : item?.imageUrl
-    ? [{ imageUrl: item.imageUrl, status: true }]
+    ? [{ imageUrl: resolveImageUrl(item.imageUrl), status: true }]
     : Array.isArray(item?.images)
     ? item.images.map((img: any) => ({
-        imageUrl: img?.imageUrl,
+        imageUrl: resolveImageUrl(img?.imageUrl),
         status: img?.status,
       }))
     : [];
@@ -177,7 +184,7 @@ const extractArray = (data: any): any[] => {
 export const fetchCampaigns = async (): Promise<Campaign[]> => {
   try {
     const { data } = await axiosInstance.get(
-      `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
+      `${BASE_URL}/marketing-service/campgin/getOnlyAllCampaignDetails`
     );
     return extractArray(data).map(normalizeCampaign);
   } catch (error) {

@@ -148,6 +148,7 @@ export default function ExternalArticlePage() {
   const { sourceName, id } = useParams<{ sourceName: string; id: string }>();
   const [article, setArticle] = useState<ExternalNewsArticle | null>(null);
   const [content, setContent] = useState<string | null>(null);
+  const [heroImage, setHeroImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,11 +161,22 @@ export default function ExternalArticlePage() {
     setLoading(true);
     setError(null);
     setContent(null);
+    setHeroImage(null);
 
     api
       .getExternalArticle(sourceName, Number(id))
       .then((found) => {
         setArticle(found);
+
+        if (found.imageUrl) {
+          setHeroImage(found.imageUrl);
+        } else {
+          api
+            .getExternalArticleImage(sourceName, Number(id))
+            .then((img) => setHeroImage(img))
+            .catch(() => setHeroImage(null));
+        }
+
         if (found.content) {
           setContent(found.content);
           return;
@@ -260,6 +272,17 @@ export default function ExternalArticlePage() {
             })()}
           </div>
         </div>
+
+        {heroImage && (
+          <div className="mt-6 rounded-3xl overflow-hidden border border-ink/10 shadow-sm aspect-[16/9] bg-ink/5">
+            <img
+              src={heroImage}
+              alt={article.title}
+              className="w-full h-full object-cover"
+              onError={() => setHeroImage(null)}
+            />
+          </div>
+        )}
 
         <div className="mt-6 border-b border-ink/10 pb-6">
           <div className="grid gap-10 lg:grid-cols-[3fr_1fr] items-start">

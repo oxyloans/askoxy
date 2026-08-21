@@ -145,5 +145,5 @@ export interface ExternalNewsArticle {
   publishedDate: string | null;
   fetchedAt: string | null;
   content?: string | null;
-
+  imageUrl: string | null;
 }

@@ -350,12 +350,12 @@ const ServicesSlider: React.FC = () => {
     )
     .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
 
-  const leagueJourneyCampaigns = campaigns
-    .filter(
-      (campaign) =>
-        campaign.campaignStatus !== false &&
-        campaign.addServiceType === "LEAGUEJOURNEYS",
-    )
+  const [journeyItems, setJourneyItems] = useState<{ journeyId: string; journeyName: string; campaign: Campaign }[]>([]);
+  const [journeysLoading, setJourneysLoading] = useState(true);
+
+  const leagueJourneyCampaigns = journeyItems
+    .map((item) => item.campaign)
+    .filter((c) => c.campaignStatus !== false)
     .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
 
   const displayedLeagueJourneys = showAllLeagueJourneys
@@ -375,12 +375,27 @@ const ServicesSlider: React.FC = () => {
         .slice(0, 5)
     : [];
 
+  const serviceCampaignsOnly = campaigns.filter(
+    (c) =>
+      c.campaignStatus !== false &&
+      c.campainInputType === "SERVICE" &&
+      (c.addServiceType === null ||
+        c.addServiceType === undefined ||
+        c.addServiceType === "" ||
+        c.addServiceType === "SERVICES"),
+  );
+
   const allServices = showAllServices
     ? [
       ...services,
       ...nonBlogCampaigns
         .filter(
           (campaign) =>
+            campaign.campainInputType === "SERVICE" &&
+            (campaign.addServiceType === null ||
+              campaign.addServiceType === undefined ||
+              campaign.addServiceType === "" ||
+              campaign.addServiceType === "SERVICES") &&
             getCampaignTitle(campaign).trim() !==
             "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
         )
@@ -437,6 +452,29 @@ const ServicesSlider: React.FC = () => {
     loadCampaigns();
     fetchJobs();
     fetchFreelancers();
+
+    const loadJourneys = async () => {
+      try {
+        setJourneysLoading(true);
+        const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
+        const json = await res.json();
+        const items: { journeyId: string; journeyName: string; campaign: Campaign }[] = [];
+        if (json.status && Array.isArray(json.data)) {
+          json.data.forEach((journey: any) => {
+            (journey.campaigns || []).forEach((c: any) => {
+              items.push({ journeyId: journey.journeyId, journeyName: journey.journeyName, campaign: c });
+            });
+          });
+        }
+        setJourneyItems(items);
+      } catch (err) {
+        console.error("Error loading journeys:", err);
+      } finally {
+        setJourneysLoading(false);
+      }
+    };
+
+    loadJourneys();
   }, []);
 
   const handleCampaignClick = (campaign: Campaign) => {
@@ -580,7 +618,7 @@ const ServicesSlider: React.FC = () => {
           )}
         </div>
 
-        {campaignsLoading ? (
+        {journeysLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <motion.div
@@ -597,16 +635,6 @@ const ServicesSlider: React.FC = () => {
                 </div>
               </motion.div>
             ))}
-          </div>
-        ) : campaignsError ? (
-          <div className="text-center py-12">
-            <p className="text-red-500 text-lg mb-4">{campaignsError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-            >
-              Retry
-            </button>
           </div>
         ) : leagueJourneyCampaigns.length > 0 ? (
           <>
@@ -805,7 +833,7 @@ const ServicesSlider: React.FC = () => {
         )}
 
         {!showAllServices &&
-          allServices.length < services.length + nonBlogCampaigns.length && (
+          allServices.length < services.length + serviceCampaignsOnly.length && (
             <div className="mt-6 text-center">
               <motion.button
                 whileHover={{ scale: 1.02 }}

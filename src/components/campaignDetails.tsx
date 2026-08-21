@@ -4,7 +4,6 @@ import Footer from "../components/Footer";
 import { message, Modal, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Header1 from "./Header";
-import { uploadurlwithId } from "../Config";
 
 import {
   fetchCampaigns,
@@ -199,10 +198,31 @@ const CampaignDetails: React.FC = () => {
       setIsLoading(true);
       try {
         const allCampaigns = await fetchCampaigns();
-
-        const foundCampaign = allCampaigns.find(
+        let foundCampaign = allCampaigns.find(
           (c) => c.campaignId?.slice(-4) === campaignId,
         );
+
+        // If not found in main campaigns, search journey campaigns
+        if (!foundCampaign) {
+          try {
+            const BASE_URL = (await import("../Config")).default;
+            const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
+            const json = await res.json();
+            if (json.status && Array.isArray(json.data)) {
+              for (const journey of json.data) {
+                const match = (journey.campaigns || []).find(
+                  (c: any) => c.campaignId?.slice(-4) === campaignId
+                );
+                if (match) {
+                  foundCampaign = { ...match, addServiceType: "LEAGUEJOURNEYS" };
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Error searching journey campaigns:", e);
+          }
+        }
 
         if (
           foundCampaign &&
@@ -794,26 +814,23 @@ const CampaignDetails: React.FC = () => {
                         key={image.imageId}
                         className="snap-center shrink-0 basis-full w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px] flex items-start justify-center rounded-xl overflow-hidden"
                       >
-                        {isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) ? (
+                        {isVideoUrl(image.imageUrl ?? "") ? (
                           <video
                             controls
                             className="max-w-full max-h-full w-auto h-auto self-start"
                             preload="metadata"
                           >
                             <source
-                              src={`${uploadurlwithId}${image.imageUrl}`}
+                              src={image.imageUrl}
                               type="video/mp4"
                             />
                           </video>
                         ) : (
                           <img
-                            src={`${uploadurlwithId}${image.imageUrl}`}
+                            src={image.imageUrl}
                             alt={`${campaign?.campaignType || "Campaign"} - ${idx + 1}`}
                             className="w-full h-auto object-contain sm:object-cover rounded-lg"
-                            style={{
-                              display: "block",
-                              margin: "0 auto",
-                            }}
+                            style={{ display: "block", margin: "0 auto" }}
                             loading="lazy"
                           />
                         )}

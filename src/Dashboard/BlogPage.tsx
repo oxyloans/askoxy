@@ -60,7 +60,7 @@ const BlogsPage: React.FC = () => {
     setIsMyBlogsLoading(true);
     try {
       const { data } = await axios.get(
-        "https://meta.oxyloans.com/api/marketing-service/campgin/getAllCampaignDetails",
+        "https://meta.oxyloans.com/api/marketing-service/campgin/getOnlyAllCampaignDetails",
         { params: { createdPersonId: userId } },
       );
       const responseData = data?.data ?? data;

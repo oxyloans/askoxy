@@ -121,7 +121,8 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
           {refreshing ? "Refreshing…" : "Refresh news"}
         </button>
       </div>
-      <div className="hidden sm:grid grid-cols-[8rem_12rem_minmax(0,1fr)] gap-4 py-3 text-xs uppercase tracking-widest text-ink font-semibold border-b border-ink/10">
+      <div className="hidden sm:grid grid-cols-[4rem_8rem_12rem_minmax(0,1fr)] gap-4 py-3 text-xs uppercase tracking-widest text-ink font-semibold border-b border-ink/10">
+        <span className="text-left" aria-hidden="true"></span>
         <span className="text-left">Date</span>
         <span className="text-left">Category</span>
         <span className="text-left">Title</span>
@@ -131,9 +132,22 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
           <li key={article.id}>
             <Link
               to={`/news/${sourceName.toLowerCase()}/${article.id}`}
-              className="focus-ring group flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 py-4"
+              className="focus-ring group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-4"
             >
-              <time className="shrink-0 w-28 text-xs font-mono text-ink-dark font-semibold">
+              <span className="shrink-0 w-16 h-12 rounded-lg overflow-hidden bg-ink/5 border border-ink/10">
+                {article.imageUrl ? (
+                  <img
+                    src={article.imageUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : null}
+              </span>
+              <time className="shrink-0 sm:w-28 text-xs font-mono text-ink-dark font-semibold">
                 {formatDate(article.publishedDate)}
               </time>
               {article.category && (

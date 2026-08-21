@@ -78,7 +78,7 @@ export default function NewsBackground3D() {
         .news-bg-3d__map {
           position: absolute;
           inset: 0;
-          background-image: url("https://assets.bizclikmedia.net/900/3443d437715625359e6d694955900f82:c7faa7546e8efb2512cee829767f9137/gettyimages-1324817452.webp");
+          background-image: url("https://i.ibb.co/mVRLYjZR/Screenshot-2026-08-07-161601.png");
           background-size: cover;
           background-position: center;
           opacity: 0.32;

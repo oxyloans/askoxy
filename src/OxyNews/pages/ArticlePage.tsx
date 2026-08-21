@@ -1,4 +1,5 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { PLATFORMS } from "../components/ResourceNavBar";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "../lib/api";
@@ -66,6 +67,13 @@ function todayDateline() {
     day: "numeric",
   });
 }
+
+const PLATFORM_COLORS: Record<string, string> = {
+  "ASKOXY.AI": "bg-violet-100 border-violet-300 text-violet-700 hover:bg-violet-600 hover:text-white",
+  "OXYLOANS":  "bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white",
+  "OXYBRICKS": "bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-600 hover:text-white",
+  "OXYGOLD.AI":"bg-amber-100 border-amber-300 text-amber-700 hover:bg-amber-600 hover:text-white",
+};
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>();
@@ -247,26 +255,29 @@ export default function ArticlePage() {
           </div>
         </div>
 
-        {/* Masthead strip: section flag + dateline */}
+        {/* Masthead strip: RadhAI attribution + hashtags left, dateline right */}
         <div className="mt-4 pb-3 border-b-2 border-ink flex items-end justify-between gap-3 flex-wrap">
-          <div className="flex flex-wrap items-center gap-2">
-            {c?.domain && c.domain !== "General" && (
-              <span className="bg-plum-dark text-paper text-[11px] font-mono uppercase tracking-widest px-2 py-1 rounded">
-                {c.domain}
-              </span>
-            )}
-            {c?.subDomain && c.subDomain !== "General" && (
-              <span className="text-xs text-ink-faint font-mono uppercase tracking-wide">
-                {c.subDomain}
-              </span>
-            )}
-            {c?.category && c.category !== "General" && (
-              <span className="bg-royal text-paper text-[11px] font-mono px-2 py-1 rounded">
-                {c.category}
-              </span>
-            )}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-mono uppercase tracking-widest text-ink-faint">
+              This article is analysed by{" "}
+              <span className="font-semibold"><span className="text-plum">Radh</span><span className="text-violet-500">AI</span></span>
+            </p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-mono uppercase tracking-widest text-ink-faint">Sponsored by</span>
+              {PLATFORMS.map((p) => (
+                <a
+                  key={p.name}
+                  href={p.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-mono font-semibold transition-colors ${PLATFORM_COLORS[p.name] ?? "bg-plum/5 border-plum/15 text-plum hover:bg-plum hover:text-white"}`}
+                >
+                  #{p.name}
+                </a>
+              ))}
+            </div>
           </div>
-          <span className="text-[11px] font-mono uppercase tracking-widest text-ink-faint">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-ink-faint shrink-0">
             {todayDateline()}
           </span>
         </div>
@@ -336,9 +347,6 @@ export default function ArticlePage() {
         <div className="flex items-center gap-3 mt-5 py-3 border-y border-ink/15 flex-wrap">
           <OpportunityMeter score={oa?.overallScore} size={48} strokeWidth={5} />
           <div className="leading-tight flex-1 min-w-0">
-            <div className="text-xs font-mono uppercase tracking-widest text-ink-faint">
-              By OxyGroup AI Analysis
-            </div>
             <div className="text-sm text-ink-soft">Opportunity signal</div>
           </div>
           {item?.blogUrl && (
@@ -592,7 +600,29 @@ export default function ArticlePage() {
           </section>
         )}
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-ink/10 pt-6">
+        {/* RadhAI attribution + platform hashtags */}
+        <div className="mt-12 border-t border-ink/10 pt-6 flex flex-col gap-3">
+          <p className="text-xs font-mono uppercase tracking-widest text-ink-faint">
+            This article is analysed by{" "}
+            <span className="font-semibold"><span className="text-plum">Radh</span><span className="text-violet-500">AI</span></span>
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-mono uppercase tracking-widest text-ink-faint">Sponsored by</span>
+            {PLATFORMS.map((p) => (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-mono font-semibold transition-colors ${PLATFORM_COLORS[p.name] ?? "bg-plum/5 border-plum/15 text-plum hover:bg-plum hover:text-white"}`}
+              >
+                #{p.name}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 border-t border-ink/10 pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-ink-faint font-mono">Continue reading</p>

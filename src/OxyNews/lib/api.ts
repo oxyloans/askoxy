@@ -10,6 +10,7 @@ import type {
   PaperclipDetail,
 } from "../types";
 const BASE_URL1 = `${BASE_URL}/ai-automation`;
+const LOCAL_BASE = "http://localhost:9041/api/ai-automation";
 
 const getAccessToken = (): string | null =>
   getCustomerAccessToken() || localStorage.getItem("accessToken");
@@ -44,6 +45,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return body.data;
 }
 
+async function localRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL1}${path}`, {
+    ...options,
+    headers: getRequestHeaders(options?.headers),
+  });
+  if (!res.ok) {
+    throw new Error(`Request failed (${res.status}): ${path}`);
+  }
+  const body: ApiResponse<T> = await res.json();
+  if (body.success === false) {
+    throw new Error(body.message || "Request failed");
+  }
+  return body.data;
+}
+
 export const api = {
   getFeed: (params: {
     domain?: string;
@@ -63,11 +79,11 @@ export const api = {
 
   getCategories: () => request<CategoryCount[]>("/news/categories"),
 
-  // Scraped news from an external company source (e.g. "anthropic").
+  // Scraped/fetched news from an external source (e.g. "anthropic", "newsdata").
   // Backend route pattern: /news/external/{sourceName}
   getExternalNews: (sourceName: string, page = 0, size = 20) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
-    return request<PageResponse<ExternalNewsArticle>>(
+    return localRequest<PageResponse<ExternalNewsArticle>>(
       `/news/external/${sourceName.toLowerCase()}?${q.toString()}`
     );
   },
@@ -91,10 +107,26 @@ export const api = {
     };
   },
 
+  // Generic no-param refresh — works for "anthropic" and any future source
+  // whose /refresh endpoint takes no query params.
   refreshExternalNews: (sourceName: string) =>
-    request<string>(`/news/external/${sourceName.toLowerCase()}/refresh`, {
+    localRequest<string>(`/news/external/${sourceName.toLowerCase()}/refresh`, {
       method: "POST",
     }),
+
+  // Newsdata.io's /refresh accepts optional query/country/language filters
+  // and returns a diagnostic result (backend defaults: country=in, language=en).
+  refreshNewsdataNews: (params?: { query?: string; country?: string; language?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.query) q.set("query", params.query);
+    if (params?.country) q.set("country", params.country);
+    if (params?.language) q.set("language", params.language);
+    const qs = q.toString();
+    return localRequest<{ success: boolean; saved: number; fetched: number; message: string }>(
+      `/news/external/newsdata/refresh${qs ? `?${qs}` : ""}`,
+      { method: "POST" }
+    );
+  },
 
   // Finds one article out of the paginated list by id (backend has no
   // single-article-by-id endpoint, only the /content one below).
@@ -105,10 +137,14 @@ export const api = {
     return found;
   },
 
-  // Lazily fetched full body text (backend scrapes it on first request and
-  // caches it, so this can be slow the first time and fast after).
+  // Lazily fetched full body text (backend scrapes/caches on first request).
   getExternalArticleContent: (sourceName: string, id: number) =>
-    request<string>(`/news/external/${sourceName.toLowerCase()}/${id}/content`),
+    localRequest<string>(`/news/external/${sourceName.toLowerCase()}/${id}/content`),
+
+  getExternalArticleImage: (sourceName: string, id: number) =>
+    localRequest<string | null>(`/news/external/${sourceName.toLowerCase()}/${id}/image`, {
+      method: "POST",
+    }),
 
   search: (query: string, page = 0, size = 12) => {
     const q = new URLSearchParams({ q: query, page: String(page), size: String(size) });

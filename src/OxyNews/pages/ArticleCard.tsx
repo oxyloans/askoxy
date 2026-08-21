@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { NewsFeedItem } from "../types";
-import OpportunityMeter from "./OpportunityMeter";
+import OpportunityMeter from "../components/OpportunityMeter";
 
 function timeAgo(iso: string | null) {
   if (!iso) return "";
@@ -146,7 +146,10 @@ export default function ArticleCard({
   small?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
-  const showOverlay = !item.imageUrl || imgError;
+  const isPaperImage = hasPagerImage(item);
+  const useRealImage = !!item.imageUrl && !isPaperImage && !imgError;
+  const showOverlay = !useRealImage;
+  const imgSrc = useRealImage ? item.imageUrl! : FALLBACK_IMG;
 
   return (
     <motion.div
@@ -165,10 +168,10 @@ export default function ArticleCard({
       >
         <div
           className="relative rounded-t-xl"
-          style={{ background: getCardGradient(item.category), overflow: "hidden" }}
+          style={{ background: getCardGradient(item.category), overflow: "hidden", minHeight: featured ? 140 : 110 }}
         >
           <img
-            src={showOverlay ? FALLBACK_IMG : item.imageUrl!}
+            src={imgSrc}
             alt={displayTitle(item)}
             className={`w-full object-contain group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
             style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, width: "100%", display: "block" }}

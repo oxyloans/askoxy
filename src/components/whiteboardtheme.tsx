@@ -9,7 +9,6 @@ import web3 from "../assets/img/web3.png";
 import web31 from "../assets/img/web3.11.png";
 import web4 from "../assets/img/web4.png";
 import web5 from "../assets/img/web5.png";
-
 import arrow0 from "../assets/img/arrow0.png";
 import arrow1 from "../assets/img/arrow1.png";
 import speak0 from "../assets/img/speak0.png";

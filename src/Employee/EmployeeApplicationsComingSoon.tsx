@@ -96,7 +96,7 @@ interface ResultsModalState {
   result: ApiResponse<ExamResultsData> | null;
 }
 
-const EmployeeApplicationsComingSoon: React.FC = () => {
+const   EmployeeApplicationsComingSoon: React.FC = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantCount, setApplicantCount] = useState<number | null>(null);
   const [pageData, setPageData] = useState<ApplicantsPage>({});
@@ -106,6 +106,17 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [resultsModal, setResultsModal] = useState<ResultsModalState | null>(null);
+  const [resumeModal, setResumeModal] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const [resumeError, setResumeError] = useState(false);
+
+  const openResumeModal = (url: string) => {
+    setResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`);
+    setIframeLoading(true);
+    setResumeError(false);
+    setResumeModal(true);
+  };
 
   const loadApplications = useCallback(async (signal?: AbortSignal, isRefresh = false) => {
     const auth = getEmployeeAuth();
@@ -277,7 +288,9 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
                 </div>
                 {applicant.coverLetter && <p className="eapps-cover-letter">{applicant.coverLetter}</p>}
                 <div className="eapps-actions">
-                  {applicant.resumeUrl ? <a href={applicant.resumeUrl} target="_blank" rel="noreferrer"><FileText />View resume</a> : <span className="eapps-unavailable">Resume unavailable</span>}
+                  {applicant.resumeUrl
+                    ? <button type="button" className="eapps-results" onClick={() => openResumeModal(applicant.resumeUrl!)}><FileText />View resume</button>
+                    : <span className="eapps-unavailable">Resume unavailable</span>}
                   {hasResults(applicant) && <button type="button" className="eapps-results" onClick={() => openResultsModal(applicant)}><Eye />View results</button>}
                 </div>
               </div>
@@ -300,6 +313,44 @@ const EmployeeApplicationsComingSoon: React.FC = () => {
           onClose={() => setResultsModal(null)}
           onRetry={() => openResultsModal(resultsModal.applicant)}
         />
+      )}
+
+      {resumeModal && (
+        <div className="eapps-modal" role="dialog" aria-modal="true" aria-labelledby="resume-viewer-title">
+          <div className="eapps-modal-card" style={{ display: "flex", flexDirection: "column", height: "88vh" }}>
+            <div className="eapps-modal-head">
+              <div>
+                <span className="eapps-eyebrow">Document viewer</span>
+                <h2 id="resume-viewer-title">Resume</h2>
+              </div>
+              <button type="button" className="eapps-modal-close" onClick={() => { setResumeModal(false); setIframeLoading(true); setResumeError(false); }} aria-label="Close resume">
+                <X />
+              </button>
+            </div>
+            <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+              {iframeLoading && !resumeError && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <LoaderCircle className="eapps-spin" style={{ width: 36, height: 36, color: "#9faeff" }} />
+                </div>
+              )}
+              {resumeError && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 24 }}>
+                  <CircleAlert style={{ width: 32, color: "#fa9cab" }} />
+                  <p style={{ color: "rgba(226,231,250,.6)", fontSize: ".8rem" }}>Unable to load resume. The file could not be displayed.</p>
+                </div>
+              )}
+              {!resumeError && (
+                <iframe
+                  src={resumeUrl}
+                  title="Resume Viewer"
+                  style={{ width: "100%", height: "100%", border: "none", display: iframeLoading ? "none" : "block" }}
+                  onLoad={() => setIframeLoading(false)}
+                  onError={() => { setIframeLoading(false); setResumeError(true); }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

@@ -16,7 +16,7 @@ import Loader from "../components/Loader";
 import { message } from "antd";
 import VideoImage from "../assets/img/Videothumb.png";
 import { fetchCampaigns, Campaign } from "../components/servicesapi";
-import { uploadurlwithId, resolveAskoxyUrl } from "../Config";
+import BASE_URL, { resolveAskoxyUrl, uploadurlwithId } from "../Config";
 
 interface DashboardItem {
   title: string;
@@ -37,6 +37,7 @@ type TabKey = "SERVICES" | "WE_ARE_HIRING" | "LEAGUE_JOURNEYS";
 const ServicesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [campaigns, setCampaigns] = useState<CampaignWithId[]>([]);
+  const [journeyCampaigns, setJourneyCampaigns] = useState<CampaignWithId[]>([]);
 
   const [activeTab, setActiveTab] = useState<TabKey>("SERVICES");
   const [loading, setLoading] = useState(false);
@@ -93,6 +94,28 @@ const ServicesPage: React.FC = () => {
       }
     };
     loadCampaigns();
+
+    const loadJourneys = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
+        const json = await res.json();
+        const items: CampaignWithId[] = [];
+        if (json.status && Array.isArray(json.data)) {
+          json.data.forEach((journey: any) => {
+            (journey.campaigns || []).forEach((c: any) => {
+              if (c.campaignId) {
+                items.push({ ...c, id: c.campaignId, addServiceType: "LEAGUEJOURNEYS" });
+              }
+            });
+          });
+        }
+        setJourneyCampaigns(items);
+      } catch (err) {
+        console.error("Error loading journey campaigns:", err);
+      }
+    };
+
+    loadJourneys();
   }, []);
 
   const services: DashboardItem[] = useMemo(
@@ -243,16 +266,7 @@ const ServicesPage: React.FC = () => {
     [campaigns],
   );
 
-  const leagueJourneyCampaigns = useMemo(
-    () =>
-      campaigns.filter(
-        (c) =>
-          c.campaignStatus !== false &&
-          (c as any).campainInputType !== "BLOG" &&
-          c.addServiceType === "LEAGUEJOURNEYS",
-      ),
-    [campaigns],
-  );
+  const leagueJourneyCampaigns = journeyCampaigns;
 
   /** Search helpers */
   const matchQuery = (text?: string) =>
@@ -288,7 +302,7 @@ const ServicesPage: React.FC = () => {
   const filteredLeagueJourneyCampaigns = useMemo(
     () =>
       leagueJourneyCampaigns.filter(
-        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description),
+        (c: any) => matchQuery(c.campaignType) || matchQuery(c.campaignDescription),
       ),
     [leagueJourneyCampaigns, searchQuery],
   );
@@ -404,14 +418,13 @@ const ServicesPage: React.FC = () => {
                       onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="mb-2">
-                        {campaign.imageUrls &&
-                          campaign.imageUrls.length > 0 && (
-                            <img
-                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
-                              alt={`${campaign.campaignType}`}
-                              className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
-                            />
-                          )}
+                        {campaign.imageUrls?.[0]?.imageUrl && (
+                          <img
+                            src={campaign.imageUrls[0].imageUrl}
+                            alt={campaign.campaignType}
+                            className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
+                          />
+                        )}
                       </div>
                       <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}
@@ -435,14 +448,13 @@ const ServicesPage: React.FC = () => {
                       onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="mb-2">
-                        {campaign.imageUrls &&
-                          campaign.imageUrls.length > 0 && (
-                            <img
-                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
-                              alt={`${campaign.campaignType}`}
-                              className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
-                            />
-                          )}
+                        {campaign.imageUrls?.[0]?.imageUrl && (
+                          <img
+                            src={campaign.imageUrls[0].imageUrl}
+                            alt={campaign.campaignType}
+                            className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
+                          />
+                        )}
                       </div>
                       <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}
@@ -466,14 +478,13 @@ const ServicesPage: React.FC = () => {
                       onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="mb-2">
-                        {campaign.imageUrls &&
-                          campaign.imageUrls.length > 0 && (
-                            <img
-                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
-                              alt={`${campaign.campaignType}`}
-                              className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
-                            />
-                          )}
+                        {campaign.imageUrls?.[0]?.imageUrl && (
+                          <img
+                            src={campaign.imageUrls[0].imageUrl}
+                            alt={campaign.campaignType}
+                            className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
+                          />
+                        )}
                       </div>
                       <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}

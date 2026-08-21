@@ -18,6 +18,13 @@ import {
 import BASE_URL from "../Config";
 const { Search } = Input;
 
+const resolveImageUrl = (url?: string): string => {
+  if (!url) return "";
+  const clean = url.trim();
+  if (/^https?:\/\//i.test(clean)) return clean;
+  return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
+};
+
 
 interface Image {
   imageId: string;
@@ -91,7 +98,12 @@ const getDateTime = (value?: string) => {
 
 const normalizeCampaign = (campaign: Campaign): Campaign => ({
   ...campaign,
-  imageUrls: Array.isArray(campaign.imageUrls) ? campaign.imageUrls : [],
+  imageUrls: Array.isArray(campaign.imageUrls)
+    ? campaign.imageUrls.map((img) => ({
+        ...img,
+        imageUrl: resolveImageUrl(img.imageUrl),
+      }))
+    : [],
   campaignPostsUrls: Array.isArray(campaign.campaignPostsUrls)
     ? campaign.campaignPostsUrls
     : [],
@@ -159,6 +171,7 @@ const AllCampaignsDetails: React.FC = () => {
   const [selectedJourneyId, setSelectedJourneyId] = useState<string>("ALL");
   const [journeyCampaigns, setJourneyCampaigns] = useState<Campaign[]>([]);
   const [journeyCampaignLoading, setJourneyCampaignLoading] = useState(false);
+  const [allJourneyCampaigns, setAllJourneyCampaigns] = useState<Campaign[]>([]);
 
   // 2) Save scroll position before refresh/route change and restore on mount
   useEffect(() => {
@@ -193,6 +206,7 @@ const AllCampaignsDetails: React.FC = () => {
   useEffect(() => {
     fetchCampaigns();
     fetchJourneys();
+    fetchAllJourneyCampaigns();
   }, []);
 
   useEffect(() => {
@@ -216,7 +230,7 @@ const AllCampaignsDetails: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        BASE_URL + "/marketing-service/campgin/getAllCampaignDetails",
+        BASE_URL + "/marketing-service/campgin/getOnlyAllCampaignDetails",
         { headers: { accept: "application/json" } }
       );
 
@@ -231,6 +245,27 @@ const AllCampaignsDetails: React.FC = () => {
       message.error("Failed to load campaign details. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllJourneyCampaigns = async () => {
+    try {
+      const response = await axios.get(
+        BASE_URL + "/marketing-service/campgin/getOnlyJourneyDetails",
+        { headers: { accept: "application/json" } }
+      );
+      const json = response.data;
+      const items: Campaign[] = [];
+      if (json.status && Array.isArray(json.data)) {
+        json.data.forEach((journey: any) => {
+          (journey.campaigns || []).forEach((c: any) => {
+            if (c.campaignId) items.push(normalizeCampaign(c));
+          });
+        });
+      }
+      setAllJourneyCampaigns(items);
+    } catch (error) {
+      console.error("Error fetching journey campaigns:", error);
     }
   };
 
@@ -279,6 +314,7 @@ const AllCampaignsDetails: React.FC = () => {
 
   const refreshCampaignData = async () => {
     await fetchCampaigns();
+    await fetchAllJourneyCampaigns();
     if (selectedJourneyId !== "ALL") {
       await fetchCampaignsByJourneyId(selectedJourneyId);
     }
@@ -678,9 +714,7 @@ const AllCampaignsDetails: React.FC = () => {
   };
 
   const getImageSrc = (imageUrl: string): string => {
-    if (!imageUrl) return "";
-    if (imageUrl.startsWith("http")) return imageUrl;
-    return uploadurlwithId + imageUrl;
+    return resolveImageUrl(imageUrl);
   };
 
   // Helper function to check if URL is a video
@@ -964,9 +998,7 @@ const AllCampaignsDetails: React.FC = () => {
   const weAreHiringCampaigns = campaigns.filter(
     (c) => c.addServiceType === "WEAREHIRING"
   );
-  const leagueJourneysCampaigns = campaigns.filter(
-    (c) => c.addServiceType === "LEAGUEJOURNEYS"
-  );
+  const leagueJourneysCampaigns = allJourneyCampaigns;
   const displayedJourneyCampaigns =
     selectedJourneyId === "ALL" ? leagueJourneysCampaigns : journeyCampaigns;
   const specialTypes = new Set(["WEAREHIRING", "LEAGUEJOURNEYS"]);
