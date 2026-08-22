@@ -224,7 +224,7 @@ const Sidebar: React.FC = () => {
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
            {
-            title: "Rotary 3150 Members" ,
+            title: "Rotary Data" ,
             icon:  <FaUsers className="text-blue-500" />,
             link: "/admin/rotarydata",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],

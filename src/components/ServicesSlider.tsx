@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Modal } from "antd";
 
 import { fetchCampaigns, fetchAllGames, Campaign } from "./servicesapi";
 import BASE_URL, {
@@ -61,9 +60,6 @@ const ServicesSlider: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
   const [showAllFreelancers, setShowAllFreelancers] = useState(false);
-  const [showResumeModal, setShowResumeModal] = useState(false);
-  const [currentResumeUrl, setCurrentResumeUrl] = useState("");
-  const [resumeLoading, setResumeLoading] = useState(false);
 
   const navigate = useNavigate();
   const accessToken = localStorage.getItem("accessToken");
@@ -360,7 +356,7 @@ const ServicesSlider: React.FC = () => {
 
   const displayedLeagueJourneys = showAllLeagueJourneys
     ? leagueJourneyCampaigns
-    : leagueJourneyCampaigns.slice(0, 4);
+    : leagueJourneyCampaigns.slice(0, 8);
 
   const displayedBlogs = showAllBlogs
     ? blogCampaigns
@@ -600,14 +596,14 @@ const ServicesSlider: React.FC = () => {
             </motion.div>
           </div>
 
-          {leagueJourneyCampaigns.length > 3 && (
+          {leagueJourneyCampaigns.length > 8 && (
             <motion.button
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium px-6 py-2.5 rounded-full shadow-md hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 text-sm sm:text-base"
+              className="bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium px-6 py-2.5 rounded-full transition-colors duration-300 text-sm sm:text-base"
               onClick={() => setShowAllLeagueJourneys(!showAllLeagueJourneys)}
             >
               {showAllLeagueJourneys ? "Show Less" : "View All"}
@@ -618,28 +614,19 @@ const ServicesSlider: React.FC = () => {
           )}
         </div>
 
-        {journeysLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3, delay: i * 0.1 }}
-                className="h-64"
-              >
-                <div className="animate-pulse p-4">
-                  <div className="w-full h-40 bg-gray-200 rounded-lg mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                </div>
-              </motion.div>
+        {campaignsLoading ? (
+          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex min-w-0 flex-col items-center">
+                <div className="aspect-[4/5] w-full max-w-[200px] animate-pulse bg-gray-100" />
+                <div className="mt-4 h-5 w-4/5 animate-pulse bg-gray-100" />
+              </div>
             ))}
           </div>
         ) : leagueJourneyCampaigns.length > 0 ? (
           <>
             <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+              className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
@@ -648,7 +635,6 @@ const ServicesSlider: React.FC = () => {
                 const mediaUrl = getCampaignFirstImage(campaign);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
                 const title = getCampaignTitle(campaign);
-                const publishedDate = formatPublishedDate(campaign.createdAt);
 
                 return (
                   <motion.div
@@ -656,16 +642,15 @@ const ServicesSlider: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(185,28,28,0.14)]"
+                    className="group flex min-w-0 cursor-pointer flex-col items-center"
                     onClick={() => handleCampaignClick(campaign)}
                   >
-                    <div className="relative h-[220px] overflow-hidden rounded-t-xl">
+                    <div className="flex w-full items-center justify-center">
                       {mediaUrl ? (
                         isVideo ? (
                           <video
                             src={mediaUrl}
-                            className="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
+                            className="h-auto max-h-[304px] w-full max-w-[200px] object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:max-h-[280px] lg:max-h-[256px]"
                             autoPlay
                             muted
                             loop
@@ -676,43 +661,25 @@ const ServicesSlider: React.FC = () => {
                             src={mediaUrl}
                             alt={title}
                             title={title}
-                            imgClassName="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
+                            imgClassName="h-auto max-h-[304px] w-full max-w-[200px] object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:max-h-[280px] lg:max-h-[256px]"
+                            wrapperClassName="aspect-[4/5] w-full max-w-[200px] transition-transform duration-300 ease-out group-hover:scale-110"
                           />
                         )
                       ) : (
-                        <ImageWithFallback title={title} alt={title} wrapperClassName="w-full h-full" />
+                        <ImageWithFallback
+                          title={title}
+                          alt={title}
+                          wrapperClassName="aspect-[4/5] w-full max-w-[200px] transition-transform duration-300 ease-out group-hover:scale-110"
+                        />
                       )}
-
-                      <div className="absolute top-2 left-2">
-                        <span className="rounded-full bg-gradient-to-br from-[#7C3AED] to-[#4C1D95] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                          Journey
-                        </span>
-                      </div>
                     </div>
 
-                    <div className="flex flex-grow flex-col p-4">
-                      {publishedDate && (
-                        <span className="mb-1.5 text-[11px] font-medium text-slate-400">
-                          {publishedDate}
-                        </span>
-                      )}
-                      <h3 className="mb-2 line-clamp-2 text-sm font-bold leading-snug text-slate-900 transition-colors group-hover:text-[#c2410c]">
-                        {title}
-                      </h3>
-                      <p className="mb-4 line-clamp-3 flex-grow text-xs leading-relaxed text-gray-500">
-                        {campaign.campaignDescription}
-                      </p>
-                      <button
-                        type="button"
-                        className="h-10 w-full rounded-lg bg-gradient-to-br from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-4 text-sm font-semibold text-white transition hover:from-[#4C1D95] hover:to-[#A855F7]"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleCampaignClick(campaign);
-                        }}
-                      >
-                        View Journey
-                      </button>
-                    </div>
+                    <h3
+                      className="mt-4 line-clamp-2 min-h-[44px] w-full px-1 text-center text-sm font-semibold uppercase leading-snug text-slate-950 transition-colors duration-300 group-hover:text-[#7C3AED] sm:text-base lg:text-[17px]"
+                      title={title}
+                    >
+                      {title}
+                    </h3>
                   </motion.div>
                 );
               })}
@@ -721,11 +688,11 @@ const ServicesSlider: React.FC = () => {
             {!showAllLeagueJourneys &&
               displayedLeagueJourneys.length <
               leagueJourneyCampaigns.length && (
-                <div className="mt-8 text-center">
+                <div className="mt-10 text-center">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/30 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
+                    className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-colors duration-300 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
                     onClick={() => setShowAllLeagueJourneys(true)}
                   >
                     View more journeys
@@ -807,19 +774,19 @@ const ServicesSlider: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group flex cursor-pointer flex-col overflow-hidden   p-4  transition-all duration-300 hover:-translate-y-1"
+                className="group flex cursor-pointer flex-col overflow-hidden p-4 transition-all duration-300 hover:-translate-y-1"
                 onClick={() => handleServiceClick(service)}
               >
-                <div className="w-full h-36 flex items-center justify-center mb-3 overflow-hidden">
+                <div className="mx-auto mb-3 flex h-28 w-[80%] items-center justify-center overflow-hidden sm:h-28 lg:h-28">
                   <ImageWithFallback
                     src={service.image}
                     alt={service.title}
                     title={service.title}
-                    imgClassName="w-full h-full object-contain transition-transform duration-300"
+                    imgClassName="h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110"
                     wrapperClassName="w-full h-full"
                   />
                 </div>
-                <h3 className="text-center text-sm sm:text-base font-medium text-gray-800 transition-colors duration-300 line-clamp-2">
+                <h3 className="line-clamp-2 text-center text-sm font-medium text-gray-800 transition-colors duration-300 group-hover:text-[#7C3AED] sm:text-base">
                   {service.title}
                 </h3>
                 {/* {"campaign" in service && service.campaign?.createdAt && (
@@ -838,7 +805,7 @@ const ServicesSlider: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/30 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-colors duration-300 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
                 onClick={() => setShowAllServices(true)}
               >
                 View all services
@@ -1112,10 +1079,10 @@ const ServicesSlider: React.FC = () => {
                   onClick={() => handleJobNavigate(job.id)}
                 >
                   <div className="flex justify-center pb-4 pt-6">
-                    <div className="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
+                    <div className="flex h-16 w-[102px] items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
                       <img
                         src={companyLogo}
-                        className="h-20 w-40 object-contain transition-transform duration-300"
+                        className="h-16 w-32 object-contain transition-transform duration-300 ease-out group-hover:scale-110"
                         alt={job.companyName || "Company Logo"}
                         loading="lazy"
                         onError={(e) => {
@@ -1165,7 +1132,7 @@ const ServicesSlider: React.FC = () => {
                   </div>
 
                   <div className="mt-auto flex justify-center px-4 pb-5">
-                    <div className="rounded-full bg-indigo-100 px-8 py-2.5 text-sm font-bold text-indigo-600 shadow-md">
+                    <div className="rounded-full bg-indigo-100 px-8 py-2.5 text-sm font-bold text-indigo-600 shadow-md transition-colors duration-300 group-hover:bg-purple-100 group-hover:text-[#7C3AED]">
                       View Job Details
                     </div>
                   </div>
@@ -1183,33 +1150,6 @@ const ServicesSlider: React.FC = () => {
       </div>
 
       <hr className="p-2 mt-12" />
-
-      <Modal
-        title="Resume Viewer"
-        open={showResumeModal}
-        onCancel={() => {
-          setShowResumeModal(false);
-          setCurrentResumeUrl("");
-          setResumeLoading(false);
-        }}
-        footer={null}
-        width="70%"
-        style={{ top: 20 }}
-        maskClosable
-        keyboard
-      >
-        {resumeLoading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-          </div>
-        )}
-        <iframe
-          src={currentResumeUrl}
-          className="w-full h-full"
-          title="Resume Viewer"
-          onLoad={() => setResumeLoading(false)}
-        />
-      </Modal>
     </section>
   );
 };

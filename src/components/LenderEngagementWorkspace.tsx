@@ -1194,6 +1194,37 @@ const TestimonialsTab: React.FC<TestimonialsTabProps> = ({
                 Verified lender story
               </div>
 
+              {/* Mobile-only video navigation.
+                  Hide the Previous / Next arrow buttons while the video is playing.
+                  They automatically return when the video is paused or ends. */}
+              {videos.length > 1 && !isPlaying && (
+                <>
+                  <button
+                    type="button"
+                    onClick={onPrevious}
+                    className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/55 text-white shadow-lg backdrop-blur-md transition active:scale-95 sm:hidden"
+                    aria-label="Previous testimonial video"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onNext}
+                    className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/55 text-white shadow-lg backdrop-blur-md transition active:scale-95 sm:hidden"
+                    aria-label="Next testimonial video"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+
+              {videos.length > 1 && (
+                <div className="absolute right-3 top-3 z-20 rounded-full border border-white/15 bg-black/55 px-2.5 py-1.5 text-[10px] font-black text-white backdrop-blur sm:hidden">
+                  {currentIndex + 1} / {videos.length}
+                </div>
+              )}
+
               {!isPlaying && (
                 <button
                   type="button"
@@ -1342,7 +1373,7 @@ const TestimonialsTab: React.FC<TestimonialsTabProps> = ({
           </div>
         </div>
 
-        <div className="border-t border-slate-200 bg-gradient-to-br from-[#f5fbfd] via-white to-[#eef9f7] px-4 py-6 sm:px-7 sm:py-8 lg:px-10">
+        <div className="hidden border-t border-slate-200 bg-gradient-to-br from-[#f5fbfd] via-white to-[#eef9f7] px-4 py-6 sm:block sm:px-7 sm:py-8 lg:px-10">
           <div className="flex items-center justify-center gap-2 sm:gap-3">
             <button
               type="button"

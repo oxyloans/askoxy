@@ -34,6 +34,19 @@
 
   const { Title, Text, Paragraph } = Typography;
 
+  interface RotaryProductService {
+    id: string;
+    memberId: string;
+    name: string;
+    membersType: "PRODUCT" | "SERVICE";
+    category: string;
+    price: number;
+    description: string;
+    availability?: string;
+    createdAt: number;
+    updatedAt: number;
+  }
+
   interface RotaryMemberDetails {
     id?: string;
     // Personal
@@ -42,6 +55,7 @@
     club?: string;
     district?: string;
     location?: string;
+    state?: string;
     blood_group?: string;
     birthday?: string;
     anniversary?: string;
@@ -57,6 +71,8 @@
     business_email?: string;
     business_phone?: string;
     business_address?: string;
+    products?: RotaryProductService[] | null;
+    services?: RotaryProductService[] | null;
   }
 
   interface ProductEntry {
@@ -95,6 +111,8 @@
     businessPhone: string | null;
     businessAddress: string | null;
     anniversary: string | null;
+    products?: RotaryProductService[] | null;
+    services?: RotaryProductService[] | null;
   }
 
   interface RotaryApiResponse {
@@ -103,14 +121,29 @@
     status: boolean;
   }
 
-  const splitFirst = (val: string | null): string => {
+  const splitFirst = (val: unknown): string => {
     if (!val) return "";
-    return val.split(",")[0]?.trim() ?? "";
+    const str = String(val);
+    return str.split(",")[0]?.trim() ?? "";
   };
-  const splitSecond = (val: string | null): string => {
+  const splitSecond = (val: unknown): string => {
     if (!val) return "";
-    const parts = val.split(",");
+    const str = String(val);
+    const parts = str.split(",");
     return parts[1]?.trim() ?? "";
+  };
+
+  const formatAnniversaryForDisplay = (val: string | number | null): string => {
+    if (!val) return "";
+    const num = Number(val);
+    if (!isNaN(num)) {
+      const d = new Date(num);
+      if (!isNaN(d.getTime())) {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${d.getDate()} ${months[d.getMonth()]}`;
+      }
+    }
+    return String(val);
   };
 
   const mapApiMemberToDetails = (m: RotaryApiMember): RotaryMemberDetails => ({
@@ -119,10 +152,11 @@
     name: m.name ?? "",
     club: m.clubName ?? "",
     district: m.districtId != null ? String(m.districtId) : "",
-    location: [m.city, m.state].filter(Boolean).join(", "),
+    location: m.city ?? "",
+    state: m.state ?? "",
     blood_group: m.bloodGroup ?? "",
     birthday: "", // not present in API yet
-    anniversary: m.anniversary ?? "",
+    anniversary: formatAnniversaryForDisplay(m.anniversary),
     email: splitFirst(m.emails),
     primary_mobile: splitFirst(m.mobileNumbers),
     secondary_mobile: m.secondaryMobile ?? splitSecond(m.mobileNumbers),
@@ -133,6 +167,8 @@
     business_email: m.businessEmail ?? "",
     business_phone: m.businessPhone ?? "",
     business_address: m.businessAddress ?? m.address ?? "",
+    products: m.products || [],
+    services: m.services || [],
   });
 
   type ProductFieldErrors = Partial<
@@ -196,7 +232,7 @@
     {
       key: "name",
       label: "Full Name",
-      placeholder: "e.g. Ramu Chellimilla",
+      placeholder: "e.g. Ramu",
       type: "text",
       section: "personal",
       essential: true,
@@ -222,7 +258,14 @@
     {
       key: "location",
       label: "Location",
-      placeholder: "e.g. Hyderabad, Telangana",
+      placeholder: "e.g. Hyderabad",
+      type: "text",
+      section: "personal",
+    },
+    {
+      key: "state",
+      label: "State",
+      placeholder: "e.g. Telangana",
       type: "text",
       section: "personal",
     },
@@ -235,7 +278,7 @@
     },
     {
       key: "birthday",
-      label: "Birthday",
+      label: "DOB",
       placeholder: "e.g. 26 Apr",
       type: "text",
       section: "personal",
@@ -273,14 +316,6 @@
     },
     // Business
     {
-      key: "designation",
-      label: "Designation",
-      placeholder: "e.g. Founder Partner",
-      type: "autocomplete",
-      section: "business",
-      options: DESIGNATION_OPTIONS,
-    },
-    {
       key: "classification",
       label: "Classification",
       placeholder: "e.g. Investment Banker",
@@ -292,13 +327,6 @@
       key: "business_name",
       label: "Business Name",
       placeholder: "e.g. Invictus FinServ LLP",
-      type: "text",
-      section: "business",
-    },
-    {
-      key: "keywords",
-      label: "Keywords",
-      placeholder: "e.g. Investment, Wealth Management",
       type: "text",
       section: "business",
     },
@@ -592,6 +620,21 @@
         .rbc-mobile-switcher {
           display: grid;
         }
+        .rbc-navigation-container {
+          padding: 4px 8px !important;
+          gap: 8px;
+        }
+        .rbc-navigation-container .ant-btn {
+          height: 48px !important;
+          font-size: 16px !important;
+          flex: 1;
+        }
+        .rbc-navigation-step-text {
+          font-size: 14px !important;
+          color: #8A7860 !important;
+          min-width: 80px;
+          text-align: center;
+        }
       }
     `;
 
@@ -602,7 +645,54 @@
     const [searched, setSearched] = useState(false);
     const [member, setMember] = useState<RotaryMemberDetails | null>(null);
     const [isNewMember, setIsNewMember] = useState(false);
+    const TAB_KEYS = ["personal", "contact", "business", "products", "services"] as const;
     const [activeTab, setActiveTab] = useState("personal");
+
+    const handleTabChange = async (targetTab: (typeof TAB_KEYS)[number]) => {
+      const currentIdx = TAB_KEYS.indexOf(activeTab as (typeof TAB_KEYS)[number]);
+      const targetIdx = TAB_KEYS.indexOf(targetTab);
+
+      if (targetIdx <= currentIdx) {
+        setActiveTab(targetTab);
+        return;
+      }
+
+      // Going forward:
+      // If target is contact (index 1) or beyond, we must validate personal (index 0)
+      if (targetIdx >= 1) {
+        try {
+          const personalFields = FIELD_CONFIG.filter((f) => f.section === "personal").map((f) => f.key);
+          await detailsForm.validateFields(personalFields);
+        } catch {
+          message.error("Please fill in all required Personal details correctly.");
+          setActiveTab("personal");
+          return;
+        }
+      }
+
+      // If target is business (index 2) or beyond, we must validate contact (index 1)
+      if (targetIdx >= 2) {
+        try {
+          const contactFields = FIELD_CONFIG.filter((f) => f.section === "contact").map((f) => f.key);
+          await detailsForm.validateFields(contactFields);
+        } catch {
+          message.error("Please fill in all required Contact details correctly.");
+          setActiveTab("contact");
+          return;
+        }
+      }
+
+      setActiveTab(targetTab);
+    };
+
+    const goToPrevTab = () => {
+      const idx = TAB_KEYS.indexOf(activeTab as (typeof TAB_KEYS)[number]);
+      if (idx > 0) handleTabChange(TAB_KEYS[idx - 1]);
+    };
+    const goToNextTab = () => {
+      const idx = TAB_KEYS.indexOf(activeTab as (typeof TAB_KEYS)[number]);
+      if (idx < TAB_KEYS.length - 1) handleTabChange(TAB_KEYS[idx + 1]);
+    };
     const [memberId, setMemberId] = useState<string>("");
     const [saving, setSaving] = useState(false);
 
@@ -640,11 +730,41 @@
         setActiveTab("personal");
         if (result) {
           setMember(result);
-          setMemberId(result.id || genUUID());
+          setMemberId(result.id || "");
           setIsNewMember(false);
           setSearched(true);
           detailsForm.resetFields();
           detailsForm.setFieldsValue(result);
+
+          if (result.products && result.products.length > 0) {
+            setProducts(
+              result.products.map((p) => ({
+                id: p.id,
+                name: p.name || "",
+                category: p.category || "",
+                price: String(p.price || ""),
+                description: p.description || "",
+              })),
+            );
+          } else {
+            setProducts([emptyProduct()]);
+          }
+
+          if (result.services && result.services.length > 0) {
+            setServices(
+              result.services.map((s) => ({
+                id: s.id,
+                name: s.name || "",
+                category: s.category || "",
+                price: String(s.price || ""),
+                availability: s.availability || "",
+                description: s.description || "",
+              })),
+            );
+          } else {
+            setServices([emptyService()]);
+          }
+
           message.success("Rotary Member Details Retrieved Successfully.");
         } else {
           const trimmed = mobile.trim();
@@ -654,11 +774,13 @@
             primary_mobile: isMobileInput ? trimmed : "",
           };
           setMember(blankMember);
-          setMemberId(genUUID());
+          setMemberId("");
           setIsNewMember(true);
           setSearched(true);
           detailsForm.resetFields();
           detailsForm.setFieldsValue(blankMember);
+          setProducts([emptyProduct()]);
+          setServices([emptyService()]);
           message.info(
             "We couldn't find this record. Please fill in your details below and save to get listed.",
           );
@@ -681,7 +803,7 @@
       if (!member) return counts;
       FIELD_CONFIG.forEach((f) => {
         const v = member[f.key];
-        if (!v || v.trim() === "") counts[f.section] += 1;
+        if (!v || String(v).trim() === "") counts[f.section] += 1;
       });
       return counts;
     }, [member]);
@@ -752,10 +874,9 @@
     };
 
     const buildDetailsPayload = (details: RotaryMemberDetails) => {
-      const [city = "", state = ""] = (details.location || "")
-        .split(",")
-        .map((v) => v.trim());
-      const anniversaryRaw = (details.anniversary || "").trim();
+      const city = String(details.location || "").trim();
+      const state = String(details.state || "").trim();
+      const anniversaryRaw = String(details.anniversary || "").trim();
       const anniversaryDate = anniversaryRaw ? new Date(anniversaryRaw) : null;
       const anniversary =
         anniversaryDate && !isNaN(anniversaryDate.getTime())
@@ -784,7 +905,7 @@
       };
     };
 
-    const saveMemberDetails = async (details: RotaryMemberDetails) => {
+    const saveMemberDetails = async (details: RotaryMemberDetails): Promise<string> => {
       const res = await fetch(
         `${BASE_URL}/marketing-service/campgin/rotary-data-update`,
         {
@@ -794,21 +915,37 @@
         },
       );
       if (!res.ok) throw new Error(`Details update failed (${res.status})`);
+      const json = await res.json();
+      let returnedId = "";
+      if (json) {
+        if (json.data) {
+          if (Array.isArray(json.data) && json.data.length > 0) {
+            returnedId = json.data[0].id || "";
+          } else if (typeof json.data === "object") {
+            returnedId = json.data.id || "";
+          }
+        }
+        if (!returnedId && json.id) {
+          returnedId = json.id;
+        }
+      }
+      return returnedId;
     };
 
     const saveProductOrService = async (
       entry: ProductEntry | ServiceEntry,
       type: "PRODUCT" | "SERVICE",
+      targetMemberId: string,
     ) => {
       const now = new Date().toISOString();
       const res = await fetch(
         `${BASE_URL}/marketing-service/campgin/save-update-member-products-services`,
         {
-          method: "PUT",
+          method: "POST",
           headers: { "Content-Type": "application/json", accept: "*/*" },
           body: JSON.stringify({
-            id: entry.id.length === 36 ? entry.id : genUUID(),
-            memberId,
+            id: entry.id.length === 36 ? entry.id : "",
+            memberId: targetMemberId,
             membersType: type,
             name: entry.name,
             category: entry.category,
@@ -886,27 +1023,47 @@
 
         setSaving(true);
 
-        const calls: Promise<void>[] = [];
-        if (detailsChanged) calls.push(saveMemberDetails(finalDetails));
-        if (productsServicesChanged) {
-          filledProducts.forEach((p) =>
-            calls.push(saveProductOrService(p, "PRODUCT")),
-          );
-          filledServices.forEach((s) =>
-            calls.push(saveProductOrService(s, "SERVICE")),
-          );
+        let activeMemberId = memberId;
+
+        // 1. Save member details first if changed
+        if (detailsChanged) {
+          const returnedId = await saveMemberDetails(finalDetails);
+          if (returnedId) {
+            activeMemberId = returnedId;
+            setMemberId(returnedId);
+          }
         }
 
-        await Promise.all(calls);
+        // 2. Save products and services using activeMemberId
+        if (productsServicesChanged) {
+          const prodCalls = filledProducts.map((p) =>
+            saveProductOrService(p, "PRODUCT", activeMemberId),
+          );
+          const servCalls = filledServices.map((s) =>
+            saveProductOrService(s, "SERVICE", activeMemberId),
+          );
+          await Promise.all([...prodCalls, ...servCalls]);
+        }
 
-        setMember(finalDetails);
+        const finalMember: RotaryMemberDetails = { ...finalDetails, id: activeMemberId };
+        setMember(finalMember);
+        setIsNewMember(false);
         message.success("Details submitted successfully.");
-      } catch (e) {
-        message.error(
-          e instanceof Error && e.message.includes("failed")
-            ? "Something went wrong while saving. Please try again."
-            : "Please fill all required fields correctly before submitting.",
-        );
+      } catch (e: any) {
+        if (e.errorFields && e.errorFields.length > 0) {
+          const firstFailedField = e.errorFields[0].name[0];
+          const fieldDef = FIELD_CONFIG.find((f) => f.key === firstFailedField);
+          if (fieldDef) {
+            setActiveTab(fieldDef.section);
+          }
+          message.error("Please fill all required fields correctly before submitting.");
+        } else {
+          message.error(
+            e instanceof Error && e.message.includes("failed")
+              ? "Something went wrong while saving. Please try again."
+              : "Please fill all required fields correctly before submitting.",
+          );
+        }
       } finally {
         setSaving(false);
       }
@@ -914,43 +1071,20 @@
 
     const renderField = (field: FieldDef) => {
       const value = member?.[field.key];
-      const isMissing = !value || value.trim() === "";
+      const isMissing = !value || String(value).trim() === "";
       const isLocked =
         !isNewMember && !!field.lockedForExisting;
       const isDisabled = isLocked || !isMissing;
-      const isRequired = isNewMember && !!field.essential && isMissing;
+      const showAsterisk = !!field.essential;
+      const isRequired = isNewMember && !!field.essential;
       return (
         <Col xs={24} sm={12} key={field.key}>
           <Form.Item
             name={field.key}
             label={
-              <Space size={8} wrap>
-                <span className="rbc-field-label text-[#3A2F23] text-[16px] font-semibold">
-                  {field.label}
-                </span>
-                {isLocked ? (
-                  <Tag
-                    color="default"
-                    className="!text-[12px] !leading-5 !m-0 !rounded-full !px-2"
-                  >
-                    Locked
-                  </Tag>
-                ) : isMissing ? (
-                  <Tag
-                    color="gold"
-                    className="!text-[12px] !leading-5 !m-0 !rounded-full !px-2"
-                  >
-                    {isRequired ? "Required" : "Fill this in"}
-                  </Tag>
-                ) : (
-                  <Tag
-                    color="green"
-                    className="!text-[12px] !leading-5 !m-0 !rounded-full !px-2"
-                  >
-                    Verified
-                  </Tag>
-                )}
-              </Space>
+              <span className="rbc-field-label text-[#3A2F23] text-[16px] font-semibold">
+                {field.label} {showAsterisk && <span style={{ color: "#ff4d4f" }}>*</span>}
+              </span>
             }
             rules={getRulesForField(field.type, isRequired, field.label)}
             validateTrigger={["onChange", "onBlur"]}
@@ -986,7 +1120,7 @@
       <ConfigProvider theme={theme}>
         <style>{tabStyles}</style>
         <div
-          className="min-h-screen py-12 px-4"
+          className="min-h-screen pt-4 pb-8 px-4"
           style={{
             background:
               "radial-gradient(circle at 12% 8%, rgba(14,107,79,0.10), transparent 40%), radial-gradient(circle at 90% 15%, rgba(201,147,43,0.14), transparent 45%), #FAF6EE",
@@ -1013,27 +1147,6 @@
                 </div>
               </div>
             </div>
-
-            {/* WHY banner */}
-            <Card
-              className="mb-6 rounded-2xl border-0"
-              style={{
-                background: "linear-gradient(135deg, #0E6B4F 0%, #0A4F3A 100%)",
-                boxShadow: "0 18px 40px -18px rgba(14,107,79,0.55)",
-              }}
-            >
-              <Space align="start" size={12}>
-                <BulbFilled className="text-amber-300 text-lg mt-0.5" />
-                <Paragraph className="!mb-0 !text-emerald-50">
-                  <Text strong className="!text-amber-300">
-                    WHY we're collecting this:{" "}
-                  </Text>
-                  We're encouraging Rotary members to seek the 1st help response —
-                  so members can avail offers on each other's products and
-                  services, and build business within the Rotary family.
-                </Paragraph>
-              </Space>
-            </Card>
 
             {/* Mobile search */}
             <Card
@@ -1087,6 +1200,51 @@
               )}
             </Card>
 
+            {/* WHY banner */}
+            {!searched && (
+              <Card
+                className="mb-6 rounded-2xl border-0"
+                style={{
+                  background: "linear-gradient(135deg, #0E6B4F 0%, #0A4F3A 100%)",
+                  boxShadow: "0 18px 40px -18px rgba(14,107,79,0.55)",
+                }}
+              >
+                <Space align="start" size={12} direction="vertical" style={{ width: "100%" }}>
+                  <Space align="center" size={8}>
+                    <BulbFilled className="text-amber-300 text-lg" />
+                    <Text strong className="!text-amber-300 text-[16px]">
+                      Why are we collecting this?
+                    </Text>
+                  </Space>
+                  <div className="text-emerald-50 text-[14px] leading-relaxed">
+                    <p className="mb-2">
+                      We encourage Rotary members to make the <strong>Rotary family their first choice for help, products, and services:</strong>
+                    </p>
+                    <ul style={{ listStyleType: "disc", paddingLeft: "20px", margin: "0 0 12px 0" }}>
+                      <li style={{ marginBottom: "6px" }}>
+                        Ensure every member’s latest profession, products, and services are up to date.
+                      </li>
+                      <li style={{ marginBottom: "6px" }}>
+                        Quickly find and connect with Rotary professionals nearby — such as doctors, lawyers, and other service providers.
+                      </li>
+                      <li style={{ marginBottom: "6px" }}>
+                        Help members discover special offers, support each other’s businesses, and grow business within the Rotary family.
+                      </li>
+                      <li style={{ marginBottom: "6px" }}>
+                        Registration is sponsored by <strong>AskOxy.ai</strong>, at no cost to Rotary members.
+                      </li>
+                      <li style={{ marginBottom: "0px" }}>
+                        As per the member’s wish, a portion of eligible fees/transactions between Rotary members may be contributed to the <strong>Rotary Foundation</strong>.
+                      </li>
+                    </ul>
+                    <p className="font-semibold text-amber-200">
+                      Avail special offers, support fellow Rotary members, and grow your business within the Rotary family!
+                    </p>
+                  </div>
+                </Space>
+              </Card>
+            )}
+
             {searched && isNewMember && member && (
               <Alert
                 className="mb-6 rounded-2xl"
@@ -1123,7 +1281,7 @@
                         <button
                           key={t.key}
                           type="button"
-                          onClick={() => setActiveTab(t.key)}
+                          onClick={() => handleTabChange(t.key)}
                           className="flex flex-col items-center justify-center gap-0.5 rounded-lg py-2 px-1 text-[12px] font-semibold leading-tight"
                           style={{
                             background: isActive
@@ -1147,7 +1305,7 @@
                     className="rbc-tabs"
                     size="large"
                     activeKey={activeTab}
-                    onChange={setActiveTab}
+                    onChange={(key) => handleTabChange(key as typeof TAB_KEYS[number])}
                     items={[
                       {
                         key: "personal",
@@ -1500,7 +1658,32 @@
                       },
                     ]}
                   />
-                </Card>
+          </Card>
+
+                <div className="rbc-navigation-container flex justify-between items-center mb-4 py-2 px-1">
+                  <Button
+                    size="large"
+                    onClick={goToPrevTab}
+                    disabled={activeTab === TAB_KEYS[0]}
+                  >
+                    Previous
+                  </Button>
+                  <Text className="rbc-navigation-step-text text-[13px] text-[#8A7860]">
+                    Step {TAB_KEYS.indexOf(activeTab as (typeof TAB_KEYS)[number]) + 1} of {TAB_KEYS.length}
+                  </Text>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={goToNextTab}
+                    disabled={activeTab === TAB_KEYS[TAB_KEYS.length - 1]}
+                    style={{
+                      background: "linear-gradient(135deg, #0E6B4F 0%, #0A4F3A 100%)",
+                      border: "none",
+                    }}
+                  >
+                    Next
+                  </Button>
+                </div>
 
                 <div
                   className="flex justify-end mb-4 py-3 px-1"

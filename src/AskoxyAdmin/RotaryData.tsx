@@ -14,7 +14,9 @@ import {
   message,
   Select,
   Popover,
+  DatePicker,
 } from "antd";
+import dayjs, { Dayjs } from "dayjs";
 import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
@@ -77,13 +79,30 @@ interface RotarySearchResponse {
   status: boolean;
 }
 
+interface RotaryReportResponse {
+  status: boolean;
+  startDate: string;
+  endDate: string;
+  districtId: number | null;
+  totalCreated?: number;
+  totalUpdated?: number;
+  pagination: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+  members: RotaryApiMember[];
+}
+
 interface RotaryDistrictResponse {
   message: string;
   data: number[];
   status: boolean;
 }
 
-/* ---------- Completion calculation ---------- */
 const COMPLETION_FIELDS: (keyof RotaryApiMember)[] = [
   "rotaryId",
   "name",
@@ -113,7 +132,6 @@ const getCompletion = (m: RotaryApiMember) => {
   return { filled, total, pct: Math.round((filled / total) * 100) };
 };
 
-/* ---------- Theme ---------- */
 const theme = {
   token: {
     colorPrimary: "#0E6B4F",
@@ -153,9 +171,23 @@ const RotaryDataAdmin: React.FC = () => {
   const [searchInput, setSearchInput] = useState("");
   const [searchMode, setSearchMode] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"all" | "complete" | "incomplete">(
-    "all",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "all" | "complete" | "incomplete" | "created" | "updated"
+  >("all");
+  const [createdRows, setCreatedRows] = useState<RotaryApiMember[]>([]);
+  const [createdPage, setCreatedPage] = useState(0);
+  const [createdTotal, setCreatedTotal] = useState(0);
+
+  const [updatedRows, setUpdatedRows] = useState<RotaryApiMember[]>([]);
+  const [updatedPage, setUpdatedPage] = useState(0);
+  const [updatedTotal, setUpdatedTotal] = useState(0);
+
+  const [reportLoading, setReportLoading] = useState(false);
+  const DEFAULT_REPORT_START = dayjs("2026-08-13");
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>([
+    DEFAULT_REPORT_START,
+    dayjs(),
+  ]);
 
   const [districtOptions, setDistrictOptions] = useState<number[]>([]);
   const [selectedDistrictId, setSelectedDistrictId] =
@@ -183,6 +215,81 @@ const RotaryDataAdmin: React.FC = () => {
     }
   };
 
+  const fetchSingleReport = async (
+    type: "created" | "updated",
+    pageNumber: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<RotaryReportResponse> => {
+    const res = await fetch(
+      `${BASE_URL}/marketing-service/campgin/report-rotary-data/${type}?page=${pageNumber}&size=${PAGE_SIZE}`,
+      {
+        method: "POST",
+        headers: { accept: "*/*", "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate, endDate }),
+      },
+    );
+    if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+    return res.json();
+  };
+
+  const fetchBothReports = async (startDate: string, endDate: string) => {
+    setReportLoading(true);
+    try {
+      const [createdJson, updatedJson] = await Promise.all([
+        fetchSingleReport("created", 0, startDate, endDate),
+        fetchSingleReport("updated", 0, startDate, endDate),
+      ]);
+      setCreatedRows(createdJson.members ?? []);
+      setCreatedTotal(
+        createdJson.totalCreated ?? createdJson.pagination?.totalElements ?? 0,
+      );
+      setCreatedPage(createdJson.pagination?.page ?? 0);
+
+      setUpdatedRows(updatedJson.members ?? []);
+      setUpdatedTotal(
+        updatedJson.totalUpdated ?? updatedJson.pagination?.totalElements ?? 0,
+      );
+      setUpdatedPage(updatedJson.pagination?.page ?? 0);
+    } catch {
+      message.error(
+        "Could not load created/updated members. Please try again.",
+      );
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  /* ---- Used only when paginating within Created or Updated tab ---- */
+  const fetchReportPage = async (
+    type: "created" | "updated",
+    pageNumber: number,
+  ) => {
+    if (!dateRange) return;
+    setReportLoading(true);
+    try {
+      const start = dateRange[0].format("YYYY-MM-DD");
+      const end = dateRange[1].format("YYYY-MM-DD");
+      const json = await fetchSingleReport(type, pageNumber, start, end);
+      if (type === "created") {
+        setCreatedRows(json.members ?? []);
+        setCreatedTotal(
+          json.totalCreated ?? json.pagination?.totalElements ?? 0,
+        );
+        setCreatedPage(json.pagination?.page ?? pageNumber);
+      } else {
+        setUpdatedRows(json.members ?? []);
+        setUpdatedTotal(
+          json.totalUpdated ?? json.pagination?.totalElements ?? 0,
+        );
+        setUpdatedPage(json.pagination?.page ?? pageNumber);
+      }
+    } catch {
+      message.error(`Could not load ${type} members. Please try again.`);
+    } finally {
+      setReportLoading(false);
+    }
+  };
   /* ---- Fetch paginated list ---- */
   const fetchList = async (pageNumber: number, districtId?: number) => {
     setLoading(true);
@@ -232,10 +339,12 @@ const RotaryDataAdmin: React.FC = () => {
       await fetchDistricts();
       setSelectedDistrictId(DEFAULT_DISTRICT_ID);
       fetchList(0, DEFAULT_DISTRICT_ID);
+      fetchBothReports(
+        DEFAULT_REPORT_START.format("YYYY-MM-DD"),
+        dayjs().format("YYYY-MM-DD"),
+      );
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   const handleDistrictChange = (districtId: number) => {
     setSelectedDistrictId(districtId);
     setSearchInput("");
@@ -279,8 +388,26 @@ const RotaryDataAdmin: React.FC = () => {
     return { avgPct, fullyFilled, incomplete };
   }, [rows]);
 
-  /* ---- Tab-filtered rows ---- */
+  const createdProductsCount = useMemo(
+    () => createdRows.reduce((sum, m) => sum + (m.products?.length ?? 0), 0),
+    [createdRows],
+  );
+  const createdServicesCount = useMemo(
+    () => createdRows.reduce((sum, m) => sum + (m.services?.length ?? 0), 0),
+    [createdRows],
+  );
+  const updatedProductsCount = useMemo(
+    () => updatedRows.reduce((sum, m) => sum + (m.products?.length ?? 0), 0),
+    [updatedRows],
+  );
+  const updatedServicesCount = useMemo(
+    () => updatedRows.reduce((sum, m) => sum + (m.services?.length ?? 0), 0),
+    [updatedRows],
+  );
+
   const visibleRows = useMemo(() => {
+    if (activeTab === "created") return createdRows;
+    if (activeTab === "updated") return updatedRows;
     if (activeTab === "complete") {
       return rows.filter((r) => getCompletion(r).pct === 100);
     }
@@ -288,9 +415,11 @@ const RotaryDataAdmin: React.FC = () => {
       return rows.filter((r) => getCompletion(r).pct < 100);
     }
     return rows;
-  }, [rows, activeTab]);
+  }, [rows, createdRows, updatedRows, activeTab]);
 
-  const handleTabChange = (tab: "all" | "complete" | "incomplete") => {
+  const handleTabChange = (
+    tab: "all" | "complete" | "incomplete" | "created" | "updated",
+  ) => {
     setActiveTab(tab);
   };
 
@@ -301,11 +430,19 @@ const RotaryDataAdmin: React.FC = () => {
       key: "serialNumber",
       align: "center",
       width: 70,
-      render: (_v, _r, index) => (
-        <Text strong style={{ color: "#6b7280" }}>
-          {page * PAGE_SIZE + index + 1}
-        </Text>
-      ),
+      render: (_v, _r, index) => {
+        const currentPage =
+          activeTab === "created"
+            ? createdPage
+            : activeTab === "updated"
+              ? updatedPage
+              : page;
+        return (
+          <Text strong style={{ color: "#6b7280" }}>
+            {currentPage * PAGE_SIZE + index + 1}
+          </Text>
+        );
+      },
     },
     {
       title: <div style={{ textAlign: "center" }}>Rotary ID</div>,
@@ -589,10 +726,16 @@ const RotaryDataAdmin: React.FC = () => {
                       <strong>Name:</strong> {p.name || "-"}
                     </div>
                     <div style={{ marginBottom: 2 }}>
+                      <strong>Type:</strong> {p.membersType || "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
                       <strong>Category:</strong> {p.category || "-"}
                     </div>
                     <div style={{ marginBottom: 2 }}>
                       <strong>Price:</strong> {p.price ? `₹${p.price}` : "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Availability:</strong> {p.availability || "-"}
                     </div>
                     <div>
                       <strong>Desc:</strong> {p.description || "-"}
@@ -647,6 +790,9 @@ const RotaryDataAdmin: React.FC = () => {
                   >
                     <div style={{ marginBottom: 2 }}>
                       <strong>Name:</strong> {s.name || "-"}
+                    </div>
+                    <div style={{ marginBottom: 2 }}>
+                      <strong>Type:</strong> {s.membersType || "-"}
                     </div>
                     <div style={{ marginBottom: 2 }}>
                       <strong>Category:</strong> {s.category || "-"}
@@ -803,27 +949,7 @@ const RotaryDataAdmin: React.FC = () => {
                 {totalElements.toLocaleString()}
               </Text>
             </Card>
-            <Card
-              className="rounded-xl"
-              style={{
-                background: "#ffffff",
-                border: "1px solid #eee",
-                borderLeft: "4px solid #C9932B",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              }}
-              styles={{ body: { padding: "10px 18px" } }}
-            >
-              <Text
-                className="block text-[14px]"
-                type="secondary"
-                style={{ fontWeight: 700 }}
-              >
-                Avg. Completion (this page)
-              </Text>
-              <Text strong className="text-[18px]" style={{ color: "#C9932B" }}>
-                {pageStats.avgPct}%
-              </Text>
-            </Card>
+
             <Card
               className="rounded-xl"
               style={{
@@ -847,11 +973,16 @@ const RotaryDataAdmin: React.FC = () => {
             </Card>
             <Card
               className="rounded-xl"
+              onClick={() => handleTabChange("created")}
               style={{
-                background: "#ffffff",
-                border: "1px solid #eee",
-                borderLeft: "4px solid #A32642",
+                background: activeTab === "created" ? "#EFF6FF" : "#ffffff",
+                border:
+                  activeTab === "created"
+                    ? "1px solid #2563EB"
+                    : "1px solid #eee",
+                borderLeft: "4px solid #2563EB",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                cursor: "pointer",
               }}
               styles={{ body: { padding: "10px 18px" } }}
             >
@@ -860,15 +991,133 @@ const RotaryDataAdmin: React.FC = () => {
                 type="secondary"
                 style={{ fontWeight: 700 }}
               >
-                Incomplete (this page)
+                Newly Created
               </Text>
-              <Text strong className="text-[18px]" style={{ color: "#A32642" }}>
-                {pageStats.incomplete}/{rows.length}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  marginTop: 2,
+                }}
+              >
+                <Text
+                  strong
+                  className="text-[18px]"
+                  style={{ color: "#2563EB" }}
+                >
+                  {createdTotal.toLocaleString()}
+                </Text>
+                <Text style={{ fontSize: 14, color: "#6b7280" }}>
+                  <Text strong style={{ fontSize: 14, color: "#16A34A" }}>
+                    {createdProductsCount}
+                  </Text>{" "}
+                  products ·{" "}
+                  <Text strong style={{ fontSize: 14, color: "#C9932B" }}>
+                    {createdServicesCount}
+                  </Text>{" "}
+                  services
+                </Text>
+              </div>
+            </Card>
+            <Card
+              className="rounded-xl"
+              onClick={() => handleTabChange("updated")}
+              style={{
+                background: activeTab === "updated" ? "#FFF9EE" : "#ffffff",
+                border:
+                  activeTab === "updated"
+                    ? "1px solid #C9932B"
+                    : "1px solid #eee",
+                borderLeft: "4px solid #C9932B",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                cursor: "pointer",
+              }}
+              styles={{ body: { padding: "10px 18px" } }}
+            >
+              <Text
+                className="block text-[14px]"
+                type="secondary"
+                style={{ fontWeight: 700 }}
+              >
+                Updated
               </Text>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  marginTop: 2,
+                }}
+              >
+                <Text
+                  strong
+                  className="text-[18px]"
+                  style={{ color: "#C9932B" }}
+                >
+                  {updatedTotal.toLocaleString()}
+                </Text>
+                <Text style={{ fontSize: 14, color: "#6b7280" }}>
+                  <Text strong style={{ fontSize: 14, color: "#16A34A" }}>
+                    {updatedProductsCount}
+                  </Text>{" "}
+                  products ·{" "}
+                  <Text strong style={{ fontSize: 14, color: "#C9932B" }}>
+                    {updatedServicesCount}
+                  </Text>{" "}
+                  services
+                </Text>
+              </div>
             </Card>
           </div>
 
-          {/* Table */}
+          {(activeTab === "created" || activeTab === "updated") && (
+            <div className="mb-5 flex items-center justify-between flex-wrap gap-3">
+              {/* Left side - Date filters */}
+              <Space wrap>
+                <DatePicker.RangePicker
+                  value={dateRange}
+                  onChange={(dates) =>
+                    setDateRange(dates as [Dayjs, Dayjs] | null)
+                  }
+                  format="DD-MM-YYYY"
+                  allowClear={false}
+                />
+
+                <Button
+                  type="primary"
+                  loading={reportLoading}
+                  onClick={() => {
+                    if (!dateRange) {
+                      message.warning("Please select a start and end date");
+                      return;
+                    }
+
+                    const start = dateRange[0].format("YYYY-MM-DD");
+                    const end = dateRange[1].format("YYYY-MM-DD");
+
+                    fetchBothReports(start, end);
+                  }}
+                >
+                  Apply
+                </Button>
+              </Space>
+
+              {/* Right side - Back button */}
+              <Button
+                onClick={() => handleTabChange("all")}
+                style={{
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  border: "1px solid #0E6B4F",
+                  color: "#0E6B4F",
+                }}
+              >
+                ← Back to Members List
+              </Button>
+            </div>
+          )}
+
           <Card
             className="rounded-2xl"
             style={{
@@ -955,7 +1204,11 @@ const RotaryDataAdmin: React.FC = () => {
                 rowKey="id"
                 columns={columns}
                 dataSource={visibleRows}
-                loading={loading}
+                loading={
+                  activeTab === "created" || activeTab === "updated"
+                    ? reportLoading
+                    : loading
+                }
                 size="middle"
                 rowClassName={(_r, index) =>
                   index % 2 === 1 ? "rotary-row-alt" : ""
@@ -977,13 +1230,29 @@ const RotaryDataAdmin: React.FC = () => {
                 pagination={
                   searchMode
                     ? false
-                    : {
-                        current: page + 1,
-                        pageSize: PAGE_SIZE,
-                        total: totalElements,
-                        showSizeChanger: false,
-                        onChange: (p) => fetchList(p - 1),
-                      }
+                    : activeTab === "created"
+                      ? {
+                          current: createdPage + 1,
+                          pageSize: PAGE_SIZE,
+                          total: createdTotal,
+                          showSizeChanger: false,
+                          onChange: (p) => fetchReportPage("created", p - 1),
+                        }
+                      : activeTab === "updated"
+                        ? {
+                            current: updatedPage + 1,
+                            pageSize: PAGE_SIZE,
+                            total: updatedTotal,
+                            showSizeChanger: false,
+                            onChange: (p) => fetchReportPage("updated", p - 1),
+                          }
+                        : {
+                            current: page + 1,
+                            pageSize: PAGE_SIZE,
+                            total: totalElements,
+                            showSizeChanger: false,
+                            onChange: (p) => fetchList(p - 1),
+                          }
                 }
               />
             </div>

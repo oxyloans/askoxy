@@ -118,8 +118,8 @@ const extractApiError = (result: unknown): string | undefined => {
 const hasLoginTokens = (result: EmailCheckResponse | null): boolean =>
   Boolean(result && (result.token || result.accessToken) && (result.id || result.userId));
 
-// Email provider classification used to identify common personal providers
-// and to distinguish them from company domains.
+// Email provider classification is used only to enforce the registration rule:
+// Login accepts any valid email, while registration accepts company/work email only.
 type EmailProvider =
   | 'Gmail'
   | 'Yahoo'
@@ -136,33 +136,47 @@ type EmailProvider =
   | 'Company'
   | 'Unknown';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const classifyEmailProvider = (email: string): EmailProvider => {
   if (!email || typeof email !== 'string') return 'Unknown';
   const at = email.lastIndexOf('@');
   if (at < 0) return 'Unknown';
   const domain = email.slice(at + 1).toLowerCase();
 
-  // Helper for simple suffix checks
-  const endsWithAny = (d: string, list: string[]) => list.some((s) => d === s || d.endsWith(`.${s}`) || d.endsWith(s));
+  // Exact domain or a real subdomain only. This avoids false positives such as
+  // "notgmail.com" being treated as Gmail.
+  const endsWithAny = (d: string, list: string[]) =>
+    list.some((providerDomain) => d === providerDomain || d.endsWith(`.${providerDomain}`));
 
   if (endsWithAny(domain, ['gmail.com', 'googlemail.com'])) return 'Gmail';
-  if (endsWithAny(domain, ['yahoo.com', 'ymail.com', 'rocketmail.com']) || domain.startsWith('yahoo')) return 'Yahoo';
+  if (endsWithAny(domain, [
+    'yahoo.com', 'yahoo.co.in', 'yahoo.in', 'yahoo.co.uk', 'ymail.com', 'rocketmail.com',
+  ])) return 'Yahoo';
   if (endsWithAny(domain, ['icloud.com', 'me.com', 'mac.com'])) return 'iCloud';
   if (endsWithAny(domain, ['rediffmail.com', 'rediff.com'])) return 'Rediffmail';
   if (endsWithAny(domain, ['protonmail.com', 'proton.me'])) return 'Proton';
   if (endsWithAny(domain, ['aol.com'])) return 'AOL';
-  if (endsWithAny(domain, ['outlook.com', 'hotmail.com', 'live.com', 'msn.com'])) return 'Outlook';
-  if (endsWithAny(domain, ['zoho.com', 'zoho.in', 'zoho.eu'])) return 'Zoho';
+  if (endsWithAny(domain, [
+    'outlook.com', 'outlook.in', 'hotmail.com', 'hotmail.co.uk', 'live.com', 'live.in', 'msn.com',
+  ])) return 'Outlook';
+  if (endsWithAny(domain, ['zoho.com', 'zoho.in', 'zoho.eu', 'zohomail.com'])) return 'Zoho';
   if (endsWithAny(domain, ['yandex.com', 'yandex.ru'])) return 'Yandex';
-  if (endsWithAny(domain, ['gmx.com', 'gmx.co.uk'])) return 'GMX';
+  if (endsWithAny(domain, ['gmx.com', 'gmx.co.uk', 'gmx.de'])) return 'GMX';
   if (endsWithAny(domain, ['mail.com'])) return 'Mail';
   if (endsWithAny(domain, ['fastmail.com'])) return 'Fastmail';
 
-  // If domain doesn't match any of the known personal providers, treat it as a company domain
-  // unless it's malformed (then Unknown).
-  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain)) return 'Company';
+  // A syntactically valid custom domain is treated as a company domain.
+  if (/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
+    return 'Company';
+  }
   return 'Unknown';
 };
+
+const isValidEmailAddress = (value: string): boolean => EMAIL_PATTERN.test(value.trim());
+
+const isCompanyEmailAddress = (value: string): boolean =>
+  isValidEmailAddress(value) && classifyEmailProvider(value.trim()) === 'Company';
 
 // Central place that decides whether an authenticated response is actually
 // allowed into the Employee Workspace. Anything that isn't primaryType
@@ -225,9 +239,12 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
   const [successEmployee, setSuccessEmployee] = useState<EmployeeData | null>(null);
   const [passwordChangeEmployee, setPasswordChangeEmployee] = useState<EmployeeData | null>(null);
 
-  // Classify current email for UI hints and restrictions
-  const emailProvider = classifyEmailProvider(email.trim());
-  const isPersonalEmail = emailProvider !== 'Company' && emailProvider !== 'Unknown';
+  // Login accepts any valid email. Registration is restricted to company email.
+  const trimmedEmail = email.trim();
+  const emailProvider = classifyEmailProvider(trimmedEmail);
+  const isValidEmail = isValidEmailAddress(trimmedEmail);
+  const isCompanyEmail = isCompanyEmailAddress(trimmedEmail);
+  const isRegistrationEmailBlocked = intent === 'register' && isValidEmail && !isCompanyEmail;
 
   const buildEmployee = (result: EmailCheckResponse, fallbackName?: string): EmployeeData => ({
     id: (result.id || result.userId) as string,
@@ -265,10 +282,38 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
     event.preventDefault();
     setFeedback(null);
     setMismatch(null);
+
+    if (!isValidEmailAddress(trimmedEmail)) {
+      setFeedback({
+        type: 'invalid',
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address.',
+      });
+      return;
+    }
+
+    if (intent === 'register' && !isCompanyEmailAddress(trimmedEmail)) {
+      setFeedback({
+        type: 'invalid',
+        title: 'Company Email Required',
+        message: 'Registration is available only with a company email address. Personal email addresses are not allowed.',
+      });
+      return;
+    }
+
+    if (intent === 'login' && !password) {
+      setFeedback({
+        type: 'invalid',
+        title: 'Password Required',
+        message: 'Please enter your password.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const body: Record<string, string> = { email: email.trim() };
+      const body: Record<string, string> = { email: trimmedEmail };
       if (intent === 'login') {
         body.password = password;
       }
@@ -361,7 +406,20 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
       setPassword('');
     } else {
       setIntent('register');
-      setShowOtpModal(true);
+
+      // A login attempt can discover that an account does not exist and return
+      // an OTP session. Do not let that path bypass the company-email-only
+      // registration rule.
+      if (isCompanyEmailAddress(trimmedEmail)) {
+        setShowOtpModal(true);
+      } else {
+        setShowOtpModal(false);
+        setFeedback({
+          type: 'invalid',
+          title: 'Company Email Required',
+          message: 'To create an employee account, please use your company email address.',
+        });
+      }
     }
 
     setMismatch(null);
@@ -436,7 +494,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
               Welcome to your
               <span> workspace.</span>
             </h1>
-            <p>Sign in with your company email to continue.</p>
+            <p>Sign in with any registered email, or register with your company email.</p>
           </div>
 
           <div className="cel-card">
@@ -486,7 +544,9 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
             </div>
 
             <form className="cel-form" onSubmit={handleSubmit} noValidate>
-              <label htmlFor="company-email">Company Email</label>
+              <label htmlFor="company-email">
+                {intent === 'login' ? 'Email Address' : 'Company Email'}
+              </label>
               <div className="cel-input-wrap">
                 <Mail />
                 <input
@@ -494,7 +554,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
                   type="email"
                   inputMode="email"
                   autoComplete="username"
-                  placeholder="name@company.com"
+                  placeholder={intent === 'login' ? 'name@example.com' : 'name@company.com'}
                   value={email}
                   onChange={(event) => {
                     setEmail(event.target.value);
@@ -506,17 +566,50 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
                 />
               </div>
 
-              {email.trim() && (
-                <p className={`cel-email-provider ${isPersonalEmail ? 'cel-email-provider-personal' : 'cel-email-provider-company'}`}>
-                  {isPersonalEmail ? (
+              {trimmedEmail && (
+                <p
+                  className={`cel-email-provider ${
+                    intent === 'login'
+                      ? isValidEmail
+                        ? 'cel-email-provider-company'
+                        : 'cel-email-provider-personal'
+                      : isCompanyEmail
+                        ? 'cel-email-provider-company'
+                        : 'cel-email-provider-personal'
+                  }`}
+                  aria-live="polite"
+                >
+                  {intent === 'login' ? (
+                    isValidEmail ? (
+                      <>
+                        <strong>
+                          {emailProvider === 'Company'
+                            ? 'Company email accepted for login.'
+                            : emailProvider === 'Unknown'
+                              ? 'Email accepted for login.'
+                              : `${emailProvider} email accepted for login.`}
+                        </strong>
+                        <small>Login supports both personal and company email addresses.</small>
+                      </>
+                    ) : (
+                      <>
+                        <strong>Enter a valid email address.</strong>
+                        <small>Example: name@gmail.com or name@company.com</small>
+                      </>
+                    )
+                  ) : isCompanyEmail ? (
                     <>
-                      <strong>{emailProvider} email is not allowed.</strong>
-                      <small>Please use your company email address.</small>
+                      <strong>Company email recognised.</strong>
+                      <small>You may continue with employee registration.</small>
                     </>
                   ) : (
                     <>
-                      <strong>Company email recognised.</strong>
-                      <small>You may proceed.</small>
+                      <strong>
+                        {isRegistrationEmailBlocked && emailProvider !== 'Unknown'
+                          ? `${emailProvider} email cannot be used for registration.`
+                          : 'Company email required for registration.'}
+                      </strong>
+                      <small>Please use your work/company email address, for example name@company.com.</small>
                     </>
                   )}
                 </p>
@@ -556,8 +649,8 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
 
               <p className="cel-hint">
                 {intent === 'login'
-                  ? "New here? Switch to the Register tab above."
-                  : 'Already have an account? Switch to the Login tab above.'}
+                  ? 'Use any email address already linked to your employee account.'
+                  : 'Registration is available only with a company/work email address.'}
               </p>
 
               {mismatch && (
@@ -593,9 +686,11 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
                 className="cel-primary-button"
                 disabled={
                   isSubmitting ||
-                  !email.trim() ||
+                  !trimmedEmail ||
+                  !isValidEmail ||
                   (intent === 'login' && !password) ||
-                  Boolean(mismatch) || (intent === 'register' && isPersonalEmail)
+                  (intent === 'register' && !isCompanyEmail) ||
+                  Boolean(mismatch)
                 }
               >
                 <span>
@@ -817,6 +912,13 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+
+    // Defense-in-depth: registration must never complete with a personal email,
+    // even if this modal was opened from a stale or unexpected UI state.
+    if (!isCompanyEmailAddress(email)) {
+      setError('Registration requires a valid company email address. Personal email addresses are not allowed.');
+      return;
+    }
 
     if (!name.trim()) {
       setError('Please enter your name.');
@@ -2097,6 +2199,16 @@ const loginStyles = `
       grid-template-columns: 1fr;
     }
 
+    .cel-email-provider {
+      margin-bottom: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .cel-mismatch-button {
+      width: 100%;
+      min-height: 42px;
+    }
+
     .cel-orb,
     .cel-mesh {
       opacity: 0.38;
@@ -2144,9 +2256,3 @@ const loginStyles = `
 `;
 
 export default CompanyEmployeeLogin;
-
-
-
-
-
-
