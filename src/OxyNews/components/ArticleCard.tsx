@@ -80,6 +80,45 @@ export function getTextColor(category: string | null): string {
 
 export { getCategoryShortForm };
 
+function getCategoryShortForm(category: string | null): string {
+  if (!category) return "OX";
+  const words = category.trim().split(/\s+/);
+  const l1 = (words[0]?.[0] ?? "O").toUpperCase();
+  const l2 = (words[1]?.[0] ?? words[0]?.[1] ?? "X").toUpperCase();
+  return l1 + l2;
+}
+
+function getCategoryBadgeStyle(category: string | null): { bg: string } {
+  const [c1] = getTwoColors(category);
+  return { bg: c1 };
+}
+
+function CategoryOverlay({ category }: { category: string | null }) {
+  const [l1, l2] = getTwoLetters(category);
+  const [c1, c2] = getTwoColors(category);
+  return (
+    <div className="flex items-center justify-center gap-1 select-none">
+      <span
+        className="text-6xl font-black leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
+        style={{ color: c1 }}
+      >
+        {l1}
+      </span>
+      <span
+        className="text-6xl font-black leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
+        style={{ color: c2 }}
+      >
+        {l2}
+      </span>
+    </div>
+  );
+}
+
+function getCardGradient(category: string | null): string {
+  const [c1, c2] = getTwoColors(category);
+  return `linear-gradient(135deg, ${c1}20 0%, ${c2}35 100%)`;
+}
+
 function displayTitle(item: NewsFeedItem): string {
   if (item.articleName && item.articleName.trim()) return item.articleName;
   const parts = [item.domain, item.category].filter(
@@ -96,44 +135,23 @@ const LETTER_COLORS = [
   "#db2777", "#4338ca", "#65a30d", "#0891b2", "#f59e0b",
 ];
 
-// Returns one colour per word in the category (cycles through LETTER_COLORS)
-function getWordColors(category: string | null): string[] {
-  const words = (category || "XX").trim().split(/\s+/);
-  return words.map((_, i) => LETTER_COLORS[i % LETTER_COLORS.length]);
+// Two colors only — one per word (max 2 words used)
+function getTwoColors(category: string | null): [string, string] {
+  const words = (category || "News").trim().split(/\s+/);
+  const c1 = LETTER_COLORS[0 % LETTER_COLORS.length];
+  const c2 = LETTER_COLORS[1 % LETTER_COLORS.length];
+  // Pick colors based on first char codes so same category always same colors
+  const seed1 = (words[0]?.charCodeAt(0) ?? 0) % LETTER_COLORS.length;
+  const seed2 = (words[1]?.charCodeAt(0) ?? 3) % LETTER_COLORS.length;
+  return [LETTER_COLORS[seed1], LETTER_COLORS[seed2 === seed1 ? (seed2 + 1) % LETTER_COLORS.length : seed2]];
 }
 
-// e.g. "Artificial Content Platform" → "#ACP"
-function getCategoryShortForm(category: string | null): string {
-  if (!category) return "XX";
-  return category.trim().split(/\s+/).map(w => w[0].toUpperCase()).join("");
-}
-
-// Badge bg = first word colour; kept for the pill badge
-function getCategoryBadgeStyle(category: string | null): { bg: string; text: string } {
-  const bg = getWordColors(category)[0];
-  return { bg, text: "#ffffff" };
-}
-
-// Renders "#" + each letter in its own colour span
-function CategoryOverlay({ category }: { category: string | null }) {
-  const short = getCategoryShortForm(category);
-  const letters = short.split("");
-  const colors = getWordColors(category);
-  return (
-    <span className="text-5xl font-black drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)] tracking-tight select-none">
-      <span style={{ color: "#1e293b" }}>#</span>
-      {letters.map((l, i) => (
-        <span key={i} style={{ color: colors[i % colors.length] }}>{l}</span>
-      ))}
-    </span>
-  );
-}
-
-// Card image area gradient per category
-function getCardGradient(category: string | null): string {
-  const colors = getWordColors(category);
-  if (colors.length === 1) return `linear-gradient(135deg, ${colors[0]}22 0%, ${colors[0]}55 100%)`;
-  return `linear-gradient(135deg, ${colors[0]}33 0%, ${colors[1 % colors.length]}44 60%, ${colors[2 % colors.length] ?? colors[0]}22 100%)`;
+// Exactly 2 letters: first letter of word1 + first letter of word2
+function getTwoLetters(category: string | null): [string, string] {
+  const words = (category || "OX").trim().split(/\s+/);
+  const l1 = (words[0]?.[0] ?? "O").toUpperCase();
+  const l2 = (words[1]?.[0] ?? words[0]?.[1] ?? "X").toUpperCase();
+  return [l1, l2];
 }
 
 export default function ArticleCard({
@@ -170,8 +188,8 @@ export default function ArticleCard({
           <img
             src={showOverlay ? FALLBACK_IMG : item.imageUrl!}
             alt={displayTitle(item)}
-            className={`w-full object-contain group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
-            style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, width: "100%", display: "block" }}
+            className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
+            style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
             onError={() => setImgError(true)}
           />
           {showOverlay && (
@@ -181,7 +199,7 @@ export default function ArticleCard({
           )}
           {item.category && (
             <span
-              className="absolute top-2 left-2 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow"
+              className="absolute left-2 top-2 block max-w-[72%] truncate rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow"
               style={{ backgroundColor: getCategoryBadgeStyle(item.category).bg, color: "#fff" }}
             >
               {item.category}

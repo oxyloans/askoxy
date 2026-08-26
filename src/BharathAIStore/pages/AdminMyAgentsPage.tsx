@@ -1444,16 +1444,6 @@ const AdminMyAgentsPage: React.FC = () => {
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               Agents Library
             </h3>
-
-            <button
-              type="button"
-              onClick={() => setShowTabsInfo(true)}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              aria-label="Tabs info"
-            >
-              <Info className="h-4 w-4" />
-              Info
-            </button>
           </div>
 
           {/* sticky tabs */}

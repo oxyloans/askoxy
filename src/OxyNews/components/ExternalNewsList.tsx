@@ -169,7 +169,7 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="focus-ring inline-flex items-center justify-center px-6 py-3 rounded-full bg-plum text-white text-sm font-semibold hover:bg-royal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="focus-ring w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full bg-plum text-white text-sm font-semibold hover:bg-royal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loadingMore ? "Loading more…" : "Load more articles"}
           </button>

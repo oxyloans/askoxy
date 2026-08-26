@@ -173,8 +173,8 @@ export default function ArticleCard({
           <img
             src={imgSrc}
             alt={displayTitle(item)}
-            className={`w-full object-contain group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
-            style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, width: "100%", display: "block" }}
+            className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
+            style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
             onError={() => setImgError(true)}
           />
           {showOverlay && (
@@ -184,7 +184,7 @@ export default function ArticleCard({
           )}
           {item.category && (
             <span
-              className="absolute top-2 left-2 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow"
+              className="absolute left-2 top-2 block max-w-[72%] truncate rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow"
               style={{ backgroundColor: getCategoryBadgeStyle(item.category).bg, color: "#fff" }}
             >
               {item.category}

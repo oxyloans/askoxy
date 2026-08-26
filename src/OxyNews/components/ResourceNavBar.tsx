@@ -125,9 +125,8 @@ export default function ResourceNavBar() {
             onClick={(e) => { setPlatformsOpen((o) => !o); setOpenId(null); setPlatformsAnchorCenter(e.currentTarget.getBoundingClientRect().left + e.currentTarget.getBoundingClientRect().width / 2); }}
             aria-expanded={platformsOpen}
             aria-haspopup="menu"
-            className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors border border-ink/10 ${
-              platformsOpen ? "bg-gold text-plum shadow-sm" : "bg-white text-ink-soft hover:bg-white/90"
-            }`}
+            className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors border border-ink/10 ${platformsOpen ? "bg-gold text-plum shadow-sm" : "bg-white text-ink-soft hover:bg-white/90"
+              }`}
           >
             <span className="font-semibold text-sm tracking-wide">Our Platforms</span>
             <span className={`text-[10px] transition-transform ${platformsOpen ? "rotate-180" : ""}`}>▾</span>
@@ -144,11 +143,10 @@ export default function ResourceNavBar() {
                 onFocus={(e) => openFrom(cat.id, e.currentTarget)}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors ${
-                  isOpen
+                className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors ${isOpen
                     ? "bg-white text-plum-dark border border-ink/10 shadow-sm"
                     : "bg-white text-ink-soft border border-ink/10 hover:bg-white/90"
-                }`}
+                  }`}
               >
                 <span className="font-semibold text-sm tracking-wide">{cat.label}</span>
                 <span className={`text-[10px] transition-transform ${isOpen ? "rotate-180" : ""}`}>▾</span>
@@ -222,10 +220,17 @@ export default function ResourceNavBar() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-ink-faint px-3 py-2 w-64">
-                No links added yet for {activeCategory.label} — add them to{" "}
-                <code className="font-mono text-xs bg-ink/5 px-1 py-0.5 rounded">src/data/resourceLinks.ts</code>.
-              </p>
+              <div className="w-64 rounded-lg border border-dashed border-ink/15 bg-ink/[0.02] px-3 py-4 text-center">
+                <div className="text-[11px] font-mono uppercase tracking-[0.18em] text-ink-faint">
+                  {activeCategory.label}
+                </div>
+                <div className="mt-2 text-sm font-semibold text-plum">
+                  Coming soon
+                </div>
+                <div className="mt-1 text-xs text-ink-faint">
+                  This section is being updated.
+                </div>
+              </div>
             )}
           </div>
         </div>

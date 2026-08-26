@@ -53,7 +53,7 @@ export default function ArticleChatWidget({
   }
 
   return (
-    <aside className="bg-plum flex flex-col h-[70vh] lg:h-[calc(100vh-7rem)] rounded-t-2xl lg:rounded-lg shadow-lift overflow-hidden">
+    <aside className="bg-plum flex flex-col h-[60dvh] sm:h-[70vh] lg:h-[calc(100vh-7rem)] rounded-t-2xl lg:rounded-lg shadow-lift overflow-hidden">
       {/* Header */}
       <div className="px-4 sm:px-5 py-4 border-b border-paper/10 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">

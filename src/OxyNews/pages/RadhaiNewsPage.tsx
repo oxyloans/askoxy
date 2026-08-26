@@ -38,7 +38,7 @@ export default function RadhaiNewsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <button
           type="button"
           onClick={() => navigate("/oxynews")}
@@ -46,7 +46,7 @@ export default function RadhaiNewsPage() {
         >
           ← Back
         </button>
-        <h2 className="font-display text-2xl font-semibold text-plum-dark">RadhAI News</h2>
+        <h2 className="font-display text-xl sm:text-2xl font-semibold text-plum-dark">RadhAI News</h2>
       </div>
 
       {loading && <div className="text-sm font-mono text-ink-faint">Loading articles…</div>}

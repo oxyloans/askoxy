@@ -233,7 +233,7 @@ export default function ExternalArticlePage() {
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-screen-2xl px-4 lg:px-8 py-10">
+    <div className="relative mx-auto w-full max-w-screen-2xl px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
@@ -285,9 +285,9 @@ export default function ExternalArticlePage() {
         )}
 
         <div className="mt-6 border-b border-ink/10 pb-6">
-          <div className="grid gap-10 lg:grid-cols-[3fr_1fr] items-start">
+          <div className="grid gap-6 lg:gap-10 lg:grid-cols-[3fr_1fr] items-start">
             <div>
-              <div className="flex flex-wrap gap-3 items-center text-xs uppercase tracking-widest text-ink-faint">
+              <div className="flex flex-wrap gap-2 items-center text-xs uppercase tracking-widest text-ink-faint">
                 <span>{article.sourceName}</span>
                 <span>•</span>
                 <span>{article.category || "News"}</span>
@@ -295,12 +295,12 @@ export default function ExternalArticlePage() {
                 <span>{formatDate(article.publishedDate)}</span>
               </div>
 
-              <h1 className="font-display text-4xl lg:text-6xl font-bold text-plum-dark mt-5 leading-tight">
+              <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-bold text-plum-dark mt-4 leading-tight">
                 {article.title}
               </h1>
             </div>
 
-            <aside className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm self-start">
+            <aside className="rounded-2xl border border-ink/10 bg-white p-4 sm:p-6 shadow-sm self-start">
               <div>
                 <p className="text-xs font-mono uppercase tracking-[0.35em] text-plum-dark">Source</p>
                 <a

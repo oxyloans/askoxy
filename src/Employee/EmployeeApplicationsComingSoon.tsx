@@ -21,6 +21,22 @@ import {
 import BASE_URL from "../Config";
 import { getEmployeeAuth } from "./employeeAuthCookie";
 
+interface JobDetails {
+  id?: string | null;
+  companyLogo?: string | null;
+  jobTitle?: string | null;
+  jobDesignation?: string | null;
+  companyName?: string | null;
+  industry?: string | null;
+  jobLocations?: string | null;
+  jobType?: string | null;
+  skills?: string | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  experience?: string | null;
+  payRateFrequencyType?: string | null;
+}
+
 interface Applicant {
   id: string;
   jobId?: string | null;
@@ -34,16 +50,15 @@ interface Applicant {
   applicationStatus?: string | null;
   appliedAt?: number | string | null;
   atsScoreViewerId?: string | null;
+  jobDetails?: JobDetails | null;
 }
 
 interface ApplicantsPage {
-  content?: Applicant[];
   totalElements?: number;
   totalPages?: number;
   number?: number;
   first?: boolean;
   last?: boolean;
-  empty?: boolean;
 }
 
 interface ApiResponse<T> {
@@ -140,7 +155,7 @@ const   EmployeeApplicationsComingSoon: React.FC = () => {
           signal,
         }),
         fetch(
-          `${BASE_URL}/marketing-service/campgin/applicants-for-users-jobs?${query}&page=${page}&size=${PAGE_SIZE}`,
+          `${BASE_URL}/marketing-service/campgin/applicants-for-users-jobs-new?${query}&page=${page}&size=${PAGE_SIZE}`,
           { headers: { Accept: "application/json" }, signal }
         ),
       ]);
@@ -157,14 +172,20 @@ const   EmployeeApplicationsComingSoon: React.FC = () => {
         );
       }
 
-      const receivedPage: ApplicantsPage = applicantsResult?.data || {};
-      setApplicants(Array.isArray(receivedPage.content) ? receivedPage.content : []);
-      setPageData(receivedPage);
+      const flat = applicantsResult as { data?: Applicant[]; totalElements?: number; totalPages?: number; currentPage?: number; status?: boolean; message?: string } | null;
+      setApplicants(Array.isArray(flat?.data) ? flat!.data! : []);
+      setPageData({
+        totalElements: flat?.totalElements,
+        totalPages: flat?.totalPages,
+        number: flat?.currentPage ?? 0,
+        first: (flat?.currentPage ?? 0) === 0,
+        last: (flat?.currentPage ?? 0) + 1 >= (flat?.totalPages ?? 1),
+      });
 
       if (countResponse.ok && countResult?.status !== false && typeof countResult?.data === "number") {
         setApplicantCount(countResult.data);
       } else {
-        setApplicantCount(typeof receivedPage.totalElements === "number" ? receivedPage.totalElements : null);
+        setApplicantCount(typeof flat?.totalElements === "number" ? flat!.totalElements! : null);
       }
 
       if (isRefresh) toast.success("Applications refreshed successfully.");
@@ -286,7 +307,41 @@ const   EmployeeApplicationsComingSoon: React.FC = () => {
                   {applicant.mobileNumber && <span><Phone />{applicant.mobileNumber}</span>}
                   {applicant.noticePeriod && <span><CalendarDays />Notice: {applicant.noticePeriod}</span>}
                 </div>
-                {applicant.coverLetter && <p className="eapps-cover-letter">{applicant.coverLetter}</p>}
+                {applicant.jobDetails && (
+                  <div className="eapps-job-details">
+                    {applicant.jobDetails.companyLogo && (
+                      <img
+                        src={applicant.jobDetails.companyLogo}
+                        alt={applicant.jobDetails.companyName || "Company"}
+                        className="eapps-job-logo"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                    <div className="eapps-job-info">
+                      <div className="eapps-job-row">
+                        <span className="eapps-job-title">{applicant.jobDetails.jobTitle || applicant.jobDetails.jobDesignation}</span>
+                        {applicant.jobDetails.companyName && <span className="eapps-job-company">{applicant.jobDetails.companyName}</span>}
+                        {applicant.jobDetails.industry && <span className="eapps-job-industry">{applicant.jobDetails.industry}</span>}
+                      </div>
+                      <div className="eapps-job-meta">
+                        {applicant.jobDetails.jobLocations && <span>📍 {applicant.jobDetails.jobLocations}</span>}
+                        {applicant.jobDetails.jobType && <span>⏱ {applicant.jobDetails.jobType}</span>}
+                        {applicant.jobDetails.experience && applicant.jobDetails.experience !== "Not specified" && <span>🎓 {applicant.jobDetails.experience}</span>}
+                        {(applicant.jobDetails.salaryMin || applicant.jobDetails.salaryMax) && (
+                          <span>💰 ₹{((applicant.jobDetails.salaryMin ?? 0) / 100000).toFixed(1)}L – ₹{((applicant.jobDetails.salaryMax ?? 0) / 100000).toFixed(1)}L{applicant.jobDetails.payRateFrequencyType ? ` ${applicant.jobDetails.payRateFrequencyType.trim()}` : ""}</span>
+                        )}
+                      </div>
+                      {applicant.jobDetails.skills && (
+                        <div className="eapps-job-skills">
+                          {applicant.jobDetails.skills.split(",").slice(0, 5).map((s) => (
+                            <span key={s.trim()} className="eapps-skill-chip">{s.trim()}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {applicant.coverLetter && <p className="eapps-cover-letter eapps-cover-letter-3">{applicant.coverLetter}</p>}
                 <div className="eapps-actions">
                   {applicant.resumeUrl
                     ? <button type="button" className="eapps-results" onClick={() => openResumeModal(applicant.resumeUrl!)}><FileText />View resume</button>
@@ -524,7 +579,8 @@ const applicationsStyles = `
   .eapps-refresh, .eapps-pagination button, .eapps-state button { justify-content: center; gap: 8px; min-height: 42px; padding: 0 14px; color: #f7f8ff; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(255,255,255,.06); font: 750 .7rem Inter, sans-serif; cursor: pointer; } .eapps-refresh svg, .eapps-pagination svg, .eapps-state button svg { width: 15px; } button:disabled { opacity: .45; cursor: not-allowed; } .eapps-spin { animation: eapps-spin .8s linear infinite; } @keyframes eapps-spin { to { transform: rotate(360deg); } }
   .eapps-summary { gap: 13px; min-height: 92px; margin-bottom: 18px; padding: 17px 20px; border: 1px solid rgba(132,145,255,.18); border-radius: 18px; background: linear-gradient(120deg,rgba(93,109,242,.17),rgba(31,186,216,.08)); } .eapps-summary-icon { width: 48px; height: 48px; color: #ccd2ff; border-radius: 14px; background: rgba(116,128,255,.18); } .eapps-summary-icon svg { width: 21px; } .eapps-summary small { display: block; color: rgba(226,231,250,.6); font-size: .68rem; } .eapps-summary strong { display: block; margin-top: 3px; font-size: 1.55rem; } .eapps-summary p { margin: 0 0 0 auto; color: rgba(226,231,250,.6); font-size: .75rem; }
   .eapps-toolbar { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 15px; } .eapps-search { flex: 1; gap: 9px; min-height: 44px; padding: 0 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 13px; background: rgba(8,14,34,.54); } .eapps-search svg { width: 17px; color: #99a6ed; } .eapps-search input { width: 100%; color: #f4f6ff; border: 0; outline: 0; background: transparent; font: .76rem Inter, sans-serif; } .eapps-search input::placeholder { color: rgba(224,230,255,.35); } .eapps-page-note { align-self: center; color: rgba(226,231,250,.48); font-size: .67rem; white-space: nowrap; }
-  .eapps-list { display: grid; gap: 11px; } .eapps-card { align-items: flex-start; gap: 13px; padding: 17px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: linear-gradient(135deg,rgba(22,30,62,.88),rgba(12,18,39,.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); } .eapps-avatar { width: 42px; height: 42px; color: #fff; border-radius: 13px; background: linear-gradient(145deg,#6576ef,#3badcf); font-size: .74rem; font-weight: 800; } .eapps-card-main { min-width: 0; flex: 1; } .eapps-card-top { justify-content: space-between; gap: 10px; } .eapps-card h2 { margin: 0; font-size: .94rem; } .eapps-card-top p { margin: 4px 0 0; color: rgba(226,231,250,.5); font-size: .65rem; } .eapps-status { flex: 0 0 auto; padding: 5px 8px; color: #9ee9c8; border-radius: 999px; background: rgba(71,194,139,.12); font-size: .59rem; font-weight: 800; text-transform: capitalize; } .eapps-contact { flex-wrap: wrap; gap: 7px 14px; margin-top: 12px; color: rgba(226,231,250,.68); font-size: .68rem; } .eapps-contact span { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; } .eapps-contact svg { width: 13px; color: #a9b4f9; } .eapps-cover-letter { display: -webkit-box; overflow: hidden; margin: 12px 0 0; color: rgba(230,235,252,.58); font-size: .7rem; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; } .eapps-actions { flex-wrap: wrap; gap: 9px; margin-top: 14px; } .eapps-actions a, .eapps-results { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 0 10px; color: #dce1ff; border: 1px solid rgba(144,156,255,.24); border-radius: 9px; background: rgba(104,121,255,.1); font: 750 .64rem Inter, sans-serif; text-decoration: none; } .eapps-results { color: #b7caff; cursor: pointer; } .eapps-results:hover { border-color: rgba(144,156,255,.38); background: rgba(104,121,255,.17); } .eapps-actions svg { width: 13px; } .eapps-unavailable { color: rgba(226,231,250,.4); font-size: .66rem; }
+  .eapps-list { display: grid; gap: 11px; } .eapps-card { align-items: flex-start; gap: 13px; padding: 17px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: linear-gradient(135deg,rgba(22,30,62,.88),rgba(12,18,39,.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); } .eapps-avatar { width: 42px; height: 42px; color: #fff; border-radius: 13px; background: linear-gradient(145deg,#6576ef,#3badcf); font-size: .74rem; font-weight: 800; } .eapps-card-main { min-width: 0; flex: 1; } .eapps-card-top { justify-content: space-between; gap: 10px; } .eapps-card h2 { margin: 0; font-size: .94rem; } .eapps-card-top p { margin: 4px 0 0; color: rgba(226,231,250,.5); font-size: .65rem; } .eapps-status { flex: 0 0 auto; padding: 5px 8px; color: #9ee9c8; border-radius: 999px; background: rgba(71,194,139,.12); font-size: .59rem; font-weight: 800; text-transform: capitalize; } .eapps-contact { flex-wrap: wrap; gap: 7px 14px; margin-top: 12px; color: rgba(226,231,250,.68); font-size: .68rem; } .eapps-contact span { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; } .eapps-contact svg { width: 13px; color: #a9b4f9; } .eapps-cover-letter { display: -webkit-box; overflow: hidden; margin: 12px 0 0; color: rgba(230,235,252,.58); font-size: .7rem; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; } .eapps-job-details { display: flex; align-items: flex-start; gap: 11px; margin: 12px 0 0; padding: 11px 13px; border: 1px solid rgba(144,156,255,.16); border-radius: 13px; background: rgba(93,109,242,.08); } .eapps-job-logo { flex: 0 0 auto; width: 44px; height: 44px; object-fit: contain; border-radius: 9px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.08); padding: 4px; } .eapps-job-info { min-width: 0; flex: 1; } .eapps-job-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 5px; } .eapps-job-title { color: #c8d0ff; font-size: .78rem; font-weight: 700; } .eapps-job-company { color: rgba(226,231,250,.5); font-size: .63rem; padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,.07); } .eapps-job-industry { color: #a8d4ff; font-size: .63rem; padding: 2px 7px; border-radius: 999px; background: rgba(43,130,220,.14); border: 1px solid rgba(43,130,220,.22); } .eapps-job-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; color: rgba(226,231,250,.55); font-size: .64rem; margin-bottom: 7px; } .eapps-job-skills { display: flex; flex-wrap: wrap; gap: 5px; } .eapps-skill-chip { padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(144,156,255,.22); background: rgba(93,109,242,.14); color: #b0bcff; font-size: .59rem; font-weight: 600; } .eapps-cover-letter-3 { -webkit-line-clamp: 3; }
+  .eapps-actions { flex-wrap: wrap; gap: 9px; margin-top: 14px; } .eapps-actions a, .eapps-results { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 0 10px; color: #dce1ff; border: 1px solid rgba(144,156,255,.24); border-radius: 9px; background: rgba(104,121,255,.1); font: 750 .64rem Inter, sans-serif; text-decoration: none; } .eapps-results { color: #b7caff; cursor: pointer; } .eapps-results:hover { border-color: rgba(144,156,255,.38); background: rgba(104,121,255,.17); } .eapps-actions svg { width: 13px; } .eapps-unavailable { color: rgba(226,231,250,.4); font-size: .66rem; }
   .eapps-state { display: grid; place-items: center; min-height: 310px; padding: 28px; text-align: center; border: 1px solid rgba(255,255,255,.1); border-radius: 19px; background: rgba(16,23,49,.64); } .eapps-state > svg { width: 34px; height: 34px; color: #9aa8f7; } .eapps-state h2 { margin: 13px 0 0; font-size: 1rem; } .eapps-state p { max-width: 430px; margin: 7px 0 0; color: rgba(226,231,250,.55); font-size: .74rem; line-height: 1.55; } .eapps-state button { margin-top: 16px; } .eapps-error > svg { color: #fa9cab; }
   .eapps-pagination { justify-content: center; gap: 14px; margin-top: 18px; } .eapps-pagination span { color: rgba(226,231,250,.6); font-size: .7rem; }
 

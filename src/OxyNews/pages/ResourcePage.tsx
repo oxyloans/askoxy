@@ -27,7 +27,7 @@ export default function ResourcePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-1">
       <Link
         to="/oxynews"
         className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
@@ -35,7 +35,7 @@ export default function ResourcePage() {
         ← Back to home
       </Link>
 
-      <div className="mt-4 pb-3 border-b-2 border-ink flex items-end justify-between gap-3 flex-wrap">
+      <div className="mt-4 pb-3 border-b-2 border-ink flex flex-wrap items-end justify-between gap-2">
         <span className="bg-plum-dark text-paper text-[11px] font-mono uppercase tracking-widest px-2 py-1 rounded">
           {category.label}
         </span>
@@ -44,8 +44,8 @@ export default function ResourcePage() {
         </span>
       </div>
 
-      <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="font-display text-3xl sm:text-5xl font-semibold text-plum-dark leading-[1.05] max-w-4xl">
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="font-display text-2xl sm:text-4xl font-semibold text-plum-dark leading-[1.05]">
           {link.name}
         </h1>
 
@@ -53,7 +53,7 @@ export default function ResourcePage() {
           href={link.url}
           target="_blank"
           rel="noreferrer"
-          className="focus-ring shrink-0 inline-flex items-center justify-center gap-1.5 bg-gold text-plum font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gold-soft transition-colors"
+          className="focus-ring w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1.5 bg-gold text-plum font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gold-soft transition-colors"
         >
           Visit official site ↗
         </a>

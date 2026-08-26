@@ -58,7 +58,7 @@ const Whiteboardtheme: React.FC = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/viewjobdetails/327983c8-50a6-40bd-8428-4d4fbaae1be4/ALL";
+      const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -135,8 +135,8 @@ const Whiteboardtheme: React.FC = () => {
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
       <img
-        src={speak1}
-        alt="Join the Sovereign AI hiring program"
+        src={"https://i.ibb.co/JRkh46XP/speak1-1.png"}
+        alt="Active Jobs and Total Companies"
         className="h-full w-full select-none object-contain"
         draggable={false}
       />
@@ -309,7 +309,7 @@ const Whiteboardtheme: React.FC = () => {
                 <div className="relative ml-auto flex h-[174px] w-[148px] flex-col items-center">
                   <div
                     className="flex h-[148px] w-[148px] items-center justify-center"
-                    
+
                   >
                     {jobsCountCard()}
                   </div>
@@ -392,20 +392,18 @@ const Whiteboardtheme: React.FC = () => {
                           delay: index * 0.08,
                           ease: "easeOut",
                         }}
-                        className={`relative flex w-full items-end justify-center rounded-[24px] ${
-                          card.big
+                        className={`relative flex w-full items-end justify-center rounded-[24px] ${card.big
                             ? "h-[120px] sm:h-[220px] md:h-[250px] lg:h-[350px]"
                             : "h-[108px] sm:h-[190px] md:h-[210px] lg:h-[270px]"
-                        }`}
+                          }`}
                       >
                         <motion.img
                           src={card.image}
                           alt={card.league}
-                          className={`relative z-10 w-full object-contain ${
-                            card.big
+                          className={`relative z-10 w-full object-contain ${card.big
                               ? "max-w-[118px] sm:max-w-[200px] md:max-w-[180px] lg:max-w-[305px]"
                               : "max-w-[106px] sm:max-w-[165px] md:max-w-[145px] lg:max-w-[224px]"
-                          }`}
+                            }`}
                           style={{
                             filter: isActive ? card.hoverShadow : card.shadow,
                           }}

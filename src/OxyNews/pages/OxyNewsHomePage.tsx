@@ -48,32 +48,37 @@ const LETTER_COLORS = [
   "#db2777", "#4338ca", "#65a30d", "#0891b2", "#f59e0b",
 ];
 
-function getWordColors(category: string | null): string[] {
-  const words = (category || "XX").trim().split(/\s+/);
-  return words.map((_, i) => LETTER_COLORS[i % LETTER_COLORS.length]);
+function getTwoColors(category: string | null): [string, string] {
+  const words = (category || "OX").trim().split(/\s+/);
+  const seed1 = (words[0]?.charCodeAt(0) ?? 0) % LETTER_COLORS.length;
+  const seed2 = (words[1]?.charCodeAt(0) ?? 3) % LETTER_COLORS.length;
+  return [LETTER_COLORS[seed1], LETTER_COLORS[seed2 === seed1 ? (seed2 + 1) % LETTER_COLORS.length : seed2]];
 }
 
-function getCategoryShortFormLocal(category: string | null): string {
-  if (!category) return "XX";
-  return category.trim().split(/\s+/).map(w => w[0].toUpperCase()).join("");
+function getTwoLetters(category: string | null): [string, string] {
+  const words = (category || "OX").trim().split(/\s+/);
+  const l1 = (words[0]?.[0] ?? "O").toUpperCase();
+  const l2 = (words[1]?.[0] ?? words[0]?.[1] ?? "X").toUpperCase();
+  return [l1, l2];
 }
 
 function getCardGradient(category: string | null): string {
-  const colors = getWordColors(category);
-  if (colors.length === 1) return `linear-gradient(135deg, ${colors[0]}22 0%, ${colors[0]}55 100%)`;
-  return `linear-gradient(135deg, ${colors[0]}33 0%, ${colors[1 % colors.length]}44 60%, ${colors[2 % colors.length] ?? colors[0]}22 100%)`;
+  const [c1, c2] = getTwoColors(category);
+  return `linear-gradient(135deg, ${c1}20 0%, ${c2}35 100%)`;
 }
 
 function ExternalCategoryOverlay({ category }: { category: string | null }) {
-  const short = getCategoryShortFormLocal(category);
-  const colors = getWordColors(category);
+  const words = (category || "OX").trim().split(/\s+/);
+  const l1 = (words[0]?.[0] ?? "O").toUpperCase();
+  const l2 = (words[1]?.[0] ?? words[0]?.[1] ?? "X").toUpperCase();
+  const seed1 = (words[0]?.charCodeAt(0) ?? 0) % LETTER_COLORS.length;
+  const seed2raw = (words[1]?.charCodeAt(0) ?? 3) % LETTER_COLORS.length;
+  const seed2 = seed2raw === seed1 ? (seed2raw + 1) % LETTER_COLORS.length : seed2raw;
   return (
-    <span className="text-5xl font-black drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)] tracking-tight select-none">
-      <span style={{ color: "#1e293b" }}>#</span>
-      {short.split("").map((l, i) => (
-        <span key={i} style={{ color: colors[i % colors.length] }}>{l}</span>
-      ))}
-    </span>
+    <div className="flex items-center justify-center gap-1 select-none">
+      <span className="text-6xl font-black leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.18)]" style={{ color: LETTER_COLORS[seed1] }}>{l1}</span>
+      <span className="text-6xl font-black leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.18)]" style={{ color: LETTER_COLORS[seed2] }}>{l2}</span>
+    </div>
   );
 }
 
@@ -104,8 +109,8 @@ function ExternalCard({
         <img
           src={useRealImage ? article.imageUrl! : FALLBACK_IMG}
           alt={article.title}
-          className={`w-full object-contain group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
-          style={{ maxHeight: 180, minHeight: 110, width: "100%", display: "block" }}
+          className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
+          style={{ maxHeight: 180, minHeight: 110, display: "block" }}
           onError={() => setImgError(true)}
         />
         {showOverlay && (
@@ -115,8 +120,8 @@ function ExternalCard({
         )}
         {article.category && (
           <span
-            className="absolute top-2 left-2 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow"
-            style={{ backgroundColor: getWordColors(article.category)[0], color: "#fff" }}
+            className="absolute left-2 top-2 block max-w-[72%] truncate rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow"
+            style={{ backgroundColor: getTwoColors(article.category)[0], color: "#fff" }}
           >
             {article.category}
           </span>
@@ -263,15 +268,13 @@ export default function OxyNewsHomePage() {
         setHasMore(!res.last);
         setPage(next);
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   useEffect(() => {
-    const el = articlesRef.current;
-    if (!el) return;
-    const handleScroll = () => setShowBackToTop(el.scrollTop > 300);
-    el.addEventListener("scroll", handleScroll);
-    return () => el.removeEventListener("scroll", handleScroll);
+    const handleScroll = () => setShowBackToTop(window.scrollY > 300);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const [orderedFeed, setOrderedFeed] = useState<typeof internalFeed>([]);
@@ -322,15 +325,15 @@ export default function OxyNewsHomePage() {
     <>
       <NewsBackground3D />
 
-      <div className="relative z-10 flex flex-col" style={{ minHeight: "calc(100dvh - 120px)" }}>
+      <div className="relative z-10 flex flex-col">
         <div className="pt-3 shrink-0">
           <PlatformAdsBanner />
         </div>
 
-        <div className="flex flex-1 min-h-0 gap-3">
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0 gap-3">
           <div
             ref={articlesRef}
-            className="flex-1 min-w-0 overflow-y-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ overflowX: "visible" }}
+            className="flex-1 min-w-0 pb-4"
           >
             {error && (
               <div className="bg-white border border-ink/10 rounded-lg p-8 text-center">
@@ -373,7 +376,7 @@ export default function OxyNewsHomePage() {
                 </div>
 
                 {orderedFeed.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 items-stretch" style={{ overflow: "visible" }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
                     {orderedFeed.slice(0, 3).map((item, colIdx) => (
                       <div
                         key={item.item.paperclipId}
@@ -403,7 +406,7 @@ export default function OxyNewsHomePage() {
                 )}
 
                 {orderedFeed.length > 3 && (
-                  <div className="grid grid-cols-3 gap-3 mt-2 items-stretch" style={{ overflow: "visible" }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2 items-stretch">
                     {orderedFeed.slice(3).map((item, idx) => (
                       <div
                         key={item.item.paperclipId}
@@ -449,7 +452,7 @@ export default function OxyNewsHomePage() {
 
             {showBackToTop && (
               <button
-                onClick={() => articlesRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gold text-xl text-plum shadow-lg transition-transform hover:scale-105 focus-ring sm:bottom-6 sm:right-6"
                 aria-label="Back to top"
               >
@@ -459,7 +462,7 @@ export default function OxyNewsHomePage() {
           </div>
 
           {!error && !newsdataLoading && externalFeed.length > 0 && (
-            <div className="w-80 shrink-0 overflow-y-auto pb-4 border-l border-ink/10 bg-white/50">
+            <div className="w-full lg:w-80 lg:shrink-0 pb-4 border-t lg:border-t-0 lg:border-l border-ink/10 bg-white/50">
               <div className="flex items-center justify-between px-3 py-2">
                 <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-wide">
                   Latest News

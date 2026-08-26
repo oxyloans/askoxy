@@ -70,9 +70,9 @@ function todayDateline() {
 
 const PLATFORM_COLORS: Record<string, string> = {
   "ASKOXY.AI": "bg-violet-100 border-violet-300 text-violet-700 hover:bg-violet-600 hover:text-white",
-  "OXYLOANS":  "bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white",
+  "OXYLOANS": "bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white",
   "OXYBRICKS": "bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-600 hover:text-white",
-  "OXYGOLD.AI":"bg-amber-100 border-amber-300 text-amber-700 hover:bg-amber-600 hover:text-white",
+  "OXYGOLD.AI": "bg-amber-100 border-amber-300 text-amber-700 hover:bg-amber-600 hover:text-white",
 };
 
 export default function ArticlePage() {
@@ -169,7 +169,7 @@ export default function ArticlePage() {
     related.length > 0;
 
   return (
-    <div className="relative mx-auto w-full max-w-6xl px-4 lg:px-0">
+    <div className="relative mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-0">
       {showQuickNav && (
         <>
           <div
@@ -217,15 +217,8 @@ export default function ArticlePage() {
       )}
 
       <article className="min-w-0 w-full">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/oxynews"
-            className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
-          >
-            ← Back to the feed
-          </Link>
-
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Prev / Next buttons */}
             {(() => {
               const idx = feedItems.findIndex((f) => f.paperclipId === item.paperclipId);
@@ -253,6 +246,13 @@ export default function ArticlePage() {
               );
             })()}
           </div>
+
+          <Link
+            to="/oxynews"
+            className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
+          >
+            ← Back to the feed
+          </Link>
         </div>
 
         {/* Masthead strip: RadhAI attribution + hashtags left, dateline right */}
@@ -282,8 +282,8 @@ export default function ArticlePage() {
           </span>
         </div>
 
-        <div className="flex items-start justify-between gap-3 mt-4">
-          <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-semibold text-plum-dark leading-[1.05]">
+        <div className="flex flex-wrap items-start justify-between gap-3 mt-4">
+          <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-semibold text-plum-dark leading-[1.05] flex-1 min-w-0">
             {a?.articleName || item.fileName || "Untitled article"}
           </h1>
           <button
@@ -385,7 +385,7 @@ export default function ArticlePage() {
             <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-widest border-b border-ink/20 pb-2 mb-3">
               Executive Analysis
             </h2>
-            <p className="text-sm text-ink-soft leading-relaxed whitespace-pre-line lg:columns-3 lg:gap-10 sm:columns-2 sm:gap-8">
+            <p className="text-sm leading-relaxed whitespace-pre-line text-ink-soft sm:columns-2 sm:gap-8 lg:columns-3 lg:gap-10">
               {s.detailedSummary}
             </p>
           </section>
@@ -396,7 +396,7 @@ export default function ArticlePage() {
             <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-widest border-b border-ink/20 pb-2 mb-3">
               Key points
             </h2>
-            <ul className="space-y-2 border-l-2 border-gold pl-4 lg:columns-2 lg:gap-8">
+            <ul className="space-y-2 border-l-2 border-gold pl-4 sm:columns-2 sm:gap-8">
               {s.keyPoints.map((k, i) => (
                 <li key={i} className="text-sm text-ink-soft leading-relaxed break-inside-avoid">
                   {k}
@@ -411,7 +411,7 @@ export default function ArticlePage() {
             <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-widest mb-3">
               Recommended next steps
             </h2>
-            <ul className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-2 lg:space-y-0">
+            <ul className="space-y-2 sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-2 sm:space-y-0">
               {s.actionItems.map((k, i) => (
                 <li key={i} className="text-sm text-ink-soft leading-relaxed flex gap-2">
                   <span className="font-mono text-gold-dim shrink-0">{String(i + 1).padStart(2, "0")}</span>
@@ -437,7 +437,7 @@ export default function ArticlePage() {
                   <p className="text-sm text-ink-soft mt-1 leading-relaxed">{p.angle}</p>
 
                   {p.relevantOpportunities && p.relevantOpportunities.length > 0 && (
-                    <div className="grid gap-2 mt-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-2 mt-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                       {p.relevantOpportunities.map((key) => {
                         const o = opportunityByKey?.[key];
                         if (!o) return null;
@@ -506,9 +506,8 @@ export default function ArticlePage() {
               People &amp; Companies
             </h2>
             <div
-              className={`bg-white rounded-lg shadow-card grid ${
-                hasPeople && hasCompanies ? "sm:grid-cols-2 sm:divide-x" : "grid-cols-1"
-              } divide-ink/10`}
+              className={`bg-white rounded-lg shadow-card grid ${hasPeople && hasCompanies ? "sm:grid-cols-2 sm:divide-x" : "grid-cols-1"
+                } divide-ink/10`}
             >
               {hasPeople && (
                 <div className="p-4">

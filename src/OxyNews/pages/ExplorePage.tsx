@@ -54,17 +54,18 @@ export default function ExplorePage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-display text-3xl font-semibold text-plum mb-4">Explore</h1>
-        <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row max-w-xl">
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-plum mb-1">Explore</h1>
+        <p className="text-sm text-ink-faint mb-4">Search articles by topic, company or keyword</p>
+        <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row w-full max-w-xl">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search"
-            className="flex-1 bg-white border border-ink/15 rounded-full px-5 py-2.5 text-sm focus-ring"
+            placeholder="e.g. AI, Finance, Startups…"
+            className="flex-1 bg-white border border-ink/15 rounded-full px-5 py-3 text-sm focus-ring"
           />
           <button
             type="submit"
-            className="focus-ring px-6 py-2.5 rounded-full bg-plum text-gold font-medium text-sm hover:bg-plum-dark transition-colors"
+            className="focus-ring w-full sm:w-auto px-6 py-3 rounded-full bg-plum text-gold font-semibold text-sm hover:bg-plum-dark transition-colors"
           >
             Search
           </button>

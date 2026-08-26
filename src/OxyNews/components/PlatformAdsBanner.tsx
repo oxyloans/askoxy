@@ -62,7 +62,7 @@ export default function PlatformAdsBanner() {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-plum/90 via-plum/50 to-transparent" />
 
-            <div className="relative z-10 h-full flex flex-row items-center gap-3 px-10 sm:px-12">
+            <div className="relative z-10 h-full flex flex-row items-center gap-3 px-4 sm:px-6">
               <span className="shrink-0">
                 {current.name === "Study Abroad" ? (
                   <img src="https://i.ibb.co/WNYSppcc/study-abroad.png" className="h-12 object-contain" alt="Study Abroad" />
@@ -78,31 +78,12 @@ export default function PlatformAdsBanner() {
                   <span className="font-display text-sm sm:text-base font-bold text-white leading-none drop-shadow">{current.name}</span>
                 )}
               </span>
-              <p className="text-[10px] sm:text-xs text-white/85 line-clamp-1 flex-1">
+              <p className="text-[10px] sm:text-xs text-white/85 line-clamp-1 flex-1 hidden sm:block">
                 {current.description}
               </p>
-              <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-white text-royal text-xs font-bold px-4 py-2 mr-6 shadow-md">
-                Visit ↗
-              </span>
             </div>
           </motion.a>
         </AnimatePresence>
-
-        {/* Prev / Next arrows */}
-        <button
-          onClick={() => setIndex((i) => (i - 1 + ADS.length) % ADS.length)}
-          className="focus-ring absolute left-1 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-sm text-plum shadow-md transition hover:bg-white"
-          aria-label="Previous ad"
-        >
-          ‹
-        </button>
-        <button
-          onClick={() => setIndex((i) => (i + 1) % ADS.length)}
-          className="focus-ring absolute right-1 top-1/2 z-20 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-sm text-plum shadow-md transition hover:bg-white"
-          aria-label="Next ad"
-        >
-          ›
-        </button>
 
         {/* Dots */}
         <div className="absolute bottom-1 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full bg-plum/60 px-2 py-1 backdrop-blur">

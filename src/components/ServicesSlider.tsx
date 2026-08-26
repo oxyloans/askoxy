@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -349,14 +349,23 @@ const ServicesSlider: React.FC = () => {
   const [journeyItems, setJourneyItems] = useState<{ journeyId: string; journeyName: string; campaign: Campaign }[]>([]);
   const [journeysLoading, setJourneysLoading] = useState(true);
 
-  const leagueJourneyCampaigns = journeyItems
-    .map((item) => item.campaign)
-    .filter((c) => c.campaignStatus !== false)
-    .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
+  const leagueJourneyCampaigns = useMemo(() => {
+    const seen = new Set<string>();
+    return journeyItems
+      .map((item) => item.campaign)
+      .filter((c) => {
+        if (c.campaignStatus === false) return false;
+        const id = c.campaignId || c.id || "";
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
+  }, [journeyItems]);
 
   const displayedLeagueJourneys = showAllLeagueJourneys
     ? leagueJourneyCampaigns
-    : leagueJourneyCampaigns.slice(0, 8);
+    : leagueJourneyCampaigns.slice(0, 4);
 
   const displayedBlogs = showAllBlogs
     ? blogCampaigns
@@ -596,37 +605,37 @@ const ServicesSlider: React.FC = () => {
             </motion.div>
           </div>
 
-          {leagueJourneyCampaigns.length > 8 && (
+          {leagueJourneyCampaigns.length > 0 && (
             <motion.button
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium px-6 py-2.5 rounded-full transition-colors duration-300 text-sm sm:text-base"
+              className="relative z-10 bg-gradient-to-r from-violet-700 to-indigo-700 text-white font-semibold px-6 py-2.5 rounded-full shadow-md shadow-indigo-900/15 hover:from-violet-800 hover:to-indigo-800 transition-all duration-300 text-sm sm:text-base"
               onClick={() => setShowAllLeagueJourneys(!showAllLeagueJourneys)}
             >
-              {showAllLeagueJourneys ? "Show Less" : "View All"}
-              <span className="ml-2 inline-block text-sm">
-                {showAllLeagueJourneys ? "↑" : "↓"}
-              </span>
+              {showAllLeagueJourneys ? "Show Less ↑" : "View All →"}
             </motion.button>
           )}
         </div>
 
         {campaignsLoading ? (
-          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex min-w-0 flex-col items-center">
-                <div className="aspect-[4/5] w-full max-w-[200px] animate-pulse bg-gray-100" />
-                <div className="mt-4 h-5 w-4/5 animate-pulse bg-gray-100" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 4}).map((_, i) => (
+              <div key={i} className="h-64 rounded-2xl border border-slate-100">
+                <div className="animate-pulse p-4">
+                  <div className="w-full h-40 bg-gray-200 rounded-lg mb-3"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
               </div>
             ))}
           </div>
         ) : leagueJourneyCampaigns.length > 0 ? (
           <>
             <motion.div
-              className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8"
+              className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
@@ -635,6 +644,7 @@ const ServicesSlider: React.FC = () => {
                 const mediaUrl = getCampaignFirstImage(campaign);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
                 const title = getCampaignTitle(campaign);
+                const publishedDate = formatPublishedDate(campaign.createdAt);
 
                 return (
                   <motion.div
@@ -642,15 +652,16 @@ const ServicesSlider: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="group flex min-w-0 cursor-pointer flex-col items-center"
+                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                    className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:border-violet-300 hover:shadow-[0_16px_36px_rgba(79,70,229,0.14)]"
                     onClick={() => handleCampaignClick(campaign)}
                   >
-                    <div className="flex w-full items-center justify-center">
+                    <div className="relative h-[220px] w-full overflow-hidden rounded-t-xl bg-gray-100">
                       {mediaUrl ? (
                         isVideo ? (
                           <video
                             src={mediaUrl}
-                            className="h-auto max-h-[304px] w-full max-w-[200px] object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:max-h-[280px] lg:max-h-[256px]"
+                            className="w-full h-full object-cover bg-gray-100 transition-transform duration-300 group-hover:scale-105"
                             autoPlay
                             muted
                             loop
@@ -661,45 +672,45 @@ const ServicesSlider: React.FC = () => {
                             src={mediaUrl}
                             alt={title}
                             title={title}
-                            imgClassName="h-auto max-h-[304px] w-full max-w-[200px] object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:max-h-[280px] lg:max-h-[256px]"
-                            wrapperClassName="aspect-[4/5] w-full max-w-[200px] transition-transform duration-300 ease-out group-hover:scale-110"
+                            imgClassName="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                           />
                         )
                       ) : (
-                        <ImageWithFallback
-                          title={title}
-                          alt={title}
-                          wrapperClassName="aspect-[4/5] w-full max-w-[200px] transition-transform duration-300 ease-out group-hover:scale-110"
-                        />
+                        <ImageWithFallback title={title} alt={title} wrapperClassName="w-full h-full" />
                       )}
+                      <div className="absolute top-2 left-2">
+                        <span className="rounded-full bg-gradient-to-r from-violet-700 to-indigo-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                          Journey
+                        </span>
+                      </div>
                     </div>
 
-                    <h3
-                      className="mt-4 line-clamp-2 min-h-[44px] w-full px-1 text-center text-sm font-semibold uppercase leading-snug text-slate-950 transition-colors duration-300 group-hover:text-[#7C3AED] sm:text-base lg:text-[17px]"
-                      title={title}
-                    >
-                      {title}
-                    </h3>
+                    <div className="flex flex-grow flex-col p-4">
+                      {publishedDate && (
+                        <span className="mb-1.5 text-[11px] font-medium text-slate-400">
+                          {publishedDate}
+                        </span>
+                      )}
+                      <h3 className="mb-2 line-clamp-2 text-sm font-bold leading-snug text-slate-900 transition-colors group-hover:text-violet-700">
+                        {title}
+                      </h3>
+                      <p className="mb-4 line-clamp-3 flex-grow text-xs leading-relaxed text-gray-500">
+                        {campaign.campaignDescription}
+                      </p>
+                      <button
+                        type="button"
+                        className="h-10 w-full rounded-xl bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] hover:shadow-lg hover:shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                        onClick={(e) => { e.stopPropagation(); handleCampaignClick(campaign); }}
+                      >
+                        Read More
+                      </button>
+                    </div>
                   </motion.div>
                 );
               })}
             </motion.div>
 
-            {!showAllLeagueJourneys &&
-              displayedLeagueJourneys.length <
-              leagueJourneyCampaigns.length && (
-                <div className="mt-10 text-center">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-colors duration-300 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
-                    onClick={() => setShowAllLeagueJourneys(true)}
-                  >
-                    View more journeys
-                    <span className="ml-2">→</span>
-                  </motion.button>
-                </div>
-              )}
+
           </>
         ) : (
           <div className="text-center py-12">
@@ -734,12 +745,12 @@ const ServicesSlider: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-medium px-6 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
+            className="relative z-10 bg-gradient-to-r from-violet-700 to-indigo-700 text-white font-semibold px-6 py-2.5 rounded-full shadow-md shadow-indigo-900/15 hover:from-violet-800 hover:to-indigo-800 hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
             onClick={() => setShowAllServices(!showAllServices)}
           >
-            {showAllServices ? "Show Less" : "View All"}
+            {showAllServices ? "Show Less" : "View All Services"}
             <span className="ml-2 inline-block text-sm">
-              {showAllServices ? "↑" : "↓"}
+              {showAllServices ? "↑" : "→"}
             </span>
           </motion.button>
         </div>
@@ -805,7 +816,7 @@ const ServicesSlider: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-colors duration-300 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
+                className="relative z-10 px-5 py-2 rounded-full bg-white text-violet-700 font-semibold hover:bg-violet-700 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md border border-violet-200 hover:border-violet-700 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                 onClick={() => setShowAllServices(true)}
               >
                 View all services
