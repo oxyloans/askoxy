@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleAlert,
+  Download,
   Eye,
   FileText,
   LoaderCircle,
@@ -123,11 +124,13 @@ const   EmployeeApplicationsComingSoon: React.FC = () => {
   const [resultsModal, setResultsModal] = useState<ResultsModalState | null>(null);
   const [resumeModal, setResumeModal] = useState(false);
   const [resumeUrl, setResumeUrl] = useState("");
+  const [resumeDownloadUrl, setResumeDownloadUrl] = useState("");
   const [iframeLoading, setIframeLoading] = useState(true);
   const [resumeError, setResumeError] = useState(false);
 
   const openResumeModal = (url: string) => {
     setResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`);
+    setResumeDownloadUrl(url);
     setIframeLoading(true);
     setResumeError(false);
     setResumeModal(true);
@@ -378,9 +381,21 @@ const   EmployeeApplicationsComingSoon: React.FC = () => {
                 <span className="eapps-eyebrow">Document viewer</span>
                 <h2 id="resume-viewer-title">Resume</h2>
               </div>
-              <button type="button" className="eapps-modal-close" onClick={() => { setResumeModal(false); setIframeLoading(true); setResumeError(false); }} aria-label="Close resume">
-                <X />
-              </button>
+              <div className="eapps-resume-modal-actions">
+                <a
+                  className="eapps-resume-download"
+                  href={resumeDownloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                >
+                  <Download />
+                  Download
+                </a>
+                <button type="button" className="eapps-modal-close" onClick={() => { setResumeModal(false); setIframeLoading(true); setResumeError(false); }} aria-label="Close resume">
+                  <X />
+                </button>
+              </div>
             </div>
             <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
               {iframeLoading && !resumeError && (
@@ -587,7 +602,7 @@ const applicationsStyles = `
   .eapps-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(2,5,17,.78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .eapps-modal-card { width: min(100%, 980px); max-height: 90vh; overflow-y: auto; color: #f7f8ff; border: 1px solid rgba(255,255,255,.14); border-radius: 22px; background: linear-gradient(150deg, rgba(24,32,69,.98), rgba(14,18,43,.98)); box-shadow: 0 34px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1); }
   .eapps-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 22px 24px; border-bottom: 1px solid rgba(255,255,255,.09); } .eapps-modal-head h2 { margin: 5px 0 0; font-size: 1.3rem; } .eapps-modal-head p { margin: 5px 0 0; color: rgba(226,231,250,.55); font-size: .72rem; }
-  .eapps-modal-close { display: grid; place-items: center; width: 36px; height: 36px; color: #edf0ff; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; background: rgba(255,255,255,.06); cursor: pointer; } .eapps-modal-close svg { width: 16px; }
+  .eapps-resume-modal-actions { display: flex; align-items: center; gap: 9px; } .eapps-resume-download { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 11px; color: #edf0ff; border: 1px solid rgba(144,156,255,.3); border-radius: 11px; background: rgba(104,121,255,.16); font: 750 .68rem Inter, sans-serif; text-decoration: none; } .eapps-resume-download:hover { background: rgba(104,121,255,.27); } .eapps-resume-download svg { width: 15px; } .eapps-modal-close { display: grid; place-items: center; width: 36px; height: 36px; color: #edf0ff; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; background: rgba(255,255,255,.06); cursor: pointer; } .eapps-modal-close svg { width: 16px; }
   .eapps-results-state { display: grid; place-items: center; min-height: 250px; padding: 26px; text-align: center; } .eapps-results-state > svg { width: 32px; color: #9aa8f7; } .eapps-results-state h3 { margin: 12px 0 0; font-size: 1rem; } .eapps-results-state p { margin: 7px 0 0; color: rgba(226,231,250,.55); font-size: .74rem; } .eapps-results-state button { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; margin-top: 14px; padding: 0 12px; color: #fff; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: rgba(255,255,255,.07); cursor: pointer; } .eapps-results-state button svg { width: 14px; }
   .eapps-result-banner { display: flex; align-items: flex-start; gap: 12px; margin: 18px 22px 0; padding: 14px; border-radius: 15px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.045); } .eapps-result-banner > span { display: grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 12px; } .eapps-result-banner svg { width: 18px; } .eapps-result-banner strong { display: block; font-size: .86rem; } .eapps-result-banner p { margin: 5px 0 0; color: rgba(226,231,250,.58); font-size: .7rem; } .eapps-result-eligible > span { color: #8df0ca; background: rgba(61,213,156,.13); } .eapps-result-not-eligible > span { color: #ffb0c5; background: rgba(237,69,117,.12); }
   .eapps-result-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin: 14px 22px 0; } .eapps-result-meta div { min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: rgba(3,7,22,.28); } .eapps-result-meta small { display: block; color: rgba(226,231,250,.42); font-size: .58rem; } .eapps-result-meta strong { display: block; margin-top: 4px; overflow: hidden; color: #fff; font-size: .9rem; text-overflow: ellipsis; white-space: nowrap; }

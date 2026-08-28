@@ -604,7 +604,7 @@ const CampaignDetails: React.FC = () => {
       ) {
         sessionStorage.setItem(
           "redirectPath",
-          "/main/dashboard/products?type=GOLD",
+          "/main/dashboard/products?type=SILVER",
         );
       } else {
         sessionStorage.setItem("redirectPath", "/main/dashboard/products");
@@ -615,7 +615,7 @@ const CampaignDetails: React.FC = () => {
           "/main/services/71e3/gold-silver-diamonds",
         )
       ) {
-        navigate("/main/dashboard/products?type=GOLD");
+        navigate("/main/dashboard/products?type=SILVER");
       } else {
         navigate("/main/dashboard/products");
       }

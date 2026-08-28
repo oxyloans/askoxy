@@ -22,6 +22,7 @@ const ExamPage: React.FC = () => {
   const navigate = useNavigate();
   const state = location.state as any;
   const {
+    responseId,
     runId,
     threadId,
     atsScoreHistoryId,
@@ -53,7 +54,9 @@ const ExamPage: React.FC = () => {
       return;
     }
 
-    if (!runId || !threadId) {
+    // Migrated flow only needs the responseId. runId/threadId are legacy
+    // fallbacks that (post-migration) carry the same Responses API id.
+    if (!responseId && !runId && !threadId) {
       setExamStatus("failed");
       return;
     }
@@ -80,8 +83,15 @@ const ExamPage: React.FC = () => {
 
   const checkExamStatus = async (): Promise<boolean> => {
     try {
+      // Prefer the migrated responseId; keep runId/threadId as fallbacks so
+      // in-flight sessions created before the migration still resolve.
+      const params = new URLSearchParams();
+      if (responseId) params.append("responseId", responseId);
+      // if (runId) params.append("runId", runId);
+      // if (threadId) params.append("threadId", threadId);
+
       const res = await axios.get(
-        `${BASE_URL}/marketing-service/campgin/exam-status?runId=${runId}&threadId=${threadId}`,
+        `${BASE_URL}/marketing-service/campgin/response-api/exam-status?${params.toString()}`,
       );
       if (res.data?.status === "completed" && res.data?.exam) {
         setExamData(res.data.exam);
@@ -109,7 +119,7 @@ const ExamPage: React.FC = () => {
 
     try {
       const startRes = await axios.put(
-        `${BASE_URL}/marketing-service/campgin/exam-status/start`,
+        `${BASE_URL}/marketing-service/campgin/response-api/exam-status/start`,
         {
           atsScoreHistoryId: atsScoreHistoryId,
           totalQuestions: examData?.totalQuestions,

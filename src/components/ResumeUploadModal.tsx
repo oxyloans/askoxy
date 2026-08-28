@@ -66,7 +66,7 @@ const ResumeUploadModal: React.FC<Props> = ({
       setStatusText("Checking ATS...");
 
       const atsRes = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/ats-score-checker-new`,
+        `${BASE_URL}/marketing-service/campgin/response-api/ats-score-checker-new`,
         {
           userId,
           jobId,
@@ -90,6 +90,9 @@ const ResumeUploadModal: React.FC<Props> = ({
         setTimeout(() => {
           navigate("/main/exam", {
             state: {
+              // Migrated identifier (OpenAI Responses API). runId/threadId are
+              // kept only for backward compatibility with older links.
+              responseId: atsRes.data.responseId,
               runId: atsRes.data.runId,
               threadId: atsRes.data.threadId,
               jobId,

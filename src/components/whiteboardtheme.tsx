@@ -288,7 +288,7 @@ const Whiteboardtheme: React.FC = () => {
                   <div className="flex h-[148px] w-[148px] items-center justify-center">
                     <button
                       type="button"
-                      onClick={() => navigate("/sovereign-ai")}
+                      onClick={() => navigate("/main/dashboard/products?type=SILVER")}
                       className="flex h-full w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95"
                       aria-label="Speak with Sovereign AI"
                     >
@@ -328,7 +328,7 @@ const Whiteboardtheme: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/sovereign-ai")}
+                    onClick={() => navigate("/main/dashboard/products?type=SILVER")}
                     className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                     style={{
                       width: "clamp(140px, 12vw, 196px)",

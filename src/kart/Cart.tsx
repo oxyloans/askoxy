@@ -20,7 +20,10 @@ import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL, { resolveAskoxyUrl } from "../Config";
 // import DeliveryFee from "./DeliveryFee";
-import { calculateDeliveryFee } from "./DeliveryFee";
+import {
+  calculateDeliveryFee,
+  calculateDistanceDeliveryFee,
+} from "./DeliveryFee";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import {
   clearAgentComboDisplay,
@@ -68,6 +71,8 @@ interface CartItem {
   combo?: boolean;
   saveAmount?: number;
   savePercentage?: number;
+  catergoryName?: string;
+  categoryName?: string;
 }
 
 interface AddressFormData {
@@ -158,6 +163,9 @@ const CartPage: React.FC = () => {
   const [handlingFee, setHandlingFee] = useState<number | null>(0);
   //states for delivery fee
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
+  const [deliveryFeeMessage, setDeliveryFeeMessage] = useState("");
+  const [isDeliveryFeeLoading, setIsDeliveryFeeLoading] = useState(false);
+  const [isPreciousMetalDistanceFeeLoading, setIsPreciousMetalDistanceFeeLoading] = useState(false);
   const lastDeliveryFeeRequestKeyRef = useRef<string>("");
   //states for small cart fee and serivce charges
   // const [smallCartFee, setSmallCartFee] = useState<number>(0);
@@ -193,6 +201,29 @@ const CartPage: React.FC = () => {
   }
 
   const { setCount } = context;
+
+  // Gold and Silver use the distance-fee delivery flow. Prefer the category
+  // returned by the cart API; the name check keeps older cart responses working.
+  const isPreciousMetalItem = (item: CartItem) =>
+    [item.catergoryName, item.categoryName, (item as any).categoryType, (item as any).category]
+      .filter(Boolean)
+      .some((category) => /GOLD|SILVER/i.test(String(category))) ||
+    /gold|silver/i.test(item.itemName);
+  const hasPreciousMetalItems = (items: CartItem[] = cartData) =>
+    items.some(isPreciousMetalItem);
+  const isPreciousMetalOnlyCart = (items: CartItem[] = cartData) =>
+    items.length > 0 && items.every(isPreciousMetalItem);
+  const PRECIOUS_METAL_MIXED_CART_FEE_DISTANCE_KM = 40;
+  const PRECIOUS_METAL_MIXED_CART_REMOVE_DISTANCE_KM = 100;
+  const getOutOfServiceItems = (items: CartItem[] = cartData) =>
+    items.filter((item) => !isPreciousMetalItem(item));
+  const formatItemNames = (items: CartItem[]) => {
+    const names = items.map((item) => item.itemName.trim()).filter(Boolean);
+    if (names.length === 0) return "the selected item";
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+    return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+  };
 
   const refreshComboPricing = (
     items: CartItem[],
@@ -358,7 +389,7 @@ const CartPage: React.FC = () => {
           if (alreadySaved.length > 0 && newlySaved.length > 0) {
             messages.push(
               `Already referred numbers: ${alreadySaved.join(", ")}. ` +
-                `Newly referred numbers: ${newlySaved.join(", ")}.`
+              `Newly referred numbers: ${newlySaved.join(", ")}.`
             );
           } else if (alreadySaved.length > 0) {
             messages.push(
@@ -470,7 +501,7 @@ const CartPage: React.FC = () => {
           message.error("Failed to cancel referral offer");
         }
       },
-      onCancel: () => {},
+      onCancel: () => { },
     });
   };
 
@@ -894,7 +925,7 @@ const CartPage: React.FC = () => {
     if (!addressFormData.landMark.trim())
       errors.landmark = "Landmark is required";
     if (!addressFormData.address.trim()) errors.address = "Address is required";
-    
+
     const pincode = addressFormData.pincode?.trim();
     if (!pincode) {
       errors.pincode = "PIN code is required";
@@ -928,7 +959,7 @@ const CartPage: React.FC = () => {
       const withinRadius = await isWithinRadius(coordinates);
       console.log({ withinRadius });
 
-      if (!withinRadius.isWithin) {
+      if (!withinRadius.isWithin && !hasPreciousMetalItems()) {
         setAddressFormData({
           flatNo: "",
           landMark: "",
@@ -1128,7 +1159,7 @@ const CartPage: React.FC = () => {
 
       console.log(
         `Removing item: ${item.itemName}, ID: ${itemIdToRemove}, cartId: ${cartIdToRemove}, ` +
-          `isFreeItem: ${isFreeItem}, isEligibleRice: ${isEligibleRice}, isContainer: ${isContainer}`
+        `isFreeItem: ${isFreeItem}, isEligibleRice: ${isEligibleRice}, isContainer: ${isContainer}`
       );
 
       if (isFreeItem) {
@@ -1241,8 +1272,106 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    if (deliveryFee === null) {
-      message.error("Delivery is not available for the selected address");
+    if (isDeliveryFeeLoading || isPreciousMetalDistanceFeeLoading) {
+      message.info("Please wait while the delivery fee is calculated");
+      return;
+    }
+
+    let checkoutItems = cartData;
+    let preciousMetalDistanceFee: number | null | undefined;
+    let skipNormalRadiusCheck = false;
+
+    if (hasPreciousMetalItems(checkoutItems)) {
+      const coordinates =
+        selectedAddress.latitude !== undefined && selectedAddress.longitude !== undefined
+          ? { lat: selectedAddress.latitude, lng: selectedAddress.longitude }
+          : await getCoordinates(
+            `${selectedAddress.flatNo}, ${selectedAddress.landMark}, ${selectedAddress.address}, ${selectedAddress.pincode}`
+          );
+
+      if (!coordinates) {
+        message.error("Unable to find location coordinates. Please check the address.");
+        return;
+      }
+
+      const distanceResult = await calculateDistanceDeliveryFee(
+        coordinates.lat,
+        coordinates.lng,
+      );
+      preciousMetalDistanceFee = distanceResult.fee;
+
+      // Gold and Silver orders are allowed outside the normal grocery delivery radius.
+      if (isPreciousMetalOnlyCart(checkoutItems)) {
+        skipNormalRadiusCheck = true;
+      }
+
+      if (
+        !isPreciousMetalOnlyCart(checkoutItems) &&
+        distanceResult.distance > PRECIOUS_METAL_MIXED_CART_REMOVE_DISTANCE_KM
+      ) {
+        const nonPreciousMetalItems = checkoutItems.filter((item) => !isPreciousMetalItem(item));
+        try {
+          await Promise.all(
+            nonPreciousMetalItems.map((item) =>
+              item.status === "FREE"
+                ? customerApi.delete(`${BASE_URL}/cart-service/cart/removeFreeContainer`, {
+                  data: {
+                    id: item.cartId,
+                    customerId,
+                    itemId: item.itemId,
+                    status: "FREE",
+                  },
+                })
+                : customerApi.delete(`${BASE_URL}/cart-service/cart/remove`, {
+                  data: { id: item.cartId },
+                })
+            )
+          );
+          checkoutItems = (await fetchCartData()) || [];
+          if (!isPreciousMetalOnlyCart(checkoutItems)) {
+            message.error("Could not prepare the Gold/Silver-only order. Please try again.");
+            return;
+          }
+          message.info("Non-Gold/Silver items were removed because this address is over 100 km away.");
+        } catch (error) {
+          console.error("Failed to remove non-Gold/Silver items:", error);
+          message.error("Could not prepare the Gold/Silver-only order. Please try again.");
+          return;
+        }
+      } else if (
+        !isPreciousMetalOnlyCart(checkoutItems) &&
+        distanceResult.distance <= PRECIOUS_METAL_MIXED_CART_FEE_DISTANCE_KM
+      ) {
+        // Under 40 km, retain all cart items and continue with normal fees.
+        skipNormalRadiusCheck = true;
+      }
+    }
+
+    const effectiveDeliveryFee = isPreciousMetalOnlyCart(checkoutItems)
+      ? (preciousMetalDistanceFee ?? 0)
+      : deliveryFee;
+
+    if (effectiveDeliveryFee === null && !isPreciousMetalOnlyCart(checkoutItems)) {
+      const outOfServiceItems = getOutOfServiceItems(checkoutItems);
+      Modal.error({
+        title: "Out of Service Range",
+        content: (
+          <>
+            <p>
+              Delivery is not available for the selected address.
+              {outOfServiceItems.length > 0 ? (
+                <>
+                  {" "}
+                  Remove <strong>{formatItemNames(outOfServiceItems)}</strong> to
+                  continue. Gold and silver items will remain in the cart.
+                </>
+              ) : (
+                " Please choose another address within the service area."
+              )}
+            </p>
+          </>
+        ),
+      });
       return;
     }
 
@@ -1255,12 +1384,14 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    const isAddressValid = await handleAddressChange(selectedAddress);
+    const isAddressValid = skipNormalRadiusCheck
+      ? { isWithin: true }
+      : await handleAddressChange(selectedAddress);
     if (isAddressValid?.isWithin) {
       navigate("/main/checkout", {
         state: {
           selectedAddress,
-          deliveryFee,
+          deliveryFee: effectiveDeliveryFee,
           agentComboPricing: comboPricing.active ? comboPricing : null,
         },
       });
@@ -1431,18 +1562,18 @@ const CartPage: React.FC = () => {
             setCoordinatesReady(true); // Mark coordinates as ready
             // Optionally update backend with coordinates
             try {
-        await customerApi.put(
-          `${BASE_URL}/user-service/updateAddress/${selectedAddress.id}`,
-          {
-            ...updatedAddress,
-            latitude: coordinates.lat.toString(),
-            longitude: coordinates.lng.toString(),
-            userId: customerId,
-          }
-        );
-      } catch (error) {
-        console.error("Error updating address with coordinates:", error);
-      }
+              await customerApi.put(
+                `${BASE_URL}/user-service/updateAddress/${selectedAddress.id}`,
+                {
+                  ...updatedAddress,
+                  latitude: coordinates.lat.toString(),
+                  longitude: coordinates.lng.toString(),
+                  userId: customerId,
+                }
+              );
+            } catch (error) {
+              console.error("Error updating address with coordinates:", error);
+            }
           } else {
             console.warn(
               "Could not fetch valid coordinates for address:",
@@ -1511,6 +1642,49 @@ const CartPage: React.FC = () => {
 
   useEffect(() => {
     const fetchDeliveryFee = async () => {
+      // Wait for the cart response before choosing a delivery API. Without
+      // this guard, the old fee API can run once before Gold/Silver is identified.
+      if (cartData.length === 0) {
+        lastDeliveryFeeRequestKeyRef.current = "";
+        return;
+      }
+
+      if (
+        hasPreciousMetalItems() &&
+        selectedAddress?.latitude !== undefined &&
+        selectedAddress?.longitude !== undefined
+      ) {
+        setIsPreciousMetalDistanceFeeLoading(true);
+        let distanceResult;
+        try {
+          distanceResult = await calculateDistanceDeliveryFee(
+            selectedAddress.latitude,
+            selectedAddress.longitude,
+          );
+        } finally {
+          setIsPreciousMetalDistanceFeeLoading(false);
+        }
+
+        if (isPreciousMetalOnlyCart()) {
+          setDeliveryFee(distanceResult.fee);
+          setHandlingFee(0);
+          setDeliveryFeeMessage(
+            distanceResult.fee == null
+              ? distanceResult.errorMessage || distanceResult.message || "Delivery fee will be calculated and collected at the time of delivery."
+              : ""
+          );
+          return;
+        }
+
+        // A mixed Gold/Silver cart may use the normal fee API only up to 40 km.
+        if (distanceResult.distance > PRECIOUS_METAL_MIXED_CART_FEE_DISTANCE_KM) {
+          lastDeliveryFeeRequestKeyRef.current = "";
+          setDeliveryFee(null);
+          setHandlingFee(0);
+          return;
+        }
+      }
+
       if (
         selectedAddress?.latitude !== undefined &&
         selectedAddress?.longitude !== undefined &&
@@ -1520,21 +1694,27 @@ const CartPage: React.FC = () => {
         if (lastDeliveryFeeRequestKeyRef.current === requestKey) return;
         lastDeliveryFeeRequestKeyRef.current = requestKey;
 
-        const result = await calculateDeliveryFee(
-          selectedAddress.latitude,
-          selectedAddress.longitude,
-          cartTotal
-        );
-        setDeliveryFee(result.fee);
-        setHandlingFee(result.handlingFee);
-        console.log("Delivery fees calculated:", result);
+        setIsDeliveryFeeLoading(true);
+        try {
+          const result = await calculateDeliveryFee(
+            selectedAddress.latitude,
+            selectedAddress.longitude,
+            cartTotal
+          );
+          setDeliveryFee(result.fee);
+          setHandlingFee(result.handlingFee);
+          setDeliveryFeeMessage("");
+          console.log("Delivery fees calculated:", result);
+        } finally {
+          setIsDeliveryFeeLoading(false);
+        }
       } else {
         lastDeliveryFeeRequestKeyRef.current = "";
       }
     };
 
     fetchDeliveryFee();
-  }, [selectedAddress?.latitude, selectedAddress?.longitude, cartTotal]);
+  }, [cartData, selectedAddress?.latitude, selectedAddress?.longitude, cartTotal]);
 
   const handleAddressChange = async (selectedAddress: Address) => {
     const fullAddress = `${selectedAddress?.flatNo}, ${selectedAddress?.landMark}, ${selectedAddress?.address}, ${selectedAddress?.pincode}`;
@@ -1551,7 +1731,7 @@ const CartPage: React.FC = () => {
     const withinRadius = await isWithinRadius(coordinates);
     console.log({ withinRadius });
 
-    if (!withinRadius.isWithin) {
+    if (!withinRadius.isWithin && !hasPreciousMetalItems()) {
       Modal.error({
         title: "Delivery Unavailable",
         content: (
@@ -1612,7 +1792,7 @@ const CartPage: React.FC = () => {
       !selectedAddress ||
       !cartData ||
       cartData.length === 0 ||
-      deliveryFee === null ||
+      (deliveryFee === null && !hasPreciousMetalItems()) ||
       hasStockIssues()
     );
   };
@@ -1620,7 +1800,7 @@ const CartPage: React.FC = () => {
   const getCheckoutButtonLabel = (): string => {
     if (!selectedAddress) return "Select an Address to Proceed";
     if (!cartData || cartData.length === 0) return "Cart is Empty";
-    if (deliveryFee === null) return "Delivery Not Available";
+    if (deliveryFee === null && !hasPreciousMetalItems()) return "Delivery Not Available";
     if (hasStockIssues()) return "Cannot Checkout - Stock Issues";
     return "Proceed to Checkout";
   };
@@ -1776,7 +1956,7 @@ const CartPage: React.FC = () => {
 
         setIsPlanModalVisible(false);
       },
-      onCancel: () => {},
+      onCancel: () => { },
     });
   };
 
@@ -1970,12 +2150,11 @@ const CartPage: React.FC = () => {
 
                                   <motion.button
                                     whileTap={{ scale: 0.92 }}
-                                    className={`w-9 h-9 flex items-center justify-center text-purple-600 ${
-                                      (regularCartItems[item.itemId] || 0) >=
-                                      item.quantity
+                                    className={`w-9 h-9 flex items-center justify-center text-purple-600 ${(regularCartItems[item.itemId] || 0) >=
+                                        item.quantity
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
-                                    }`}
+                                      }`}
                                     onClick={() => {
                                       if (
                                         (regularCartItems[item.itemId] || 0) <
@@ -1985,7 +2164,7 @@ const CartPage: React.FC = () => {
                                     }}
                                     disabled={
                                       (regularCartItems[item.itemId] || 0) >=
-                                        item.quantity ||
+                                      item.quantity ||
                                       loadingItems[item.itemId]
                                     }
                                     aria-label="Increase quantity"
@@ -2051,7 +2230,7 @@ const CartPage: React.FC = () => {
                         {/* ROW 3: MOBILE-ONLY Save + Delete (single row) */}
                         <div className="flex justify-between items-center mt-1 block sm:hidden">
                           {typeof item.saveAmount === "number" &&
-                          item.saveAmount > 0 ? (
+                            item.saveAmount > 0 ? (
                             <p className="text-[12px] text-green-600 font-medium truncate">
                               Save ₹{Number(item.saveAmount || 0).toFixed(2)} (
                               {item.savePercentage ?? 0}% OFF)
@@ -2126,19 +2305,17 @@ const CartPage: React.FC = () => {
                           key={address.id}
                           type="button"
                           onClick={() => handleAddressChange(address)}
-                          className={`w-full text-left rounded-lg border p-3 transition-all ${
-                            isSelected
+                          className={`w-full text-left rounded-lg border p-3 transition-all ${isSelected
                               ? "border-purple-500 bg-purple-50 ring-1 ring-purple-400"
                               : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start gap-2">
                             <span
-                              className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 ${
-                                isSelected
+                              className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 ${isSelected
                                   ? "border-purple-600 bg-purple-600"
                                   : "border-gray-400 bg-white"
-                              }`}
+                                }`}
                             />
                             <div className="min-w-0">
                               <span className="text-[10px] font-semibold uppercase tracking-wide text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">
@@ -2172,9 +2349,8 @@ const CartPage: React.FC = () => {
                           Item Total & GST
                         </span>
                         <RiArrowDropDownLine
-                          className={`ml-2 h-5 w-5 transform transition-transform duration-200 ${
-                            isItemTotalDropdownOpen ? "rotate-180" : ""
-                          }`}
+                          className={`ml-2 h-5 w-5 transform transition-transform duration-200 ${isItemTotalDropdownOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                       <span>₹{Number(itemTotalWithGstAndHandling).toFixed(2)}</span>
@@ -2243,14 +2419,25 @@ const CartPage: React.FC = () => {
                     )}
                   </div>
                   {cartData.length > 0 && (
-                    <div className="flex justify-between mb-2 text-gray-700">
-                      <span>Delivery Fee</span>
-                      <span className="font-semibold">
-                        {deliveryFee === null
-                          ? "N/A"
-                          : `₹${Number(deliveryFee || 0).toFixed(2)}`}
-                      </span>
-                    </div>
+                    isPreciousMetalDistanceFeeLoading || isDeliveryFeeLoading ? (
+                      <div className="mb-2 flex items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Calculating delivery charges…
+                      </div>
+                    ) : deliveryFee === null && isPreciousMetalOnlyCart() ? (
+                      <div className="mb-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                        {deliveryFeeMessage || "Delivery fee will be calculated and collected at the time of delivery."}
+                      </div>
+                    ) : (
+                      <div className="flex justify-between mb-2 text-gray-700">
+                        <span>Delivery Fee</span>
+                        <span className="font-semibold">
+                          {deliveryFee === null
+                            ? "N/A"
+                            : `₹${Number(deliveryFee || 0).toFixed(2)}`}
+                        </span>
+                      </div>
+                    )
                   )}
 
                   <div className="mb-4">
@@ -2271,7 +2458,7 @@ const CartPage: React.FC = () => {
                                 (acc, item) =>
                                   acc +
                                   parseFloat(item.itemPrice) *
-                                    (regularCartItems[item.itemId] || 0),
+                                  (regularCartItems[item.itemId] || 0),
                                 0
                               ) || 0;
 
@@ -2320,58 +2507,57 @@ const CartPage: React.FC = () => {
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0
                   ) && (
-                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                      <p className="font-semibold">
-                        Quantity adjustments needed:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter(
-                            (item) =>
-                              item.cartQuantity > item.quantity &&
-                              item.quantity > 0
-                          )
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} - Only {item.quantity} in stock
-                              (you have {item.cartQuantity})
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
+                      <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                        <p className="font-semibold">
+                          Quantity adjustments needed:
+                        </p>
+                        <ul className="ml-4 mt-1 list-disc">
+                          {cartData
+                            .filter(
+                              (item) =>
+                                item.cartQuantity > item.quantity &&
+                                item.quantity > 0
+                            )
+                            .map((item) => (
+                              <li key={item.itemId}>
+                                {item.itemName} - Only {item.quantity} in stock
+                                (you have {item.cartQuantity})
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
                   {cartData?.some(
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0
                   ) && (
-                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                      <p className="font-semibold">
-                        Quantity adjustments needed:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter(
-                            (item) =>
-                              item.cartQuantity > item.quantity &&
-                              item.quantity > 0
-                          )
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} - Only {item.quantity} in stock
-                              (you have {item.cartQuantity})
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
+                      <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                        <p className="font-semibold">
+                          Quantity adjustments needed:
+                        </p>
+                        <ul className="ml-4 mt-1 list-disc">
+                          {cartData
+                            .filter(
+                              (item) =>
+                                item.cartQuantity > item.quantity &&
+                                item.quantity > 0
+                            )
+                            .map((item) => (
+                              <li key={item.itemId}>
+                                {item.itemName} - Only {item.quantity} in stock
+                                (you have {item.cartQuantity})
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
                   <button
-                    className={`w-full py-3 px-6 rounded-lg transition ${
-                      isCheckoutDisabled() || deliveryFee === null
+                    className={`w-full py-3 px-6 rounded-lg transition ${isCheckoutDisabled()
                         ? "bg-gray-400 cursor-not-allowed"
                         : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
-                    }`}
+                      }`}
                     onClick={() => handleToProcess()}
-                    disabled={isCheckoutDisabled() || deliveryFee === null}
+                    disabled={isCheckoutDisabled()}
                   >
                     {getCheckoutButtonLabel()}
                   </button>

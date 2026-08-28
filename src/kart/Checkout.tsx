@@ -23,6 +23,7 @@ import BASE_URL from "../Config";
 // import DeliveryFee from "./DeliveryFee";
 import {
   calculateDeliveryFee,
+  calculateDistanceDeliveryFee,
   checkEligibilityForActiveZones,
 } from "./DeliveryFee";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
@@ -41,6 +42,8 @@ interface CartItem {
   cartQuantity: string;
   quantity: number;
   status: string;
+  catergoryName?: string;
+  categoryName?: string;
 }
 
 interface Address {
@@ -118,6 +121,16 @@ const CheckoutPage: React.FC = () => {
   const [isEligibleToday, setIsEligibleToday] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [cartData, setCartData] = useState<CartItem[]>([]);
+  // Gold and Silver categories follow the distance-fee delivery flow.
+  const isPreciousMetalOnlyCart = (items: CartItem[]): boolean =>
+    items.length > 0 &&
+    items.every(
+      (item) =>
+        [item.catergoryName, item.categoryName]
+          .filter(Boolean)
+          .some((category) => /GOLD|SILVER/i.test(category!)) ||
+        /gold|silver/i.test(item.itemName)
+    );
   const [loading, setLoading] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
@@ -135,6 +148,9 @@ const CheckoutPage: React.FC = () => {
   );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
+  const [deliveryFeeMessage, setDeliveryFeeMessage] = useState("");
+  const [isDeliveryFeeLoading, setIsDeliveryFeeLoading] = useState(false);
+  const [isPreciousMetalDistanceFeeLoading, setIsPreciousMetalDistanceFeeLoading] = useState(false);
   const [handlingFee, setHandlingFee] = useState<number | null>(0);
   const [subGst, setSubGst] = useState(0);
   const [goldMakingCharges, setGoldMakingCharges] = useState<number>(0);
@@ -503,9 +519,8 @@ const CheckoutPage: React.FC = () => {
 
       nextDays.push({
         dayOfWeek: daysOfWeek[date.getDay()].toUpperCase(),
-        date: `${String(date.getDate()).padStart(2, "0")}-${
-          months[date.getMonth()]
-        }-${date.getFullYear()}`,
+        date: `${String(date.getDate()).padStart(2, "0")}-${months[date.getMonth()]
+          }-${date.getFullYear()}`,
         formattedDay: daysOfWeek[date.getDay()],
       });
     }
@@ -745,13 +760,37 @@ const CheckoutPage: React.FC = () => {
 
         // const actualGstWithoutMaking = gstAmount - goldMakingCharges;
 
-        let deliveryFee = 0;
+        let deliveryFee: number | null = 0;
         let handlingFee = 0;
         if (
+          isPreciousMetalOnlyCart(cartItems) &&
+          selectedAddress?.latitude !== undefined &&
+          selectedAddress?.longitude !== undefined
+        ) {
+          setIsPreciousMetalDistanceFeeLoading(true);
+          let result;
+          try {
+            result = await calculateDistanceDeliveryFee(
+              selectedAddress.latitude,
+              selectedAddress.longitude,
+            );
+          } finally {
+            setIsPreciousMetalDistanceFeeLoading(false);
+          }
+          deliveryFee = result.fee;
+          handlingFee = 0;
+          setCanPlaceOrder(true);
+          setDeliveryFeeMessage(
+            result.fee == null
+              ? result.errorMessage || result.message || "Delivery fee will be calculated and collected at the time of delivery."
+              : ""
+          );
+        } else if (
           cartItems.length > 0 &&
           selectedAddress?.latitude !== undefined &&
           selectedAddress?.longitude !== undefined
         ) {
+          setIsDeliveryFeeLoading(true);
           const {
             fee,
             handlingFee: calculatedHandlingFee,
@@ -765,12 +804,14 @@ const CheckoutPage: React.FC = () => {
             selectedAddress.longitude,
             amountToPay,
           );
+          setIsDeliveryFeeLoading(false);
           setWalletApplicable(!!walletFlag);
           setCanPlaceOrder(canPlace);
           setMinOrderToPlace(minOrderToPlace ?? minOrderamnt);
           setMinOrderAmount(minOrderamnt);
           deliveryFee = fee ?? 0;
           handlingFee = calculatedHandlingFee;
+          setDeliveryFeeMessage("");
           console.log(
             "Delivery Fee:",
             fee,
@@ -797,7 +838,7 @@ const CheckoutPage: React.FC = () => {
         const totalWithFees =
           totalWithGst +
           (cartItems.length > 0
-            ? deliveryFee + handlingFee + smallCartFee + serviceFee
+            ? (deliveryFee ?? 0) + handlingFee + smallCartFee + serviceFee
             : 0);
         setGrandTotalAmount(totalWithFees);
       } else {
@@ -848,9 +889,32 @@ const CheckoutPage: React.FC = () => {
           cartResponse.data.totalGstAmountToPay || "0",
         );
 
-        let deliveryFee = 0;
+        let deliveryFee: number | null = 0;
         let handlingFee = 0;
         if (
+          isPreciousMetalOnlyCart(cartItems) &&
+          selectedAddress?.latitude !== undefined &&
+          selectedAddress?.longitude !== undefined
+        ) {
+          setIsPreciousMetalDistanceFeeLoading(true);
+          let result;
+          try {
+            result = await calculateDistanceDeliveryFee(
+              selectedAddress.latitude,
+              selectedAddress.longitude,
+            );
+          } finally {
+            setIsPreciousMetalDistanceFeeLoading(false);
+          }
+          deliveryFee = result.fee;
+          handlingFee = 0;
+          setCanPlaceOrder(true);
+          setDeliveryFeeMessage(
+            result.fee == null
+              ? result.errorMessage || result.message || "Delivery fee will be calculated and collected at the time of delivery."
+              : ""
+          );
+        } else if (
           cartItems.length > 0 &&
           selectedAddress?.latitude !== undefined &&
           selectedAddress?.longitude !== undefined
@@ -861,14 +925,17 @@ const CheckoutPage: React.FC = () => {
             selectedAddress.longitude,
             totalAmount,
           );
+          setIsDeliveryFeeLoading(true);
           const { fee, handlingFee: calculatedHandlingFee } =
             await calculateDeliveryFee(
               selectedAddress.latitude,
               selectedAddress.longitude,
               amountToPay,
             );
+          setIsDeliveryFeeLoading(false);
           deliveryFee = fee ?? 0;
           handlingFee = calculatedHandlingFee;
+          setDeliveryFeeMessage("");
         } else if (cartItems.length > 0) {
           console.error("Latitude or Longitude is undefined");
         }
@@ -882,7 +949,7 @@ const CheckoutPage: React.FC = () => {
         const totalWithFees =
           totalWithGst +
           (cartItems.length > 0
-            ? deliveryFee + handlingFee + smallCartFee + serviceFee
+            ? (deliveryFee ?? 0) + handlingFee + smallCartFee + serviceFee
             : 0);
         setGrandTotalAmount(totalWithFees);
 
@@ -983,24 +1050,24 @@ const CheckoutPage: React.FC = () => {
   const handleApplyCoupon = () => {
     // Validate coupon code - trim whitespace and check if empty
     const trimmedCouponCode = couponCode.trim();
-    
+
     if (!trimmedCouponCode) {
       message.error("Please enter a valid coupon code");
       return;
     }
-    
+
     // Check if coupon code contains only spaces
     if (trimmedCouponCode.length === 0) {
       message.error("Coupon code cannot be empty or contain only spaces");
       return;
     }
-    
+
     // Additional validation for minimum length
     if (trimmedCouponCode.length < 3) {
       message.error("Please enter a valid coupon code (minimum 3 characters)");
       return;
     }
-    
+
     const data = {
       couponCode: trimmedCouponCode.toUpperCase(), // Convert to uppercase for consistency
       customerId: customerId,
@@ -1016,7 +1083,7 @@ const CheckoutPage: React.FC = () => {
         setCoupenDetails(discount || 0);
         setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
-        
+
         // Update the coupon code state with the trimmed and uppercase version
         setCouponCode(trimmedCouponCode.toUpperCase());
       })
@@ -1030,12 +1097,12 @@ const CheckoutPage: React.FC = () => {
   const handleSelectCoupon = async (coupon: Coupon) => {
     // Validate coupon code
     const trimmedCouponCode = coupon.couponCode.trim();
-    
+
     if (!trimmedCouponCode) {
       message.error("Invalid coupon code");
       return;
     }
-    
+
     setCouponCode(trimmedCouponCode.toUpperCase());
     setCoupenLoading(true);
 
@@ -1258,7 +1325,7 @@ const CheckoutPage: React.FC = () => {
         return;
       }
 
-      if (deliveryFee === null) {
+      if (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) {
         Modal.error({
           title: "Error",
           content: "Delivery not available for this location.",
@@ -1310,21 +1377,21 @@ const CheckoutPage: React.FC = () => {
         if (!response.data.paymentId && response.data.status) {
           setLoading(false);
           const Swal = require("sweetalert2");
-         Swal.fire({
-  icon: "warning",
-  title: "Minimum Order Required",
-  text: response.data.status,
-  confirmButtonText: "Continue Shopping",
-  confirmButtonColor: "#7C3AED",
-  background: "#ffffff",
-  color: "#333",
-  width: 400,
-  customClass: {
-    popup: "rounded-2xl shadow-xl",
-    title: "text-lg font-semibold",
-    confirmButton: "rounded-xl px-5 py-2",
-  },
-}).then(() => {
+          Swal.fire({
+            icon: "warning",
+            title: "Minimum Order Required",
+            text: response.data.status,
+            confirmButtonText: "Continue Shopping",
+            confirmButtonColor: "#7C3AED",
+            background: "#ffffff",
+            color: "#333",
+            width: 400,
+            customClass: {
+              popup: "rounded-2xl shadow-xl",
+              title: "text-lg font-semibold",
+              confirmButton: "rounded-xl px-5 py-2",
+            },
+          }).then(() => {
             navigate("/main/mycart");
           });
           return;
@@ -1382,9 +1449,8 @@ const CheckoutPage: React.FC = () => {
               transactionDate: new Date(),
               terminalId: "getepay.merchant128638@icici",
               udf1: withoutCountryCode || "",
-              udf2: `${profileData.firstName || ""} ${
-                profileData.lastName || ""
-              }`,
+              udf2: `${profileData.firstName || ""} ${profileData.lastName || ""
+                }`,
               udf3: profileData.email || "",
               udf4: "",
               udf5: "",
@@ -1424,18 +1490,16 @@ const CheckoutPage: React.FC = () => {
       <div className="flex gap-4">
         {/* Online Payment */}
         <div
-          className={`p-3 border rounded-md ${
-            selectedPayment === "ONLINE"
+          className={`p-3 border rounded-md ${selectedPayment === "ONLINE"
               ? "border-purple-500 bg-purple-50"
               : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
-          } flex items-center cursor-pointer transition-colors w-full`}
+            } flex items-center cursor-pointer transition-colors w-full`}
           onClick={() => setSelectedPayment("ONLINE")}
         >
           <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
             <div
-              className={`w-2 h-2 rounded-full ${
-                selectedPayment === "ONLINE" ? "bg-purple-500" : ""
-              } m-0.5`}
+              className={`w-2 h-2 rounded-full ${selectedPayment === "ONLINE" ? "bg-purple-500" : ""
+                } m-0.5`}
             ></div>
           </div>
           <label className="ml-2 flex-grow cursor-pointer">
@@ -1445,18 +1509,16 @@ const CheckoutPage: React.FC = () => {
 
         {/* Cash on Delivery */}
         <div
-          className={`p-3 border rounded-md ${
-            selectedPayment === "COD"
+          className={`p-3 border rounded-md ${selectedPayment === "COD"
               ? "border-purple-500 bg-purple-50"
               : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
-          } flex items-center cursor-pointer transition-colors w-full`}
+            } flex items-center cursor-pointer transition-colors w-full`}
           onClick={() => setSelectedPayment("COD")}
         >
           <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
             <div
-              className={`w-2 h-2 rounded-full ${
-                selectedPayment === "COD" ? "bg-purple-500" : ""
-              } m-0.5`}
+              className={`w-2 h-2 rounded-full ${selectedPayment === "COD" ? "bg-purple-500" : ""
+                } m-0.5`}
             ></div>
           </div>
           <label className="ml-2 flex-grow cursor-pointer">
@@ -1548,10 +1610,10 @@ const CheckoutPage: React.FC = () => {
 
               if (parsedData.paymentStatus === "SUCCESS") {
                 customerApi.get(
-                    `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
-                      "merchantTransactionId",
-                    )}&userId=${customerId}`
-                  )
+                  `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
+                    "merchantTransactionId",
+                  )}&userId=${customerId}`
+                )
                   .then((response) => {
                     console.log(response.data);
                   })
@@ -1678,15 +1740,14 @@ const CheckoutPage: React.FC = () => {
                         block
                         type={
                           selectedTimeSlot === slotTime &&
-                          selectedDate === slot.date
+                            selectedDate === slot.date
                             ? "primary"
                             : "default"
                         }
-                        className={`rounded-md ${
-                          selectedTimeSlot === slotTime
+                        className={`rounded-md ${selectedTimeSlot === slotTime
                             ? "bg-green-600 border-none text-white"
                             : "bg-white hover:bg-purple-50 border-gray-200"
-                        }`}
+                          }`}
                         onClick={() =>
                           handleSelectTimeSlot(
                             slot.date,
@@ -1931,10 +1992,21 @@ const CheckoutPage: React.FC = () => {
                           )}
                         </span>
                       </div>
-                      {cartData.length > 0 && deliveryFee !== null && (
+                      {cartData.length > 0 && deliveryFee !== null && !isDeliveryFeeLoading && !isPreciousMetalDistanceFeeLoading && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Delivery Fee</span>
                           <span>₹{(deliveryFee ?? 0).toFixed(2)}</span>
+                        </div>
+                      )}
+                      {cartData.length > 0 && (isPreciousMetalDistanceFeeLoading || isDeliveryFeeLoading) && (
+                        <div className="flex items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Calculating delivery charges…
+                        </div>
+                      )}
+                      {cartData.length > 0 && !isPreciousMetalDistanceFeeLoading && !isDeliveryFeeLoading && deliveryFee === null && isPreciousMetalOnlyCart(cartData) && (
+                        <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                          {deliveryFeeMessage || "Delivery fee will be calculated and collected at the time of delivery."}
                         </div>
                       )}
                       {cartData.length > 0 &&
@@ -2171,10 +2243,12 @@ const CheckoutPage: React.FC = () => {
                       onClick={handlePayment}
                       disabled={
                         loading ||
+                        isDeliveryFeeLoading ||
+                        isPreciousMetalDistanceFeeLoading ||
                         !selectedAddress ||
                         !selectedTimeSlot ||
                         cartData.length === 0 ||
-                        deliveryFee === null ||
+                        (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) ||
                         !canPlaceOrder // ← Only use this for minimum order logic!
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"

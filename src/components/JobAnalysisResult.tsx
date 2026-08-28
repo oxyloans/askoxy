@@ -49,28 +49,89 @@ const JobAnalysisResult: React.FC = () => {
   const isEligible = atsData?.status === true;
   const matchScore = atsData?.data?.matchScore ?? 0;
 
+  // Migrated identifier (OpenAI Responses API). runId/threadId are legacy
+  // fallbacks that carry the same id after the migration.
+  const examResponseId =
+    atsData?.responseId || atsData?.runId || atsData?.threadId;
+
+  // Experience-match details now returned by the backend inside data. The
+  // backend is the source of truth for eligibility; these are display-only so
+  // the candidate understands *why* the exam did or didn't unlock.
+  const experienceMatch = atsData?.data?.experienceMatch;
+  const experienceReason = atsData?.data?.experienceReason;
+  const candidateExperienceYears = atsData?.data?.candidateExperienceYears;
+  const requiredExperienceYears = atsData?.data?.requiredExperienceYears;
+  const hasExperienceInfo =
+    experienceMatch !== undefined && experienceMatch !== null;
+
+  // Why is a candidate NOT eligible? The backend applies two independent gates
+  // and is the source of truth:
+  //   (1) ATS match score must be >= the configured minimum (minAtsScore)
+  //   (2) total experience must be >= the required minimum (experienceMatch)
+  // We surface the *specific* failing gate(s) instead of always blaming score.
+  // minAtsScore is returned by the backend; if an older build omits it we fall
+  // back to a safe inference so the page still explains the outcome correctly.
+  const minAtsScore: number | null =
+    atsData?.minAtsScore ?? atsData?.data?.minAtsScore ?? null;
+
+  const experienceShortfall = experienceMatch === false;
+  const scoreBelowMin =
+    minAtsScore != null
+      ? matchScore < minAtsScore
+      : !isEligible && experienceMatch !== false;
+
+  const ineligibilityReasons: { title: string; detail: string }[] = [];
+  if (experienceShortfall) {
+    ineligibilityReasons.push({
+      title: "Experience below requirement",
+      detail:
+        "Your total professional experience" +
+        (candidateExperienceYears != null
+          ? ` (${candidateExperienceYears} yrs)`
+          : "") +
+        " is under the role's required minimum" +
+        (requiredExperienceYears != null
+          ? ` of ${requiredExperienceYears} yrs`
+          : "") +
+        ".",
+    });
+  }
+  if (scoreBelowMin) {
+    ineligibilityReasons.push({
+      title: "ATS match below minimum",
+      detail:
+        `Your ATS match of ${matchScore}%` +
+        (minAtsScore != null
+          ? ` is under the required ${minAtsScore}%`
+          : " is below the required minimum") +
+        ".",
+    });
+  }
+
+  const ineligibleHeadline = experienceShortfall
+    ? scoreBelowMin
+      ? "Experience & ATS Score Below Requirement"
+      : "Experience Requirement Not Met"
+    : "ATS Score Below Threshold";
+
   useEffect(() => {
     if (!atsData) {
       navigate("/main/viewjobdetails");
       return;
     }
-    if (atsData?.examStarted && atsData?.runId && atsData?.threadId) {
-      pollExamStatus(atsData.runId, atsData.threadId);
+    if (atsData?.examStarted && examResponseId) {
+      pollExamStatus();
     }
   }, []);
 
   useEffect(() => {
     if (!atsData) return;
 
-    if (
-      isEligible &&
-      atsData?.examStarted &&
-      atsData?.runId &&
-      atsData?.threadId
-    ) {
+    if (isEligible && atsData?.examStarted && examResponseId) {
       navigate("/main/exam", {
         replace: true,
         state: {
+          responseId: atsData.responseId,
           runId: atsData.runId,
           threadId: atsData.threadId,
           jobId,
@@ -82,14 +143,21 @@ const JobAnalysisResult: React.FC = () => {
     }
   }, []);
 
-  const pollExamStatus = async (runId: string, threadId: string) => {
+  const pollExamStatus = async () => {
     setExamStatus("generating");
     setCurrentStep(1);
 
     const checkStatus = async (): Promise<boolean> => {
       try {
+        // Prefer the migrated responseId; keep runId/threadId as fallbacks.
+        const params = new URLSearchParams();
+        if (atsData?.responseId)
+          params.append("responseId", atsData.responseId);
+        if (atsData?.runId) params.append("runId", atsData.runId);
+        if (atsData?.threadId) params.append("threadId", atsData.threadId);
+
         const response = await axios.get(
-          `${BASE_URL}/marketing-service/campgin/exam-status?runId=${runId}&threadId=${threadId}`,
+          `${BASE_URL}/marketing-service/campgin/response-api/exam-status?${params.toString()}`,
         );
         if (response.data?.status === "completed") {
           setExamData(response.data.exam);
@@ -212,7 +280,7 @@ const JobAnalysisResult: React.FC = () => {
                     color: colors.stroke,
                   }}
                 >
-                  {isEligible ? "ELIGIBLE" : "LACKS QUALIFICATIONS"}
+                  {isEligible ? "ELIGIBLE" : "NOT ELIGIBLE"}
                 </Tag>
               </div>
             </div>
@@ -270,7 +338,7 @@ const JobAnalysisResult: React.FC = () => {
                   <Title level={5} className={`!mb-0 font-bold ${colors.text}`}>
                     {isEligible
                       ? "Qualified for Assessment"
-                      : "Skill Gap Detected"}
+                      : ineligibleHeadline}
                   </Title>
                 </div>
                 <Paragraph className="text-slate-700 text-lg leading-relaxed !mb-0 italic">
@@ -316,6 +384,98 @@ const JobAnalysisResult: React.FC = () => {
               </div>
             </div>
           </Card>
+
+          {/* Experience Match */}
+          {hasExperienceInfo && (
+            <Card className="rounded-[24px] border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden p-2">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 text-xl font-bold flex-shrink-0">
+                    <FileDoneOutlined />
+                  </div>
+                  <div className="flex-1">
+                    <Title level={4} className="!mb-1 font-black">
+                      Experience Match
+                    </Title>
+                    <Text className="text-slate-500">
+                      Whether your experience meets the role's requirement
+                    </Text>
+                  </div>
+                  <Tag
+                    className="font-bold px-3 py-1 border-0 rounded-lg self-center"
+                    style={{
+                      backgroundColor: experienceMatch ? "#ecfdf5" : "#fff1f2",
+                      color: experienceMatch ? "#10b981" : "#ef4444",
+                    }}
+                  >
+                    {experienceMatch ? "MEETS REQUIREMENT" : "BELOW REQUIREMENT"}
+                  </Tag>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
+                    <div className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">
+                      Your Experience
+                    </div>
+                    <div className="text-2xl font-black text-slate-800">
+                      {candidateExperienceYears != null
+                        ? `${candidateExperienceYears} yrs`
+                        : "—"}
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
+                    <div className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">
+                      Required
+                    </div>
+                    <div className="text-2xl font-black text-slate-800">
+                      {requiredExperienceYears != null
+                        ? `${requiredExperienceYears} yrs`
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {experienceReason && (
+                  <div
+                    className={`border rounded-2xl p-5 ${
+                      experienceMatch
+                        ? "bg-emerald-50 border-emerald-200"
+                        : "bg-rose-50 border-rose-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {experienceMatch ? (
+                        <CheckCircleOutlined className="text-emerald-500" />
+                      ) : (
+                        <InfoCircleOutlined className="text-rose-500" />
+                      )}
+                      <Text
+                        strong
+                        className={
+                          experienceMatch ? "text-emerald-700" : "text-rose-700"
+                        }
+                      >
+                        Experience Assessment
+                      </Text>
+                    </div>
+                    <Paragraph className="text-slate-700 !mb-0 leading-relaxed">
+                      {experienceReason}
+                    </Paragraph>
+                  </div>
+                )}
+
+                {!isEligible && experienceMatch === false && (
+                  <Alert
+                    className="mt-4 rounded-2xl"
+                    type="warning"
+                    showIcon
+                    message="Exam locked"
+                    description="A strong ATS score alone does not unlock the exam — the role's experience requirement must also be met."
+                  />
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Recommendations & Optimization */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -660,12 +820,34 @@ const JobAnalysisResult: React.FC = () => {
                 <Title level={2} className="!text-white !mb-4 font-black">
                   Path to Eligibility
                 </Title>
-                <Paragraph className="text-rose-100 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                  While you don't meet the current threshold of 80% with a score
-                  of <span className="font-black underline">{matchScore}%</span>
-                  , you have a clear path to improvement. We recommend focusing
-                  on the gaps identified above.
+                <Paragraph className="text-rose-100 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+                  The exam unlocks only when both the ATS match and the
+                  experience requirement are met. Here's what's holding it back:
                 </Paragraph>
+
+                <div className="max-w-xl mx-auto mb-10 space-y-3 text-left">
+                  {ineligibilityReasons.length > 0 ? (
+                    ineligibilityReasons.map((r, i) => (
+                      <div
+                        key={i}
+                        className="bg-white/10 border border-white/20 rounded-2xl p-4 flex items-start gap-3"
+                      >
+                        <CloseCircleOutlined className="text-white text-lg mt-0.5" />
+                        <div>
+                          <div className="font-black text-white">{r.title}</div>
+                          <div className="text-rose-100 text-sm leading-relaxed">
+                            {r.detail}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-rose-100">
+                      Focus on the gaps and recommendations identified above to
+                      strengthen your application.
+                    </div>
+                  )}
+                </div>
                 <Button
                   size="large"
                   onClick={() => navigate(-1)}

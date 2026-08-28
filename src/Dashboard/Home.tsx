@@ -40,7 +40,7 @@ import ProductImg1 from "../assets/img/ricecard1.png";
 import ricecontainer1 from "../assets/img/steelcontainer.png";
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
-import O8 from "../assets/img/aitemplate.png";
+import O8 from "../assets/img/silver0.png";
 import aibook from "../assets/img/aibook.png";
 
 import O5 from "../assets/img/cashewoffer1.png";
@@ -757,12 +757,12 @@ const Home: React.FC = () => {
 
   const headerImages: HeaderImage[] = [
     {
-      id: "Agent Create",
+      id: "Buy Silver Coins",
       src: O8,
-      alt: "Agent Create",
-      path: "/main/agentcreate",
+      alt: "Buy Silver Coins",
+      path: "/main/dashboard/products?type=SILVER",
       onClick: () => {
-        navigate("/main/agentcreate");
+        navigate("/main/dashboard/products?type=SILVER");
       },
     },
     {

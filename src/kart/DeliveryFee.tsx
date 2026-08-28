@@ -47,6 +47,37 @@ interface DeliveryFeeResult {
   };
 }
 
+export interface DistanceDeliveryFeeResult {
+  fee: number | null;
+  distance: number;
+  canPlaceOrder: boolean;
+  hasFee?: boolean;
+  willFeeAvailable?: boolean;
+  message?: string | null;
+  errorMessage?: string | null;
+}
+
+export const calculateDistanceDeliveryFee = async (
+  userLat: number,
+  userLng: number,
+): Promise<DistanceDeliveryFeeResult> => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/calculate-distance-fee`, {
+      userLat: String(userLat),
+      userLng: String(userLng),
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("Distance delivery-fee API error:", error);
+    return {
+      fee: null,
+      distance: 0,
+      canPlaceOrder: false,
+      errorMessage: error.response?.data?.error || "Unable to calculate the delivery fee.",
+    };
+  }
+};
+
 export const getFinalDeliveryFee = async (
   userLat: number,
   userLng: number,
