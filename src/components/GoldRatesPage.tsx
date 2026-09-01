@@ -13,6 +13,9 @@ interface GoldRate {
   rate22kt: number | null;
   rate24kt: number | null;
   silverprice: number | null;
+  rate22kt1kg: number | null;
+  rate24kt1kg: number | null;
+  silverprice1g: number | null;
   updatedTime: number;
   websiteLink?: string;
   website22kt?: string;
@@ -51,8 +54,8 @@ const avg = (nums: Array<number | null>) => {
 const GoldRatesPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const buyRef   = useRef<HTMLDivElement>(null);
-  const sellRef  = useRef<HTMLDivElement>(null);
+  const buyRef = useRef<HTMLDivElement>(null);
+  const sellRef = useRef<HTMLDivElement>(null);
   const leaseRef = useRef<HTMLDivElement>(null);
 
   const [goldRates, setGoldRates] = useState<GoldRate[]>([]);
@@ -160,13 +163,13 @@ const GoldRatesPage: React.FC = () => {
       hour: "2-digit", minute: "2-digit",
     });
 
-  const ibjaRate   = goldRates.find(r => r.companyName === "IBJA");
+  const ibjaRate = goldRates.find(r => r.companyName === "IBJA");
   const tableRates = goldRates.filter(r => r.companyName !== "IBJA");
 
-  const s22Base    = ibjaRate?.rate22kt ?? null;
+  const s22Base = ibjaRate?.rate22kt ?? null;
   const s22Charges = s22Base !== null ? s22Base * 0.02 : null;
   const s22Payable = (s22Base !== null && s22Charges !== null) ? s22Base - s22Charges : null;
-  const s24Base    = ibjaRate?.rate24kt ?? null;
+  const s24Base = ibjaRate?.rate24kt ?? null;
   const s24Charges = s24Base !== null ? s24Base * 0.02 : null;
   const s24Payable = (s24Base !== null && s24Charges !== null) ? s24Base - s24Charges : null;
 
@@ -184,7 +187,8 @@ const GoldRatesPage: React.FC = () => {
         * { box-sizing: border-box; }
 
         /* ── Main rates table ── */
-        .gr-table { width: 100%; border-collapse: collapse; }
+        .desktop-table { overflow-x: auto; }
+        .gr-table { width: 100%; min-width: 780px; border-collapse: collapse; }
         .gr-table th {
           padding: 11px 18px;
           text-align: left;
@@ -207,6 +211,7 @@ const GoldRatesPage: React.FC = () => {
         .gr-table tbody tr:hover td { background: #fffdf8; }
         .gr-price-link { color: #222; text-decoration: none; font-weight: 500; font-variant-numeric: tabular-nums; }
         .gr-price-link:hover { color: #b8861c; text-decoration: underline; }
+        .gr-unit { color: #aaa; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; }
 
         /* ── Section tables ── */
         .sec-table { width: 100%; border-collapse: collapse; }
@@ -270,11 +275,33 @@ const GoldRatesPage: React.FC = () => {
 
         .section-anchor { scroll-margin-top: 64px; }
 
+        @media (max-width: 900px) {
+          .page-main { padding-left: 14px !important; padding-right: 14px !important; }
+          .top-header { padding-left: 14px !important; padding-right: 14px !important; }
+        }
         @media (max-width: 768px) {
           .desktop-table { display: none !important; }
           .mobile-cards-list { display: flex !important; }
           .two-col-grid { grid-template-columns: 1fr !important; }
           .header-sub { display: none !important; }
+          .top-header { height: auto !important; min-height: 58px; padding-top: 8px !important; padding-bottom: 8px !important; gap: 10px; }
+          .top-nav { gap: 0 !important; overflow-x: auto; max-width: 62vw; scrollbar-width: none; }
+          .top-nav::-webkit-scrollbar { display: none; }
+          .nav-btn { white-space: nowrap; padding: 6px 9px; font-size: 11.5px; }
+          .section-heading-row { align-items: flex-start !important; gap: 10px; }
+          .update-note { display: none; }
+          .mobile-rate-row { padding: 8px 0; border-bottom: 1px dashed #eee7d8; }
+          .mobile-rate-row:last-child { border-bottom: none; }
+        }
+        @media (max-width: 480px) {
+          .page-main { padding-top: 22px !important; padding-bottom: 56px !important; }
+          .brand-mark { display: none !important; }
+          .top-nav { max-width: 68vw; }
+          .nav-btn { padding: 6px 7px; font-size: 10.8px; }
+          .mobile-card-head { align-items: flex-start !important; gap: 8px; }
+          .mobile-updated { max-width: 120px; text-align: right; line-height: 1.3; }
+          .mobile-rate-label { font-size: 12.5px !important; }
+          .mobile-rate-value { font-size: 13.5px !important; }
         }
         @media (min-width: 769px) {
           .mobile-cards-list { display: none !important; }
@@ -283,6 +310,7 @@ const GoldRatesPage: React.FC = () => {
 
       {/* ════════════════ HEADER ════════════════ */}
       <header
+        className="top-header"
         style={{
           background: "#fff",
           borderBottom: "1px solid #e8e0cc",
@@ -299,6 +327,7 @@ const GoldRatesPage: React.FC = () => {
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
+            className="brand-mark"
             style={{
               width: 30,
               height: 30,
@@ -341,7 +370,7 @@ const GoldRatesPage: React.FC = () => {
         </div>
 
         {/* Nav */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <div className="top-nav" style={{ display: "flex", alignItems: "center", gap: 2 }}>
           <button
             className={`nav-btn${activeSection === "buy" ? " active" : ""}`}
             onClick={() => scrollTo(buyRef, "buy")}
@@ -379,7 +408,8 @@ const GoldRatesPage: React.FC = () => {
 
       {/* ════════════════ MAIN ════════════════ */}
       <main
-        style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px 80px" }}
+        className="page-main"
+        style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px 80px" }}
       >
         {/* Error */}
         {error && (
@@ -443,6 +473,7 @@ const GoldRatesPage: React.FC = () => {
             {/* ══════════ BUY GOLD ══════════ */}
             <div ref={buyRef} className="section-anchor">
               <div
+                className="section-heading-row"
                 style={{
                   display: "flex",
                   alignItems: "flex-end",
@@ -476,6 +507,7 @@ const GoldRatesPage: React.FC = () => {
                   </p>
                 </div>
                 <div
+                  className="update-note"
                   style={{
                     fontSize: 11.5,
                     color: "#777",
@@ -530,19 +562,8 @@ const GoldRatesPage: React.FC = () => {
                           /g
                         </span>
                       </th>
-                      <th>
-                        Silver{" "}
-                        <span
-                          style={{
-                            fontWeight: 400,
-                            color: "#aaa",
-                            textTransform: "none",
-                            letterSpacing: 0,
-                          }}
-                        >
-                          /kg
-                        </span>
-                      </th>
+                      <th>Silver <span className="gr-unit">/g</span></th>
+                      <th>Silver <span className="gr-unit">/kg</span></th>
                       <th>Updated</th>
                     </tr>
                   </thead>
@@ -621,6 +642,16 @@ const GoldRatesPage: React.FC = () => {
                             rel="noopener noreferrer"
                             className="gr-price-link"
                           >
+                            {formatCurrency2(rate.silverprice1g)}
+                          </a>
+                        </td>
+                        <td>
+                          <a
+                            href={rate.websiteSilver || rate.websiteLink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gr-price-link"
+                          >
                             {formatCurrency2(rate.silverprice)}
                           </a>
                         </td>
@@ -631,11 +662,11 @@ const GoldRatesPage: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
-               
+
               </div>
- <p>
-                  <strong>Note:</strong> All gold rates are excluding GST.
-                </p>
+              <p>
+                <strong>Note:</strong> All gold rates are excluding GST.
+              </p>
               {/* Mobile cards */}
               <div
                 className="mobile-cards-list"
@@ -649,6 +680,7 @@ const GoldRatesPage: React.FC = () => {
                 {tableRates.map((rate) => (
                   <div key={rate.id} className="card">
                     <div
+                      className="mobile-card-head"
                       style={{
                         padding: "10px 14px",
                         borderBottom: "1px solid #f0ece2",
@@ -669,7 +701,7 @@ const GoldRatesPage: React.FC = () => {
                           rate.companyName
                         )}
                       </span>
-                      <span style={{ fontSize: 11, color: "#777" }}>
+                      <span className="mobile-updated" style={{ fontSize: 11, color: "#777" }}>
                         {formatTime(rate.updatedTime)}
                       </span>
                     </div>
@@ -683,37 +715,43 @@ const GoldRatesPage: React.FC = () => {
                     >
                       {[
                         {
-                          label: "22K Gold",
+                          label: "22K Gold / 1g",
                           val: rate.rate22kt,
                           href: rate.website22kt || rate.websiteLink || "#",
                         },
                         {
-                          label: "24K Gold",
+                          label: "24K Gold / 1g",
                           val: rate.rate24kt,
                           href: rate.website24kt || rate.websiteLink || "#",
                         },
                         {
-                          label: "Silver",
+                          label: "Silver / 1g",
+                          val: rate.silverprice1g,
+                          href: rate.websiteSilver || rate.websiteLink || "#",
+                        },
+                        {
+                          label: "Silver / 1kg",
                           val: rate.silverprice,
                           href: rate.websiteSilver || rate.websiteLink || "#",
                         },
                       ].map((item) => (
                         <div
                           key={item.label}
+                          className="mobile-rate-row"
                           style={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
                           }}
                         >
-                          <span style={{ fontSize: 13, color: "#555" }}>
+                          <span className="mobile-rate-label" style={{ fontSize: 13, color: "#555" }}>
                             {item.label}
                           </span>
                           <a
                             href={item.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gr-price-link"
+                            className="gr-price-link mobile-rate-value"
                             style={{ fontSize: 13.5 }}
                           >
                             {formatCurrency2(item.val)}
@@ -725,7 +763,7 @@ const GoldRatesPage: React.FC = () => {
                 ))}
               </div>
             </div>
-            
+
             {/* end Buy Gold */}
 
             {/* ══════════ LEASE GOLD ══════════ */}
@@ -808,7 +846,14 @@ const GoldRatesPage: React.FC = () => {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="td-label">IBJA Price</td>
+                        <td className="td-label">IBJA Price (1g)</td>
+                        <td className="td-value">
+                          {formatCurrency2(ibjaRate.silverprice1g)}
+                          <span className="td-sub">/g</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="td-label">IBJA Price (1kg)</td>
                         <td className="td-value">
                           {fmt(ibjaRate.silverprice)}
                           <span className="td-sub">/kg</span>
@@ -944,7 +989,14 @@ const GoldRatesPage: React.FC = () => {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="td-label">IBJA Rate</td>
+                        <td className="td-label">IBJA Rate (1g)</td>
+                        <td className="td-value">
+                          {formatCurrency2(ibjaRate.silverprice1g)}
+                          <span className="td-sub">/g</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="td-label">IBJA Rate (1kg)</td>
                         <td className="td-value">
                           {fmt(ibjaRate.silverprice)}
                           <span className="td-sub">/kg</span>

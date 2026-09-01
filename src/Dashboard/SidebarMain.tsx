@@ -16,13 +16,13 @@ import {
   FaUser,
   FaRegCheckCircle,
   FaCog,
-  FaComments
+  FaComments,
 } from "react-icons/fa";
 import { IoLayers, IoLogOut } from "react-icons/io5";
 import { FaCreditCard, FaRobot, FaBriefcase } from "react-icons/fa6";
 import { TbLayoutDashboardFilled } from "react-icons/tb";
 import { ImUsers } from "react-icons/im";
-import { AiFillFileText } from "react-icons/ai";
+import { AiFillFileText, AiFillProduct } from "react-icons/ai";
 import { HiSparkles } from "react-icons/hi2";
 import { TiChevronRight, TiChevronLeft } from "react-icons/ti";
 import { BiSolidMessageSquare } from "react-icons/bi";
@@ -95,13 +95,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleSignout = () => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: 'You will be signed out of your account.',
-      icon: 'warning',
+      title: "Are you sure?",
+      text: "You will be signed out of your account.",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, sign out!'
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, sign out!",
     }).then((result) => {
       if (result.isConfirmed) {
         const entryPoint = localStorage.getItem("entryPoint") || "/";
@@ -294,7 +294,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "Blog Management",
           icon: <AiFillFileText size={16} />,
         },
-        
+       
       ],
     },
 
@@ -317,18 +317,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
       ],
     },
+    // {
+    //   type: "item",
+    //   to: "/main/dashboard/addproduct-service",
+    //   label: "Add Product/Service",
+    //   icon: <AiFillProduct size={16} />,
+    // },
     {
       type: "item",
       to: "/oxycommunity",
       icon: <FaComments size={18} />,
       label: "Oxy Community",
     },
-    // {
-    //   type: "item",
-    //   to: "/interview",
-    //   icon: <AiFillFileText size={18} />,
-    //   label: "Interview",
-    // },
+    
   ];
 
   const isActive = (to: string) => {
@@ -499,7 +500,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             {item.icon}
                           </span>
                         )}
-                        <span >{item.label}</span>
+                        <span>{item.label}</span>
                       </Link>
                     );
                   })}

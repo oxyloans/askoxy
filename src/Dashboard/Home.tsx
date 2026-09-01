@@ -40,7 +40,7 @@ import ProductImg1 from "../assets/img/ricecard1.png";
 import ricecontainer1 from "../assets/img/steelcontainer.png";
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
-import O8 from "../assets/img/silver0.png";
+import O8 from "../assets/img/silver0.jpeg";
 import aibook from "../assets/img/aibook.png";
 
 import O5 from "../assets/img/cashewoffer1.png";
