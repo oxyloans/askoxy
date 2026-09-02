@@ -36,6 +36,7 @@ import EmployeeJobComingSoon from "./Employee/EmployeeJobComingSoon";
 import JobPostForm from "./Employee/JobPostForm";
 import AddCompanyEmployeeNew from "./AskoxyAdmin/Addcompanyemployeenew";
 import ProductServiceManager from "./Dashboard/ProductServiceManager";
+import MyProductsServices from "./Dashboard/MyProductsServices";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -1988,6 +1989,7 @@ const App: React.FC = () => {
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/addproduct-service" element={<ProductServiceManager />} />
+                <Route path="dashboard/my-products-services" element={<MyProductsServices />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
                 <Route
                   path="dashboard/leaguejourneys"

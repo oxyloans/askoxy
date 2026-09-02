@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import BASE_URL from "../Config"; 
+import { useLocation, useNavigate } from "react-router-dom";
+import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 const USER_ID_STORAGE_KEY = "userId";
 
 
@@ -11,7 +13,7 @@ type EntryKind = "PRODUCT" | "SERVICE";
 type TriState = "" | "true" | "false";
 
 interface ProductEntry {
-  id: string; 
+  id: string;
   name: string;
   category: string;
   subCategory: string;
@@ -139,6 +141,7 @@ const PRICE_TYPES: { value: PriceType; label: string }[] = [
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUUID = (v: string) => UUID_REGEX.test(v);
+const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -204,13 +207,7 @@ const toIntOrNull = (v: string): number | null =>
 const triToBool = (v: TriState): boolean | null =>
   v === "true" ? true : v === "false" ? false : null;
 
-function buildProductPayload(
-  entry: ProductEntry,
-  memberId: string,
-  gstNumber: string,
-  gstDocumentUrl: string,
-) {
-  const now = new Date().toISOString();
+function buildProductPayload(entry: ProductEntry, memberId: string) {
   return {
     id: isUUID(entry.id) ? entry.id : null,
     memberId,
@@ -223,11 +220,7 @@ function buildProductPayload(
     price: toNumberOrNull(entry.price),
     availability: entry.availability.trim() || null,
     imageUrl: entry.imageUrl.trim() || null,
-    gstNumber: gstNumber.trim() || null,
-    gstDocumentUrl: gstDocumentUrl.trim() || null,
     paymentModes: "",
-    createdAt: now,
-    updatedAt: now,
     color: entry.color.trim() || null,
     brand: entry.brand.trim() || null,
     quantity: toNumberOrNull(entry.quantity),
@@ -251,13 +244,7 @@ function buildProductPayload(
   };
 }
 
-function buildServicePayload(
-  entry: ServiceEntry,
-  memberId: string,
-  gstNumber: string,
-  gstDocumentUrl: string,
-) {
-  const now = new Date().toISOString();
+function buildServicePayload(entry: ServiceEntry, memberId: string) {
   return {
     id: isUUID(entry.id) ? entry.id : null,
     memberId,
@@ -270,11 +257,7 @@ function buildServicePayload(
     price: toNumberOrNull(entry.price),
     availability: entry.availability.trim() || null,
     imageUrl: entry.imageUrl.trim() || null,
-    gstNumber: gstNumber.trim() || null,
-    gstDocumentUrl: gstDocumentUrl.trim() || null,
     paymentModes: "",
-    createdAt: now,
-    updatedAt: now,
     color: null,
     providerName: entry.providerName.trim() || null,
     businessName: entry.businessName.trim() || null,
@@ -315,18 +298,18 @@ async function uploadMemberFile(
     fileType,
   )}&userId=${encodeURIComponent(userId.trim())}`;
 
-  const res = await fetch(uploadUrl, {
-    method: "POST",
-    headers: { accept: "*/*" },
-    body: formData,
+  const res = await customerApi.post(uploadUrl, formData, {
+    headers: { "Content-Type": undefined },
   });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
+  if (res.status < 200 || res.status >= 300) {
+    const errText =
+      typeof res.data === "string" ? res.data : JSON.stringify(res.data ?? "");
     throw new Error(`Upload failed (${res.status}): ${errText}`);
   }
 
-  const text = await res.text();
+  const text =
+    typeof res.data === "string" ? res.data : JSON.stringify(res.data ?? "");
   try {
     const json = JSON.parse(text);
     if (typeof json === "string") return json;
@@ -346,27 +329,34 @@ async function uploadMemberFile(
   }
 }
 
+interface SaveResponse {
+  status: boolean;
+  message: string;
+  data?: { id: string;[key: string]: unknown };
+}
+
 async function saveEntry(
   payload:
     | ReturnType<typeof buildProductPayload>
     | ReturnType<typeof buildServicePayload>,
-): Promise<string> {
-  const res = await fetch(
+): Promise<{ message: string; savedId: string }> {
+  const res = await customerApi.post(
     `${BASE_URL}/marketing-service/campgin/save-update-member-products-services`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", accept: "*/*" },
-      body: JSON.stringify(payload),
-    },
+    payload,
+    { headers: { "Content-Type": "application/json", accept: "*/*" } },
   );
-  const json = await res.json().catch(() => null);
-  if (!res.ok || json?.status === false) {
+  const json = res.data as SaveResponse | null | undefined;
+
+  if (!json || json.status === false) {
     throw new Error(
       json?.message ||
-      `${payload.membersType === "PRODUCT" ? "Product" : "Service"} save failed (${res.status})`,
+      `${payload.membersType === "PRODUCT" ? "Product" : "Service"} save failed`,
     );
   }
-  return json?.message || "Saved successfully.";
+  return {
+    message: json.message || "Saved successfully.",
+    savedId: (json.data?.id as string) || "",
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -454,7 +444,8 @@ const UploadField: React.FC<{
   onChange: (url: string) => void;
   userId: string;
   isImage?: boolean;
-}> = ({ label, value, onChange, userId, isImage = false }) => {
+  compact?: boolean;
+}> = ({ label, value, onChange, userId, isImage = false, compact = false }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -466,8 +457,10 @@ const UploadField: React.FC<{
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File size must be under 5MB.");
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setError(
+        `File size must be 5 MB or less. Selected file is ${(file.size / (1024 * 1024)).toFixed(2)} MB.`,
+      );
       return;
     }
     setError(null);
@@ -524,7 +517,17 @@ const UploadField: React.FC<{
         </p>
       )}
       {error && <ErrorText msg={error} />}
-      <p className="mt-1 text-right text-[11px] text-gray-400">Max 5 MB</p>
+      {isImage && value && !uploading && (
+        <div className="mt-2 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-2">
+          <img src={value} alt={`${label} preview`} className="h-14 w-14 rounded-md bg-white object-contain" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-gray-700">Image ready</p>
+            <p className="truncate text-[11px] text-gray-400">Preview of the uploaded image</p>
+          </div>
+          <button type="button" onClick={() => { onChange(""); setSuccessMsg(null); }} className="rounded-md px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">Remove</button>
+        </div>
+      )}
+      {!compact && <p className="mt-1 text-right text-[11px] text-gray-400">Max 5 MB</p>}
     </div>
   );
 };
@@ -562,11 +565,71 @@ const StatusPill: React.FC<{ status: SaveStatus }> = ({ status }) => {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
+/* ── helper: map API entry → ProductEntry form shape ── */
+function apiToProduct(d: Record<string, unknown>): ProductEntry {
+  const boolToTri = (v: unknown): TriState =>
+    v === true ? "true" : v === false ? "false" : "";
+  return {
+    id: String(d.id ?? ""),
+    name: String(d.name ?? ""),
+    category: String(d.category ?? ""),
+    subCategory: String(d.subCategory ?? ""),
+    description: String(d.description ?? ""),
+    keyFeatures: String(d.keyFeatures ?? ""),
+    price: d.price != null ? String(d.price) : "",
+    availability: String(d.availability ?? ""),
+    imageUrl: String(d.imageUrl ?? ""),
+    color: String(d.color ?? ""),
+    brand: String(d.brand ?? ""),
+    quantity: d.quantity != null ? String(d.quantity) : "",
+    quantityUnit: String(d.quantityUnit ?? ""),
+    variant: String(d.variant ?? ""),
+    mrp: d.mrp != null ? String(d.mrp) : "",
+    stockQuantity: d.stockQuantity != null ? String(d.stockQuantity) : "",
+    productCondition: (d.productCondition as ProductCondition) || "",
+    returnAvailable: boolToTri(d.returnAvailable),
+    returnDays: d.returnDays != null ? String(d.returnDays) : "",
+    warrantyAvailable: boolToTri(d.warrantyAvailable),
+    warrantyPeriod: String(d.warrantyPeriod ?? ""),
+    deliveryTime: String(d.deliveryTime ?? ""),
+    priceType: (d.priceType as PriceType) || "FIXED",
+  };
+}
+
+function apiToService(d: Record<string, unknown>): ServiceEntry {
+  const boolToTri = (v: unknown): TriState =>
+    v === true ? "true" : v === false ? "false" : "";
+  return {
+    id: String(d.id ?? ""),
+    name: String(d.name ?? ""),
+    category: String(d.category ?? ""),
+    subCategory: String(d.subCategory ?? ""),
+    description: String(d.description ?? ""),
+    keyFeatures: String(d.keyFeatures ?? ""),
+    price: d.price != null ? String(d.price) : "",
+    availability: String(d.availability ?? ""),
+    imageUrl: String(d.imageUrl ?? ""),
+    providerName: String(d.providerName ?? ""),
+    businessName: String(d.businessName ?? ""),
+    serviceMode: (d.serviceMode as ServiceMode) || "",
+    serviceLocation: String(d.serviceLocation ?? ""),
+    serviceDuration: String(d.serviceDuration ?? ""),
+    priceType: (d.priceType as PriceType) || "FIXED",
+    bookingRequired: boolToTri(d.bookingRequired),
+    targetCustomers: String(d.targetCustomers ?? ""),
+    cancellationPolicy: String(d.cancellationPolicy ?? ""),
+    refundPolicy: String(d.refundPolicy ?? ""),
+    brochureUrl: String(d.brochureUrl ?? ""),
+  };
+}
+
 const ProductServiceManager: React.FC = () => {
-  // The logged-in member's id, read once from localStorage.
-  // TODO: once the GET API for existing products/services is ready, use this
-  // same id to fetch and prefill `products` / `services` below.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const editId: string | undefined = (location.state as { editId?: string } | null)?.editId;
+
   const [memberId, setMemberId] = useState<string>("");
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
 
   useEffect(() => {
     setMemberId(localStorage.getItem(USER_ID_STORAGE_KEY) || "");
@@ -576,17 +639,35 @@ const ProductServiceManager: React.FC = () => {
   const [products, setProducts] = useState<ProductEntry[]>([emptyProduct()]);
   const [services, setServices] = useState<ServiceEntry[]>([emptyService()]);
 
-  // GST is a one-time, business-level detail — shared across every product
-  // and service, not repeated per entry.
+  // GST — UI only, not sent to backend (backend DTO has no gst fields)
   const [gstNumber, setGstNumber] = useState("");
   const [gstDocumentUrl, setGstDocumentUrl] = useState("");
 
-  const [productErrors, setProductErrors] = useState<
-    Record<string, FieldErrors>
-  >({});
-  const [serviceErrors, setServiceErrors] = useState<
-    Record<string, FieldErrors>
-  >({});
+  /* ── pre-fill form when editing an existing entry ── */
+  useEffect(() => {
+    if (!editId) return;
+    const mId = localStorage.getItem(USER_ID_STORAGE_KEY) || "";
+    if (!mId) { setLoadingEdit(false); return; }
+    customerApi
+      .get(`${BASE_URL}/marketing-service/campgin/products-services/${mId}`)
+      .then((res) => {
+        const list: Record<string, unknown>[] = Array.isArray(res.data) ? res.data : [];
+        const entry = list.find((e) => String(e.id) === editId);
+        if (!entry) { setLoadingEdit(false); return; }
+        if (String(entry.membersType) === "PRODUCT") {
+          setActiveKind("PRODUCT");
+          setProducts([apiToProduct(entry)]);
+        } else {
+          setActiveKind("SERVICE");
+          setServices([apiToService(entry)]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingEdit(false));
+  }, [editId]);
+
+  const [productErrors, setProductErrors] = useState<Record<string, FieldErrors>>({});
+  const [serviceErrors, setServiceErrors] = useState<Record<string, FieldErrors>>({});
   const [status, setStatus] = useState<Record<string, SaveStatus>>({});
   const [banner, setBanner] = useState<{
     type: "success" | "error" | "info";
@@ -600,23 +681,42 @@ const ProductServiceManager: React.FC = () => {
     id: string,
     key: K,
     value: ProductEntry[K],
-  ) =>
+  ) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, [key]: value } : p)),
     );
+    setStatus((prev) => ({ ...prev, [id]: "idle" }));
+    if (key === "name" || key === "category" || key === "price") {
+      setProductErrors((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], [key]: undefined },
+      }));
+    }
+  };
 
   const updateService = <K extends keyof ServiceEntry>(
     id: string,
     key: K,
     value: ServiceEntry[K],
-  ) =>
+  ) => {
     setServices((prev) =>
       prev.map((s) => (s.id === id ? { ...s, [key]: value } : s)),
     );
+    setStatus((prev) => ({ ...prev, [id]: "idle" }));
+    if (key === "name" || key === "category" || key === "price") {
+      setServiceErrors((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], [key]: undefined },
+      }));
+    }
+  };
 
   const removeProduct = (id: string) => {
+    if (products.length === 1) return;
+    const product = products.find((item) => item.id === id);
+    if (product && isProductFilled(product) && !window.confirm("Remove this product? Your entered details will be lost.")) return;
     setProducts((prev) =>
-      prev.length > 1 ? prev.filter((p) => p.id !== id) : prev,
+      prev.filter((p) => p.id !== id),
     );
     setProductErrors((prev) => {
       const { [id]: _, ...rest } = prev;
@@ -625,8 +725,11 @@ const ProductServiceManager: React.FC = () => {
   };
 
   const removeService = (id: string) => {
+    if (services.length === 1) return;
+    const service = services.find((item) => item.id === id);
+    if (service && isServiceFilled(service) && !window.confirm("Remove this service? Your entered details will be lost.")) return;
     setServices((prev) =>
-      prev.length > 1 ? prev.filter((s) => s.id !== id) : prev,
+      prev.filter((s) => s.id !== id),
     );
     setServiceErrors((prev) => {
       const { [id]: _, ...rest } = prev;
@@ -684,6 +787,7 @@ const ProductServiceManager: React.FC = () => {
         type: "error",
         text: "Fix the highlighted product fields before saving.",
       });
+      window.setTimeout(() => document.getElementById(`entry-${Object.keys(nextProductErrors)[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
       return;
     }
     if (Object.keys(nextServiceErrors).length) {
@@ -692,6 +796,7 @@ const ProductServiceManager: React.FC = () => {
         type: "error",
         text: "Fix the highlighted service fields before saving.",
       });
+      window.setTimeout(() => document.getElementById(`entry-${Object.keys(nextServiceErrors)[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
       return;
     }
 
@@ -719,28 +824,57 @@ const ProductServiceManager: React.FC = () => {
 
     const results = await Promise.allSettled([
       ...validProducts.map((p) =>
-        saveEntry(
-          buildProductPayload(p, memberId, gstNumber, gstDocumentUrl),
-        ).then((msg) => ({ id: p.id, msg })),
+        saveEntry(buildProductPayload(p, memberId)).then((res) => ({
+          id: p.id,
+          savedId: res.savedId,
+          msg: res.message,
+          kind: "PRODUCT" as const,
+        })),
       ),
       ...validServices.map((s) =>
-        saveEntry(
-          buildServicePayload(s, memberId, gstNumber, gstDocumentUrl),
-        ).then((msg) => ({ id: s.id, msg })),
+        saveEntry(buildServicePayload(s, memberId)).then((res) => ({
+          id: s.id,
+          savedId: res.savedId,
+          msg: res.message,
+          kind: "SERVICE" as const,
+        })),
       ),
     ]);
 
     const finalStatus: Record<string, SaveStatus> = {};
     let failCount = 0;
     let successMsg = "";
+    let errorMsg = "";
+
     results.forEach((r) => {
       if (r.status === "fulfilled") {
         finalStatus[r.value.id] = "saved";
         successMsg = r.value.msg;
+        // Replace temp id with real UUID so next save does UPDATE
+        if (r.value.savedId && r.value.savedId !== r.value.id) {
+          if (r.value.kind === "PRODUCT") {
+            setProducts((prev) =>
+              prev.map((p) =>
+                p.id === r.value.id ? { ...p, id: r.value.savedId } : p,
+              ),
+            );
+          } else {
+            setServices((prev) =>
+              prev.map((s) =>
+                s.id === r.value.id ? { ...s, id: r.value.savedId } : s,
+              ),
+            );
+          }
+        }
       } else {
         failCount += 1;
+        if (!errorMsg) {
+          errorMsg =
+            r.reason instanceof Error ? r.reason.message : String(r.reason);
+        }
       }
     });
+
     [...validProducts, ...validServices].forEach((e) => {
       if (!finalStatus[e.id]) finalStatus[e.id] = "error";
     });
@@ -748,44 +882,62 @@ const ProductServiceManager: React.FC = () => {
     setSavingAll(false);
 
     if (failCount === 0) {
-      setBanner({ type: "success", text: successMsg || "All products and services saved successfully." });
-      // Reset forms after success
-      setProducts([emptyProduct()]);
-      setServices([emptyService()]);
-      setGstNumber("");
-      setGstDocumentUrl("");
-      setStatus({});
+      setBanner({
+        type: "success",
+        text: successMsg || "All products and services saved successfully.",
+      });
     } else {
       setBanner({
         type: "error",
-        text: `${failCount} item${failCount > 1 ? "s" : ""} failed to save. Please retry.`,
+        text: `${failCount} item${failCount > 1 ? "s" : ""
+          } failed to save${errorMsg ? `: ${errorMsg}` : ". Please retry."
+          }`,
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 pb-16 pt-6 sm:pt-8">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50/40 via-white to-white px-3 pb-28 pt-5 sm:px-4 sm:pb-20 sm:pt-8">
+      {loadingEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-purple-200 border-t-purple-700" />
+            <p className="text-sm font-semibold text-purple-700">Loading details…</p>
+          </div>
+        </div>
+      )}
       <DatalistOptions id="product-categories" values={PRODUCT_CATEGORIES} />
       <DatalistOptions id="service-categories" values={SERVICE_CATEGORIES} />
-      <DatalistOptions
-        id="availability-options"
-        values={AVAILABILITY_OPTIONS}
-      />
+      <DatalistOptions id="availability-options" values={AVAILABILITY_OPTIONS} />
       <DatalistOptions id="quantity-units" values={QUANTITY_UNITS} />
 
       <div className="mx-auto max-w-6xl">
-        {/* Header row: title+subtitle left, tabs right */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
-              Add Products &amp; Services
-            </h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              List the products or services you want to sell.
-            </p>
+        {/* Header */}
+        <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            {editId && (
+              <button
+                type="button"
+                onClick={() => navigate("/main/dashboard/my-products-services")}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-purple-300 hover:text-purple-700"
+                aria-label="Back"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+                {editId ? "Edit Product / Service" : "Add Products & Services"}
+              </h1>
+              <p className="mt-0.5 text-sm text-gray-500">
+                {editId ? "Update the details below and save." : "Add clear details so customers can quickly understand your offering."}
+              </p>
+            </div>
           </div>
           {/* Kind switch tabs */}
-          <div className="flex shrink-0 gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
+          <div className="grid w-full shrink-0 grid-cols-2 gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 sm:w-auto">
             {(["PRODUCT", "SERVICE"] as EntryKind[]).map((kind) => {
               const isActive = activeKind === kind;
               const count = kind === "PRODUCT" ? products.length : services.length;
@@ -795,13 +947,13 @@ const ProductServiceManager: React.FC = () => {
                   type="button"
                   onClick={() => setActiveKind(kind)}
                   className={
-                    "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all " +
+                    "flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all sm:px-4 " +
                     (isActive
                       ? "bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white shadow"
                       : "text-gray-500 hover:bg-white hover:text-purple-700")
                   }
                 >
-                  {kind === "PRODUCT" ? "🛍 Products" : "⚙️ Services"}
+                  {kind === "PRODUCT" ? "Products" : "Services"}
                   <span className={"rounded-full px-1.5 py-0.5 text-[11px] font-bold " +
                     (isActive ? "bg-white/25 text-white" : "bg-gray-200 text-gray-500")}>
                     {count}
@@ -821,7 +973,7 @@ const ProductServiceManager: React.FC = () => {
               Add this once — it applies to all of your products and services.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
             <TextField
               label="GST number"
               value={gstNumber}
@@ -832,28 +984,11 @@ const ProductServiceManager: React.FC = () => {
               label="GST document"
               value={gstDocumentUrl}
               userId={memberId}
+              compact
               onChange={setGstDocumentUrl}
             />
           </div>
         </div>
-
-        {/* Banner */}
-        {banner && (
-          <div className={
-            "mb-5 flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium " +
-            (banner.type === "success"
-              ? "border-purple-200 bg-purple-50 text-purple-800"
-              : banner.type === "error"
-              ? "border-rose-200 bg-rose-50 text-rose-800"
-              : "border-amber-200 bg-amber-50 text-amber-800")
-          }>
-            <span className="flex items-center gap-2">
-              {banner.type === "success" ? "✅" : banner.type === "error" ? "❌" : "ℹ️"}
-              {banner.text}
-            </span>
-            <button type="button" onClick={() => setBanner(null)} className="shrink-0 text-lg leading-none opacity-60 hover:opacity-100">&times;</button>
-          </div>
-        )}
 
         {/* PRODUCTS */}
         {activeKind === "PRODUCT" && (
@@ -863,7 +998,8 @@ const ProductServiceManager: React.FC = () => {
               return (
                 <div
                   key={p.id}
-                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5 transition hover:shadow-md"
+                  id={`entry-${p.id}`}
+                  className="scroll-mt-24 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5"
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -882,7 +1018,7 @@ const ProductServiceManager: React.FC = () => {
                     </button>
                   </div>
 
-                    <SectionHeading>Basic information</SectionHeading>
+                  <SectionHeading>Basic information</SectionHeading>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <TextField
                       label="Product name"
@@ -915,8 +1051,8 @@ const ProductServiceManager: React.FC = () => {
                     />
                   </div>
 
-                    <SectionHeading>Pricing, stock &amp; specifications</SectionHeading>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <SectionHeading>Pricing, stock &amp; specifications</SectionHeading>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <TextField
                       label="Selling price (₹)"
                       value={p.price}
@@ -993,7 +1129,7 @@ const ProductServiceManager: React.FC = () => {
                     />
                   </div>
 
-                    <SectionHeading>Delivery &amp; policies</SectionHeading>
+                  <SectionHeading>Delivery &amp; policies</SectionHeading>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <TextField
                       label="Delivery time"
@@ -1053,7 +1189,7 @@ const ProductServiceManager: React.FC = () => {
                     />
                   </div>
 
-                    <SectionHeading>Features &amp; description</SectionHeading>
+                  <SectionHeading>Features &amp; description</SectionHeading>
                   <div className="grid grid-cols-1 gap-4">
                     <TextAreaField
                       label="Key features / highlights"
@@ -1091,7 +1227,8 @@ const ProductServiceManager: React.FC = () => {
               return (
                 <div
                   key={s.id}
-                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5 transition hover:shadow-md"
+                  id={`entry-${s.id}`}
+                  className="scroll-mt-24 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5"
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1158,7 +1295,7 @@ const ProductServiceManager: React.FC = () => {
                   </div>
 
                   <SectionHeading>Fee, mode &amp; delivery</SectionHeading>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <TextField
                       label="Price / fee (₹)"
                       value={s.price}
@@ -1287,15 +1424,71 @@ const ProductServiceManager: React.FC = () => {
         )}
 
         {/* Save bar */}
-        <div className="sticky bottom-4 mt-6 flex justify-end">
-          <button
-            type="button"
-            onClick={handleSaveAll}
-            disabled={savingAll}
-            className="rounded-xl bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-8 py-3 text-[15px] font-bold text-white shadow-lg shadow-purple-900/20 transition hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {savingAll ? "Saving…" : "Save all details"}
-          </button>
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-purple-100 bg-white/95 px-3 py-3 shadow-[0_-8px_30px_rgba(76,29,149,0.10)] backdrop-blur sm:sticky sm:bottom-4 sm:mt-6 sm:rounded-2xl sm:border sm:px-4">
+          {banner && (
+            <div
+              className={
+                "mx-auto mb-3 flex max-w-6xl items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium " +
+                (banner.type === "success"
+                  ? "border-purple-200 bg-purple-50 text-purple-800"
+                  : banner.type === "error"
+                    ? "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-amber-200 bg-amber-50 text-amber-800")
+              }
+              role="status"
+              aria-live="polite"
+            >
+              <span className="flex min-w-0 items-start gap-2">
+                <span aria-hidden="true">
+                  {banner.type === "success" ? "✅" : banner.type === "error" ? "❌" : "ℹ️"}
+                </span>
+                <span className="break-words">{banner.text}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setBanner(null)}
+                className="shrink-0 text-lg leading-none opacity-60 hover:opacity-100"
+                aria-label="Dismiss message"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+            <div className="min-w-0">
+              {editId ? (
+                <>
+                  <p className="text-xs font-semibold text-gray-700">Editing existing {activeKind === "PRODUCT" ? "product" : "service"}</p>
+                  <p className="hidden text-[11px] text-gray-400 sm:block">Changes will update the saved record.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold text-gray-700">{products.filter(isProductFilled).length} product{products.filter(isProductFilled).length === 1 ? "" : "s"} · {services.filter(isServiceFilled).length} service{services.filter(isServiceFilled).length === 1 ? "" : "s"} ready</p>
+                  <p className="hidden text-[11px] text-gray-400 sm:block">Your details remain visible after saving.</p>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {editId && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/main/dashboard/my-products-services")}
+                  disabled={savingAll}
+                  className="shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm transition hover:border-purple-300 hover:text-purple-700 disabled:opacity-50 sm:px-6"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSaveAll}
+                disabled={savingAll}
+                className="shrink-0 rounded-xl bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-purple-900/20 transition hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] disabled:cursor-not-allowed disabled:opacity-60 sm:px-8 sm:text-[15px]"
+              >
+                {savingAll ? "Saving…" : editId ? "Update Details" : "Save All Details"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

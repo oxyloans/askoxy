@@ -317,12 +317,24 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
       ],
     },
-    // {
-    //   type: "item",
-    //   to: "/main/dashboard/addproduct-service",
-    //   label: "Add Product/Service",
-    //   icon: <AiFillProduct size={16} />,
-    // },
+    {
+      type: "dropdown",
+      key: "products_services",
+      icon: <AiFillProduct size={18} />,
+      label: "Products & Services",
+      items: [
+        {
+          to: "/main/dashboard/my-products-services",
+          label: "My Products & Services",
+          icon: <FaStore size={16} />,
+        },
+        {
+          to: "/main/dashboard/addproduct-service",
+          label: "Add Product / Service",
+          icon: <FaPlusCircle size={16} />,
+        },
+      ],
+    },
     {
       type: "item",
       to: "/oxycommunity",

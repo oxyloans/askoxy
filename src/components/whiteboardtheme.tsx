@@ -293,7 +293,7 @@ const Whiteboardtheme: React.FC = () => {
                       aria-label="Speak with Sovereign AI"
                     >
                       <img
-                        src={speak0}
+                        src={"https://i.ibb.co/Sw1TVDtQ/qw2.png"}
                         alt="Speak with Sovereign AI"
                         className="h-full w-full object-contain"
                       />
@@ -337,7 +337,7 @@ const Whiteboardtheme: React.FC = () => {
                     aria-label="Speak with Sovereign AI"
                   >
                     <img
-                      src={speak0}
+                      src={"https://i.ibb.co/Sw1TVDtQ/qw2.png"}
                       alt="Speak with Sovereign AI"
                       className="h-full w-full object-contain"
                     />
