@@ -71,6 +71,7 @@ interface TimeSlot {
 interface Item {
   itemId: string;
   itemName: string;
+  categoryName?: string | null;
   itemUrl: string | null;
   weight: string | number;
   price: number;
@@ -116,7 +117,7 @@ const MyOrders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] =
     useState<OrderDetailsResponse | null>(null);
   const [activeTab, setActiveTab] = useState<number | string>("details");
- 
+
   const [showTimeSlotPopup, setShowTimeSlotPopup] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [allOrders, setOrders] = useState<OrderDetailsResponse[]>([]);
@@ -206,7 +207,7 @@ const MyOrders: React.FC = () => {
   // Helper function to get available time slots based on slot status
   const getAvailableTimeSlots = (slot: TimeSlot): string[] => {
     console.log('Processing slot:', slot);
-    
+
     const timeSlots = [
       { time: slot.timeSlot1, status: slot.slot1Status },
       { time: slot.timeSlot2, status: slot.slot2Status },
@@ -225,7 +226,7 @@ const MyOrders: React.FC = () => {
       console.log('Available slots when isAvailable=false:', availableSlots);
       return availableSlots;
     }
-    
+
     // If isAvailable is true, show all non-empty slots
     const allSlots = timeSlots
       .filter(ts => ts.time && ts.time.trim() !== '')
@@ -456,16 +457,16 @@ const MyOrders: React.FC = () => {
         prevOrders.map((order) =>
           order.orderId === selectedOrder.orderId
             ? {
-                ...order,
-                orderItems: order.orderItems.map((item) => {
-                  if (
-                    validExchangeItems.some((ex) => ex.itemId === item.itemId)
-                  ) {
-                    return { ...item, isExchanged: true };
-                  }
-                  return item;
-                }),
-              }
+              ...order,
+              orderItems: order.orderItems.map((item) => {
+                if (
+                  validExchangeItems.some((ex) => ex.itemId === item.itemId)
+                ) {
+                  return { ...item, isExchanged: true };
+                }
+                return item;
+              }),
+            }
             : order
         )
       );
@@ -521,6 +522,7 @@ const MyOrders: React.FC = () => {
         orderItems: (order.orderItem || []).map((item: any) => ({
           itemId: item.itemId,
           itemName: item.productName,
+          categoryName: item.categoryName,
           itemUrl: null,
           weight: "1",
           price: item.price,
@@ -636,90 +638,90 @@ const MyOrders: React.FC = () => {
     }
   };
 
-//   const handleDownloadInvoice = (order: OrderDetailsResponse) => {
-//     try {
-//       const orderDate = new Date(order.orderDate);
-//       const formattedDate = orderDate.toLocaleDateString("en-US", {
-//         year: "numeric",
-//         month: "short",
-//         day: "numeric",
-//       });
+  //   const handleDownloadInvoice = (order: OrderDetailsResponse) => {
+  //     try {
+  //       const orderDate = new Date(order.orderDate);
+  //       const formattedDate = orderDate.toLocaleDateString("en-US", {
+  //         year: "numeric",
+  //         month: "short",
+  //         day: "numeric",
+  //       });
 
-//       // Add GA tracking for invoice download
-//       if (typeof window !== "undefined" && window.gtag) {
-//         window.gtag("event", "download_invoice", {
-//           currency: "INR",
-//           order_id: order.newOrderId || order.orderId,
-//           value: order.grandTotal,
-//         });
-//       }
+  //       // Add GA tracking for invoice download
+  //       if (typeof window !== "undefined" && window.gtag) {
+  //         window.gtag("event", "download_invoice", {
+  //           currency: "INR",
+  //           order_id: order.newOrderId || order.orderId,
+  //           value: order.grandTotal,
+  //         });
+  //       }
 
-//     const invoiceContent = `
-//   INVOICE
-//   =============================
-//   Order ID: ${order.newOrderId || order.orderId}
-//   Date: ${formattedDate}
-//   Customer: ${order.customerName}
-//   Phone: ${order.customerMobile}
-  
-//   Items:
-//   -----------------------------
-//   ${order.orderItems
-//     .map(
-//       (item) =>
-//         `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
-//           item.quantity
-//         } =₹${Math.round(Number(item.quantity * item.singleItemPrice))}`
-//     )
-//     .join("\n")}
-  
-//   -----------------------------
-//   Sub Total: ₹${Math.round(Number(order.subTotal || order.grandTotal))}
-//   Delivery Fee: ₹${Math.round(Number(order.deliveryFee))}
-//   ${order.walletAmount > 0 ? `Wallet Amount: -₹${Math.round(Number(order.walletAmount))}\n` : ""}
-//   ${order.discountAmount > 0 ? `Coupon Discount: -₹${Math.round(Number(order.discountAmount))}\n` : ""}
-//   ${order.gstAmount > 0 ? `GST Charges: ₹${Math.round(Number(order.gstAmount))}\n` : ""}
-  
-//   TOTAL: ₹${Math.round(Number(order.grandTotal))}
-//   =============================
-//   Payment Method: ${order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"}
-// `;
+  //     const invoiceContent = `
+  //   INVOICE
+  //   =============================
+  //   Order ID: ${order.newOrderId || order.orderId}
+  //   Date: ${formattedDate}
+  //   Customer: ${order.customerName}
+  //   Phone: ${order.customerMobile}
 
-//       const blob = new Blob([invoiceContent], { type: "text/plain" });
-//       const url = URL.createObjectURL(blob);
-//       const link = document.createElement("a");
-//       link.href = url;
-//       link.download = `Invoice-${order.newOrderId || order.orderId}.txt`;
-//       document.body.appendChild(link);
-//       link.click();
-//       document.body.removeChild(link);
-//       URL.revokeObjectURL(url);
-//     } catch (error) {
-//       console.error("Error generating invoice:", error);
-//       alert("Failed to download invoice. Please try again later.");
-//     }
-//   };
+  //   Items:
+  //   -----------------------------
+  //   ${order.orderItems
+  //     .map(
+  //       (item) =>
+  //         `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
+  //           item.quantity
+  //         } =₹${Math.round(Number(item.quantity * item.singleItemPrice))}`
+  //     )
+  //     .join("\n")}
+
+  //   -----------------------------
+  //   Sub Total: ₹${Math.round(Number(order.subTotal || order.grandTotal))}
+  //   Delivery Fee: ₹${Math.round(Number(order.deliveryFee))}
+  //   ${order.walletAmount > 0 ? `Wallet Amount: -₹${Math.round(Number(order.walletAmount))}\n` : ""}
+  //   ${order.discountAmount > 0 ? `Coupon Discount: -₹${Math.round(Number(order.discountAmount))}\n` : ""}
+  //   ${order.gstAmount > 0 ? `GST Charges: ₹${Math.round(Number(order.gstAmount))}\n` : ""}
+
+  //   TOTAL: ₹${Math.round(Number(order.grandTotal))}
+  //   =============================
+  //   Payment Method: ${order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"}
+  // `;
+
+  //       const blob = new Blob([invoiceContent], { type: "text/plain" });
+  //       const url = URL.createObjectURL(blob);
+  //       const link = document.createElement("a");
+  //       link.href = url;
+  //       link.download = `Invoice-${order.newOrderId || order.orderId}.txt`;
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       document.body.removeChild(link);
+  //       URL.revokeObjectURL(url);
+  //     } catch (error) {
+  //       console.error("Error generating invoice:", error);
+  //       alert("Failed to download invoice. Please try again later.");
+  //     }
+  //   };
 
 
- const handleDownloadInvoice = (order: any) => {
-   try {
-     if (order?.invoiceUrl) {
-       const link = document.createElement("a");
-       link.href = order.invoiceUrl;
-       link.download = `invoice_${order.orderId}.pdf`;
-       document.body.appendChild(link);
-       link.click();
-       document.body.removeChild(link);
-       message.success("Invoice download started.");
-     } else {
-       console.error("No invoice URL found for order:", order.orderId);
-       message.error("No invoice available for this order.");
-     }
-   } catch (error) {
-     console.error("Error downloading invoice:", error);
-     message.error("Failed to download invoice. Please try again.");
-   }
- };
+  const handleDownloadInvoice = (order: any) => {
+    try {
+      if (order?.invoiceUrl) {
+        const link = document.createElement("a");
+        link.href = order.invoiceUrl;
+        link.download = `invoice_${order.orderId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        message.success("Invoice download started.");
+      } else {
+        console.error("No invoice URL found for order:", order.orderId);
+        message.error("No invoice available for this order.");
+      }
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      message.error("Failed to download invoice. Please try again.");
+    }
+  };
 
 
   const fetchOrderFeedbackData = async (
@@ -911,7 +913,7 @@ const MyOrders: React.FC = () => {
 
       if (response.data && Array.isArray(response.data)) {
         console.log('API Response:', response.data);
-        
+
         // Get potential delivery days
         const potentialDays = getNextAvailableDays();
 
@@ -945,9 +947,9 @@ const MyOrders: React.FC = () => {
               date: dayInfo.date,
               isToday: dayInfo.isToday,
             };
-            
+
             console.log('Processed slot for', dayInfo.dayOfWeek, ':', processedSlot);
-            
+
             // Only add if there are available slots (at least one timeSlot is not empty)
             const hasAvailableSlots = [
               processedSlot.timeSlot1,
@@ -955,7 +957,7 @@ const MyOrders: React.FC = () => {
               processedSlot.timeSlot3,
               processedSlot.timeSlot4
             ].some(slot => slot && slot.trim() !== '');
-            
+
             if (hasAvailableSlots) {
               allProcessedTimeSlots.push(processedSlot);
             }
@@ -1112,12 +1114,12 @@ const MyOrders: React.FC = () => {
           setSelectedOrder((prev: OrderDetailsResponse | null) =>
             prev
               ? {
-                  ...prev,
-                  feedback: {
-                    feedbackStatus: selectedLabel,
-                    comments: comments,
-                  },
-                }
+                ...prev,
+                feedback: {
+                  feedbackStatus: selectedLabel,
+                  comments: comments,
+                },
+              }
               : prev
           );
         }
@@ -1126,12 +1128,12 @@ const MyOrders: React.FC = () => {
           prevOrders.map((order) =>
             order.orderId === orderToRate.orderId
               ? {
-                  ...order,
-                  feedback: {
-                    feedbackStatus: selectedLabel,
-                    comments: comments,
-                  },
-                }
+                ...order,
+                feedback: {
+                  feedbackStatus: selectedLabel,
+                  comments: comments,
+                },
+              }
               : order
           )
         );
@@ -1496,7 +1498,7 @@ const MyOrders: React.FC = () => {
       const matchesStatus =
         statusFilter === "all" ||
         getStatusText(order.orderStatus).toLowerCase() ===
-          statusFilter.toLowerCase();
+        statusFilter.toLowerCase();
 
       return matchesSearch && matchesStatus;
     })
@@ -1645,13 +1647,12 @@ const MyOrders: React.FC = () => {
                 {availableTimeSlots.map((timeSlot, index) => (
                   <div
                     key={`timeSlot-${index}`}
-                    className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${
-                      selectedTimeSlot === timeSlot &&
-                      selectedDate === selectedSlot.date &&
-                      selectedDay === selectedSlot.dayOfWeek
+                    className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${selectedTimeSlot === timeSlot &&
+                        selectedDate === selectedSlot.date &&
+                        selectedDay === selectedSlot.dayOfWeek
                         ? "border-green-500 bg-green-50 shadow-sm"
                         : "border-gray-200 bg-white"
-                    }`}
+                      }`}
                     onClick={() =>
                       handleSelectTimeSlot(
                         selectedSlot.date || "",
@@ -1717,15 +1718,13 @@ const MyOrders: React.FC = () => {
           return (
             <button
               key={`day-${slot.id}`}
-              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-                isAvailable
-                  ? `hover:bg-purple-50 hover:border-purple-500 ${
-                      isActive
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-200"
-                    }`
+              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${isAvailable
+                  ? `hover:bg-purple-50 hover:border-purple-500 ${isActive
+                    ? "border-purple-500 bg-purple-50"
+                    : "border-gray-200"
+                  }`
                   : "border-gray-200 bg-gray-50 opacity-80"
-              }`}
+                }`}
               onClick={() => handleDaySelection(slot)}
             >
               <div className="flex items-center">
@@ -1736,9 +1735,8 @@ const MyOrders: React.FC = () => {
                 )}
                 <div className="text-left">
                   <span
-                    className={`font-medium ${
-                      isAvailable ? "text-gray-900" : "text-gray-500"
-                    } block`}
+                    className={`font-medium ${isAvailable ? "text-gray-900" : "text-gray-500"
+                      } block`}
                   >
                     {slot.isToday ? "Today" : formatDayOfWeek(slot.dayOfWeek)}
                     {!isAvailable && " (Unavailable)"}
@@ -1882,6 +1880,14 @@ const MyOrders: React.FC = () => {
       );
     });
   };
+
+  const canRequestExchange = (order: OrderDetailsResponse): boolean =>
+    order.orderItems?.some((item) => !item.isExchanged) === true &&
+    !order.orderItems.some((item) =>
+      ["GOLD", "SILVER"].includes(
+        item.categoryName?.trim().toUpperCase() || ""
+      )
+    );
 
   const ExchangeOrdersTable: React.FC = () => {
     const exchangeOrders = filteredOrders.filter(
@@ -2070,14 +2076,14 @@ const MyOrders: React.FC = () => {
       setSelectedOrder((prev) =>
         prev
           ? {
-              ...prev,
-              orderAddress: {
-                flatNo: addressFormData.flatNo,
-                landMark: addressFormData.landMark,
-                address: addressFormData.address,
-                pincode: parseInt(addressFormData.pincode),
-              },
-            }
+            ...prev,
+            orderAddress: {
+              flatNo: addressFormData.flatNo,
+              landMark: addressFormData.landMark,
+              address: addressFormData.address,
+              pincode: parseInt(addressFormData.pincode),
+            },
+          }
           : prev
       );
 
@@ -2086,14 +2092,14 @@ const MyOrders: React.FC = () => {
         prevOrders.map((order) =>
           order.orderId === selectedOrder.orderId
             ? {
-                ...order,
-                orderAddress: {
-                  flatNo: addressFormData.flatNo,
-                  landMark: addressFormData.landMark,
-                  address: addressFormData.address,
-                  pincode: parseInt(addressFormData.pincode),
-                },
-              }
+              ...order,
+              orderAddress: {
+                flatNo: addressFormData.flatNo,
+                landMark: addressFormData.landMark,
+                address: addressFormData.address,
+                pincode: parseInt(addressFormData.pincode),
+              },
+            }
             : order
         )
       );
@@ -2261,11 +2267,10 @@ const MyOrders: React.FC = () => {
               <label className="text-sm text-gray-600 mb-1 block"> </label>
               <button
                 onClick={handleShowExchangeOrders}
-                className={`w-full px-2 sm:px-4 py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors flex items-center justify-center ${
-                  showExchangeOrders
+                className={`w-full px-2 sm:px-4 py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors flex items-center justify-center ${showExchangeOrders
                     ? "bg-purple-600 text-white border-purple-600"
                     : "bg-purple-600 text-white border-purple-600"
-                }`}
+                  }`}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -2363,8 +2368,8 @@ const MyOrders: React.FC = () => {
                           )}
                         </div>
                         {order.expectedDeliveryDate ||
-                        order.dayOfWeek ||
-                        order.timeSlot ? (
+                          order.dayOfWeek ||
+                          order.timeSlot ? (
                           <div className="mt-1 bg-purple-50 rounded-md p-1.5 text-xs sm:text-sm">
                             <div className="flex items-center">
                               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-purple-700 mr-1.5" />
@@ -2413,7 +2418,7 @@ const MyOrders: React.FC = () => {
                     !showExchangeOrders &&
                     !order.isFromExchangeTab &&
                     !hasMatchingExchangeOrder(order.orderId) &&
-                    order.orderItems?.some((item) => !item.isExchanged) && (
+                    canRequestExchange(order) && (
                       <div
                         className="bg-white hover:bg-blue-50 cursor-pointer transition-all duration-300"
                         onClick={() => openExchangeModal(order, false)}
@@ -2429,11 +2434,10 @@ const MyOrders: React.FC = () => {
 
                   {order.orderStatus === "4" && (
                     <div
-                      className={`${
-                        order.feedback
+                      className={`${order.feedback
                           ? "bg-purple-100 cursor-default"
                           : "bg-white hover:bg-purple-50 cursor-pointer"
-                      } transition-all duration-300`}
+                        } transition-all duration-300`}
                       onClick={
                         order.feedback
                           ? undefined
@@ -2519,7 +2523,7 @@ const MyOrders: React.FC = () => {
                       </p>
                     </div>
                     {selectedOrder.orderItems &&
-                    selectedOrder.orderItems.length > 0 ? (
+                      selectedOrder.orderItems.length > 0 ? (
                       <div className="space-y-4">
                         {selectedOrder.orderItems.map((item, index) => (
                           <div
@@ -2725,10 +2729,10 @@ const MyOrders: React.FC = () => {
                               (history) => history.exchangeRequestDate
                             )?.exchangeRequestDate
                               ? formatDate(
-                                  selectedOrder.orderHistory.find(
-                                    (history) => history.exchangeRequestDate
-                                  )?.exchangeRequestDate
-                                )
+                                selectedOrder.orderHistory.find(
+                                  (history) => history.exchangeRequestDate
+                                )?.exchangeRequestDate
+                              )
                               : "N/A"}
                           </span>
                         </div>
@@ -2739,15 +2743,15 @@ const MyOrders: React.FC = () => {
                               (history) => history.deliveredDate
                             )?.deliveredDate
                               ? formatDate(
-                                  selectedOrder.orderHistory.find(
-                                    (history) => history.deliveredDate
-                                  )?.deliveredDate
-                                )
+                                selectedOrder.orderHistory.find(
+                                  (history) => history.deliveredDate
+                                )?.deliveredDate
+                              )
                               : selectedOrder.expectedDeliveryDate
-                              ? formatDeliveryDate(
+                                ? formatDeliveryDate(
                                   selectedOrder.expectedDeliveryDate
                                 )
-                              : "N/A"}
+                                : "N/A"}
                           </span>
                         </div>
                       </>
@@ -2888,11 +2892,11 @@ const MyOrders: React.FC = () => {
                             </span>{" "}
                             {selectedOrder.expectedDeliveryDate
                               ? formatDeliveryDate(
-                                  selectedOrder.expectedDeliveryDate
-                                )
+                                selectedOrder.expectedDeliveryDate
+                              )
                               : selectedOrder.dayOfWeek
-                              ? formatDayOfWeek(selectedOrder.dayOfWeek)
-                              : "Not scheduled"}
+                                ? formatDayOfWeek(selectedOrder.dayOfWeek)
+                                : "Not scheduled"}
                             {selectedOrder.timeSlot &&
                               ` • ${selectedOrder.timeSlot}`}
                           </span>
@@ -2933,14 +2937,14 @@ const MyOrders: React.FC = () => {
                           (history) => history.placedDate
                         )?.placedDate ?? null
                       ) && (
-                        <button
-                          onClick={() => openAddressUpdateModal(selectedOrder)}
-                          className="flex items-center gap-1.5 text-purple-600 hover:text-purple-800 text-xs font-medium"
-                        >
-                          <MapPin className="h-4 w-4" />
-                          Update Address
-                        </button>
-                      )}
+                          <button
+                            onClick={() => openAddressUpdateModal(selectedOrder)}
+                            className="flex items-center gap-1.5 text-purple-600 hover:text-purple-800 text-xs font-medium"
+                          >
+                            <MapPin className="h-4 w-4" />
+                            Update Address
+                          </button>
+                        )}
                     </div>
                   )}
                 </div>
@@ -3101,9 +3105,7 @@ const MyOrders: React.FC = () => {
                       selectedOrder.orderItems.length > 0 &&
                       !selectedOrder.isFromExchangeTab &&
                       !hasMatchingExchangeOrder(selectedOrder.orderId) &&
-                      selectedOrder.orderItems.some(
-                        (item) => !item.isExchanged
-                      ) && (
+                      canRequestExchange(selectedOrder) && (
                         <button
                           onClick={() => openExchangeModal(selectedOrder, true)}
                           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -3175,11 +3177,10 @@ const MyOrders: React.FC = () => {
                       {feedbackOptions.map((option) => (
                         <button
                           key={option.label}
-                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                            selectedLabel === option.label
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${selectedLabel === option.label
                               ? "border-purple-500 bg-purple-50"
                               : "border-gray-200 hover:bg-gray-50"
-                          }`}
+                            }`}
                           onClick={() => setSelectedLabel(option.label)}
                         >
                           <span className="text-xl">{option.emoji}</span>
@@ -3266,7 +3267,7 @@ const MyOrders: React.FC = () => {
                       </p>
                     </div>
                     {selectedOrder.orderItems &&
-                    selectedOrder.orderItems.length > 0 ? (
+                      selectedOrder.orderItems.length > 0 ? (
                       <div className="space-y-4">
                         {selectedOrder.orderItems.map((item, index) => (
                           <div

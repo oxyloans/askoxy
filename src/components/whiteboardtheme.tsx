@@ -135,7 +135,7 @@ const Whiteboardtheme: React.FC = () => {
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
       <img
-        src={"https://i.ibb.co/JRkh46XP/speak1-1.png"}
+        src={"https://i.ibb.co/DfGmV3B6/Chat-GPT-Image-Aug-29-2026-12-09-49-PM-5870x4306.png"}
         alt="Active Jobs and Total Companies"
         className="h-full w-full select-none object-contain"
         draggable={false}
@@ -288,7 +288,7 @@ const Whiteboardtheme: React.FC = () => {
                   <div className="flex h-[148px] w-[148px] items-center justify-center">
                     <button
                       type="button"
-                      onClick={() => navigate("/main/dashboard/products?type=SILVER")}
+                      onClick={() => navigate("/sovereign-ai")}
                       className="flex h-full w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95"
                       aria-label="Speak with Sovereign AI"
                     >
@@ -328,7 +328,7 @@ const Whiteboardtheme: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/main/dashboard/products?type=SILVER")}
+                    onClick={() => navigate("/sovereign-ai")}
                     className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                     style={{
                       width: "clamp(140px, 12vw, 196px)",
