@@ -4,7 +4,6 @@ import {
   DatePicker,
   Input,
   Button,
-  Card,
   Typography,
   Row,
   Col,
@@ -165,7 +164,7 @@ const LeaveApplicationPage: React.FC = () => {
   return (
     <UserPanelLayout>
       <div className="leave-page">
-        <Card bordered={false} className="leave-shell">
+        <div className="leave-shell">
           <div className="leave-hero">
             <div>
               <Title level={2} className="leave-title">
@@ -346,108 +345,87 @@ const LeaveApplicationPage: React.FC = () => {
               </Button>
             </div>
           </Form>
-        </Card>
+        </div>
       </div>
 
       <style>{`
         .leave-page {
           width: 100%;
-          padding: 24px;
+          padding: 16px;
           background: #ffffff;
           min-height: calc(100vh - 64px);
           box-sizing: border-box;
         }
 
         .leave-shell {
-          width: min(100%, 1180px);
+          width: 100%;
+          max-width: 80rem;
           margin: 0 auto;
-          border: 1px solid #e8edf5;
-          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 12px 36px rgba(15, 23, 42, 0.07);
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
           background: #ffffff;
         }
 
-        .leave-shell .ant-card-body {
-          padding: 0;
-        }
-
         .leave-hero {
-          min-height: 150px;
-          padding: 34px 38px 26px;
+          min-height: 110px;
+          padding: 24px 28px 20px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 24px;
-          position: relative;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 88% 30%, rgba(59, 130, 246, 0.12), transparent 28%),
-            linear-gradient(135deg, #ffffff 0%, #ffffff 65%, #f1f7ff 100%);
-          border-bottom: 1px solid #eef2f7;
-        }
-
-        .leave-hero::after {
-          content: "";
-          position: absolute;
-          right: -50px;
-          bottom: -80px;
-          width: 290px;
-          height: 180px;
-          border-radius: 50%;
-          background: rgba(37, 99, 235, 0.055);
-          transform: rotate(-10deg);
+          gap: 20px;
+          background: #ffffff;
+          border-bottom: 1px solid #e2e8f0;
         }
 
         .leave-title.ant-typography {
-          margin: 0 0 8px !important;
-          color: #102a56;
-          font-size: 30px;
-          font-weight: 750;
-          letter-spacing: -0.5px;
+          margin: 0 0 6px !important;
+          color: #0f172a;
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.3px;
         }
 
         .leave-subtitle.ant-typography {
           margin: 0 !important;
           color: #64748b;
-          font-size: 14px;
+          font-size: 13px;
         }
 
         .leave-hero-icon {
-          width: 76px;
-          height: 76px;
-          flex: 0 0 76px;
-          border-radius: 20px;
+          width: 60px;
+          height: 60px;
+          flex: 0 0 60px;
+          border-radius: 14px;
           display: grid;
           place-items: center;
-          position: relative;
-          z-index: 1;
-          font-size: 36px;
+          font-size: 28px;
           color: #2563eb;
-          background: linear-gradient(145deg, #eff6ff, #dbeafe);
-          border: 1px solid #dbeafe;
-          box-shadow: 0 10px 28px rgba(37, 99, 235, 0.14);
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
         }
 
         .leave-info {
-          margin: 22px 38px 0;
-          padding: 13px 16px;
+          margin: 16px 28px 0;
+          padding: 10px 14px;
           display: flex;
           align-items: center;
           gap: 10px;
-          border: 1px solid #cfe2ff;
-          border-radius: 9px;
-          background: #f0f7ff;
-          color: #2563eb;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #475569;
         }
 
         .leave-info .ant-typography {
-          color: #334155;
+          color: #475569;
           font-size: 13px;
         }
 
         .leave-form {
-          padding: 28px 38px 34px;
+          padding: 20px 28px 26px;
         }
 
         .field-label {
@@ -461,7 +439,7 @@ const LeaveApplicationPage: React.FC = () => {
         }
 
         .leave-form .ant-form-item {
-          margin-bottom: 22px;
+          margin-bottom: 16px;
         }
 
         .leave-form .ant-form-item-extra {
@@ -485,7 +463,7 @@ const LeaveApplicationPage: React.FC = () => {
         }
 
         .duration-section {
-          margin-bottom: 22px;
+          margin-bottom: 16px;
         }
 
         .duration-section > .field-label {
@@ -494,55 +472,56 @@ const LeaveApplicationPage: React.FC = () => {
         }
 
         .duration-card {
-          min-height: 102px;
+          min-height: 90px;
           box-sizing: border-box;
-          padding: 18px;
+          padding: 14px;
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
           position: relative;
-          border-radius: 9px;
-          border: 1px solid #d6efda;
-          background: linear-gradient(135deg, #f0fbf2, #e9f8ed);
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
         }
 
         .duration-card.empty {
           border-color: #e2e8f0;
-          background: #f8fafc;
+          background: #ffffff;
         }
 
         .duration-icon {
-          width: 38px;
-          height: 38px;
-          flex: 0 0 38px;
+          width: 36px;
+          height: 36px;
+          flex: 0 0 36px;
           display: grid;
           place-items: center;
-          border-radius: 9px;
-          background: #dcfce7;
+          border-radius: 8px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
           color: #16a34a;
-          font-size: 19px;
+          font-size: 18px;
         }
 
         .duration-card.empty .duration-icon {
-          background: #e2e8f0;
-          color: #64748b;
+          background: #ffffff;
+          color: #94a3b8;
         }
 
         .duration-value {
-          color: #173b24;
-          font-size: 20px;
-          font-weight: 750;
+          color: #0f172a;
+          font-size: 18px;
+          font-weight: 700;
           line-height: 1.2;
         }
 
         .duration-card.empty .duration-value {
-          color: #64748b;
-          font-size: 16px;
+          color: #94a3b8;
+          font-size: 15px;
         }
 
         .duration-help {
-          margin-top: 5px;
-          color: #64806d;
+          margin-top: 4px;
+          color: #94a3b8;
           font-size: 10px;
         }
 
@@ -565,15 +544,15 @@ const LeaveApplicationPage: React.FC = () => {
         }
 
         .applying-as {
-          min-height: 44px;
-          padding: 10px 14px;
+          min-height: 40px;
+          padding: 8px 12px;
           margin-top: 4px;
           display: flex;
           align-items: center;
-          gap: 9px;
+          gap: 8px;
           border-radius: 8px;
-          border: 1px solid #dbeafe;
-          background: #eff6ff;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
         }
 
         .applying-as .ant-typography {
@@ -582,7 +561,7 @@ const LeaveApplicationPage: React.FC = () => {
         }
 
         .applying-as strong {
-          color: #1d4ed8;
+          color: #0f172a;
         }
 
         .user-dot {
@@ -591,15 +570,15 @@ const LeaveApplicationPage: React.FC = () => {
           display: grid;
           place-items: center;
           border-radius: 50%;
-          background: #dbeafe;
+          background: #f1f5f9;
           font-size: 12px;
         }
 
         .leave-actions {
-          margin-top: 22px;
+          margin-top: 16px;
           display: flex;
           justify-content: flex-end;
-          gap: 12px;
+          gap: 10px;
         }
 
         .reset-button,
@@ -629,39 +608,39 @@ const LeaveApplicationPage: React.FC = () => {
 
         @media (max-width: 991px) {
           .leave-page {
-            padding: 18px;
+            padding: 14px;
           }
 
           .leave-hero {
-            min-height: 128px;
-            padding: 28px;
+            min-height: 100px;
+            padding: 20px 22px;
           }
 
           .leave-info {
-            margin: 20px 28px 0;
+            margin: 14px 22px 0;
           }
 
           .leave-form {
-            padding: 24px 28px 30px;
+            padding: 18px 22px 24px;
           }
         }
 
         @media (max-width: 767px) {
           .leave-page {
-            padding: 12px;
+            padding: 10px;
           }
 
           .leave-shell {
-            border-radius: 14px;
+            border-radius: 10px;
           }
 
           .leave-hero {
-            min-height: 108px;
-            padding: 22px 18px;
+            min-height: 90px;
+            padding: 16px 14px;
           }
 
           .leave-title.ant-typography {
-            font-size: 22px;
+            font-size: 18px;
           }
 
           .leave-subtitle.ant-typography {
@@ -669,16 +648,16 @@ const LeaveApplicationPage: React.FC = () => {
           }
 
           .leave-hero-icon {
-            width: 54px;
-            height: 54px;
-            flex-basis: 54px;
-            border-radius: 15px;
-            font-size: 26px;
+            width: 46px;
+            height: 46px;
+            flex-basis: 46px;
+            border-radius: 10px;
+            font-size: 22px;
           }
 
           .leave-info {
-            margin: 14px 14px 0;
-            padding: 10px 12px;
+            margin: 12px 10px 0;
+            padding: 8px 10px;
             align-items: flex-start;
           }
 
@@ -688,24 +667,24 @@ const LeaveApplicationPage: React.FC = () => {
           }
 
           .leave-form {
-            padding: 18px 14px 22px;
+            padding: 14px 10px 18px;
           }
 
           .leave-form .ant-form-item {
-            margin-bottom: 16px;
+            margin-bottom: 12px;
           }
 
           .leave-picker {
-            height: 43px;
+            height: 42px;
           }
 
           .duration-card {
-            min-height: 86px;
-            padding: 14px;
+            min-height: 76px;
+            padding: 12px;
           }
 
           .duration-value {
-            font-size: 17px;
+            font-size: 15px;
           }
 
           .leave-actions {
@@ -718,7 +697,7 @@ const LeaveApplicationPage: React.FC = () => {
           .submit-button {
             width: 100%;
             min-width: 0;
-            height: 42px;
+            height: 40px;
             padding-inline: 10px;
             font-size: 12px;
           }
@@ -726,22 +705,22 @@ const LeaveApplicationPage: React.FC = () => {
 
         @media (max-width: 390px) {
           .leave-page {
-            padding: 8px;
+            padding: 6px;
           }
 
           .leave-hero {
-            padding: 18px 14px;
+            padding: 14px 10px;
           }
 
           .leave-hero-icon {
-            width: 46px;
-            height: 46px;
-            flex-basis: 46px;
-            font-size: 22px;
+            width: 40px;
+            height: 40px;
+            flex-basis: 40px;
+            font-size: 18px;
           }
 
           .leave-title.ant-typography {
-            font-size: 19px;
+            font-size: 16px;
           }
 
           .leave-actions {

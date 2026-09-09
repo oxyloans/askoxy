@@ -42,13 +42,22 @@ interface CommentType {
   status?: string;
 }
 
+interface TrackingItem {
+  trackingId: string;
+  taskId: string;
+  taskStatus: string;
+  comments: string;
+  taskStartDate: number;
+  taskEndDate: number;
+  createdAt: number;
+}
 
 type StatusFilter = "ALL" | "ASSIGNED" | ActionStatus;
 
 const DEFAULT_USER_ID = sessionStorage.getItem("userId") || "default_user_id";
 
 const ACTION_CONFIG: Record<ActionStatus, { label: string; color: string; bg: string; border: string; needsComment: boolean }> = {
-  ACCEPTED: { label: "Accept", color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd", needsComment: true },
+  ACCEPTED: { label: "Accept", color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd", needsComment: false },
   REJECTED: { label: "Reject", color: "#b91c1c", bg: "#fef2f2", border: "#fecaca", needsComment: true },
   HOLD: { label: "Hold", color: "#92400e", bg: "#fffbeb", border: "#fcd34d", needsComment: true },
   COMPLETED: { label: "Completed", color: "#1e3a5f", bg: "#eff6ff", border: "#bfdbfe", needsComment: true },
@@ -306,8 +315,30 @@ const TaskBasedOnUserId: React.FC = () => {
   const [comments, setComments] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [trackingVisible, setTrackingVisible] = useState(false);
+  const [trackingData, setTrackingData] = useState<TrackingItem[]>([]);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingTask, setTrackingTask] = useState<TaskItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 20;
+
+  const handleViewTracking = async (task: TaskItem) => {
+    setTrackingTask(task);
+    setTrackingVisible(true);
+    setTrackingLoading(true);
+    setTrackingData([]);
+    try {
+      const response = await employeeApi.get(
+        `${BASE_URL}/ai-service/agent/adminTaskTracking`,
+        { params: { taskId: task.id } },
+      );
+      setTrackingData(Array.isArray(response?.data) ? response.data : []);
+    } catch {
+      setTrackingData([]);
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
 
   const openAction = (taskId: string, action: ActionStatus) => {
     setActionModal({ taskId, action, comment: "", submitting: false, error: "" });
@@ -320,20 +351,21 @@ const TaskBasedOnUserId: React.FC = () => {
 
     const { taskId, action, comment } = actionModal;
     const cleanComment = comment.trim();
+    const commentRequired = ACTION_CONFIG[action].needsComment;
 
-    if (!cleanComment) {
+    if (commentRequired && !cleanComment) {
       setActionModal((previous) =>
         previous
           ? {
             ...previous,
-            error: `Comment is mandatory when you ${ACTION_CONFIG[action].label.toLowerCase()} a task.`,
+            error: "Please provide the required details before continuing.",
           }
           : previous,
       );
       return;
     }
 
-    if (cleanComment.length < 3) {
+    if (cleanComment && cleanComment.length < 3) {
       setActionModal((previous) =>
         previous
           ? { ...previous, error: "Please enter at least 3 characters." }
@@ -693,7 +725,7 @@ const TaskBasedOnUserId: React.FC = () => {
                 type="search"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search by task #, name, keyword..."
+                placeholder="Search by task, name, keyword..."
                 aria-label="Search tasks"
                 aria-busy={searchLoading}
               />
@@ -1074,6 +1106,16 @@ const TaskBasedOnUserId: React.FC = () => {
                           >
                             View Comments
                           </button>
+
+                          {normalizedStatus !== "ASSIGNED" && (
+                            <button
+                              type="button"
+                              className="task-comment-btn task-comment-btn--track"
+                              onClick={() => handleViewTracking(task)}
+                            >
+                              Track
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1127,6 +1169,54 @@ const TaskBasedOnUserId: React.FC = () => {
             )}
         </section>
       </div>
+
+      {trackingVisible && (
+        <div
+          className="comments-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Task tracking"
+          onClick={() => setTrackingVisible(false)}
+        >
+          <div className="comments-modal tracking-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="comments-modal__header">
+              <div>
+                <h3>Task Tracking</h3>
+                <p>{trackingTask?.taskName ? (trackingTask.taskName.length > 60 ? `${trackingTask.taskName.slice(0, 60)}…` : trackingTask.taskName) : "Selected task"}</p>
+              </div>
+              <button type="button" className="comments-modal__close" onClick={() => setTrackingVisible(false)} aria-label="Close tracking">×</button>
+            </div>
+            <div className="comments-modal__body tracking-body">
+              {trackingLoading ? (
+                <div className="comments-modal__state"><span className="task-search__large-spinner" /><span>Loading tracking...</span></div>
+              ) : trackingData.length === 0 ? (
+                <div className="comments-modal__state"><span>No tracking history available for this task.</span></div>
+              ) : (
+                <div className="tracking-timeline">
+                  {trackingData.map((item, idx) => (
+                    <div className="tracking-item" key={item.trackingId}>
+                      <div className="tracking-item__line">
+                        <div className={`tracking-dot tracking-dot--${item.taskStatus.toLowerCase()}`} />
+                        {idx < trackingData.length - 1 && <div className="tracking-connector" />}
+                      </div>
+                      <div className="tracking-item__content">
+                        <div className="tracking-item__head">
+                          <span className={`tracking-status tracking-status--${item.taskStatus.toLowerCase()}`}>{item.taskStatus}</span>
+                          <span className="tracking-time">{new Date(item.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                        </div>
+                        {item.comments && <p className="tracking-comment">{item.comments}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="comments-modal__footer">
+              <button type="button" className="comments-modal__secondary" onClick={() => setTrackingVisible(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedImage && (
         <div
@@ -1185,10 +1275,10 @@ const TaskBasedOnUserId: React.FC = () => {
                   {ACTION_CONFIG[actionModal.action].label} Task
                 </h3>
                 <p className="action-modal__sub">
-                  {actionModal.action === "ACCEPTED" && "Add a comment and confirm you accept this task."}
-                  {actionModal.action === "REJECTED" && "Please provide a reason for rejection."}
-                  {actionModal.action === "HOLD" && "Describe why this task is on hold."}
-                  {actionModal.action === "COMPLETED" && "Add completion notes or remarks."}
+                  {actionModal.action === "ACCEPTED" && "Confirm that you are accepting this task. An acceptance note is optional."}
+                  {actionModal.action === "REJECTED" && "Provide a clear reason before rejecting this task."}
+                  {actionModal.action === "HOLD" && "Explain why this task needs to be placed on hold."}
+                  {actionModal.action === "COMPLETED" && "Add completion notes before marking this task as completed."}
                 </p>
               </div>
               <button type="button" className="action-modal__close" onClick={closeAction} aria-label="Close">
@@ -1201,20 +1291,30 @@ const TaskBasedOnUserId: React.FC = () => {
             {/* Comment box */}
             <div className="action-modal__body">
               <label className="action-modal__label">
-                Comment *
+                {actionModal.action === "ACCEPTED"
+                  ? "Acceptance Note (Optional)"
+                  : actionModal.action === "REJECTED"
+                    ? "Reason for Rejection *"
+                    : actionModal.action === "HOLD"
+                      ? "Reason for Hold *"
+                      : "Completion Notes *"}
               </label>
               <textarea
                 className="action-modal__textarea"
                 rows={4}
                 placeholder={
-                  actionModal.action === "ACCEPTED" ? "Comment for accepting this task…" :
-                    actionModal.action === "REJECTED" ? "Reason for rejection…" :
-                      actionModal.action === "HOLD" ? "Reason for hold…" :
-                        "Completion notes or remarks…"
+                  actionModal.action === "ACCEPTED"
+                    ? "Add an optional note for the task owner…"
+                    : actionModal.action === "REJECTED"
+                      ? "Briefly explain why you are rejecting this task…"
+                      : actionModal.action === "HOLD"
+                        ? "Briefly explain why this task is being placed on hold…"
+                        : "Summarize the work completed or add final remarks…"
                 }
                 value={actionModal.comment}
                 maxLength={500}
-                required
+                required={ACTION_CONFIG[actionModal.action].needsComment}
+                aria-required={ACTION_CONFIG[actionModal.action].needsComment}
                 onChange={(e) => setActionModal((p) => p ? { ...p, comment: e.target.value, error: "" } : p)}
                 style={{ borderColor: actionModal.error ? "#ef4444" : undefined }}
               />
@@ -1232,13 +1332,25 @@ const TaskBasedOnUserId: React.FC = () => {
                 type="button"
                 className="action-modal__submit"
                 onClick={submitAction}
-                disabled={actionModal.submitting || actionModal.comment.trim().length < 3}
+                disabled={
+                  actionModal.submitting ||
+                  (ACTION_CONFIG[actionModal.action].needsComment && actionModal.comment.trim().length < 3) ||
+                  (!ACTION_CONFIG[actionModal.action].needsComment && actionModal.comment.trim().length > 0 && actionModal.comment.trim().length < 3)
+                }
                 style={{
                   background: ACTION_CONFIG[actionModal.action].color,
                   opacity: actionModal.submitting ? 0.7 : 1,
                 }}
               >
-                {actionModal.submitting ? "Submitting…" : `Confirm ${ACTION_CONFIG[actionModal.action].label}`}
+                {actionModal.submitting
+                  ? "Submitting…"
+                  : actionModal.action === "ACCEPTED"
+                    ? "Accept Task"
+                    : actionModal.action === "REJECTED"
+                      ? "Reject Task"
+                      : actionModal.action === "HOLD"
+                        ? "Place on Hold"
+                        : "Mark as Completed"}
               </button>
             </div>
           </div>
@@ -1976,6 +2088,115 @@ const TaskBasedOnUserId: React.FC = () => {
           background: #f5f3ff;
         }
 
+        .task-comment-btn--track {
+          color: #0f766e;
+          border-color: #99f6e4;
+          background: #f0fdfa;
+        }
+
+        .task-comment-btn--track:hover {
+          background: #ccfbf1;
+          border-color: #5eead4;
+        }
+
+        .tracking-modal {
+          width: min(620px, 96vw);
+        }
+
+        .tracking-body {
+          padding: 20px 18px;
+        }
+
+        .tracking-timeline {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .tracking-item {
+          display: grid;
+          grid-template-columns: 28px 1fr;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .tracking-item__line {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding-top: 3px;
+        }
+
+        .tracking-dot {
+          width: 14px;
+          height: 14px;
+          flex: 0 0 14px;
+          border-radius: 50%;
+          border: 2px solid;
+          background: #fff;
+        }
+
+        .tracking-dot--accepted { border-color: #0369a1; background: #e0f2fe; }
+        .tracking-dot--rejected { border-color: #b91c1c; background: #fee2e2; }
+        .tracking-dot--completed { border-color: #15803d; background: #dcfce7; }
+        .tracking-dot--hold { border-color: #b45309; background: #fef3c7; }
+        .tracking-dot--assigned { border-color: #4f46e5; background: #e0e7ff; }
+
+        .tracking-connector {
+          flex: 1;
+          width: 2px;
+          min-height: 24px;
+          background: #e2e8f0;
+          margin: 4px 0;
+        }
+
+        .tracking-item__content {
+          padding-bottom: 18px;
+          min-width: 0;
+        }
+
+        .tracking-item__head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-bottom: 6px;
+        }
+
+        .tracking-status {
+          padding: 3px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: .04em;
+        }
+
+        .tracking-status--accepted { color: #0369a1; background: #e0f2fe; }
+        .tracking-status--rejected { color: #b91c1c; background: #fee2e2; }
+        .tracking-status--completed { color: #15803d; background: #dcfce7; }
+        .tracking-status--hold { color: #b45309; background: #fef3c7; }
+        .tracking-status--assigned { color: #4f46e5; background: #e0e7ff; }
+
+        .tracking-time {
+          color: #94a3b8;
+          font-size: 11px;
+          white-space: nowrap;
+        }
+
+        .tracking-comment {
+          margin: 0;
+          padding: 8px 12px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          color: #374151;
+          font-size: 12px;
+          line-height: 1.55;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+        }
+
         .comments-modal-overlay {
           position: fixed;
           inset: 0;
@@ -2509,10 +2730,11 @@ const TaskBasedOnUserId: React.FC = () => {
 
           .task-comment-actions {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 6px;
             width: 100%;
             margin-left: 0;
+            flex: 0 0 auto;
           }
 
           .task-comment-btn {
