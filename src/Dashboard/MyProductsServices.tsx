@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
   Button,
@@ -285,12 +285,17 @@ const DetailGrid: React.FC<{ entry: Entry }> = ({ entry }) => {
 
 const MyProductsServices: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const memberId = localStorage.getItem(USER_ID_KEY) || "";
+
+  const tabFromUrl = new URLSearchParams(location.search).get("tab");
+  const initialTab: MembersType =
+    tabFromUrl === "SERVICE" ? "SERVICE" : "PRODUCT";
 
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<MembersType>("PRODUCT");
+  const [activeTab, setActiveTab] = useState<MembersType>(initialTab);
   const [search, setSearch] = useState("");
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
 
@@ -318,6 +323,13 @@ const MyProductsServices: React.FC = () => {
   useEffect(() => {
     loadEntries();
   }, [memberId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(location.search).get("tab");
+    setActiveTab(requestedTab === "SERVICE" ? "SERVICE" : "PRODUCT");
+    setSearch("");
+    setExpandedRowKeys([]);
+  }, [location.search]);
 
   const products = useMemo(
     () => entries.filter((entry) => entry.membersType === "PRODUCT"),
@@ -638,9 +650,14 @@ const MyProductsServices: React.FC = () => {
             <Tabs
               activeKey={activeTab}
               onChange={(key) => {
-                setActiveTab(key as MembersType);
+                const nextTab = key as MembersType;
+                setActiveTab(nextTab);
                 setSearch("");
                 setExpandedRowKeys([]);
+                navigate(
+                  `/main/dashboard/my-products-services?tab=${nextTab}`,
+                  { replace: true },
+                );
               }}
               items={[
                 {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import UserPanelLayout from "./UserPanelLayout";
@@ -42,7 +43,7 @@ interface CommentType {
 }
 
 
-type StatusFilter = "ALL" | ActionStatus;
+type StatusFilter = "ALL" | "ASSIGNED" | ActionStatus;
 
 const DEFAULT_USER_ID = sessionStorage.getItem("userId") || "default_user_id";
 
@@ -55,17 +56,42 @@ const ACTION_CONFIG: Record<ActionStatus, { label: string; color: string; bg: st
 
 
 
+const formatDate = (dateStr?: string | null): string => {
+  if (!dateStr) return "—";
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const [d, m, y] = parts;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${d} ${months[parseInt(m, 10) - 1] || m} ${y}`;
+  }
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+  return dateStr;
+};
+
 const normalizeStatus = (status?: string | null): TaskStatus | ActionStatus => {
   const value = (status || "").trim().toUpperCase().replace(/\s+/g, "_");
 
   if (["COMPLETED", "COMPLETE", "DONE"].includes(value)) return "COMPLETED";
-  if (["IN_PROGRESS", "INPROGRESS", "PROGRESS", "STARTED"].includes(value))
-    return "IN_PROGRESS";
   if (["ACCEPTED", "ACCEPT"].includes(value)) return "ACCEPTED";
   if (["REJECTED", "REJECT"].includes(value)) return "REJECTED";
   if (["HOLD", "ON_HOLD", "ONHOLD"].includes(value)) return "HOLD";
 
-  return "PENDING";
+  return "ASSIGNED";
+};
+
+const getStatusFilterFromUrl = (status?: string | null): StatusFilter => {
+  const value = String(status || "ALL").trim().toUpperCase().replace(/\s+/g, "_");
+
+  if (value === "ASSIGNED") return "ASSIGNED";
+  if (["ACCEPTED", "ACCEPT"].includes(value)) return "ACCEPTED";
+  if (["REJECTED", "REJECT"].includes(value)) return "REJECTED";
+  if (["HOLD", "ON_HOLD", "ONHOLD"].includes(value)) return "HOLD";
+  if (["COMPLETED", "COMPLETE", "DONE"].includes(value)) return "COMPLETED";
+
+  return "ALL";
 };
 
 const sortTasksByCreatedDate = (taskList: TaskItem[]) =>
@@ -260,6 +286,9 @@ const getStoredUserId = () => {
 };
 
 const TaskBasedOnUserId: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = getStatusFilterFromUrl(searchParams.get("status"));
+
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -267,7 +296,6 @@ const TaskBasedOnUserId: React.FC = () => {
   const [searchResults, setSearchResults] = useState<TaskItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [actionModal, setActionModal] = useState<ActionModal | null>(null);
@@ -459,7 +487,7 @@ const TaskBasedOnUserId: React.FC = () => {
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (filter: StatusFilter = "ALL") => {
     try {
       setLoading(true);
       setError("");
@@ -469,8 +497,11 @@ const TaskBasedOnUserId: React.FC = () => {
       const response = await employeeApi.get(
         `${BASE_URL}/ai-service/agent/showingTaskBasedOnUserId`,
         {
-          params: { userId },
-        }
+          params: {
+            userId,
+            ...(filter !== "ALL" ? { status: filter.toLowerCase() } : {}),
+          },
+        },
       );
 
       const taskData = Array.isArray(response?.data)
@@ -490,8 +521,8 @@ const TaskBasedOnUserId: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks(statusFilter);
+  }, [statusFilter]);
 
   useEffect(() => {
     const query = searchText.trim();
@@ -570,7 +601,7 @@ const TaskBasedOnUserId: React.FC = () => {
         else if (status === "ACCEPTED") accumulator.accepted += 1;
         else if (status === "REJECTED") accumulator.rejected += 1;
         else if (status === "HOLD") accumulator.hold += 1;
-        else accumulator.pending += 1;
+        else accumulator.assigned += 1;
 
         return accumulator;
       },
@@ -580,7 +611,7 @@ const TaskBasedOnUserId: React.FC = () => {
         accepted: 0,
         rejected: 0,
         hold: 0,
-        pending: 0,
+        assigned: 0,
       },
     );
   }, [tasks]);
@@ -622,7 +653,16 @@ const TaskBasedOnUserId: React.FC = () => {
     if (normalized === "REJECTED") return "Rejected";
     if (normalized === "HOLD") return "On Hold";
 
-    return "Pending";
+    return "Assigned";
+  };
+
+  const changeStatusFilter = (value: StatusFilter) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("status", value);
+    setSearchParams(nextParams);
+    setShowFilterMenu(false);
+    setSearchText("");
+    setSearchResults([]);
   };
 
   return (
@@ -696,6 +736,7 @@ const TaskBasedOnUserId: React.FC = () => {
                   {(
                     [
                       ["ALL", "All"],
+                      ["ASSIGNED", "Assigned"],
                       ["ACCEPTED", "Accepted"],
                       ["REJECTED", "Rejected"],
                       ["HOLD", "Hold"],
@@ -710,12 +751,9 @@ const TaskBasedOnUserId: React.FC = () => {
                           ? "filter-menu__item filter-menu__item--active"
                           : "filter-menu__item"
                       }
-                      onClick={() => {
-                        setStatusFilter(value);
-                        setShowFilterMenu(false);
-                      }}
+                      onClick={() => changeStatusFilter(value)}
                     >
-                      {label}
+                      {label === "Hold" ? "On Hold" : label}
                     </button>
                   ))}
                 </div>
@@ -825,12 +863,12 @@ const TaskBasedOnUserId: React.FC = () => {
             </div>
           </article>
 
-          <article className="stat-card stat-card--pending">
+          <article className="stat-card stat-card--assigned">
             <div>
-              <span>Pending</span>
-              <strong>{counts.pending}</strong>
+              <span>Assigned</span>
+              <strong>{counts.assigned}</strong>
             </div>
-            <div className="stat-icon stat-icon--pending">
+            <div className="stat-icon stat-icon--assigned">
               <svg
                 viewBox="0 0 24 24"
                 width="22"
@@ -874,7 +912,7 @@ const TaskBasedOnUserId: React.FC = () => {
               <div className="state-card__icon state-card__icon--error">!</div>
               <h3>Couldn&apos;t load tasks</h3>
               <p>{error}</p>
-              <button type="button" onClick={fetchTasks}>
+              <button type="button" onClick={() => fetchTasks(statusFilter)}>
                 Try Again
               </button>
             </div>
@@ -912,13 +950,15 @@ const TaskBasedOnUserId: React.FC = () => {
                 const normalizedStatus = normalizeStatus(task.status);
 
                 return (
-                  <article className="task-card" key={task.id}>
-                    <div className="task-card__media">
-                      <AttachmentPreview
-                        url={task.image}
-                        onImageClick={(url) => setSelectedImage(url)}
-                      />
-                    </div>
+                  <article className="task-card" key={task.id} style={{ gridTemplateColumns: task.image ? "124px minmax(0,1fr)" : "minmax(0,1fr)" }}>
+                    {task.image && (
+                      <div className="task-card__media">
+                        <AttachmentPreview
+                          url={task.image}
+                          onImageClick={(url) => setSelectedImage(url)}
+                        />
+                      </div>
+                    )}
 
                     <div className="task-card__body">
                       <div className="task-card__top">
@@ -947,17 +987,17 @@ const TaskBasedOnUserId: React.FC = () => {
 
                       <div className="task-meta">
                         <div className="task-meta__item">
-                          <span className="meta-label">Assigned Date</span>
+                          <span className="meta-label">Assign Date</span>
                           <span className="meta-value">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
                               <rect x="3" y="5" width="18" height="16" rx="2" />
                               <path d="M8 3v4M16 3v4M3 10h18" />
                             </svg>
-                            {task.taskAssignedDate || "—"}
+                            {formatDate(task.tastCreatedDate)}
                           </span>
                         </div>
 
-                        {normalizedStatus === "COMPLETED" && (
+                        {normalizedStatus === "COMPLETED" && task.taskCompleteDate && (
                           <div className="task-meta__item">
                             <span className="meta-label">Completed Date</span>
                             <span className="meta-value">
@@ -965,7 +1005,7 @@ const TaskBasedOnUserId: React.FC = () => {
                                 <circle cx="12" cy="12" r="9" />
                                 <path d="m8 12 2.5 2.5L16.5 9" />
                               </svg>
-                              {task.taskCompleteDate || "—"}
+                              {formatDate(task.taskCompleteDate)}
                             </span>
                           </div>
                         )}
@@ -1600,9 +1640,9 @@ const TaskBasedOnUserId: React.FC = () => {
           background: linear-gradient(135deg, #fff 0%, #fff3f7 100%);
         }
 
-        .stat-card--pending {
-          border-color: #ffc9cb;
-          background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+        .stat-card--assigned {
+          border-color: #c7d7ff;
+          background: linear-gradient(135deg, #fff 0%, #f0f4ff 100%);
         }
 
         .stat-icon {
@@ -1639,9 +1679,9 @@ const TaskBasedOnUserId: React.FC = () => {
           background: #ffe1ea;
         }
 
-        .stat-icon--pending {
-          color: #ef4444;
-          background: #ffe2e2;
+        .stat-icon--assigned {
+          color: #3b5bdb;
+          background: #dde3ff;
         }
 
         .task-content {
@@ -2209,16 +2249,10 @@ const TaskBasedOnUserId: React.FC = () => {
           background: #eaf9ef;
         }
 
-        .status-badge--in_progress {
-          color: #c77700;
-          border-color: #f6db9f;
-          background: #fff7e8;
-        }
-
-        .status-badge--pending {
-          color: #d63d46;
-          border-color: #f3bec2;
-          background: #fff0f1;
+        .status-badge--assigned {
+          color: #3b5bdb;
+          border-color: #bac8ff;
+          background: #edf2ff;
         }
 
         .status-badge--accepted {

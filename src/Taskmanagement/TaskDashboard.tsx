@@ -151,6 +151,33 @@ const sortTasksByCreatedDate = (tasks: RecentTask[]) =>
         return getDateValue(secondTask.tastCreatedDate) - getDateValue(firstTask.tastCreatedDate);
     });
 
+const formatDate = (dateStr?: string | null): string => {
+    if (!dateStr) return "—";
+    const parts = dateStr.split("/");
+    if (parts.length === 3) {
+        const [d, m, y] = parts;
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${d} ${months[parseInt(m, 10) - 1] || m} ${y}`;
+    }
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    }
+    return dateStr;
+};
+
+const STATUS_FILTER_MAP: Record<string, string> = {
+    assignedCount: "ASSIGNED",
+    acceptCount: "ACCEPTED",
+    holdCount: "HOLD",
+    rejectCount: "REJECTED",
+    completedCount: "COMPLETED",
+    totalCount: "ALL",
+};
+
+const getTasksUrlByStatus = (status: string) =>
+    `/taskmanagement/assignedtasks?status=${encodeURIComponent(status)}`;
+
 const TaskDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [counts, setCounts] = useState<TaskStatusCounts>(initialCounts);
@@ -281,7 +308,9 @@ const TaskDashboard: React.FC = () => {
                                 return (
                                     <article
                                         key={key}
-                                        className={`group rounded-2xl border ${border} bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_34px_rgba(15,23,42,0.08)] sm:p-5`}
+                                        className={`group cursor-pointer rounded-2xl border ${border} bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_34px_rgba(15,23,42,0.08)] sm:p-5`}
+                                        onClick={() => navigate(getTasksUrlByStatus(STATUS_FILTER_MAP[key] || "ALL"))}
+                                        title={`View ${label} tasks`}
                                     >
                                         <div className="flex items-start gap-3">
                                             <div
@@ -474,14 +503,9 @@ const TaskDashboard: React.FC = () => {
                                                                 </span>
                                                             </td>
                                                             <td className="px-5 py-4 sm:px-6">
-                                                                {/* <p className="text-sm font-medium text-slate-700">
-                                                                {task.taskAssignedDate || "—"}
-                                                            </p> */}
-                                                                {task.tastCreatedDate && (
-                                                                    <p className="mt-1 text-xs text-slate-400">
-                                                                        {task.tastCreatedDate}
-                                                                    </p>
-                                                                )}
+                                                                <p className="text-sm font-medium text-slate-700">
+                                                                    {formatDate(task.tastCreatedDate)}
+                                                                </p>
                                                             </td>
                                                         </tr>
                                                     );
@@ -495,7 +519,7 @@ const TaskDashboard: React.FC = () => {
                             <div className="border-t border-slate-100 p-4 sm:px-6">
                                 <button
                                     type="button"
-                                    onClick={() => navigate("/taskmanagement/assignedtasks")}
+                                    onClick={() => navigate(getTasksUrlByStatus("ALL"))}
                                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
                                 >
                                     View all tasks <ArrowRight className="h-4 w-4" />

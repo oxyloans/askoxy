@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import UserPanelLayout from "./UserPanelLayout";
@@ -42,7 +43,25 @@ interface CommentType {
 }
 
 
-type StatusFilter = "ALL" | "ACCEPTED" | "REJECTED" | "HOLD" | "COMPLETED";
+type StatusFilter = "ALL" | "ASSIGNED" | "ACCEPTED" | "REJECTED" | "HOLD" | "COMPLETED";
+
+const formatDate = (dateStr?: string | null): string => {
+  if (!dateStr) return "—";
+  // Already in DD/MM/YYYY
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const [d, m, y] = parts;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthName = months[parseInt(m, 10) - 1] || m;
+    return `${d} ${monthName} ${y}`;
+  }
+  // Try parsing ISO or other formats
+  const parsed = new Date(dateStr.replace(" ", "T"));
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+  return dateStr;
+};
 
 const ACTION_CONFIG: Record<ActionStatus, { label: string; color: string; bg: string; border: string; needsComment: boolean }> = {
   ACCEPTED: { label: "Accept", color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd", needsComment: true },
@@ -55,28 +74,38 @@ const ACTION_CONFIG: Record<ActionStatus, { label: string; color: string; bg: st
 
 const normalizeStatus = (status?: string | null): TaskStatus | ActionStatus => {
   const value = (status || "").trim().toUpperCase().replace(/\s+/g, "_");
-
   if (["COMPLETED", "COMPLETE", "DONE"].includes(value)) return "COMPLETED";
-  if (["IN_PROGRESS", "INPROGRESS", "PROGRESS", "STARTED"].includes(value))
-    return "IN_PROGRESS";
   if (["ACCEPTED", "ACCEPT"].includes(value)) return "ACCEPTED";
   if (["REJECTED", "REJECT"].includes(value)) return "REJECTED";
   if (["HOLD", "ON_HOLD", "ONHOLD"].includes(value)) return "HOLD";
-
-  return "PENDING";
+  return "ASSIGNED";
 };
 
-const sortTasksByCreatedDate = (taskList: TaskItem[]) =>
-  [...taskList].sort((firstTask, secondTask) => {
-    const getDateValue = (date?: string | null) => {
-      if (!date) return 0;
-      const [day, month, year] = date.split("/").map(Number);
-      if (!day || !month || !year) return 0;
-      return new Date(year, month - 1, day).getTime();
-    };
+const getDateValue = (date?: string | null): number => {
+  if (!date) return 0;
 
-    return getDateValue(secondTask.tastCreatedDate) - getDateValue(firstTask.tastCreatedDate);
-  });
+  // Handle DD/MM/YYYY values.
+  const slashParts = date.split("/");
+  if (slashParts.length === 3) {
+    const [day, month, year] = slashParts.map(Number);
+    if (day && month && year) {
+      return new Date(year, month - 1, day).getTime();
+    }
+  }
+
+  // Backend format example: 2026-08-20 05:43:16.519
+  // Replacing the first space with T makes the value ISO-like and more browser-safe.
+  const normalizedDate = date.replace(" ", "T");
+  const parsed = new Date(normalizedDate);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+};
+
+const sortTasksByAssignedDate = (taskList: TaskItem[]) =>
+  [...taskList].sort(
+    (firstTask, secondTask) =>
+      getDateValue(secondTask.taskAssignedDate) -
+      getDateValue(firstTask.taskAssignedDate),
+  );
 
 
 const normalizeTasks = (list: unknown): TaskItem[] => {
@@ -227,6 +256,9 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ url, onImageClick
 };
 
 const Assignedtasksbasedstatus: React.FC = () => {
+  const location = useLocation();
+  const locationState = location.state as { statusFilter?: string } | null;
+  const initialFilter = (locationState?.statusFilter as StatusFilter) || "ALL";
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -234,7 +266,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
   const [searchResults, setSearchResults] = useState<TaskItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilter);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [actionModal, setActionModal] = useState<ActionModal | null>(null);
@@ -503,7 +535,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
       );
 
       const taskData = normalizeTasks(response?.data);
-      setTasks(sortTasksByCreatedDate(taskData));
+      setTasks(sortTasksByAssignedDate(taskData));
     } catch (err) {
       console.error("Failed to fetch assigned tasks:", err);
       setError("Unable to load assigned tasks. Please try again.");
@@ -514,7 +546,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasks(initialFilter);
   }, []);
 
   useEffect(() => {
@@ -550,7 +582,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
             ? response.data.data
             : [];
 
-        setSearchResults(sortTasksByCreatedDate(normalizeTasks(taskData)));
+        setSearchResults(sortTasksByAssignedDate(normalizeTasks(taskData)));
       } catch (err: any) {
         // Axios uses ERR_CANCELED when a newer search replaces the current request.
         if (err?.code === "ERR_CANCELED" || err?.name === "CanceledError") return;
@@ -589,24 +621,15 @@ const Assignedtasksbasedstatus: React.FC = () => {
     return tasks.reduce(
       (acc, task) => {
         const status = normalizeStatus(task.status);
-
         acc.total += 1;
         if (status === "COMPLETED") acc.completed += 1;
         else if (status === "ACCEPTED") acc.accepted += 1;
         else if (status === "REJECTED") acc.rejected += 1;
         else if (status === "HOLD") acc.hold += 1;
-        else acc.pending += 1;
-
+        else acc.assigned += 1;
         return acc;
       },
-      {
-        total: 0,
-        completed: 0,
-        accepted: 0,
-        rejected: 0,
-        hold: 0,
-        pending: 0,
-      }
+      { total: 0, completed: 0, accepted: 0, rejected: 0, hold: 0, assigned: 0 }
     );
   }, [tasks]);
 
@@ -639,13 +662,11 @@ const Assignedtasksbasedstatus: React.FC = () => {
 
   const statusLabel = (status?: string | null) => {
     const normalized = normalizeStatus(status);
-
     if (normalized === "COMPLETED") return "Completed";
-    if (normalized === "IN_PROGRESS") return "In Progress";
     if (normalized === "ACCEPTED") return "Accepted";
     if (normalized === "REJECTED") return "Rejected";
     if (normalized === "HOLD") return "On Hold";
-    return "Pending";
+    return "Assigned";
   };
 
   return (
@@ -719,9 +740,10 @@ const Assignedtasksbasedstatus: React.FC = () => {
                   {(
                     [
                       ["ALL", "All"],
+                      ["ASSIGNED", "Assigned"],
                       ["ACCEPTED", "Accepted"],
                       ["REJECTED", "Rejected"],
-                      ["HOLD", "Hold"],
+                      ["HOLD", "On Hold"],
                       ["COMPLETED", "Completed"],
                     ] as Array<[StatusFilter, string]>
                   ).map(([value, label]) => (
@@ -751,125 +773,27 @@ const Assignedtasksbasedstatus: React.FC = () => {
         </div>
 
         <section className="task-stats" aria-label="Task summary">
-          <article className="stat-card stat-card--total">
-            <div>
-              <span>Total Tasks</span>
-              <strong>{counts.total}</strong>
-            </div>
-            <div className="stat-icon stat-icon--total">
-              <svg
-                viewBox="0 0 24 24"
-                width="21"
-                height="21"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="6" y="5" width="12" height="15" rx="2" />
-                <path d="M9 5V3h6v2M9 10h6M9 14h6" />
-              </svg>
-            </div>
-          </article>
-
-          <article className="stat-card stat-card--completed">
-            <div>
-              <span>Completed</span>
-              <strong>{counts.completed}</strong>
-            </div>
-            <div className="stat-icon stat-icon--completed">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="m8 12 2.5 2.5L16.5 9" />
-              </svg>
-            </div>
-          </article>
-
-          <article className="stat-card stat-card--hold">
-            <div>
-              <span>On Hold</span>
-              <strong>{counts.hold}</strong>
-            </div>
-            <div className="stat-icon stat-icon--hold">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </div>
-          </article>
-
-          <article className="stat-card stat-card--accepted">
-            <div>
-              <span>Accepted</span>
-              <strong>{counts.accepted}</strong>
-            </div>
-            <div className="stat-icon stat-icon--accepted">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="m8 12 2.5 2.5L16.5 9" />
-              </svg>
-            </div>
-          </article>
-
-          <article className="stat-card stat-card--rejected">
-            <div>
-              <span>Rejected</span>
-              <strong>{counts.rejected}</strong>
-            </div>
-            <div className="stat-icon stat-icon--rejected">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="m9 9 6 6M15 9l-6 6" />
-              </svg>
-            </div>
-          </article>
-
-          <article className="stat-card stat-card--pending">
-            <div>
-              <span>Pending</span>
-              <strong>{counts.pending}</strong>
-            </div>
-            <div className="stat-icon stat-icon--pending">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v6l4 2" />
-              </svg>
-            </div>
-          </article>
+          {([
+            { label: "Total", value: counts.total, filter: "ALL" as StatusFilter, cls: "total", icon: <><rect x="6" y="5" width="12" height="15" rx="2" /><path d="M9 5V3h6v2M9 10h6M9 14h6" /></> },
+            { label: "Accepted", value: counts.accepted, filter: "ACCEPTED" as StatusFilter, cls: "accepted", icon: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16.5 9" /></> },
+            { label: "Rejected", value: counts.rejected, filter: "REJECTED" as StatusFilter, cls: "rejected", icon: <><circle cx="12" cy="12" r="9" /><path d="m9 9 6 6M15 9l-6 6" /></> },
+            { label: "On Hold", value: counts.hold, filter: "HOLD" as StatusFilter, cls: "hold", icon: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></> },
+            { label: "Completed", value: counts.completed, filter: "COMPLETED" as StatusFilter, cls: "completed", icon: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16.5 9" /></> },
+            { label: "Assigned", value: counts.assigned, filter: "ASSIGNED" as StatusFilter, cls: "pending", icon: <><circle cx="12" cy="12" r="9" /><path d="M12 7v6l4 2" /></> },
+          ]).map(({ label, value, cls, icon }) => (
+            <article
+              key={label}
+              className={`stat-card stat-card--${cls}`}
+            >
+              <div>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+              <div className={`stat-icon stat-icon--${cls}`}>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">{icon}</svg>
+              </div>
+            </article>
+          ))}
         </section>
 
         <section className="task-content">
@@ -938,13 +862,15 @@ const Assignedtasksbasedstatus: React.FC = () => {
                 const normalizedStatus = normalizeStatus(task.status);
 
                 return (
-                  <article className="task-card" key={task.id}>
-                    <div className="task-card__media">
-                      <AttachmentPreview
-                        url={task.image}
-                        onImageClick={(url) => setSelectedImage(url)}
-                      />
-                    </div>
+                  <article className="task-card" key={task.id} style={{ gridTemplateColumns: task.image ? "124px minmax(0,1fr)" : "minmax(0,1fr)" }}>
+                    {task.image && (
+                      <div className="task-card__media">
+                        <AttachmentPreview
+                          url={task.image}
+                          onImageClick={(url) => setSelectedImage(url)}
+                        />
+                      </div>
+                    )}
 
                     <div className="task-card__body">
                       <div className="task-card__top">
@@ -986,11 +912,11 @@ const Assignedtasksbasedstatus: React.FC = () => {
                               <rect x="3" y="5" width="18" height="16" rx="2" />
                               <path d="M8 3v4M16 3v4M3 10h18" />
                             </svg>
-                            {task.taskAssignedDate || "—"}
+                            {formatDate(task.taskAssignedDate)}
                           </span>
                         </div>
 
-                        {normalizedStatus === "COMPLETED" && (
+                        {normalizedStatus === "COMPLETED" && task.taskCompleteDate && (
                           <div className="task-meta__item">
                             <span className="meta-label">Completed Date</span>
                             <span className="meta-value">
@@ -998,7 +924,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
                                 <circle cx="12" cy="12" r="9" />
                                 <path d="m8 12 2.5 2.5L16.5 9" />
                               </svg>
-                              {task.taskCompleteDate || "—"}
+                              {formatDate(task.taskCompleteDate)}
                             </span>
                           </div>
                         )}

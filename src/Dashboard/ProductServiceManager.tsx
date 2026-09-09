@@ -163,6 +163,35 @@ const ALLOWED_DOC_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+const isValidHttpsUrl = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+
+  // URL-related fields must explicitly start with https://
+  if (!trimmed.toLowerCase().startsWith("https://")) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "https:" && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+
+const isValidLinkedInUrl = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  if (!isValidHttpsUrl(trimmed)) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    return host === "linkedin.com" || host.endsWith(".linkedin.com");
+  } catch {
+    return false;
+  }
+};
+
 
 
 const emptyProduct = (): ProductEntry => ({
@@ -640,7 +669,13 @@ const UploadField: React.FC<{
     setUploading(true);
     try {
       const url = await uploadMemberFile(file, userId, "company");
+
+      if (!isValidHttpsUrl(url)) {
+        throw new Error("Uploaded file URL is invalid. The URL must start with https://");
+      }
+
       onChange(url);
+      setError(null);
       const message = `${isImage ? "Image" : "File"} uploaded successfully.`;
       setSuccessMsg(message);
       onToast?.("success", message);
@@ -657,7 +692,7 @@ const UploadField: React.FC<{
     <div>
       <div className="mb-1.5 flex items-center justify-between">
         <Label required={required}>{label}</Label>
-        {value && !isImage && (
+        {value && isValidHttpsUrl(value) && !isImage && (
           <a href={value} target="_blank" rel="noreferrer"
             className="text-[11px] font-semibold text-purple-700 hover:underline">
             View file
@@ -667,10 +702,28 @@ const UploadField: React.FC<{
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFileChange} />
       <div className={"flex items-center gap-1.5 rounded-lg border p-1 transition-all " + (error ? "border-rose-400 bg-white" : successMsg ? "border-emerald-400 bg-white" : "border-gray-200 bg-white focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20")}>
         <input
+          type="url"
           className="w-full min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm text-gray-800 outline-none placeholder:text-gray-400"
-          placeholder={isImage ? "Paste image URL or upload" : "Paste PDF/image URL or upload"}
+          placeholder={isImage ? "https://... image URL or upload" : "https://... file URL or upload"}
           value={value}
-          onChange={(e) => { onChange(e.target.value); setSuccessMsg(null); setError(null); }}
+          onChange={(e) => {
+            const nextValue = e.target.value;
+            onChange(nextValue);
+            setSuccessMsg(null);
+
+            if (nextValue.trim() && !isValidHttpsUrl(nextValue)) {
+              setError("URL must start with https:// and be valid.");
+            } else {
+              setError(null);
+            }
+          }}
+          onBlur={() => {
+            if (value.trim() && !isValidHttpsUrl(value)) {
+              setError("URL must start with https:// and be valid.");
+            } else {
+              setError(null);
+            }
+          }}
         />
         <button
           type="button"
@@ -694,7 +747,7 @@ const UploadField: React.FC<{
       )}
       {error && <ErrorText msg={error} />}
       {!error && validationError && <ErrorText msg={validationError} />}
-      {isImage && value && !uploading && (
+      {isImage && value && isValidHttpsUrl(value) && !uploading && (
         <div className="mt-2 flex items-center gap-3 rounded-lg border border-gray-100 bg-white p-2">
           <img src={value} alt={`${label} preview`} className="h-14 w-14 rounded-md bg-white object-contain" />
           <div className="min-w-0 flex-1">
@@ -707,7 +760,7 @@ const UploadField: React.FC<{
       {!compact && !error && !successMsg && (
         <p className="mt-1 flex items-center gap-1 text-[11px] text-gray-400">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0"><circle cx="5" cy="5" r="4.5" stroke="currentColor" /><path d="M5 3.5V5.5M5 6.5h.01" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" /></svg>
-          Allowed: {allowedLabel} · Max 5 MB
+          Allowed: {allowedLabel} · Max 5 MB · Pasted URLs must start with https://
         </p>
       )}
     </div>
@@ -1083,14 +1136,14 @@ const ProductServiceManager: React.FC = () => {
       // if (!company.type.trim()) companyErrors.type = "Company type is required";
       if (company.gstNumber.trim() && !/^[0-9A-Z]{15}$/i.test(company.gstNumber.trim()))
         companyErrors.gstNumber = "GST number must be exactly 15 alphanumeric characters (e.g. 22AAAAA0000A1Z5)";
-      const isValidUrl = (value: string) => {
-        if (!value.trim()) return true;
-        try { new URL(value); return true; } catch { return false; }
-      };
-      if (!isValidUrl(company.websiteUrl)) companyErrors.websiteUrl = "Enter a valid URL starting with https://";
-      if (!isValidUrl(company.linkedinUrl)) companyErrors.linkedinUrl = "Enter a valid LinkedIn URL starting with https://";
-      if (company.logoUrl && !isValidUrl(company.logoUrl)) companyErrors.logoUrl = "Upload or enter a valid logo URL";
-      if (company.gstDocumentUrl && !isValidUrl(company.gstDocumentUrl)) companyErrors.gstDocumentUrl = "Upload or enter a valid GST document URL";
+      if (company.websiteUrl.trim() && !isValidHttpsUrl(company.websiteUrl))
+        companyErrors.websiteUrl = "Website URL must start with https:// and be a valid URL";
+      if (company.linkedinUrl.trim() && !isValidLinkedInUrl(company.linkedinUrl))
+        companyErrors.linkedinUrl = "Enter a valid LinkedIn URL starting with https://linkedin.com/";
+      if (company.logoUrl.trim() && !isValidHttpsUrl(company.logoUrl))
+        companyErrors.logoUrl = "Company logo URL must start with https://";
+      if (company.gstDocumentUrl.trim() && !isValidHttpsUrl(company.gstDocumentUrl))
+        companyErrors.gstDocumentUrl = "GST document URL must start with https://";
       setCompanyErrors(companyErrors);
       if (Object.keys(companyErrors).length) {
         setStatus((prev) => ({ ...prev, COMPANY: "error" }));
@@ -1166,10 +1219,6 @@ const ProductServiceManager: React.FC = () => {
 
     const isPositiveNumber = (value: string) => value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) > 0;
     const isNonNegativeNumber = (value: string) => value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
-    const isValidUrl = (value: string) => {
-      if (!value.trim()) return true;
-      try { new URL(value); return true; } catch { return false; }
-    };
 
     const nextProductErrors: Record<string, FieldErrors> = {};
     const filledProducts = products.filter(isProductFilled);
@@ -1191,7 +1240,8 @@ const ProductServiceManager: React.FC = () => {
       if (!p.warrantyAvailable) errs.warrantyAvailable = "Select warranty availability";
       if (p.warrantyAvailable === "true" && !p.warrantyPeriod.trim()) errs.warrantyPeriod = "Enter warranty period";
       if (!p.imageUrl.trim()) errs.imageUrl = "Upload a product image";
-      else if (!isValidUrl(p.imageUrl)) errs.imageUrl = "Upload a valid product image";
+      else if (!isValidHttpsUrl(p.imageUrl))
+        errs.imageUrl = "Product image URL must start with https://";
       if (Object.keys(errs).length) nextProductErrors[p.id] = errs;
     });
 
@@ -1205,8 +1255,10 @@ const ProductServiceManager: React.FC = () => {
       if (!s.availability) errs.availability = "Select availability";
       if (!s.serviceMode) errs.serviceMode = "Select service mode";
       if (!s.bookingRequired) errs.bookingRequired = "Select booking requirement";
-      if (s.imageUrl && !isValidUrl(s.imageUrl)) errs.imageUrl = "Upload a valid service image";
-      if (s.brochureUrl && !isValidUrl(s.brochureUrl)) errs.brochureUrl = "Upload a valid brochure or portfolio file";
+      if (s.imageUrl.trim() && !isValidHttpsUrl(s.imageUrl))
+        errs.imageUrl = "Service image URL must start with https://";
+      if (s.brochureUrl.trim() && !isValidHttpsUrl(s.brochureUrl))
+        errs.brochureUrl = "Brochure / portfolio URL must start with https://";
       if (Object.keys(errs).length) nextServiceErrors[s.id] = errs;
     });
 
@@ -1355,7 +1407,10 @@ const ProductServiceManager: React.FC = () => {
       setProductErrors({});
       setServiceErrors({});
       setStatus({});
-      navigate("/main/dashboard/my-products-services", { replace: true });
+      navigate(
+        `/main/dashboard/my-products-services?tab=${savedKind}`,
+        { replace: true },
+      );
     } else {
       await Swal.fire({
         icon: "error",
@@ -1957,8 +2012,60 @@ const ProductServiceManager: React.FC = () => {
 
               <TextField label="Locations" required value={company.locations} error={companyErrors.locations} placeholder="e.g. Hyderabad, Telangana" hint="City or cities where you operate" onChange={(v) => updateCompany("locations", v)} />
               <TextField label="GST number" value={company.gstNumber} error={companyErrors.gstNumber} placeholder="22AAAAA0000A1Z5" hint="15-character GSTIN (optional)" maxLength={15} onChange={(v) => updateCompany("gstNumber", v.toUpperCase())} />
-              <TextField label="Website URL" value={company.websiteUrl} error={companyErrors.websiteUrl} placeholder="https://example.com" hint="Must start with https://" onChange={(v) => updateCompany("websiteUrl", v)} />
-              <TextField label="LinkedIn URL" value={company.linkedinUrl} error={companyErrors.linkedinUrl} placeholder="https://linkedin.com/company/..." hint="Your company LinkedIn page" onChange={(v) => updateCompany("linkedinUrl", v)} />
+              <TextField
+                label="Website URL"
+                type="url"
+                value={company.websiteUrl}
+                error={companyErrors.websiteUrl}
+                placeholder="https://example.com"
+                hint="Optional. If entered, it must start with https://"
+                onChange={(v) => {
+                  updateCompany("websiteUrl", v);
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    websiteUrl:
+                      v.trim() && !isValidHttpsUrl(v)
+                        ? "Website URL must start with https:// and be a valid URL"
+                        : undefined,
+                  }));
+                }}
+                onBlur={() =>
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    websiteUrl:
+                      company.websiteUrl.trim() && !isValidHttpsUrl(company.websiteUrl)
+                        ? "Website URL must start with https:// and be a valid URL"
+                        : undefined,
+                  }))
+                }
+              />
+              <TextField
+                label="LinkedIn URL"
+                type="url"
+                value={company.linkedinUrl}
+                error={companyErrors.linkedinUrl}
+                placeholder="https://linkedin.com/company/..."
+                hint="Optional. Must be a valid LinkedIn URL starting with https://"
+                onChange={(v) => {
+                  updateCompany("linkedinUrl", v);
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    linkedinUrl:
+                      v.trim() && !isValidLinkedInUrl(v)
+                        ? "Enter a valid LinkedIn URL starting with https://linkedin.com/"
+                        : undefined,
+                  }));
+                }}
+                onBlur={() =>
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    linkedinUrl:
+                      company.linkedinUrl.trim() && !isValidLinkedInUrl(company.linkedinUrl)
+                        ? "Enter a valid LinkedIn URL starting with https://linkedin.com/"
+                        : undefined,
+                  }))
+                }
+              />
             </div>
             <SectionHeading>Brand and documents</SectionHeading>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

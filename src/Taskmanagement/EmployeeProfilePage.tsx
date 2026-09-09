@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Col,
+  DatePicker,
   Divider,
   Form,
   Grid,
@@ -29,6 +30,7 @@ import {
   TeamOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
+import dayjs from "dayjs";
 
 import { employeeApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
@@ -302,14 +304,20 @@ const EmployeeProfilePage: React.FC = () => {
     | string
     | undefined;
 
-  const getEmployeeSkills = async () => {
+  const getEmployeeSkills = async (options?: {
+    silentLoading?: boolean;
+    preserveEditMode?: boolean;
+  }) => {
+    const silentLoading = Boolean(options?.silentLoading);
+    const preserveEditMode = Boolean(options?.preserveEditMode);
+
     if (!userId) {
-      setPageLoading(false);
-      setIsEditMode(true);
-      return;
+      if (!silentLoading) setPageLoading(false);
+      if (!preserveEditMode) setIsEditMode(true);
+      return false;
     }
 
-    setPageLoading(true);
+    if (!silentLoading) setPageLoading(true);
 
     try {
       const response = await employeeApi.get(
@@ -350,25 +358,30 @@ const EmployeeProfilePage: React.FC = () => {
         location: cleanText(data.location),
         aboutMe: cleanText(data.aboutMe),
         dateOfJoining: data.dateOfJoining
-          ? String(data.dateOfJoining).slice(0, 10)
-          : "",
+          ? dayjs(data.dateOfJoining)
+          : null,
         imageUrl: cleanText(data.imageUrl),
       });
 
-      setIsEditMode(!hasData);
+      if (!preserveEditMode) setIsEditMode(!hasData);
+      return true;
     } catch (error) {
       console.error("Failed to load employee profile:", error);
 
-      setHasProfileData(false);
-      setIsEditMode(true);
+      if (!preserveEditMode) {
+        setHasProfileData(false);
+        setIsEditMode(true);
 
-      form.setFieldsValue({
-        mobileNumber: digits10(
-          sessionStorage.getItem("mobileNumber") || "",
-        ),
-      });
+        form.setFieldsValue({
+          mobileNumber: digits10(
+            sessionStorage.getItem("mobileNumber") || "",
+          ),
+        });
+      }
+
+      return false;
     } finally {
-      setPageLoading(false);
+      if (!silentLoading) setPageLoading(false);
     }
   };
 
@@ -387,11 +400,23 @@ const EmployeeProfilePage: React.FC = () => {
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedImageTypes.includes(file.type)) {
       await Swal.fire({
         icon: "warning",
-        title: "Invalid image",
-        text: "Please select a valid image file.",
+        title: "Unsupported image",
+        text: "Please upload a JPG, JPEG, PNG, or WebP image.",
+        confirmButtonColor: PRIMARY,
+      });
+      return;
+    }
+
+    if (file.size <= 0) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Empty image file",
+        text: "Please choose a valid image file and try again.",
         confirmButtonColor: PRIMARY,
       });
       return;
@@ -451,6 +476,14 @@ const EmployeeProfilePage: React.FC = () => {
         ...prev,
         imageUrl: uploadedUrl,
       }));
+
+      // Re-fetch the saved profile immediately after upload so the UI always
+      // reflects the backend response. Keep the refresh silent and preserve
+      // the user's current edit mode for a smoother experience.
+      await getEmployeeSkills({
+        silentLoading: true,
+        preserveEditMode: true,
+      });
 
       await Swal.fire({
         icon: "success",
@@ -522,7 +555,7 @@ const EmployeeProfilePage: React.FC = () => {
     const payload = {
       aboutMe: cleanText(values.aboutMe) || null,
       dateOfJoining: values.dateOfJoining
-        ? new Date(`${values.dateOfJoining}T00:00:00`).toISOString()
+        ? values.dateOfJoining.startOf("day").toISOString()
         : null,
       designation: designations.join(", "),
       empNumber: mobile,
@@ -792,6 +825,7 @@ const EmployeeProfilePage: React.FC = () => {
           layout="vertical"
           requiredMark
           validateTrigger={["onChange", "onBlur"]}
+          scrollToFirstError={{ behavior: "smooth", block: "center" }}
         >
           {mobErr && (
             <Alert
@@ -802,225 +836,240 @@ const EmployeeProfilePage: React.FC = () => {
             />
           )}
 
-          <div className="form-section-title">Personal Information</div>
-          <Divider style={{ margin: "8px 0 20px" }} />
+          <section className="form-section-panel" aria-labelledby="personal-information-title">
+            <div className="form-section-heading">
+              <div>
+                <div id="personal-information-title" className="form-section-title">Personal Information</div>
+                <Text className="form-section-subtitle">Keep your core employee details accurate and up to date.</Text>
+              </div>
+            </div>
 
-          <Row gutter={[18, 8]}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                label="Employee Mobile Number"
-                name="mobileNumber"
-                rules={[
-                  {
-                    required: true,
-                    message: "Employee mobile number is required.",
-                  },
-                ]}
-              >
-                <Input
-                  size="large"
-                  addonBefore="+91"
-                  maxLength={10}
-                  inputMode="numeric"
-                  disabled={fieldDisabled}
-                  placeholder="Enter 10-digit mobile number"
-                  onChange={(event) => {
-                    form.setFieldsValue({
-                      mobileNumber: digits10(event.target.value),
-                    });
-                    if (mobErr) setMobErr("");
-                  }}
-                />
-              </Form.Item>
-            </Col>
+            <Row gutter={[18, 4]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Employee Mobile Number"
+                  name="mobileNumber"
+                  rules={[
+                    { required: true, message: "Employee mobile number is required." },
+                    { pattern: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number." },
+                    {
+                      validator: (_, value) =>
+                        /^(\d)\1{9}$/.test(String(value || ""))
+                          ? Promise.reject(new Error("Mobile number cannot contain the same digit repeatedly."))
+                          : Promise.resolve(),
+                    },
+                  ]}
+                >
+                  <Input
+                    size="middle"
+                    addonBefore="+91"
+                    prefix={<PhoneOutlined />}
+                    maxLength={10}
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    disabled={fieldDisabled}
+                    placeholder="Enter 10-digit mobile number"
+                    onChange={(event) => {
+                      form.setFieldsValue({ mobileNumber: digits10(event.target.value) });
+                      if (mobErr) setMobErr("");
+                    }}
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} md={12}>
-              <Form.Item
-                label="Work Location"
-                name="location"
-                rules={[
-                  {
-                    required: true,
-                    message: "Work location is required.",
-                  },
-                ]}
-              >
-                <Input
-                  size="large"
-                  disabled={fieldDisabled}
-                  placeholder="Enter work location, e.g. Hyderabad, Telangana"
-                />
-              </Form.Item>
-            </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Work Location"
+                  name="location"
+                  rules={[
+                    { required: true, message: "Work location is required." },
+                    { whitespace: true, message: "Work location cannot be blank." },
+                    { min: 2, message: "Work location must be at least 2 characters." },
+                    { max: 100, message: "Work location cannot exceed 100 characters." },
+                  ]}
+                >
+                  <Input
+                    size="middle"
+                    prefix={<EnvironmentOutlined />}
+                    autoComplete="organization-locality"
+                    disabled={fieldDisabled}
+                    placeholder="e.g. Hyderabad, Telangana"
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} md={12}>
-              <Form.Item
-                label="Employee Joining Date"
-                name="dateOfJoining"
-                rules={[
-                  {
-                    required: true,
-                    message: "Employee joining date is required.",
-                  },
-                ]}
-              >
-                <Input
-                  type="date"
-                  size="large"
-                  disabled={fieldDisabled}
-                />
-              </Form.Item>
-            </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Employee Joining Date"
+                  name="dateOfJoining"
+                  rules={[{ required: true, message: "Employee joining date is required." }]}
+                >
+                  <DatePicker
+                    size="middle"
+                    format="DD MMM YYYY"
+                    disabledDate={(current) =>
+                      Boolean(current && current.startOf("day").isAfter(dayjs().startOf("day")))
+                    }
+                    placeholder="Select joining date"
+                    suffixIcon={<CalendarOutlined />}
+                    disabled={fieldDisabled}
+                    style={{ width: "100%" }}
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} md={12}>
-              <Form.Item
-                label="Employee Skills"
-                name="skills"
-              >
-                <Input
-                  size="large"
-                  disabled={fieldDisabled}
-                  placeholder="React Js, TypeScript, Git, Ant Design..."
-                />
-              </Form.Item>
-            </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Employee Skills"
+                  name="skills"
+                  rules={[
+                    { required: true, message: "Employee skills are required." },
+                    { whitespace: true, message: "Employee skills cannot be blank." },
+                    { min: 2, message: "Please enter at least one valid skill." },
+                    { max: 300, message: "Employee skills cannot exceed 300 characters." },
+                  ]}
+                >
+                  <Input
+                    size="middle"
+                    prefix={<BuildOutlined />}
+                    disabled={fieldDisabled}
+                    placeholder="React, TypeScript, Git, Ant Design..."
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col span={24}>
-              <Form.Item
-                label="Professional Summary"
-                name="aboutMe"
-                rules={[
-                  {
-                    required: true,
-                    message: "Professional summary is required.",
-                  },
-                  {
-                    min: 20,
-                    message: "Please enter at least 20 characters.",
-                  },
-                ]}
-              >
-                <Input.TextArea
-                  rows={4}
-                  maxLength={600}
-                  showCount
-                  disabled={fieldDisabled}
-                  placeholder="Briefly describe your experience, responsibilities, and strengths..."
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Col span={24}>
+                <Form.Item
+                  label="Professional Summary"
+                  name="aboutMe"
+                  rules={[
+                    { required: true, message: "Professional summary is required." },
+                    { whitespace: true, message: "Professional summary cannot be blank." },
+                    { min: 20, message: "Please enter at least 20 characters." },
+                    { max: 600, message: "Professional summary cannot exceed 600 characters." },
+                  ]}
+                >
+                  <Input.TextArea
+                    autoSize={{ minRows: 4, maxRows: 7 }}
+                    maxLength={600}
+                    showCount
+                    disabled={fieldDisabled}
+                    placeholder="Briefly describe your experience, responsibilities, strengths, and current focus..."
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </section>
 
-          <div className="form-section-title">Work Information</div>
-          <Divider style={{ margin: "8px 0 20px" }} />
+          <section className="form-section-panel" aria-labelledby="work-information-title">
+            <div className="form-section-heading">
+              <div>
+                <div id="work-information-title" className="form-section-title">Work Information</div>
+                <Text className="form-section-subtitle">Choose the platforms and roles that best describe your current work.</Text>
+              </div>
+            </div>
 
-          <Row gutter={[18, 8]}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                label="Employee Working Platforms"
-                name="projectType"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select at least one working platform.",
-                  },
-                ]}
-              >
-                <Select
-                  mode="multiple"
-                  size="large"
-                  allowClear
-                  maxTagCount="responsive"
-                  disabled={fieldDisabled}
-                  placeholder="Select platforms"
-                  options={PLATFORMS.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
+            <Row gutter={[18, 4]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Employee Working Platforms"
+                  name="projectType"
+                  rules={[
+                    { required: true, type: "array", min: 1, message: "Please select at least one working platform." },
+                  ]}
+                >
+                  <Select
+                    mode="multiple"
+                    size="middle"
+                    allowClear
+                    maxTagCount="responsive"
+                    disabled={fieldDisabled}
+                    showSearch
+                    optionFilterProp="label"
+                    placeholder="Search and select platforms"
+                    suffixIcon={<BuildOutlined />}
+                    options={PLATFORMS.map((item) => ({ label: item.label, value: item.value }))}
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} md={12}>
-              <Form.Item
-                label="Employee Roles / Designations"
-                name="designation"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select at least one employee role.",
-                  },
-                ]}
-              >
-                <Select
-                  mode="multiple"
-                  size="large"
-                  allowClear
-                  maxTagCount="responsive"
-                  disabled={fieldDisabled}
-                  showSearch
-                  optionFilterProp="label"
-                  placeholder="Search and select roles"
-                  options={ROLE_OPTIONS.map((role) => ({
-                    label: role,
-                    value: role,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Employee Roles / Designations"
+                  name="designation"
+                  rules={[
+                    { required: true, type: "array", min: 1, message: "Please select at least one employee role." },
+                  ]}
+                >
+                  <Select
+                    mode="multiple"
+                    size="middle"
+                    allowClear
+                    maxTagCount="responsive"
+                    disabled={fieldDisabled}
+                    showSearch
+                    optionFilterProp="label"
+                    placeholder="Search and select roles"
+                    suffixIcon={<TeamOutlined />}
+                    options={ROLE_OPTIONS.map((role) => ({ label: role, value: role }))}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </section>
 
-          <div className="form-section-title">
-            AI Tools & Usage Levels
-          </div>
-          <Divider style={{ margin: "8px 0 20px" }} />
+          <section className="form-section-panel" aria-labelledby="ai-tools-title">
+            <div className="form-section-heading">
+              <div>
+                <div id="ai-tools-title" className="form-section-title">AI Tools & Usage Levels</div>
+                <Text className="form-section-subtitle">Add comma-separated tools based on how frequently you use them.</Text>
+              </div>
+            </div>
 
-          <Row gutter={[18, 8]}>
-            <Col xs={24} md={8}>
-              <Form.Item
-                label={<Tag color="green">High Usage</Tag>}
-                name="aiToolsHigh"
-              >
-                <Input.TextArea
-                  rows={3}
-                  disabled={fieldDisabled}
-                  placeholder="ChatGPT, Claude, Gemini AI"
-                />
-              </Form.Item>
-            </Col>
+            <Row gutter={[18, 4]}>
+              <Col xs={24} md={8}>
+                <Form.Item label={<Tag color="green">High Usage</Tag>} name="aiToolsHigh">
+                  <Input.TextArea
+                    autoSize={{ minRows: 3, maxRows: 5 }}
+                    maxLength={300}
+                    showCount
+                    disabled={fieldDisabled}
+                    placeholder="ChatGPT, Claude, Gemini AI"
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} md={8}>
-              <Form.Item
-                label={<Tag color="gold">Moderate Usage</Tag>}
-                name="aiToolsModerate"
-              >
-                <Input.TextArea
-                  rows={3}
-                  disabled={fieldDisabled}
-                  placeholder="Copilot, Cursor AI..."
-                />
-              </Form.Item>
-            </Col>
+              <Col xs={24} md={8}>
+                <Form.Item label={<Tag color="gold">Moderate Usage</Tag>} name="aiToolsModerate">
+                  <Input.TextArea
+                    autoSize={{ minRows: 3, maxRows: 5 }}
+                    maxLength={300}
+                    showCount
+                    disabled={fieldDisabled}
+                    placeholder="Copilot, Cursor AI..."
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} md={8}>
-              <Form.Item
-                label={<Tag color="blue">Low Usage</Tag>}
-                name="aiToolsLow"
-              >
-                <Input.TextArea
-                  rows={3}
-                  disabled={fieldDisabled}
-                  placeholder="Other AI tools..."
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Col xs={24} md={8}>
+                <Form.Item label={<Tag color="blue">Low Usage</Tag>} name="aiToolsLow">
+                  <Input.TextArea
+                    autoSize={{ minRows: 3, maxRows: 5 }}
+                    maxLength={300}
+                    showCount
+                    disabled={fieldDisabled}
+                    placeholder="Other AI tools..."
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </section>
 
           {isEditMode && (
             <div className="form-actions">
               <Button
                 type="primary"
-                size="large"
+                size="middle"
                 loading={saving}
                 onClick={handleSave}
                 style={{
@@ -1035,7 +1084,7 @@ const EmployeeProfilePage: React.FC = () => {
 
               {hasProfileData && (
                 <Button
-                  size="large"
+                  size="middle"
                   icon={<CloseOutlined />}
                   disabled={saving}
                   onClick={handleCancel}
@@ -1230,12 +1279,10 @@ const EmployeeProfilePage: React.FC = () => {
 
         .profile-hero {
           overflow: hidden;
-          border: 1px solid #dbeafe !important;
+          border: 1px solid #e2e8f0 !important;
           border-radius: 16px !important;
-          background:
-            radial-gradient(circle at 90% 0%, rgba(34, 211, 238, .15), transparent 30%),
-            linear-gradient(135deg, #ffffff 0%, #f0fbff 54%, #dff8fb 100%) !important;
-          box-shadow: 0 6px 20px rgba(15, 23, 42, .05);
+          background: #ffffff !important;
+          box-shadow: 0 8px 28px rgba(15, 23, 42, .05);
         }
 
         .profile-hero .ant-card-body {
@@ -1387,12 +1434,6 @@ const EmployeeProfilePage: React.FC = () => {
           margin-top: 18px;
         }
 
-        .edit-card .ant-form-item-label > label {
-          color: #1e293b;
-          font-size: 13px;
-          font-weight: 700;
-        }
-
         .edit-card .ant-form-item-required::before {
           margin-inline-end: 5px !important;
         }
@@ -1403,6 +1444,7 @@ const EmployeeProfilePage: React.FC = () => {
 
         .profile-section-card {
           height: 100%;
+          background: #ffffff !important;
           min-height: 310px;
           border: 1px solid #e2e8f0 !important;
           border-radius: 14px !important;
@@ -1456,7 +1498,8 @@ const EmployeeProfilePage: React.FC = () => {
           border-radius: 50%;
           display: grid;
           place-items: center;
-          background: linear-gradient(135deg, #dff7fa, #e0f2fe);
+          background: #ffffff;
+          border: 1px solid #dbeafe;
           color: ${PRIMARY_DARK};
           font-size: 11px;
           font-weight: 800;
@@ -1525,6 +1568,7 @@ const EmployeeProfilePage: React.FC = () => {
         }
 
         .profile-about-card {
+          background: #ffffff !important;
           border: 1px solid #e2e8f0 !important;
           border-radius: 14px !important;
           box-shadow: 0 4px 16px rgba(15, 23, 42, .03);
@@ -1543,8 +1587,9 @@ const EmployeeProfilePage: React.FC = () => {
           border-radius: 50%;
           display: grid;
           place-items: center;
-          color: #fff;
-          background: linear-gradient(135deg, ${PRIMARY}, #34d399);
+          color: ${PRIMARY};
+          background: #ffffff;
+          border: 1px solid #dbeafe;
         }
 
         .about-copy {
@@ -1554,23 +1599,129 @@ const EmployeeProfilePage: React.FC = () => {
 
         .edit-card {
           border: 1px solid #e2e8f0 !important;
-          border-radius: 14px !important;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+          border-radius: 16px !important;
+          background: #ffffff !important;
+          box-shadow: 0 8px 28px rgba(15, 23, 42, .045);
+        }
+
+        .edit-card .ant-card-body {
+          padding: 22px;
+        }
+
+        .form-section-panel {
+          padding: 20px;
+          margin-bottom: 16px;
+          border: 1px solid #e7eaf0;
+          border-radius: 14px;
+          background: #ffffff;
+        }
+
+        .form-section-heading {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 18px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid #eef1f5;
+        }
+
+        .form-section-title {
+          color: #0f172a;
+          font-size: 15px;
+          font-weight: 800;
+          letter-spacing: -.01em;
+        }
+
+        .form-section-subtitle {
+          display: block;
+          margin-top: 4px;
+          color: #64748b !important;
+          font-size: 12px;
+          line-height: 1.5;
+        }
+
+        .edit-card .ant-form-item-label > label {
+          height: auto;
+          color: #334155;
+          font-size: 13px;
+          font-weight: 700;
         }
 
         .edit-card .ant-input,
         .edit-card .ant-input-affix-wrapper,
+        .edit-card .ant-input-group-addon,
+        .edit-card .ant-picker,
         .edit-card .ant-select-selector {
-          border-radius: 9px !important;
+          border-color: #d8dee8 !important;
+          border-radius: 10px !important;
+          background: #ffffff !important;
+          box-shadow: none !important;
+          transition: border-color .18s ease, box-shadow .18s ease;
         }
 
-        .form-section-title {
-          margin-top: 2px;
-          color: ${PRIMARY_DARK};
-          font-size: 14px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: .04em;
+        .edit-card .ant-input,
+        .edit-card .ant-input-affix-wrapper,
+        .edit-card .ant-picker {
+          min-height: 38px;
+        }
+
+        .edit-card .ant-select-single .ant-select-selector,
+        .edit-card .ant-select-multiple .ant-select-selector {
+          min-height: 38px !important;
+          padding-top: 3px !important;
+          padding-bottom: 3px !important;
+        }
+
+        .edit-card .ant-input:hover,
+        .edit-card .ant-input-affix-wrapper:hover,
+        .edit-card .ant-picker:hover,
+        .edit-card .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+          border-color: #94a3b8 !important;
+        }
+
+        .edit-card .ant-input:focus,
+        .edit-card .ant-input-focused,
+        .edit-card .ant-input-affix-wrapper-focused,
+        .edit-card .ant-picker-focused,
+        .edit-card .ant-select-focused .ant-select-selector {
+          border-color: ${PRIMARY} !important;
+          box-shadow: 0 0 0 3px rgba(0, 140, 186, .09) !important;
+        }
+
+        .edit-card .ant-input-prefix,
+        .edit-card .ant-picker-suffix,
+        .edit-card .ant-select-arrow {
+          color: #94a3b8;
+        }
+
+        .edit-card .ant-form-item-explain-error {
+          margin-top: 4px;
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .edit-card .ant-select-selection-overflow {
+          gap: 3px 2px;
+        }
+
+        .edit-card .ant-select-selection-item {
+          max-width: 100%;
+        }
+
+        .edit-card .ant-input-disabled,
+        .edit-card .ant-input-affix-wrapper-disabled,
+        .edit-card .ant-picker-disabled,
+        .edit-card .ant-select-disabled .ant-select-selector {
+          color: #475569 !important;
+          background: #f8fafc !important;
+          border-color: #e2e8f0 !important;
+          cursor: default;
+        }
+
+        .edit-card textarea.ant-input {
+          resize: vertical;
+          line-height: 1.6;
         }
 
         .form-actions {
@@ -1657,7 +1808,35 @@ const EmployeeProfilePage: React.FC = () => {
           }
 
           .edit-card .ant-card-body {
-            padding: 18px 14px;
+            padding: 14px 10px;
+          }
+
+          .form-section-panel {
+            padding: 16px 12px;
+            border-radius: 12px;
+          }
+
+          .form-section-heading {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+          }
+
+          .edit-card .ant-input,
+          .edit-card .ant-input-affix-wrapper,
+          .edit-card .ant-picker,
+          .edit-card .ant-select-single .ant-select-selector,
+          .edit-card .ant-select-multiple .ant-select-selector {
+            min-height: 42px !important;
+          }
+
+          .form-actions {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            margin: 8px -10px -14px;
+            padding: 12px 10px 14px;
+            background: rgba(255,255,255,.96);
+            backdrop-filter: blur(8px);
           }
 
           .form-actions .ant-btn {
