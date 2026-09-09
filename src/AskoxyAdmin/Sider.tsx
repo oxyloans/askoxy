@@ -223,9 +223,9 @@ const Sidebar: React.FC = () => {
             link: "/admin/sudheervakkalagadda",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
-           {
-            title: "Rotary Data" ,
-            icon:  <FaUsers className="text-blue-500" />,
+          {
+            title: "Rotary Data",
+            icon: <FaUsers className="text-blue-500" />,
             link: "/admin/rotarydata",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
@@ -333,7 +333,7 @@ const Sidebar: React.FC = () => {
             link: "/admin/addleaguejourney",
             roles: ["HELPDESKSUPERADMIN"],
           },
-          
+
           {
             title: "Journey vs Campaigns vs Interested Users",
             icon: <FaUsers className="text-sky-400" />,
@@ -351,6 +351,12 @@ const Sidebar: React.FC = () => {
             title: "Add Service / Product",
             icon: <FaStore className="text-green-400" />,
             link: "/admin/campaignsadd",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Company Products & Services",
+            icon: <FaBoxes className="text-cyan-400" />,
+            link: "/admin/company-product-services",
             roles: ["HELPDESKSUPERADMIN"],
           },
           {
@@ -659,17 +665,15 @@ const Sidebar: React.FC = () => {
 
         <aside
           className={`fixed inset-y-0 left-0 z-50 h-dvh transform overflow-hidden bg-gray-800 transition-all duration-300 ease-in-out
-            ${
-              isMobile
-                ? isMobileOpen
-                  ? "translate-x-0"
-                  : "-translate-x-full"
-                : "translate-x-0"
+            ${isMobile
+              ? isMobileOpen
+                ? "translate-x-0"
+                : "-translate-x-full"
+              : "translate-x-0"
             }
-            ${
-              isMobile
-                ? "w-[86vw] max-w-72"
-                : collapsed && !isMobileOpen
+            ${isMobile
+              ? "w-[86vw] max-w-72"
+              : collapsed && !isMobileOpen
                 ? "w-20"
                 : "w-64"
             }
@@ -737,17 +741,15 @@ const Sidebar: React.FC = () => {
                   <li key={categoryIndex} className="mb-1">
                     <div
                       className={`group relative flex cursor-pointer items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                        ${
-                          isActiveCat
-                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
-                            : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                        ${isActiveCat
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                          : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                         }`}
                       onClick={() => handleCategoryClick(category.title)}
                     >
                       <span
-                        className={`z-10 text-lg transition-all duration-300 ${
-                          collapsed ? "ml-1" : "ml-0"
-                        }`}
+                        className={`z-10 text-lg transition-all duration-300 ${collapsed ? "ml-1" : "ml-0"
+                          }`}
                       >
                         {React.cloneElement(category.icon as React.ReactElement, {
                           className: isActiveCat
@@ -763,30 +765,27 @@ const Sidebar: React.FC = () => {
                       ) : (
                         <>
                           <span
-                            className={`z-10 ml-2 flex-1 truncate transition-colors duration-300 ${
-                              isActiveCat
+                            className={`z-10 ml-2 flex-1 truncate transition-colors duration-300 ${isActiveCat
                                 ? "text-white"
                                 : "text-white group-hover:text-gray-800"
-                            }`}
+                              }`}
                           >
                             {category.title}
                           </span>
                           <span className="z-10 ml-2 transition-all duration-300">
                             {isExpanded ? (
                               <FaChevronDown
-                                className={`text-sm transition-all duration-300 ${
-                                  isActiveCat
+                                className={`text-sm transition-all duration-300 ${isActiveCat
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800"
-                                }`}
+                                  }`}
                               />
                             ) : (
                               <FaChevronRight
-                                className={`text-sm transition-all duration-300 ${
-                                  isActiveCat
+                                className={`text-sm transition-all duration-300 ${isActiveCat
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800"
-                                }`}
+                                  }`}
                               />
                             )}
                           </span>
@@ -799,11 +798,10 @@ const Sidebar: React.FC = () => {
                     </div>
 
                     <div
-                      className={`overflow-hidden transition-all duration-400 ease-in-out ${
-                        isExpanded && !collapsed
+                      className={`overflow-hidden transition-all duration-400 ease-in-out ${isExpanded && !collapsed
                           ? "mt-1 max-h-[1000px] opacity-100"
                           : "max-h-0 opacity-0"
-                      }`}
+                        }`}
                     >
                       <ul className="ml-4 space-y-1 border-l-2 border-gray-600 pl-3">
                         {categoryItems.map((item, itemIndex) => (
@@ -811,10 +809,9 @@ const Sidebar: React.FC = () => {
                             <Link
                               to={item.link}
                               className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                                ${
-                                  isActive(item.link)
-                                    ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                                    : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                                ${isActive(item.link)
+                                  ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
+                                  : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                                 }`}
                               onClick={(e) => {
                                 if (item.onClick) {
@@ -836,11 +833,10 @@ const Sidebar: React.FC = () => {
                                 )}
                               </span>
                               <span
-                                className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${
-                                  isActive(item.link)
+                                className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${isActive(item.link)
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800"
-                                }`}
+                                  }`}
                               >
                                 {item.title}
                               </span>
@@ -865,10 +861,9 @@ const Sidebar: React.FC = () => {
                   <Link
                     to={item.link}
                     className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                      ${
-                        isActive(item.link)
-                          ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                          : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                      ${isActive(item.link)
+                        ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
+                        : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                       }`}
                     onClick={(e) => {
                       if (item.onClick) {
@@ -880,9 +875,8 @@ const Sidebar: React.FC = () => {
                     }}
                   >
                     <span
-                      className={`z-10 text-lg transition-all duration-300 ${
-                        collapsed ? "ml-1" : "ml-0"
-                      }`}
+                      className={`z-10 text-lg transition-all duration-300 ${collapsed ? "ml-1" : "ml-0"
+                        }`}
                     >
                       {React.cloneElement(item.icon as React.ReactElement, {
                         className: isActive(item.link)
@@ -896,11 +890,10 @@ const Sidebar: React.FC = () => {
                       </span>
                     ) : (
                       <span
-                        className={`z-10 ml-3 truncate text-base font-medium transition-colors duration-300 ${
-                          isActive(item.link)
+                        className={`z-10 ml-3 truncate text-base font-medium transition-colors duration-300 ${isActive(item.link)
                             ? "text-white"
                             : "text-white group-hover:text-gray-800"
-                        }`}
+                          }`}
                       >
                         {item.title}
                       </span>
@@ -939,8 +932,8 @@ const Sidebar: React.FC = () => {
             marginLeft: isMobile
               ? "0"
               : collapsed && !isMobileOpen
-              ? "80px"
-              : "256px",
+                ? "80px"
+                : "256px",
             transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
           }}
         >
@@ -979,9 +972,8 @@ const Sidebar: React.FC = () => {
         <div className="h-16 w-full" />
 
         <div
-          className={`transition-all duration-300 ease-in-out ${
-            isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"
-          }`}
+          className={`transition-all duration-300 ease-in-out ${isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"
+            }`}
           style={{
             minHeight: "calc(100vh - 64px)",
             paddingBottom: "2rem",

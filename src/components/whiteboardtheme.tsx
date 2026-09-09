@@ -12,7 +12,7 @@ import web5 from "../assets/img/web5.png";
 import arrow0 from "../assets/img/arrow0.png";
 import arrow1 from "../assets/img/arrow1.png";
 import speak0 from "../assets/img/speak0.png";
-import speak1 from "../assets/img/speak1.png";
+import speak1 from "../assets/img/speak1.jpg.jpeg";
 import line1 from "../assets/img/line1.png";
 import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
@@ -58,7 +58,7 @@ const Whiteboardtheme: React.FC = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+      const redirectPath = "/main/viewjobdetails/dd3b6af5-9783-4606-a94b-13a1113cf855/ASKOXY_AI";
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -135,7 +135,7 @@ const Whiteboardtheme: React.FC = () => {
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
       <img
-        src={"https://i.ibb.co/DfGmV3B6/Chat-GPT-Image-Aug-29-2026-12-09-49-PM-5870x4306.png"}
+        src={speak1}
         alt="Active Jobs and Total Companies"
         className="h-full w-full select-none object-contain"
         draggable={false}
@@ -288,12 +288,12 @@ const Whiteboardtheme: React.FC = () => {
                   <div className="flex h-[148px] w-[148px] items-center justify-center">
                     <button
                       type="button"
-                      onClick={() => navigate("/sovereign-ai")}
+                      onClick={() => navigate("/main/dashboard/products?type=SILVER")}
                       className="flex h-full w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95"
                       aria-label="Speak with Sovereign AI"
                     >
                       <img
-                        src={"https://i.ibb.co/Sw1TVDtQ/qw2.png"}
+                        src={"https://i.ibb.co/Ps1yQ2yB/we-vinayak.png"}
                         alt="Speak with Sovereign AI"
                         className="h-full w-full object-contain"
                       />
@@ -328,7 +328,7 @@ const Whiteboardtheme: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/sovereign-ai")}
+                    onClick={() => navigate("/main/dashboard/products?type=SILVER")}
                     className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                     style={{
                       width: "clamp(140px, 12vw, 196px)",
@@ -337,7 +337,7 @@ const Whiteboardtheme: React.FC = () => {
                     aria-label="Speak with Sovereign AI"
                   >
                     <img
-                      src={"https://i.ibb.co/Sw1TVDtQ/qw2.png"}
+                      src={"https://i.ibb.co/Ps1yQ2yB/we-vinayak.png"}
                       alt="Speak with Sovereign AI"
                       className="h-full w-full object-contain"
                     />

@@ -42,7 +42,9 @@ interface CommentType {
 }
 
 
-type StatusFilter = "ALL" | "ACCEPTED" | "REJECTED" | "HOLD" | "COMPLETED";
+type StatusFilter = "ALL" | ActionStatus;
+
+const DEFAULT_USER_ID = sessionStorage.getItem("userId") || "default_user_id";
 
 const ACTION_CONFIG: Record<ActionStatus, { label: string; color: string; bg: string; border: string; needsComment: boolean }> = {
   ACCEPTED: { label: "Accept", color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd", needsComment: true },
@@ -79,51 +81,6 @@ const sortTasksByCreatedDate = (taskList: TaskItem[]) =>
   });
 
 
-const normalizeTasks = (list: unknown): TaskItem[] => {
-  const rawList = Array.isArray(list)
-    ? list
-    : Array.isArray((list as any)?.data)
-      ? (list as any).data
-      : Array.isArray((list as any)?.content)
-        ? (list as any).content
-        : [];
-
-  return rawList.filter((task: any) => {
-    const hasTaskId = Boolean(task?.id);
-    const hasTaskName =
-      typeof task?.taskName === "string" && task.taskName.trim().length > 0;
-
-    const assigned = task?.taskAssignTo;
-    const hasAssignee = Array.isArray(assigned)
-      ? assigned.some((item: unknown) => String(item ?? "").replace(/^\[|\]$/g, "").trim())
-      : String(assigned ?? "").replace(/^\[|\]$/g, "").trim().length > 0;
-
-    return hasTaskId && hasTaskName && hasAssignee;
-  });
-};
-
-const getAssignedToText = (taskAssignTo: Array<string | null> | null) => {
-  if (!Array.isArray(taskAssignTo)) return "Not assigned";
-
-  const names = taskAssignTo
-    .flatMap((item) =>
-      String(item ?? "")
-        .replace(/^\[|\]$/g, "")
-        .split(",")
-    )
-    .map((name) => name.trim())
-    .filter(Boolean);
-
-  return names.length ? names.join(", ") : "Not assigned";
-};
-
-// Normalize names before comparing the logged-in employee with task assignees.
-const normalizeName = (name?: string | null) =>
-  String(name ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-
 type AttachmentPreviewProps = {
   url: string | null;
   onImageClick: (url: string) => void;
@@ -131,16 +88,21 @@ type AttachmentPreviewProps = {
 
 const getAttachmentLabel = (url: string) => {
   const cleanUrl = url.split("?")[0].toLowerCase();
+
   if (cleanUrl.endsWith(".pdf")) return "PDF Document";
   if (/\.(mp4|webm|mov|m4v|avi|mkv)$/.test(cleanUrl)) return "Video File";
   if (/\.(doc|docx)$/.test(cleanUrl)) return "Word Document";
   if (/\.(xls|xlsx|csv)$/.test(cleanUrl)) return "Spreadsheet";
   if (/\.(ppt|pptx)$/.test(cleanUrl)) return "Presentation";
   if (/\.(zip|rar|7z)$/.test(cleanUrl)) return "Archive File";
+
   return "Attachment";
 };
 
-const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ url, onImageClick }) => {
+const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
+  url,
+  onImageClick,
+}) => {
   const [imageState, setImageState] = useState<"checking" | "image" | "file">(
     url ? "checking" : "file",
   );
@@ -153,8 +115,15 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ url, onImageClick
 
     let active = true;
     const probe = new Image();
-    probe.onload = () => active && setImageState("image");
-    probe.onerror = () => active && setImageState("file");
+
+    probe.onload = () => {
+      if (active) setImageState("image");
+    };
+
+    probe.onerror = () => {
+      if (active) setImageState("file");
+    };
+
     probe.src = url;
 
     return () => {
@@ -167,7 +136,14 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ url, onImageClick
   if (!url) {
     return (
       <div className="attachment-empty" aria-label="No attachment">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <svg
+          viewBox="0 0 24 24"
+          width="32"
+          height="32"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
           <path d="M8 12.5 13.5 7a3 3 0 0 1 4.2 4.2l-7 7a5 5 0 0 1-7.1-7.1l7.3-7.3" />
         </svg>
         <span>No attachment</span>
@@ -207,17 +183,34 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ url, onImageClick
       aria-label={`Open ${getAttachmentLabel(url)} in a new tab`}
     >
       <span className="file-attachment-card__icon">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          width="28"
+          height="28"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <path d="M7 3h7l4 4v14H7z" />
           <path d="M14 3v5h5" />
           <path d="M9.5 14h5M9.5 17h4" />
         </svg>
       </span>
+
       <span className="file-attachment-card__text">
         <strong>{getAttachmentLabel(url)}</strong>
         <small>Open in new tab</small>
       </span>
-      <svg className="file-attachment-card__open" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+
+      <svg
+        className="file-attachment-card__open"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <path d="M14 5h5v5" />
         <path d="m11 13 8-8" />
         <path d="M19 13v6H5V5h6" />
@@ -226,7 +219,47 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ url, onImageClick
   );
 };
 
-const Assignedtasksbasedstatus: React.FC = () => {
+const getStoredUserId = () => {
+  if (typeof window === "undefined") return DEFAULT_USER_ID;
+
+  const directKeys = [
+    "userId",
+    "user_id",
+    "USER_ID",
+    "employeeId",
+    "employee_id",
+  ];
+
+  for (const key of directKeys) {
+    const value = sessionStorage.getItem(key);
+    if (value && value !== "null" && value !== "undefined") return value;
+  }
+
+  const objectKeys = ["user", "userData", "profile", "loginData"];
+
+  for (const key of objectKeys) {
+    const value = sessionStorage.getItem(key);
+    if (!value) continue;
+
+    try {
+      const parsed = JSON.parse(value);
+      const userId =
+        parsed?.userId ||
+        parsed?.user_id ||
+        parsed?.id ||
+        parsed?.employeeId ||
+        parsed?.employee_id;
+
+      if (userId) return String(userId);
+    } catch {
+      // Ignore invalid sessionStorage JSON.
+    }
+  }
+
+  return DEFAULT_USER_ID;
+};
+
+const TaskBasedOnUserId: React.FC = () => {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -248,108 +281,56 @@ const Assignedtasksbasedstatus: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 20;
 
-  const getLoggedInUserName = () =>
-    normalizeName(sessionStorage.getItem("Name") || "");
-
-  const getAssignedNames = (taskAssignTo: Array<string | null> | null) => {
-    const assignedText = getAssignedToText(taskAssignTo);
-
-    return assignedText
-      .split(",")
-      .map((name) => normalizeName(name))
-      .filter((name) => Boolean(name) && name !== "not assigned");
-  };
-
-  const canLoggedInUserAccessTask = (task: TaskItem) => {
-    const loggedInName = getLoggedInUserName();
-    const assignedNames = getAssignedNames(task.taskAssignTo);
-
-    if (!loggedInName || assignedNames.length === 0) return false;
-
-    return assignedNames.some(
-      (assignedName) =>
-        assignedName === loggedInName ||
-        assignedName.includes(loggedInName) ||
-        loggedInName.includes(assignedName),
-    );
-  };
-
-  const showAccessRestrictedMessage = (
-    action: "action" | "comment" | "view-comment",
-  ) => {
-    const message =
-      action === "action"
-        ? "You do not have permission to update this task. Only an employee assigned to this task can accept, reject, hold, or complete it."
-        : action === "view-comment"
-          ? "You do not have permission to view comments for this task. Only an employee assigned to this task can view its comments."
-          : "You do not have permission to add comments to this task. Only an employee assigned to this task can add or update comments.";
-
-    Swal.fire({
-      icon: "warning",
-      title: "Access Restricted",
-      text: message,
-      confirmButtonColor: "#008cba",
-    });
-  };
-
-  const openAction = (task: TaskItem, action: ActionStatus) => {
-    if (!canLoggedInUserAccessTask(task)) {
-      showAccessRestrictedMessage("action");
-      return;
-    }
-
-    setSelectedTask(task);
-    setActionModal({ taskId: task.id, action, comment: "", submitting: false, error: "" });
-  };
-
-  const openAddComment = (task: TaskItem) => {
-    if (!canLoggedInUserAccessTask(task)) {
-      showAccessRestrictedMessage("comment");
-      return;
-    }
-
-    setSelectedTask(task);
-    setComments("");
-    setCommentsModalVisible(true);
+  const openAction = (taskId: string, action: ActionStatus) => {
+    setActionModal({ taskId, action, comment: "", submitting: false, error: "" });
   };
 
   const closeAction = () => setActionModal(null);
 
   const submitAction = async () => {
     if (!actionModal) return;
+
     const { taskId, action, comment } = actionModal;
-
-    const actionTask =
-      selectedTask?.id === taskId
-        ? selectedTask
-        : tasks.find((task) => task.id === taskId) ||
-        searchResults.find((task) => task.id === taskId);
-
-    if (!actionTask || !canLoggedInUserAccessTask(actionTask)) {
-      closeAction();
-      showAccessRestrictedMessage("action");
-      return;
-    }
-
     const cleanComment = comment.trim();
-    if (ACTION_CONFIG[action].needsComment && !cleanComment) {
-      setActionModal((p) => p ? { ...p, error: "Comment is mandatory for this action." } : p);
+
+    if (!cleanComment) {
+      setActionModal((previous) =>
+        previous
+          ? {
+            ...previous,
+            error: `Comment is mandatory when you ${ACTION_CONFIG[action].label.toLowerCase()} a task.`,
+          }
+          : previous,
+      );
       return;
     }
+
     if (cleanComment.length < 3) {
-      setActionModal((p) => p ? { ...p, error: "Please enter at least 3 characters." } : p);
+      setActionModal((previous) =>
+        previous
+          ? { ...previous, error: "Please enter at least 3 characters." }
+          : previous,
+      );
       return;
     }
+
     if (cleanComment.length > 500) {
-      setActionModal((p) => p ? { ...p, error: "Comment cannot exceed 500 characters." } : p);
+      setActionModal((previous) =>
+        previous
+          ? { ...previous, error: "Comment cannot exceed 500 characters." }
+          : previous,
+      );
       return;
     }
-    setActionModal((p) => p ? { ...p, submitting: true, error: "" } : p);
+
+    setActionModal((previous) =>
+      previous ? { ...previous, submitting: true, error: "" } : previous,
+    );
+
     try {
       const now = new Date();
-      const fmt = (d: Date) => d.toISOString().slice(0, 19);
-      // Single action API for Accept / Reject / Hold / Completed.
-      // This replaces the old taskUpdate + add-comment APIs.
+      const fmt = (date: Date) => date.toISOString().slice(0, 19);
+
       await employeeApi.patch(
         `${BASE_URL}/ai-service/agent/taskCommentsUpdation`,
         {
@@ -358,29 +339,33 @@ const Assignedtasksbasedstatus: React.FC = () => {
           comments: cleanComment,
           taskStartDate: fmt(now),
           taskEndDate: fmt(now),
-        }
+        },
       );
+
       const updateStatus = (list: TaskItem[]) =>
         list.map((task) =>
-          task.id === taskId ? { ...task, status: action } : task
+          task.id === taskId ? { ...task, status: action } : task,
         );
 
       setTasks(updateStatus);
       setSearchResults(updateStatus);
       closeAction();
     } catch (err: any) {
-      setActionModal((p) =>
-        p ? { ...p, submitting: false, error: err?.response?.data?.message || "Failed to update. Please try again." } : p
+      setActionModal((previous) =>
+        previous
+          ? {
+            ...previous,
+            submitting: false,
+            error:
+              err?.response?.data?.message ||
+              "Failed to update. Please try again.",
+          }
+          : previous,
       );
     }
   };
 
   const handleViewComments = async (task: TaskItem) => {
-    if (!canLoggedInUserAccessTask(task)) {
-      showAccessRestrictedMessage("view-comment");
-      return;
-    }
-
     try {
       setCommentsLoading(true);
       setSelectedTask(task);
@@ -421,13 +406,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
       return;
     }
 
-    if (!canLoggedInUserAccessTask(selectedTask)) {
-      setCommentsModalVisible(false);
-      setComments("");
-      showAccessRestrictedMessage("comment");
-      return;
-    }
-
     if (!comments.trim()) {
       Swal.fire({
         toast: true,
@@ -465,8 +443,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
 
       setCommentsModalVisible(false);
       setComments("");
-
-      // Refresh comments using the restored View Comments API.
       await handleViewComments(selectedTask);
     } catch {
       Swal.fire({
@@ -483,30 +459,30 @@ const Assignedtasksbasedstatus: React.FC = () => {
     }
   };
 
-  const fetchTasks = async (filter: StatusFilter = "ALL") => {
+  const fetchTasks = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // "ALL" keeps the existing request.
-      // Any selected status is passed to the API in lowercase:
-      // e.g. ?status=accepted
+      const userId = getStoredUserId();
+
       const response = await employeeApi.get(
-        `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
-        filter === "ALL"
-          ? undefined
-          : {
-            params: {
-              status: filter.toLowerCase(),
-            },
-          }
+        `${BASE_URL}/ai-service/agent/showingTaskBasedOnUserId`,
+        {
+          params: { userId },
+        }
       );
 
-      const taskData = normalizeTasks(response?.data);
+      const taskData = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.data?.data)
+          ? response.data.data
+          : [];
+
       setTasks(sortTasksByCreatedDate(taskData));
     } catch (err) {
-      console.error("Failed to fetch assigned tasks:", err);
-      setError("Unable to load assigned tasks. Please try again.");
+      console.error("Failed to fetch user tasks:", err);
+      setError("Unable to load your tasks. Please try again.");
       setTasks([]);
     } finally {
       setLoading(false);
@@ -534,8 +510,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
         setSearchLoading(true);
         setSearchError("");
 
-        // Search API used only while the user has entered a query.
-        // Axios safely encodes values such as "#34" as "%2334".
         const response = await employeeApi.get(
           `${BASE_URL}/ai-service/agent/messages`,
           {
@@ -550,7 +524,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
             ? response.data.data
             : [];
 
-        setSearchResults(sortTasksByCreatedDate(normalizeTasks(taskData)));
+        setSearchResults(sortTasksByCreatedDate(taskData));
       } catch (err: any) {
         // Axios uses ERR_CANCELED when a newer search replaces the current request.
         if (err?.code === "ERR_CANCELED" || err?.name === "CanceledError") return;
@@ -587,17 +561,18 @@ const Assignedtasksbasedstatus: React.FC = () => {
 
   const counts = useMemo(() => {
     return tasks.reduce(
-      (acc, task) => {
+      (accumulator, task) => {
         const status = normalizeStatus(task.status);
 
-        acc.total += 1;
-        if (status === "COMPLETED") acc.completed += 1;
-        else if (status === "ACCEPTED") acc.accepted += 1;
-        else if (status === "REJECTED") acc.rejected += 1;
-        else if (status === "HOLD") acc.hold += 1;
-        else acc.pending += 1;
+        accumulator.total += 1;
 
-        return acc;
+        if (status === "COMPLETED") accumulator.completed += 1;
+        else if (status === "ACCEPTED") accumulator.accepted += 1;
+        else if (status === "REJECTED") accumulator.rejected += 1;
+        else if (status === "HOLD") accumulator.hold += 1;
+        else accumulator.pending += 1;
+
+        return accumulator;
       },
       {
         total: 0,
@@ -606,16 +581,12 @@ const Assignedtasksbasedstatus: React.FC = () => {
         rejected: 0,
         hold: 0,
         pending: 0,
-      }
+      },
     );
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {
     const sourceTasks = searchText.trim() ? searchResults : tasks;
-
-    // Status selections are already filtered by messagesBasedOnStatus API.
-    // Keep local filtering only for search results.
-    if (!searchText.trim()) return sourceTasks;
 
     return sourceTasks.filter((task) => {
       const status = normalizeStatus(task.status);
@@ -623,7 +594,11 @@ const Assignedtasksbasedstatus: React.FC = () => {
     });
   }, [tasks, searchResults, searchText, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredTasks.length / PAGE_SIZE),
+  );
+
   const paginatedTasks = useMemo(() => {
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     return filteredTasks.slice(startIndex, startIndex + PAGE_SIZE);
@@ -634,17 +609,19 @@ const Assignedtasksbasedstatus: React.FC = () => {
   }, [searchText, statusFilter]);
 
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
   }, [currentPage, totalPages]);
 
   const statusLabel = (status?: string | null) => {
     const normalized = normalizeStatus(status);
 
     if (normalized === "COMPLETED") return "Completed";
-    if (normalized === "IN_PROGRESS") return "In Progress";
     if (normalized === "ACCEPTED") return "Accepted";
     if (normalized === "REJECTED") return "Rejected";
     if (normalized === "HOLD") return "On Hold";
+
     return "Pending";
   };
 
@@ -653,8 +630,8 @@ const Assignedtasksbasedstatus: React.FC = () => {
       <div className="task-page">
         <div className="task-page__header">
           <div>
-            <h1>All Assigned Tasks</h1>
-            <p>Search, review, and update assigned tasks in one place</p>
+            <h1>My Tasks</h1>
+            <p>View and manage all your assigned tasks</p>
           </div>
 
           <div className="task-page__actions">
@@ -736,9 +713,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
                       onClick={() => {
                         setStatusFilter(value);
                         setShowFilterMenu(false);
-                        setSearchText("");
-                        setSearchResults([]);
-                        fetchTasks(value);
                       }}
                     >
                       {label}
@@ -806,7 +780,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
                 strokeWidth="2"
               >
                 <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
+                <path d="M9 8v8M15 8v8" />
               </svg>
             </div>
           </article>
@@ -900,7 +874,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
               <div className="state-card__icon state-card__icon--error">!</div>
               <h3>Couldn&apos;t load tasks</h3>
               <p>{error}</p>
-              <button type="button" onClick={() => fetchTasks(statusFilter)}>
+              <button type="button" onClick={fetchTasks}>
                 Try Again
               </button>
             </div>
@@ -929,7 +903,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
               <p>
                 {searchText || statusFilter !== "ALL"
                   ? "Try changing your search or task filter."
-                  : "No assigned tasks are available yet."}
+                  : "No tasks have been assigned to you yet."}
               </p>
             </div>
           ) : (
@@ -968,13 +942,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
                         </span>
                         <span className="assigned-name">
                           {task.taskAssignBy || "Not available"}
-                        </span>
-                      </div>
-
-                      <div className="assigned-to">
-                        <span className="meta-label">Assigned to</span>
-                        <span className="assigned-to__value">
-                          {getAssignedToText(task.taskAssignTo)}
                         </span>
                       </div>
 
@@ -1032,7 +999,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
                                 <button
                                   key={act}
                                   type="button"
-                                  onClick={() => openAction(task, act)}
+                                  onClick={() => openAction(task.id, act)}
                                   className="task-action-btn"
                                   style={{
                                     color: cfg.color,
@@ -1051,7 +1018,11 @@ const Assignedtasksbasedstatus: React.FC = () => {
                           <button
                             type="button"
                             className="task-comment-btn task-comment-btn--add"
-                            onClick={() => openAddComment(task)}
+                            onClick={() => {
+                              setSelectedTask(task);
+                              setComments("");
+                              setCommentsModalVisible(true);
+                            }}
                           >
                             Add Comment
                           </button>
@@ -1072,30 +1043,48 @@ const Assignedtasksbasedstatus: React.FC = () => {
             </div>
           )}
 
-          {!loading && !searchLoading && !error && !searchError && filteredTasks.length > 0 && (
-            <nav className="task-pagination" aria-label="Task pagination">
-              <div className="task-pagination__summary">
-                Showing <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong>–<strong>{Math.min(currentPage * PAGE_SIZE, filteredTasks.length)}</strong> of <strong>{filteredTasks.length}</strong>
-              </div>
-              <div className="task-pagination__controls">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                <span className="task-pagination__page">Page {currentPage} of {totalPages}</span>
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </button>
-              </div>
-            </nav>
-          )}
+          {!loading &&
+            !searchLoading &&
+            !error &&
+            !searchError &&
+            filteredTasks.length > 0 && (
+              <nav className="task-pagination" aria-label="Task pagination">
+                <div className="task-pagination__summary">
+                  Showing{" "}
+                  <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong>–
+                  <strong>
+                    {Math.min(currentPage * PAGE_SIZE, filteredTasks.length)}
+                  </strong>{" "}
+                  of <strong>{filteredTasks.length}</strong>
+                </div>
+
+                <div className="task-pagination__controls">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+
+                  <span className="task-pagination__page">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </nav>
+            )}
         </section>
       </div>
 
@@ -1296,12 +1285,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
                 type="button"
                 className="comments-modal__primary"
                 onClick={() => {
-                  if (!selectedTask || !canLoggedInUserAccessTask(selectedTask)) {
-                    setViewModalVisible(false);
-                    showAccessRestrictedMessage("comment");
-                    return;
-                  }
-
                   setViewModalVisible(false);
                   setComments("");
                   setCommentsModalVisible(true);
@@ -1718,51 +1701,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
           cursor: zoom-in;
         }
 
-        .image-preview-modal {
-          position: fixed;
-          inset: 0;
-          z-index: 1000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 28px;
-          background: rgba(15, 23, 42, 0.82);
-        }
-
-        .image-preview-modal__image {
-          max-width: min(1100px, 94vw);
-          max-height: 90vh;
-          object-fit: contain;
-          border-radius: 10px;
-          background: #fff;
-          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
-        }
-
-        .image-preview-modal__close {
-          position: absolute;
-          top: 18px;
-          right: 22px;
-          width: 38px;
-          height: 38px;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          border-radius: 50%;
-          background: rgba(15, 23, 42, 0.7);
-          color: #fff;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        .image-fallback {
-          position: absolute;
-          inset: 0;
-          align-items: center;
-          justify-content: center;
-          color: #b8b5c8;
-          background: linear-gradient(145deg, #f7f5fb, #fbfbfc);
-        }
-
-
         .attachment-empty,
         .attachment-checking {
           position: absolute;
@@ -1812,7 +1750,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
           background: linear-gradient(145deg, #f5f3ff, #fafafa);
           text-decoration: none;
           text-align: center;
-          transition: background .2s ease, transform .2s ease;
+          transition: background .2s ease;
         }
 
         .file-attachment-card:hover {
@@ -1897,6 +1835,50 @@ const Assignedtasksbasedstatus: React.FC = () => {
           cursor: not-allowed;
         }
 
+        .image-preview-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 28px;
+          background: rgba(15, 23, 42, 0.82);
+        }
+
+        .image-preview-modal__image {
+          max-width: min(1100px, 94vw);
+          max-height: 90vh;
+          object-fit: contain;
+          border-radius: 10px;
+          background: #fff;
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        .image-preview-modal__close {
+          position: absolute;
+          top: 18px;
+          right: 22px;
+          width: 38px;
+          height: 38px;
+          border: 1px solid rgba(255, 255, 255, 0.4);
+          border-radius: 50%;
+          background: rgba(15, 23, 42, 0.7);
+          color: #fff;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .image-fallback {
+          position: absolute;
+          inset: 0;
+          align-items: center;
+          justify-content: center;
+          color: #b8b5c8;
+          background: linear-gradient(145deg, #f7f5fb, #fbfbfc);
+        }
+
         .task-card__action-row {
           display: flex;
           align-items: center;
@@ -1948,20 +1930,10 @@ const Assignedtasksbasedstatus: React.FC = () => {
           background: #f0f9ff;
         }
 
-        .task-comment-btn--add:hover {
-          background: #e0f2fe;
-          border-color: #7dd3fc;
-        }
-
         .task-comment-btn--view {
           color: #5b21b6;
           border-color: #ddd6fe;
           background: #f5f3ff;
-        }
-
-        .task-comment-btn--view:hover {
-          background: #ede9fe;
-          border-color: #c4b5fd;
         }
 
         .comments-modal-overlay {
@@ -2177,11 +2149,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
           line-height: 1.5;
         }
 
-        .comment-textarea:focus {
-          border-color: #7dd3fc;
-          box-shadow: 0 0 0 3px rgba(14, 165, 233, .08);
-        }
-
         .comment-count {
           margin-top: 5px;
           color: #9a9ca7;
@@ -2301,23 +2268,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
           white-space: nowrap;
           color: #484953;
           font-weight: 550;
-        }
-
-        .assigned-to {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          margin-top: 7px;
-          min-width: 0;
-          font-size: 11px;
-        }
-
-        .assigned-to__value {
-          min-width: 0;
-          color: #52525b;
-          font-weight: 550;
-          line-height: 1.45;
-          overflow-wrap: anywhere;
         }
 
         .meta-label {
@@ -2503,17 +2453,39 @@ const Assignedtasksbasedstatus: React.FC = () => {
           .task-meta {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
-
-          .task-card__action-row {
-            flex-wrap: wrap;
-          }
-
-          .task-comment-actions {
-            margin-left: auto;
-          }
         }
 
         @media (max-width: 767px) {
+          .task-card__action-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+          }
+
+          .task-card__action-row .task-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            width: 100%;
+          }
+
+          .task-actions .task-action-btn:only-child {
+            grid-column: 1 / -1;
+          }
+
+          .task-comment-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            width: 100%;
+            margin-left: 0;
+          }
+
+          .task-comment-btn {
+            width: 100%;
+            min-height: 36px;
+          }
+
           .task-page {
             padding: 16px 14px 88px;
           }
@@ -2542,37 +2514,14 @@ const Assignedtasksbasedstatus: React.FC = () => {
             height: 42px;
           }
 
-          .task-pagination {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 10px;
-          }
-
-          .task-pagination__summary {
-            text-align: center;
-          }
-
-          .task-pagination__controls {
-            justify-content: space-between;
-          }
-
-          .task-pagination button {
-            min-width: 82px;
-          }
-
           .filter-button {
-            width: auto;
-            min-width: 96px;
+            width: 42px;
             height: 42px;
-            padding: 0 11px;
+            padding: 0;
           }
 
           .filter-button span {
-            display: inline;
-            max-width: 82px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            display: none;
           }
 
           .filter-menu {
@@ -2660,24 +2609,6 @@ const Assignedtasksbasedstatus: React.FC = () => {
             display: none;
           }
 
-          .assigned-to {
-            margin-top: 5px;
-            gap: 5px;
-            font-size: 9px;
-          }
-
-          .assigned-to .meta-label {
-            display: none;
-          }
-
-          .assigned-to__value {
-            display: -webkit-box;
-            overflow: hidden;
-            line-height: 1.35;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-          }
-
           .avatar {
             width: 19px;
             height: 19px;
@@ -2710,6 +2641,17 @@ const Assignedtasksbasedstatus: React.FC = () => {
             width: 12px;
             height: 12px;
             margin-top: 1px;
+          }
+
+          .task-pagination {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            text-align: center;
+          }
+
+          .task-pagination__controls {
+            justify-content: center;
           }
         }
 
@@ -2969,39 +2911,16 @@ const Assignedtasksbasedstatus: React.FC = () => {
           transition: opacity .2s;
         }
 
+        .action-modal__submit:disabled {
+          opacity: .48 !important;
+          cursor: not-allowed;
+        }
+
         @media (max-width: 767px) {
-          .task-card__action-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
+          .task-actions {
+            gap: 6px;
             margin-top: 10px;
             padding-top: 10px;
-          }
-
-          .task-actions {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 6px;
-            width: 100%;
-            margin-top: 0;
-            padding-top: 0;
-          }
-
-          .task-actions .task-action-btn:only-child {
-            grid-column: 1 / -1;
-          }
-
-          .task-comment-actions {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 6px;
-            width: 100%;
-            margin-left: 0;
-          }
-
-          .task-comment-btn {
-            width: 100%;
-            min-height: 34px;
           }
           .task-action-btn {
             height: 26px;
@@ -3017,4 +2936,4 @@ const Assignedtasksbasedstatus: React.FC = () => {
   );
 };
 
-export default Assignedtasksbasedstatus;
+export default TaskBasedOnUserId;

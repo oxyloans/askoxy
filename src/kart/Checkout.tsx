@@ -3,16 +3,15 @@ import { customerApi } from "../utils/axiosInstance";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button, Divider, message, Modal, notification } from "antd";
+import { load, Cashfree } from "@cashfreepayments/cashfree-js";
 import Footer from "../components/Footer";
 import {
   ArrowLeft,
   CreditCard,
-  Plus,
   Truck,
   Tag,
   ShoppingBag,
   Clock,
-  X,
   Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -20,14 +19,12 @@ import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
-// import DeliveryFee from "./DeliveryFee";
 import {
   calculateDeliveryFee,
   calculateDistanceDeliveryFee,
   checkEligibilityForActiveZones,
 } from "./DeliveryFee";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { head } from "lodash";
 import {
   computeComboPricing,
   loadAgentComboDisplay,
@@ -131,6 +128,33 @@ const CheckoutPage: React.FC = () => {
           .some((category) => /GOLD|SILVER/i.test(category!)) ||
         /gold|silver/i.test(item.itemName)
     );
+const getPreciousMetalCategory = (items: CartItem[]): string | null => {
+  if (items.length === 0) return null;
+
+  let hasGold = false;
+  let hasSilver = false;
+
+  items.forEach((item) => {
+    const categories = [item.catergoryName, item.categoryName]
+      .filter(Boolean)
+      .join(" ");
+
+    const itemName = item.itemName || "";
+
+    if (/gold/i.test(categories) || /gold/i.test(itemName)) {
+      hasGold = true;
+    }
+
+    if (/silver/i.test(categories) || /silver/i.test(itemName)) {
+      hasSilver = true;
+    }
+  });
+
+  if (hasGold) return "GOLD";
+  if (hasSilver) return "SILVER";
+
+  return null;
+};
   const [loading, setLoading] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
@@ -198,6 +222,20 @@ const CheckoutPage: React.FC = () => {
   //states for small cart fee and service fee
   const [smallCartFee, setSmallCartFee] = useState<number>(0);
   const [serviceFee, setServiceFee] = useState<number>(0);
+const [cashfree, setCashfree] = useState<Cashfree | null>(null);
+
+useEffect(() => {
+  const initializeCashfree = async () => {
+    const instance = await load({
+      mode: "production",
+    });
+
+    setCashfree(instance);
+  };
+
+  initializeCashfree();
+}, []);
+
 
   const context = useContext(CartContext);
   if (!context) {
@@ -282,14 +320,57 @@ const CheckoutPage: React.FC = () => {
     if (userData) {
       setProfileData(JSON.parse(userData));
     }
+    getPreciousMetalCategory(cartData)
   }, []);
 
   useEffect(() => {
     const trans = localStorage.getItem("merchantTransactionId");
     const paymentId = localStorage.getItem("paymentId");
-    if (trans === orderId && paymentId) {
-      Requery(paymentId);
-    }
+    if (getPreciousMetalCategory(cartData) === "GOLD" || getPreciousMetalCategory(cartData) === "SILVER") {
+          customerApi
+            .post(
+              `${BASE_URL}/order-service/verify-cashfree-payment/${localStorage.getItem("merchantTransactionId")}`
+            )
+            .then((secondResponse:any) => {
+              if (secondResponse.paymentStatus === "SUCCESS") {
+                customerApi.get(
+                  `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
+                    "merchantTransactionId",
+                  )}&userId=${customerId}`
+                )
+                  .then((response) => {
+                    console.log(response.data);
+                  })
+                  .catch((error) => {
+                    console.error("Error in payment confirmation:", error);
+                  });
+                applyBmvCashBack();
+                localStorage.removeItem("paymentId");
+                localStorage.removeItem("merchantTransactionId");
+                fetchCartData();
+                if (secondResponse.paymentStatus === "SUCCESS") {
+                  Modal.success({
+                    title: "Success",
+                    content: "Order placed successfully.",
+                    onOk: () => {
+                      navigate("/main/myorders");
+                      fetchCartData();
+                    },
+                  });
+                } else {
+                  Modal.error({
+                    title: "Payment Failed",
+                    content: `Payment status: ${secondResponse.paymentStatus || "FAILED"}`,
+                  });
+                }
+              }
+            })
+            .catch((error) => {
+              console.error("Error in payment confirmation:", error);
+            })
+      }else if (trans === orderId && paymentId) {
+            Requery(paymentId);
+            }
   }, [orderId]);
 
   useEffect(() => {
@@ -1370,6 +1451,8 @@ const CheckoutPage: React.FC = () => {
           orderFrom: "WEB",
           paymentType: selectedPayment === "COD" ? 0 : 1,
           handlingFee: handlingFee,
+          categoryName: getPreciousMetalCategory(cartData),
+          returnUrl: `https://www.askoxy.ai/main/checkout?trans={paymentId}`
         }
       );
 
@@ -1435,7 +1518,7 @@ const CheckoutPage: React.FC = () => {
             fetchCartData();
           });
         } else {
-          if (response.data.paymentId) {
+          if (response.data.paymentId && !response.data.paymentSessionId) {
             const number =
               localStorage.getItem("whatsappNumber") ||
               localStorage.getItem("mobileNumber");
@@ -1449,8 +1532,7 @@ const CheckoutPage: React.FC = () => {
               transactionDate: new Date(),
               terminalId: "getepay.merchant128638@icici",
               udf1: withoutCountryCode || "",
-              udf2: `${profileData.firstName || ""} ${profileData.lastName || ""
-                }`,
+              udf2: `${profileData.firstName || ""} ${profileData.lastName || ""}`,
               udf3: profileData.email || "",
               udf4: "",
               udf5: "",
@@ -1470,6 +1552,16 @@ const CheckoutPage: React.FC = () => {
             };
 
             getepayPortal(paymentData);
+          }else if (response.data.paymentId && response.data.paymentSessionId) {
+              if (!cashfree) {
+                message.error("Payment gateway is not ready. Please try again.");
+                return;
+              }
+
+              await cashfree.checkout({
+                paymentSessionId: response.data.paymentSessionId,
+                redirectTarget: "_self",
+              });
           } else {
             message.error("Unable to process payment. Please try again.");
           }
@@ -1621,7 +1713,7 @@ const CheckoutPage: React.FC = () => {
                     console.error("Error in payment confirmation:", error);
                   });
               }
-
+            
               customerApi
                 .post(
                   `${BASE_URL}/order-service/orderPlacedPaymet`,

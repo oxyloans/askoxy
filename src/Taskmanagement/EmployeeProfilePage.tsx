@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { employeeApi } from "../utils/axiosInstances";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  Avatar,
   Button,
   Card,
   Col,
@@ -15,106 +15,41 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { EditOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  CameraOutlined,
+  CalendarOutlined,
+  EnvironmentOutlined,
+  EditOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  UserOutlined,
+  CloseOutlined,
+  BuildOutlined,
+  RobotOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import Swal from "sweetalert2";
+
+import { employeeApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
 const PRIMARY = "#008cba";
+const PRIMARY_DARK = "#006f94";
 const SECONDARY = "#1ab394";
 
 const PLATFORMS = [
-  { value: "oxybricks", label: "Oxybricks" },
-  { value: "oxyloans", label: "OxyLoans" },
-  { value: "oxygold", label: "OxyGold" },
-  { value: "oxyglobal", label: "OxyGlobal" },
-  { value: "ai_agents", label: "AI Agents" },
-  { value: "askoxy_ai", label: "Askoxy.ai" },
-  { value: "study_abroad", label: "Study Abroad" },
+  { value: "oxybricks", label: "Oxybricks", short: "OB" },
+  { value: "oxyloans", label: "OxyLoans", short: "OL" },
+  { value: "oxygold", label: "OxyGold", short: "OG" },
+  { value: "oxyglobal", label: "OxyGlobal", short: "OX" },
+  { value: "ai_agents", label: "AI Agents", short: "AI" },
+  { value: "askoxy_ai", label: "Askoxy.ai", short: "AO" },
+  { value: "study_abroad", label: "Study Abroad", short: "SA" },
 ];
-
-const USAGE = [
-  { value: "high", label: "High", color: "green", field: "aiToolsHigh" },
-  {
-    value: "moderate",
-    label: "Medium",
-    color: "gold",
-    field: "aiToolsModerate",
-  },
-  { value: "low", label: "Low", color: "blue", field: "aiToolsLow" },
-] as const;
-
-type UsageLevel = (typeof USAGE)[number]["value"];
-
-type AiToolsByLevel = Record<UsageLevel, string>;
-
-const buildToolUsageArray = (byLevel: Partial<AiToolsByLevel>) => {
-  const result: Array<{ usageLevel: string; tools: string[] }> = [];
-
-  if (byLevel.high?.trim()) {
-    result.push({
-      usageLevel: "HIGH",
-      tools: byLevel.high
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-  }
-  if (byLevel.moderate?.trim()) {
-    result.push({
-      usageLevel: "MODERATE",
-      tools: byLevel.moderate
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-  }
-  if (byLevel.low?.trim()) {
-    result.push({
-      usageLevel: "LOW",
-      tools: byLevel.low
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-  }
-
-  return result;
-};
-
-const parseToolUsage = (
-  toolUsage?: Array<{ usageLevel: string; tools: string[] }>,
-): AiToolsByLevel => {
-  const empty: AiToolsByLevel = { high: "", moderate: "", low: "" };
-
-  if (!toolUsage || !Array.isArray(toolUsage)) return empty;
-
-  const result = { ...empty };
-
-  toolUsage.forEach((item) => {
-    const level = item.usageLevel?.toUpperCase();
-    const tools = item.tools?.join(", ") || "";
-
-    if (level === "HIGH") result.high = tools;
-    else if (level === "MODERATE") result.moderate = tools;
-    else if (level === "LOW") result.low = tools;
-  });
-
-  return result;
-};
-
-const parseDesignations = (designation?: string): string[] => {
-  const trimmed = (designation || "").trim();
-  if (!trimmed) return [];
-
-  return trimmed
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-};
 
 const ROLE_OPTIONS = [
   "Frontend Developer",
@@ -133,32 +68,27 @@ const ROLE_OPTIONS = [
   "Project Manager",
   "Product Manager",
   "Engineering Manager",
-
   "UI/UX Designer",
   "Graphic Designer",
   "Motion Graphic Designer",
   "Video Editor",
   "3D Designer",
-
   "QA Engineer",
   "QA Tester",
   "Automation Tester",
   "Manual Tester",
   "Test Engineer",
-
   "Business Analyst",
   "Senior Business Analyst",
   "Data Analyst",
   "AI Engineer",
   "Machine Learning Engineer",
   "Prompt Engineer",
-
   "HR Executive",
   "HR Recruiter",
   "Talent Acquisition Specialist",
   "HR Manager",
   "Human Resources Manager",
-
   "Sales Executive",
   "Sales Manager",
   "Business Development Executive",
@@ -168,17 +98,14 @@ const ROLE_OPTIONS = [
   "Social Media Manager",
   "Operations Executive",
   "Operations Manager",
-
   "Customer Support Executive",
   "Telecalling Executive",
   "Accountant",
   "Finance Executive",
-
   "Consultant",
   "Trainer",
   "Mentor",
   "Freelancer",
-
   "Director",
   "Managing Director",
   "Chief Executive Officer (CEO)",
@@ -190,34 +117,197 @@ const ROLE_OPTIONS = [
   "Co-Founder",
 ];
 
+type UsageLevel = "high" | "moderate" | "low";
+type AiToolsByLevel = Record<UsageLevel, string>;
+
+interface ToolUsageItem {
+  usageLevel: string;
+  tools: string[];
+}
+
+interface EmployeeProfileResponse {
+  aboutMe?: string | null;
+  dateOfJoining?: string | null;
+  designation?: string | null;
+  empNumber?: string | null;
+  employeeId?: string | null;
+  imageUrl?: string | null;
+  location?: string | null;
+  projectType?: string | null;
+  skills?: string | null;
+  toolUsage?: ToolUsageItem[];
+}
+
+const cleanText = (value: unknown) => String(value ?? "").trim();
+
+const digits10 = (value: string) =>
+  (value || "").replace(/\D/g, "").slice(0, 10);
+
+const splitCommaValues = (value?: string | null) =>
+  value
+    ? value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+    : [];
+
+const parseDesignations = (designation?: string | null) =>
+  splitCommaValues(designation);
+
+const parseToolUsage = (
+  toolUsage?: ToolUsageItem[],
+): AiToolsByLevel => {
+  const result: AiToolsByLevel = {
+    high: "",
+    moderate: "",
+    low: "",
+  };
+
+  if (!Array.isArray(toolUsage)) return result;
+
+  toolUsage.forEach((item) => {
+    const tools = Array.isArray(item.tools)
+      ? item.tools.map((tool) => cleanText(tool)).filter(Boolean).join(", ")
+      : "";
+
+    const level = cleanText(item.usageLevel).toUpperCase();
+
+    if (level === "HIGH") result.high = tools;
+    if (level === "MODERATE") result.moderate = tools;
+    if (level === "LOW") result.low = tools;
+  });
+
+  return result;
+};
+
+const buildToolUsageArray = (
+  values: Partial<AiToolsByLevel>,
+): ToolUsageItem[] => {
+  const result: ToolUsageItem[] = [];
+
+  const push = (level: UsageLevel, apiLevel: string) => {
+    const raw = cleanText(values[level]);
+    if (!raw) return;
+
+    const tools = raw
+      .split(",")
+      .map((tool) => tool.trim())
+      .filter(Boolean);
+
+    if (tools.length) {
+      result.push({
+        usageLevel: apiLevel,
+        tools,
+      });
+    }
+  };
+
+  push("high", "HIGH");
+  push("moderate", "MODERATE");
+  push("low", "LOW");
+
+  return result;
+};
+
+const formatJoiningDate = (value?: string | null) => {
+  if (!value) return "Not added";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const extractUploadedUrl = (data: any): string => {
+  if (!data) return "";
+
+  if (typeof data === "string") {
+    return data.replace(/^"|"$/g, "").trim();
+  }
+
+  return (
+    data.imageUrl ||
+    data.url ||
+    data.fileUrl ||
+    data.documentUrl ||
+    data.documentPath ||
+    data?.data?.imageUrl ||
+    data?.data?.url ||
+    data?.data?.fileUrl ||
+    data?.data?.documentUrl ||
+    data?.data?.documentPath ||
+    ""
+  );
+};
+
 const EmployeeProfilePage: React.FC = () => {
   const screens = useBreakpoint();
   const isMobile = useMemo(() => !screens.md, [screens.md]);
 
   const [form] = Form.useForm();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasProfileData, setHasProfileData] = useState(false);
   const [mobErr, setMobErr] = useState("");
+  const [profile, setProfile] = useState<EmployeeProfileResponse>({});
 
-  const userId = sessionStorage.getItem("userId") || "";
-  const savedMobile = sessionStorage.getItem("mobileNumber") || "";
+  const userId =
+    sessionStorage.getItem("userId") ||
+    localStorage.getItem("userId") ||
+    "";
 
-  const digits10 = (v: string) => (v || "").replace(/\D/g, "").slice(0, 10);
+  const employeeName =
+    sessionStorage.getItem("Name") ||
+    sessionStorage.getItem("name") ||
+    "Employee";
 
-  const cleanText = (v: any) => String(v || "").trim();
+  const employeeEmail =
+    sessionStorage.getItem("email") ||
+    sessionStorage.getItem("Email") ||
+    "";
 
-  const splitCommaValues = (value?: string) =>
-    value
-      ? value
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : [];
+  const designationValues = Form.useWatch("designation", form) as
+    | string[]
+    | undefined;
+
+  const selectedPlatforms = Form.useWatch("projectType", form) as
+    | string[]
+    | undefined;
+
+  const aiToolsHigh = Form.useWatch("aiToolsHigh", form) as
+    | string
+    | undefined;
+
+  const aiToolsModerate = Form.useWatch("aiToolsModerate", form) as
+    | string
+    | undefined;
+
+  const aiToolsLow = Form.useWatch("aiToolsLow", form) as
+    | string
+    | undefined;
+
+  const watchedAboutMe = Form.useWatch("aboutMe", form) as
+    | string
+    | undefined;
+
+  const watchedLocation = Form.useWatch("location", form) as
+    | string
+    | undefined;
 
   const getEmployeeSkills = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setPageLoading(false);
+      setIsEditMode(true);
+      return;
+    }
 
     setPageLoading(true);
 
@@ -226,58 +316,57 @@ const EmployeeProfilePage: React.FC = () => {
         `${BASE_URL}/user-service/write/getEmployeeSkills/${userId}`,
       );
 
-      const data = response.data || {};
-
+      const data: EmployeeProfileResponse = response.data || {};
+      const parsedTools = parseToolUsage(data.toolUsage);
       const projectTypes = splitCommaValues(data.projectType);
-      const aiToolsByLevel = parseToolUsage(data.toolUsage);
       const designations = parseDesignations(data.designation);
 
-      console.log("API Response toolUsage:", data.toolUsage);
-      console.log("Parsed aiToolsByLevel:", aiToolsByLevel);
-      console.log("Form values being set:", {
-        aiToolsHigh: aiToolsByLevel.high,
-        aiToolsModerate: aiToolsByLevel.moderate,
-        aiToolsLow: aiToolsByLevel.low,
-        designation: designations,
-      });
+      setProfile(data);
 
-      const hasData =
-        !!cleanText(data.skills) ||
-        !!aiToolsByLevel.high ||
-        !!aiToolsByLevel.moderate ||
-        !!aiToolsByLevel.low ||
-        designations.length > 0 ||
-        projectTypes.length > 0;
+      const hasData = Boolean(
+        cleanText(data.skills) ||
+        cleanText(data.projectType) ||
+        cleanText(data.designation) ||
+        cleanText(data.aboutMe) ||
+        cleanText(data.location) ||
+        cleanText(data.imageUrl) ||
+        cleanText(data.dateOfJoining) ||
+        cleanText(data.empNumber) ||
+        parsedTools.high ||
+        parsedTools.moderate ||
+        parsedTools.low,
+      );
 
       setHasProfileData(hasData);
 
-      const apiMobileNumber = digits10(data.empNumber || "");
-
-      const formValues = {
-        // ✅ Mobile number should come from getEmployeeSkills API response
-        // API field: empNumber
-        mobileNumber: apiMobileNumber,
+      form.setFieldsValue({
+        mobileNumber: digits10(data.empNumber || ""),
         skills: cleanText(data.skills),
-        aiToolsHigh: aiToolsByLevel.high,
-        aiToolsModerate: aiToolsByLevel.moderate,
-        aiToolsLow: aiToolsByLevel.low,
         projectType: projectTypes,
         designation: designations,
-      };
-
-      form.setFieldsValue(formValues);
+        aiToolsHigh: parsedTools.high,
+        aiToolsModerate: parsedTools.moderate,
+        aiToolsLow: parsedTools.low,
+        location: cleanText(data.location),
+        aboutMe: cleanText(data.aboutMe),
+        dateOfJoining: data.dateOfJoining
+          ? String(data.dateOfJoining).slice(0, 10)
+          : "",
+        imageUrl: cleanText(data.imageUrl),
+      });
 
       setIsEditMode(!hasData);
-    } catch (err) {
+    } catch (error) {
+      console.error("Failed to load employee profile:", error);
+
       setHasProfileData(false);
+      setIsEditMode(true);
 
       form.setFieldsValue({
         mobileNumber: digits10(
-          sessionStorage.getItem("mobileNumber") || savedMobile,
+          sessionStorage.getItem("mobileNumber") || "",
         ),
       });
-
-      setIsEditMode(true);
     } finally {
       setPageLoading(false);
     }
@@ -285,7 +374,106 @@ const EmployeeProfilePage: React.FC = () => {
 
   useEffect(() => {
     getEmployeeSkills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  const canUploadImage = Boolean(userId) && !uploadingImage;
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Invalid image",
+        text: "Please select a valid image file.",
+        confirmButtonColor: PRIMARY,
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Image too large",
+        text: "Please upload an image smaller than 5 MB.",
+        confirmButtonColor: PRIMARY,
+      });
+      return;
+    }
+
+    if (!userId) {
+      await Swal.fire({
+        icon: "error",
+        title: "User not found",
+        text: "Please log in again before uploading a profile image.",
+        confirmButtonColor: PRIMARY,
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setUploadingImage(true);
+
+    try {
+      const response = await employeeApi.patch(
+        `${BASE_URL}/user-service/write/profileUpload`,
+        formData,
+        {
+          params: {
+            fileType: "image",
+            id: userId,
+          },
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      const uploadedUrl = extractUploadedUrl(response.data);
+
+      if (!uploadedUrl) {
+        throw new Error(
+          "Image uploaded, but the API did not return an image URL.",
+        );
+      }
+
+      form.setFieldsValue({ imageUrl: uploadedUrl });
+
+      setProfile((prev) => ({
+        ...prev,
+        imageUrl: uploadedUrl,
+      }));
+
+      await Swal.fire({
+        icon: "success",
+        title: "Profile image updated",
+        text: "Your profile image has been uploaded successfully.",
+        confirmButtonColor: PRIMARY,
+      });
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to upload the profile image.";
+
+      await Swal.fire({
+        icon: "error",
+        title: "Upload failed",
+        text: message,
+        confirmButtonColor: PRIMARY,
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSave = async () => {
     setMobErr("");
@@ -296,21 +484,12 @@ const EmployeeProfilePage: React.FC = () => {
       return;
     }
 
-    const vals = form.getFieldsValue(true);
+    const values = form.getFieldsValue(true);
 
-    const mobile = digits10(vals.mobileNumber || "");
-    const skills = cleanText(vals.skills);
-    const projectType = vals.projectType || [];
-    const designations: string[] = vals.designation || [];
-
-    const aiToolsByLevel = {
-      high: cleanText(vals.aiToolsHigh),
-      moderate: cleanText(vals.aiToolsModerate),
-      low: cleanText(vals.aiToolsLow),
-    };
-
-    const toolUsage = buildToolUsageArray(aiToolsByLevel);
-    const designation = designations.join(", ");
+    const mobile = digits10(values.mobileNumber || "");
+    const skills = cleanText(values.skills);
+    const projectType: string[] = values.projectType || [];
+    const designations: string[] = values.designation || [];
 
     if (!mobile || mobile.length !== 10) {
       setMobErr("Please enter a valid 10-digit mobile number.");
@@ -318,7 +497,9 @@ const EmployeeProfilePage: React.FC = () => {
     }
 
     if (/^(\d)\1{9}$/.test(mobile)) {
-      setMobErr("Mobile number cannot contain the same digit repeatedly.");
+      setMobErr(
+        "Mobile number cannot contain the same digit repeatedly.",
+      );
       return;
     }
 
@@ -332,443 +513,1168 @@ const EmployeeProfilePage: React.FC = () => {
       return;
     }
 
+    const toolUsage = buildToolUsageArray({
+      high: values.aiToolsHigh,
+      moderate: values.aiToolsModerate,
+      low: values.aiToolsLow,
+    });
+
+    const payload = {
+      aboutMe: cleanText(values.aboutMe) || null,
+      dateOfJoining: values.dateOfJoining
+        ? new Date(`${values.dateOfJoining}T00:00:00`).toISOString()
+        : null,
+      designation: designations.join(", "),
+      empNumber: mobile,
+      employeeId: userId,
+      imageUrl: cleanText(values.imageUrl) || null,
+      location: cleanText(values.location) || null,
+      projectType: projectType.join(", "),
+      skills,
+      toolUsage,
+    };
+
     setSaving(true);
 
     try {
       await employeeApi.patch(
+        `${BASE_URL}/user-service/write/updateEmployeeSkills`,
+        payload,
+      );
+
+      // Keep the existing mobile endpoint integration as well.
+      await employeeApi.patch(
         `${BASE_URL}/user-service/users/${userId}/empMobile`,
         null,
-        { params: { mobileNumber: mobile } },
+        {
+          params: {
+            mobileNumber: mobile,
+          },
+        },
       );
 
       sessionStorage.setItem("mobileNumber", mobile);
 
-      const employeeSkillsPayload = {
-        designation,
-        employeeId: userId,
-        projectType: projectType.join(", "),
-        skills,
-        toolUsage,
-      };
-
-      await employeeApi.patch(
-        `${BASE_URL}/user-service/write/updateEmployeeSkills`,
-        employeeSkillsPayload,
-      );
-
       setIsEditMode(false);
       setHasProfileData(true);
 
-      Swal.fire({
+      await Swal.fire({
         icon: "success",
-        title: "Update Successful",
-        text: "The employee profile information has been updated successfully.",
+        title: "Profile updated",
+        text: "Your employee profile has been updated successfully.",
+        confirmButtonColor: PRIMARY,
       });
 
-      getEmployeeSkills();
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
+      await getEmployeeSkills();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
         "Unable to update employee profile. Please try again.";
 
-      setMobErr(msg);
+      setMobErr(message);
 
-      Swal.fire({
+      await Swal.fire({
         icon: "error",
-        title: "Error",
-        text: msg,
+        title: "Update failed",
+        text: message,
+        confirmButtonColor: PRIMARY,
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     setMobErr("");
     setIsEditMode(false);
-    form.resetFields();
-    getEmployeeSkills();
+    await getEmployeeSkills();
 
     Swal.fire({
       icon: "info",
-      title: "Info",
-      text: "Edit cancelled.",
+      title: "Edit cancelled",
+      text: "Your saved profile information has been restored.",
+      confirmButtonColor: PRIMARY,
     });
   };
 
+  const profileImage =
+    cleanText(form.getFieldValue("imageUrl")) ||
+    cleanText(profile.imageUrl);
+
+  const roles =
+    designationValues?.length
+      ? designationValues
+      : parseDesignations(profile.designation);
+
+  const platforms =
+    selectedPlatforms?.length
+      ? selectedPlatforms
+      : splitCommaValues(profile.projectType);
+
+  const aboutMe =
+    cleanText(watchedAboutMe) ||
+    cleanText(profile.aboutMe) ||
+    "Add a short introduction about your experience, strengths, and the work you do.";
+
+  const location =
+    cleanText(watchedLocation) ||
+    cleanText(profile.location) ||
+    "Location not added";
+
+  const primaryDesignation =
+    roles?.[0] || "Employee";
+
+  const mobileNumber =
+    digits10(form.getFieldValue("mobileNumber") || profile.empNumber || "");
+
+  const toolChipData = [
+    {
+      title: "High Usage",
+      level: "high",
+      value:
+        cleanText(aiToolsHigh) ||
+        parseToolUsage(profile.toolUsage).high,
+      className: "tool-chip tool-chip--high",
+    },
+    {
+      title: "Moderate Usage",
+      level: "moderate",
+      value:
+        cleanText(aiToolsModerate) ||
+        parseToolUsage(profile.toolUsage).moderate,
+      className: "tool-chip tool-chip--moderate",
+    },
+    {
+      title: "Low Usage",
+      level: "low",
+      value:
+        cleanText(aiToolsLow) ||
+        parseToolUsage(profile.toolUsage).low,
+      className: "tool-chip tool-chip--low",
+    },
+  ];
+
+  const renderOverview = () => (
+    <>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={8}>
+          <Card className="profile-section-card" bordered={false}>
+            <div className="section-title">
+              <BuildOutlined />
+              <span>Platforms Access</span>
+            </div>
+
+            {platforms.length ? (
+              <div className="platform-grid">
+                {platforms.map((platform) => {
+                  const item = PLATFORMS.find(
+                    (option) => option.value === platform,
+                  );
+
+                  return (
+                    <div className="platform-tile" key={platform}>
+                      <div className="platform-icon">
+                        {item?.short || platform.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span>{item?.label || platform}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-copy">
+                No working platforms added yet.
+              </div>
+            )}
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={8}>
+          <Card className="profile-section-card" bordered={false}>
+            <div className="section-title">
+              <RobotOutlined />
+              <span>AI Tools Usage</span>
+            </div>
+
+            <div className="tool-groups">
+              {toolChipData.map((group) => {
+                const tools = splitCommaValues(group.value);
+
+                return (
+                  <div className="tool-group" key={group.level}>
+                    <div
+                      className={`tool-group-title tool-group-title--${group.level}`}
+                    >
+                      {group.title}
+                    </div>
+
+                    {tools.length ? (
+                      <div className="tool-chip-wrap">
+                        {tools.map((tool) => (
+                          <span
+                            className={group.className}
+                            key={`${group.level}-${tool}`}
+                          >
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="tool-empty">No tools added</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={8}>
+          <Card className="profile-section-card" bordered={false}>
+            <div className="section-title">
+              <TeamOutlined />
+              <span>Roles / Designations</span>
+            </div>
+
+            {roles?.length ? (
+              <div className="roles-wrap">
+                {roles.map((role) => (
+                  <Tag
+                    key={role}
+                    className="role-tag"
+                    closable={false}
+                  >
+                    {role}
+                  </Tag>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-copy">
+                No roles or designations added yet.
+              </div>
+            )}
+          </Card>
+        </Col>
+      </Row>
+
+      <Card
+        className="profile-about-card"
+        bordered={false}
+        style={{ marginTop: 16 }}
+      >
+        <div className="about-icon">
+          <UserOutlined />
+        </div>
+
+        <div className="about-copy">
+          <div className="section-title section-title--compact">
+            <span>About Me</span>
+          </div>
+          <Paragraph style={{ marginBottom: 0, color: "#475569" }}>
+            {aboutMe}
+          </Paragraph>
+        </div>
+      </Card>
+    </>
+  );
+
   const fieldDisabled =
-    saving || pageLoading || (hasProfileData && !isEditMode);
+    saving || pageLoading || (!isEditMode && hasProfileData);
 
-  const aiToolsHigh = Form.useWatch("aiToolsHigh", form) as string | undefined;
-  const aiToolsModerate = Form.useWatch("aiToolsModerate", form) as
-    | string
-    | undefined;
-  const aiToolsLow = Form.useWatch("aiToolsLow", form) as string | undefined;
-  const selectedRoles = Form.useWatch("designation", form) as
-    | string[]
-    | undefined;
+  const renderEditForm = () => (
+    <Card className="edit-card" bordered={false}>
+      <Spin
+        spinning={saving}
+        tip="Updating employee profile..."
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark
+          validateTrigger={["onChange", "onBlur"]}
+        >
+          {mobErr && (
+            <Alert
+              type="error"
+              showIcon
+              message={mobErr}
+              style={{ marginBottom: 18, borderRadius: 10 }}
+            />
+          )}
 
-  console.log("Current form watch values:", {
-    aiToolsHigh,
-    aiToolsModerate,
-    aiToolsLow,
-    selectedRoles,
-    isEditMode,
-    hasProfileData,
-  });
+          <div className="form-section-title">Personal Information</div>
+          <Divider style={{ margin: "8px 0 20px" }} />
 
-  const getToolsForLevel = (level: UsageLevel) => {
-    if (level === "high") return aiToolsHigh;
-    if (level === "moderate") return aiToolsModerate;
-    return aiToolsLow;
-  };
+          <Row gutter={[18, 8]}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Employee Mobile Number"
+                name="mobileNumber"
+                rules={[
+                  {
+                    required: true,
+                    message: "Employee mobile number is required.",
+                  },
+                ]}
+              >
+                <Input
+                  size="large"
+                  addonBefore="+91"
+                  maxLength={10}
+                  inputMode="numeric"
+                  disabled={fieldDisabled}
+                  placeholder="Enter 10-digit mobile number"
+                  onChange={(event) => {
+                    form.setFieldsValue({
+                      mobileNumber: digits10(event.target.value),
+                    });
+                    if (mobErr) setMobErr("");
+                  }}
+                />
+              </Form.Item>
+            </Col>
 
-  const pad = isMobile ? "16px 14px" : "36px 40px";
-  const colSpan = { xs: 24, sm: 12, md: 8 };
-  const halfSpan = { xs: 24, sm: 12, md: 12 };
-  const toolsColSpan = { xs: 24, sm: 24, md: 8 };
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Work Location"
+                name="location"
+                rules={[
+                  {
+                    required: true,
+                    message: "Work location is required.",
+                  },
+                ]}
+              >
+                <Input
+                  size="large"
+                  disabled={fieldDisabled}
+                  placeholder="Enter work location, e.g. Hyderabad, Telangana"
+                />
+              </Form.Item>
+            </Col>
 
-  const dividerStyle = (color: string): React.CSSProperties => ({
-    borderColor: color,
-    marginBottom: 20,
-    marginTop: 8,
-  });
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Employee Joining Date"
+                name="dateOfJoining"
+                rules={[
+                  {
+                    required: true,
+                    message: "Employee joining date is required.",
+                  },
+                ]}
+              >
+                <Input
+                  type="date"
+                  size="large"
+                  disabled={fieldDisabled}
+                />
+              </Form.Item>
+            </Col>
 
-  const sectionLabelStyle = (color: string): React.CSSProperties => ({
-    color,
-    fontWeight: 700,
-    fontSize: 13,
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  });
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Employee Skills"
+                name="skills"
+              >
+                <Input
+                  size="large"
+                  disabled={fieldDisabled}
+                  placeholder="React Js, TypeScript, Git, Ant Design..."
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item
+                label="Professional Summary"
+                name="aboutMe"
+                rules={[
+                  {
+                    required: true,
+                    message: "Professional summary is required.",
+                  },
+                  {
+                    min: 20,
+                    message: "Please enter at least 20 characters.",
+                  },
+                ]}
+              >
+                <Input.TextArea
+                  rows={4}
+                  maxLength={600}
+                  showCount
+                  disabled={fieldDisabled}
+                  placeholder="Briefly describe your experience, responsibilities, and strengths..."
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <div className="form-section-title">Work Information</div>
+          <Divider style={{ margin: "8px 0 20px" }} />
+
+          <Row gutter={[18, 8]}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Employee Working Platforms"
+                name="projectType"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select at least one working platform.",
+                  },
+                ]}
+              >
+                <Select
+                  mode="multiple"
+                  size="large"
+                  allowClear
+                  maxTagCount="responsive"
+                  disabled={fieldDisabled}
+                  placeholder="Select platforms"
+                  options={PLATFORMS.map((item) => ({
+                    label: item.label,
+                    value: item.value,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Employee Roles / Designations"
+                name="designation"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select at least one employee role.",
+                  },
+                ]}
+              >
+                <Select
+                  mode="multiple"
+                  size="large"
+                  allowClear
+                  maxTagCount="responsive"
+                  disabled={fieldDisabled}
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="Search and select roles"
+                  options={ROLE_OPTIONS.map((role) => ({
+                    label: role,
+                    value: role,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <div className="form-section-title">
+            AI Tools & Usage Levels
+          </div>
+          <Divider style={{ margin: "8px 0 20px" }} />
+
+          <Row gutter={[18, 8]}>
+            <Col xs={24} md={8}>
+              <Form.Item
+                label={<Tag color="green">High Usage</Tag>}
+                name="aiToolsHigh"
+              >
+                <Input.TextArea
+                  rows={3}
+                  disabled={fieldDisabled}
+                  placeholder="ChatGPT, Claude, Gemini AI"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <Form.Item
+                label={<Tag color="gold">Moderate Usage</Tag>}
+                name="aiToolsModerate"
+              >
+                <Input.TextArea
+                  rows={3}
+                  disabled={fieldDisabled}
+                  placeholder="Copilot, Cursor AI..."
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <Form.Item
+                label={<Tag color="blue">Low Usage</Tag>}
+                name="aiToolsLow"
+              >
+                <Input.TextArea
+                  rows={3}
+                  disabled={fieldDisabled}
+                  placeholder="Other AI tools..."
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {isEditMode && (
+            <div className="form-actions">
+              <Button
+                type="primary"
+                size="large"
+                loading={saving}
+                onClick={handleSave}
+                style={{
+                  background: PRIMARY,
+                  borderColor: PRIMARY,
+                  minWidth: 150,
+                  fontWeight: 700,
+                }}
+              >
+                {hasProfileData ? "Update Profile" : "Save Profile"}
+              </Button>
+
+              {hasProfileData && (
+                <Button
+                  size="large"
+                  icon={<CloseOutlined />}
+                  disabled={saving}
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          )}
+        </Form>
+      </Spin>
+    </Card>
+  );
 
   return (
     <UserPanelLayout>
-      <div
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          padding: isMobile ? "16px 10px" : "32px 24px",
-        }}
-      >
-        <div
-          style={{
-            marginBottom: 12,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
+      <div className="profile-page">
+        <Spin
+          spinning={pageLoading}
+          tip="Loading employee profile..."
+          size="large"
         >
-          <Title
-            level={isMobile ? 4 : 3}
-            style={{ margin: 0, fontWeight: 700, color: "#1a1a2e" }}
-          >
-            Employee Profile Details
-          </Title>
+          <div className="page-heading">
+            <div>
+              <Title
+                level={isMobile ? 4 : 3}
+                style={{ margin: 0, color: "#0f172a" }}
+              >
+                My Profile
+              </Title>
+              <div className="heading-line" />
+            </div>
+          </div>
 
-          {hasProfileData && !isEditMode ? (
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setMobErr("");
-                setIsEditMode(true);
-              }}
-              disabled={pageLoading || saving}
-              style={{
-                background: PRIMARY,
-                borderColor: PRIMARY,
-                borderRadius: 8,
-                fontWeight: 600,
-              }}
-            >
-              Edit Profile
-            </Button>
-          ) : isEditMode && hasProfileData ? (
-            <Button
-              icon={<CloseOutlined />}
-              onClick={handleCancel}
-              disabled={saving}
-              style={{
-                borderRadius: 8,
-                fontWeight: 600,
-                borderColor: "#ff4d4f",
-                color: "#ff4d4f",
-              }}
-            >
-              Cancel Edit
-            </Button>
-          ) : null}
-        </div>
-
-        <Card
-          bordered={false}
-          style={{
-            borderRadius: 10,
-            boxShadow: "0 2px 16px rgba(0,0,0,0.09)",
-            border: "1.5px solid #e8e8e8",
-          }}
-          bodyStyle={{ padding: pad }}
-        >
-          <Spin
-            spinning={saving || pageLoading}
-            tip={
-              pageLoading
-                ? "Loading employee profile..."
-                : "Updating employee profile..."
-            }
-            size="large"
+          <Card
+            className="profile-hero"
+            bordered={false}
           >
-            <Form
-              form={form}
-              layout="vertical"
-              requiredMark={true}
-              validateTrigger={["onBlur", "onChange"]}
-              onValuesChange={() => {
-                if (mobErr) setMobErr("");
-              }}
-            >
-              <div style={sectionLabelStyle(PRIMARY)}>
-                Employee Contact & Work Information
+            <div className="hero-content">
+              <div className="hero-avatar-area">
+                <div className="avatar-wrap">
+                  <Avatar
+                    size={isMobile ? 104 : 128}
+                    src={profileImage || undefined}
+                    icon={!profileImage ? <UserOutlined /> : undefined}
+                    style={{
+                      background: "#dbeafe",
+                      color: PRIMARY,
+                      border: "4px solid rgba(255,255,255,.95)",
+                      boxShadow: "0 8px 24px rgba(15,23,42,.12)",
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="camera-button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!canUploadImage}
+                    aria-label="Upload profile image"
+                  >
+                    {uploadingImage ? (
+                      <span className="camera-spinner" />
+                    ) : (
+                      <CameraOutlined />
+                    )}
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleImageUpload}
+                  />
+                </div>
               </div>
 
-              <Divider style={dividerStyle(PRIMARY)} />
+              <div className="hero-main">
+                <div className="hero-title-row">
+                  <Title
+                    level={2}
+                    style={{
+                      margin: 0,
+                      fontSize: isMobile ? 24 : 30,
+                      color: "#0f172a",
+                    }}
+                  >
+                    {employeeName}
+                  </Title>
+                  <Tag color="green" className="active-tag">
+                    Active
+                  </Tag>
+                </div>
 
-              <Row gutter={[24, 0]}>
-                <Col {...colSpan}>
-                  {mobErr && (
-                    <Alert
-                      type="error"
-                      showIcon
-                      message={mobErr}
-                      style={{ borderRadius: 8, marginBottom: 12 }}
-                    />
+                <Text className="designation-text">
+                  {primaryDesignation}
+                </Text>
+
+                <div className="contact-row">
+                  {employeeEmail && (
+                    <span className="contact-item">
+                      <MailOutlined />
+                      {employeeEmail}
+                    </span>
                   )}
 
-                  <Form.Item
-                    label={<Text strong>Employee Mobile Number</Text>}
-                    name="mobileNumber"
-                    required
-                  >
-                    <Input
-                      size="large"
-                      addonBefore="+91"
-                      placeholder="Enter employee 10-digit mobile number"
-                      maxLength={10}
-                      inputMode="numeric"
-                      disabled={fieldDisabled}
-                      onChange={(e) =>
-                        form.setFieldsValue({
-                          mobileNumber: digits10(e.target.value),
-                        })
-                      }
-                      style={{ borderRadius: 8 }}
-                    />
-                  </Form.Item>
-                </Col>
+                  {mobileNumber && (
+                    <span className="contact-item">
+                      <PhoneOutlined />
+                      +91 {mobileNumber}
+                    </span>
+                  )}
+                </div>
 
-                <Col {...halfSpan}>
-                  <Form.Item
-                    label={<Text strong>Employee Working Platforms</Text>}
-                    name="projectType"
-                    required
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please select at least one working platform.",
-                      },
-                    ]}
-                  >
-                    <Select
-                      mode="multiple"
-                      size="large"
-                      placeholder="Select employee working platforms"
-                      allowClear
-                      maxTagCount="responsive"
-                      disabled={fieldDisabled}
-                      style={{ width: "100%" }}
-                    >
-                      {PLATFORMS.map((p) => (
-                        <Select.Option key={p.value} value={p.value}>
-                          {p.label}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <div style={sectionLabelStyle(SECONDARY)}>
-                Employee Skills & AI Tool Details
+                <div className="location-row">
+                  <EnvironmentOutlined />
+                  <span>{location}</span>
+                </div>
               </div>
 
-              <Divider style={dividerStyle(SECONDARY)} />
+              <div className="hero-side">
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setIsEditMode(true);
+                  }}
+                  disabled={pageLoading || saving}
+                  style={{
+                    background: PRIMARY,
+                    borderColor: PRIMARY,
+                    fontWeight: 700,
+                    height: 42,
+                    borderRadius: 9,
+                  }}
+                >
+                  Edit Profile
+                </Button>
 
-              <Row gutter={[24, 16]}>
-                <Col span={24}>
-                  <div style={{ marginBottom: 16 }}>
-                    <Text strong style={{ display: "block", marginBottom: 4 }}>
-                      AI Tools Used by Employee (Optional)
-                    </Text>
-                    <Text
-                      type="secondary"
-                      style={{
-                        display: "block",
-                        marginBottom: 12,
-                        fontSize: 13,
-                      }}
-                    >
-                      Enter tools for High, Medium, and Low separately. All
-                      three fields are always shown — fill only what you use,
-                      then save.
-                    </Text>
-
-                    <Row gutter={[16, 16]}>
-                      {USAGE.map((level) => (
-                        <Col key={level.value} {...toolsColSpan}>
-                          <Form.Item
-                            label={
-                              <Tag color={level.color} style={{ margin: 0 }}>
-                                {level.label} usage tools
-                              </Tag>
-                            }
-                            name={level.field}
-                            style={{ marginBottom: 0 }}
-                          >
-                            <Input.TextArea
-                              rows={3}
-                              size="large"
-                              disabled={fieldDisabled}
-                              placeholder={`Tools for ${level.label} usage (comma separated)`}
-                              style={{ borderRadius: 8 }}
-                              onBlur={(e) =>
-                                form.setFieldsValue({
-                                  [level.field]: cleanText(e.target.value),
-                                })
-                              }
-                            />
-                          </Form.Item>
-                        </Col>
-                      ))}
-                    </Row>
+                <div className="side-meta">
+                  <div className="side-meta-item">
+                    <CalendarOutlined />
+                    <div>
+                      <span className="side-label">Joined On</span>
+                      <strong>
+                        {formatJoiningDate(profile.dateOfJoining)}
+                      </strong>
+                    </div>
                   </div>
-                </Col>
 
-                <Col {...colSpan}>
-                  <Form.Item
-                    label={<Text strong>Employee Skills (Optional)</Text>}
-                    name="skills"
-                  >
-                    <Input
-                      size="large"
-                      placeholder="Enter employee skills"
-                      disabled={fieldDisabled}
-                      onBlur={(e) =>
-                        form.setFieldsValue({
-                          skills: cleanText(e.target.value),
-                        })
-                      }
-                      style={{ borderRadius: 8 }}
-                    />
-                  </Form.Item>
-                </Col>
+                  <div className="side-meta-item">
+                    <BuildOutlined />
+                    <div>
+                      <span className="side-label">Designation</span>
+                      <strong>{primaryDesignation}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
 
-                <Col xs={24} sm={24} md={16}>
-                  <Form.Item
-                    label={<Text strong>Employee Roles</Text>}
-                    name="designation"
-                    required
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please select at least one employee role.",
-                      },
-                    ]}
-                   
-                  >
-                    <Select
-                      mode="multiple"
-                      size="large"
-                      placeholder="Search and select employee roles"
-                      disabled={fieldDisabled}
-                      allowClear
-                      maxTagCount="responsive"
-                      showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        String(option?.children ?? "")
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      style={{ width: "100%" }}
-                    >
-                      {ROLE_OPTIONS.map((role) => (
-                        <Select.Option key={role} value={role}>
-                          {role}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              {isEditMode && (
-                <>
-                  <Divider style={{ marginTop: 8, marginBottom: 24 }} />
-
-                  <Row
-                    gutter={[16, 12]}
-                    justify={isMobile ? "center" : "start"}
-                  >
-                    <Col xs={24} sm={10} md={6} lg={5}>
-                      <Button
-                        type="primary"
-                        size="large"
-                        block
-                        loading={saving}
-                        onClick={handleSave}
-                        style={{
-                          borderRadius: 8,
-                          fontWeight: 600,
-                          height: 46,
-                          background: PRIMARY,
-                          borderColor: PRIMARY,
-                          fontSize: 15,
-                        }}
-                      >
-                        {hasProfileData ? "Update Profile" : "Save Profile"}
-                      </Button>
-                    </Col>
-
-                    {hasProfileData && (
-                      <Col xs={24} sm={10} md={5} lg={4}>
-                        <Button
-                          size="large"
-                          block
-                          disabled={saving}
-                          onClick={handleCancel}
-                          style={{
-                            borderRadius: 8,
-                            fontWeight: 600,
-                            height: 46,
-                            borderColor: SECONDARY,
-                            color: SECONDARY,
-                            fontSize: 15,
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </Col>
-                    )}
-                  </Row>
-                </>
-              )}
-            </Form>
-          </Spin>
-        </Card>
+          <div className="profile-content profile-content--no-tabs">
+            {!isEditMode ? renderOverview() : renderEditForm()}
+          </div>
+        </Spin>
       </div>
+
+      <style>{`
+        .profile-page {
+          width: 100%;
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 20px 14px 32px;
+          background: #fff;
+        }
+
+        .page-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+
+        .heading-line {
+          width: 34px;
+          height: 3px;
+          margin-top: 7px;
+          border-radius: 999px;
+          background: ${PRIMARY};
+        }
+
+        .profile-hero {
+          overflow: hidden;
+          border: 1px solid #dbeafe !important;
+          border-radius: 16px !important;
+          background:
+            radial-gradient(circle at 90% 0%, rgba(34, 211, 238, .15), transparent 30%),
+            linear-gradient(135deg, #ffffff 0%, #f0fbff 54%, #dff8fb 100%) !important;
+          box-shadow: 0 6px 20px rgba(15, 23, 42, .05);
+        }
+
+        .profile-hero .ant-card-body {
+          padding: 28px 32px;
+        }
+
+        .hero-content {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 28px;
+        }
+
+        .avatar-wrap {
+          position: relative;
+          display: inline-flex;
+        }
+
+        .camera-button {
+          position: absolute;
+          right: -2px;
+          bottom: 2px;
+          width: 38px;
+          height: 38px;
+          border: 1px solid #dbe3ed;
+          border-radius: 50%;
+          background: #fff;
+          color: #0f172a;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(15, 23, 42, .12);
+        }
+
+        .camera-button:disabled {
+          opacity: .65;
+          cursor: not-allowed;
+        }
+
+        .camera-spinner {
+          width: 15px;
+          height: 15px;
+          border-radius: 50%;
+          border: 2px solid #dbeafe;
+          border-top-color: ${PRIMARY};
+          animation: cameraSpin .7s linear infinite;
+        }
+
+        @keyframes cameraSpin {
+          to { transform: rotate(360deg); }
+        }
+
+        .hero-title-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .active-tag {
+          border-radius: 999px !important;
+          font-weight: 600;
+          padding-inline: 10px !important;
+        }
+
+        .designation-text {
+          display: block;
+          margin-top: 5px;
+          color: #334155;
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .contact-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px 20px;
+          margin-top: 16px;
+        }
+
+        .contact-item,
+        .location-row {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #334155;
+          font-size: 14px;
+        }
+
+        .contact-item .anticon,
+        .location-row .anticon {
+          color: ${PRIMARY};
+        }
+
+        .location-row {
+          margin-top: 12px;
+        }
+
+        .hero-side {
+          min-width: 190px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 18px;
+        }
+
+        .side-meta {
+          width: 100%;
+          display: grid;
+          gap: 13px;
+        }
+
+        .side-meta-item {
+          display: grid;
+          grid-template-columns: 24px minmax(0, 1fr);
+          gap: 10px;
+          align-items: start;
+          color: #334155;
+        }
+
+        .side-meta-item > .anticon {
+          margin-top: 3px;
+          color: #0f172a;
+          font-size: 17px;
+        }
+
+        .side-meta-item strong,
+        .side-label {
+          display: block;
+        }
+
+        .side-label {
+          margin-bottom: 2px;
+          color: #64748b;
+          font-size: 12px;
+        }
+
+        .side-meta-item strong {
+          color: #0f172a;
+          font-size: 13px;
+        }
+
+        .profile-content {
+          margin-top: 18px;
+        }
+
+        .profile-content--no-tabs {
+          margin-top: 18px;
+        }
+
+        .edit-card .ant-form-item-label > label {
+          color: #1e293b;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .edit-card .ant-form-item-required::before {
+          margin-inline-end: 5px !important;
+        }
+
+        .edit-card .ant-form-item {
+          margin-bottom: 18px;
+        }
+
+        .profile-section-card {
+          height: 100%;
+          min-height: 310px;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 14px !important;
+          box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+        }
+
+        .section-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+          color: #0f172a;
+          font-weight: 800;
+          font-size: 15px;
+        }
+
+        .section-title .anticon {
+          color: ${PRIMARY};
+        }
+
+        .section-title--compact {
+          margin-bottom: 6px;
+        }
+
+        .platform-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .platform-tile {
+          min-height: 88px;
+          padding: 10px 7px;
+          border: 1px solid #e2e8f0;
+          border-radius: 11px;
+          background: #fff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          color: #334155;
+          text-align: center;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .platform-icon {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(135deg, #dff7fa, #e0f2fe);
+          color: ${PRIMARY_DARK};
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .tool-groups {
+          display: grid;
+          gap: 18px;
+        }
+
+        .tool-group-title {
+          margin-bottom: 8px;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .tool-group-title--high { color: #15803d; }
+        .tool-group-title--moderate { color: #c2410c; }
+        .tool-group-title--low { color: #0369a1; }
+
+        .tool-chip-wrap,
+        .roles-wrap {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 7px;
+        }
+
+        .tool-chip {
+          display: inline-flex;
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .tool-chip--high {
+          color: #166534;
+          background: #ecfdf3;
+        }
+
+        .tool-chip--moderate {
+          color: #c2410c;
+          background: #fff7ed;
+        }
+
+        .tool-chip--low {
+          color: #075985;
+          background: #eff6ff;
+        }
+
+        .tool-empty,
+        .empty-copy {
+          color: #94a3b8;
+          font-size: 12px;
+        }
+
+        .role-tag {
+          margin: 0 !important;
+          padding: 6px 10px !important;
+          border: 0 !important;
+          border-radius: 8px !important;
+          color: #075985 !important;
+          background: #eff6ff !important;
+          font-size: 12px !important;
+          font-weight: 600;
+        }
+
+        .profile-about-card {
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 14px !important;
+          box-shadow: 0 4px 16px rgba(15, 23, 42, .03);
+        }
+
+        .profile-about-card .ant-card-body {
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+        }
+
+        .about-icon {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          color: #fff;
+          background: linear-gradient(135deg, ${PRIMARY}, #34d399);
+        }
+
+        .about-copy {
+          min-width: 0;
+          flex: 1;
+        }
+
+        .edit-card {
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 14px !important;
+          box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+        }
+
+        .edit-card .ant-input,
+        .edit-card .ant-input-affix-wrapper,
+        .edit-card .ant-select-selector {
+          border-radius: 9px !important;
+        }
+
+        .form-section-title {
+          margin-top: 2px;
+          color: ${PRIMARY_DARK};
+          font-size: 14px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: .04em;
+        }
+
+        .form-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 14px;
+          padding-top: 18px;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 991px) {
+          .hero-content {
+            grid-template-columns: auto minmax(0, 1fr);
+          }
+
+          .hero-side {
+            grid-column: 1 / -1;
+            width: 100%;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .side-meta {
+            width: auto;
+            grid-template-columns: repeat(2, minmax(140px, 1fr));
+          }
+
+          .profile-section-card {
+            min-height: auto;
+          }
+        }
+
+        @media (max-width: 767px) {
+          .profile-page {
+            padding: 12px 4px 24px;
+          }
+
+          .profile-hero .ant-card-body {
+            padding: 20px 16px;
+          }
+
+          .hero-content {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 18px;
+          }
+
+          .hero-avatar-area {
+            display: flex;
+            justify-content: center;
+          }
+
+          .hero-main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .hero-title-row,
+          .contact-row,
+          .location-row {
+            justify-content: center;
+          }
+
+          .hero-side {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .side-meta {
+            width: 100%;
+            grid-template-columns: 1fr 1fr;
+            text-align: left;
+          }
+
+          .platform-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .profile-about-card .ant-card-body {
+            padding: 16px;
+          }
+
+          .edit-card .ant-card-body {
+            padding: 18px 14px;
+          }
+
+          .form-actions .ant-btn {
+            flex: 1 1 100%;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .side-meta {
+            grid-template-columns: 1fr;
+          }
+
+          .platform-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+      `}</style>
     </UserPanelLayout>
   );
 };

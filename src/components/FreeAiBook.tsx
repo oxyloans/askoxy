@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FaAmazon } from "react-icons/fa";
+import { FaAmazon, FaShoppingCart } from "react-icons/fa";
 import { ArrowRight } from "lucide-react";
 
-import aiImage from "../assets/img/gt.png";
+import aiImage from "../assets/img/gt.jpg.jpeg";
 
 
 const cardAnimation = {
@@ -42,7 +42,25 @@ const FreeAiBook: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   // YouTube facade: only embed the iframe after the user clicks play
   const [ytReady, setYtReady] = useState(false);
+  const LOGIN_URL = "/whatsapplogin";
 
+  const handleSignInFreeAiBook = () => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/itemsdisplay/b3e1bf52-9f80-4179-b533-c9410affd8d2";
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const openAmazon = useCallback(() => {
     window.open("https://amzn.in/d/2Ie3hEg", "_blank");
   }, []);
@@ -162,7 +180,7 @@ const FreeAiBook: React.FC = () => {
               <img
                 src={aiImage}
                 alt="AI Book"
-                onClick={openAmazon}
+                onClick={handleSignInFreeAiBook}
                 className={imageClass}
                 loading="eager"
                 decoding="async"
@@ -186,11 +204,11 @@ const FreeAiBook: React.FC = () => {
                 <motion.button
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={openAmazon}
+                  onClick={handleSignInFreeAiBook}
                   className={buttonClass}
                 >
-                  <FaAmazon size={18} />
-                  Buy on Amazon
+                  <FaShoppingCart size={18} />
+                  Buy Now
                 </motion.button>
               </div>
             </div>

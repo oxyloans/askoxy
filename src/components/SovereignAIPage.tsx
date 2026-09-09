@@ -27,6 +27,8 @@ import AIdata from "../assets/img/ai2.png";
 import Radha from "../assets/img/radha sir.png";
 import Rama from "../assets/img/rama mam.png";
 import Logo from "../assets/img/askoxylogoblack.png";
+import SovereignBlack from "../assets/img/bharat bfsi ai logo.png";
+import SovereignWhite from "../assets/img/bharat bfsi ai.png"
 
 /* -------------------------------------------------------------------------- */
 /*                              Verified URLs                                  */
@@ -293,9 +295,8 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
     className={`${align === "center" ? "mx-auto text-center" : ""} max-w-3xl`}
   >
     <div
-      className={`mb-5 inline-flex items-center gap-2 rounded-full border border-fuchsia-400/20 bg-fuchsia-400/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-200 ${
-        align === "center" ? "mx-auto" : ""
-      }`}
+      className={`mb-5 inline-flex items-center gap-2 rounded-full border border-fuchsia-400/20 bg-fuchsia-400/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-200 ${align === "center" ? "mx-auto" : ""
+        }`}
     >
       <Sparkles className="h-3.5 w-3.5" />
       {eyebrow}
@@ -444,31 +445,31 @@ const SovereignAIPage: React.FC = () => {
 
       <div className="relative z-10">
         <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#070817]/95 backdrop-blur-2xl">
-          <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            {/* Left */}
-            <div className="flex items-center gap-3 sm:gap-5">
-              {/* Hide ASKOXY Logo on Mobile */}
+          <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:min-h-20 sm:px-6 lg:px-8">
+            {/* Brand logos: always side-by-side across devices */}
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3 lg:gap-4">
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="hidden sm:flex group items-center justify-center h-12 w-[130px] lg:h-14 lg:w-[150px] rounded-lg"
+                className="group flex h-10 w-[92px] shrink-0 items-center justify-center rounded-lg p-1 transition hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:h-12 sm:w-[124px] lg:h-14 lg:w-[148px]"
                 aria-label="Go to ASKOXY.AI home"
               >
                 <img
                   src={Logo}
                   alt="ASKOXY.AI"
-                  className="h-full w-full object-contain transition-all duration-300 group-hover:scale-105"
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                 />
               </button>
 
-              {/* Sovereign Logo */}
-              <div className="group flex h-12 w-[132px] shrink-0 items-center justify-center sm:h-14 sm:w-[170px] lg:h-16 lg:w-[190px]">
+              <span className="h-7 w-px shrink-0 bg-white/15 sm:h-9" aria-hidden="true" />
+
+              <div className="group flex h-10 w-[104px] shrink-0 items-center justify-center rounded-lg p-1 sm:h-12 sm:w-[142px] lg:h-14 lg:w-[170px]">
                 <img
-                  src="https://i.ibb.co/MkPjc2vy/sovereign-ai.png"
+                  src={SovereignBlack}
                   alt="SOVEREIGN.AI"
                   width="190"
                   height="64"
-                  className="block h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                  className="block h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                 />
               </div>
 
@@ -492,7 +493,7 @@ const SovereignAIPage: React.FC = () => {
               onClick={() =>
                 navigate("/main/services/187a/build-the-future-of-regulated-")
               }
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-4 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-sm font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-purple-500/30"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-purple-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:min-h-11 sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3"
             >
               <span className="hidden xs:inline">I AM INTERESTED</span>
               <span className="xs:hidden">Interested</span>
@@ -1092,30 +1093,28 @@ sm:p-6"
           <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
             <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
               <div>
-                <div className="flex min-w-0 flex-col items-start gap-3 xs:flex-row xs:items-center">
+                <div className="flex min-w-0 flex-nowrap items-center gap-3 sm:gap-4">
                   <button
                     type="button"
                     onClick={() => navigate("/")}
-                    className="group flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300"
+                    className="group flex h-14 w-[116px] shrink-0 items-center justify-center rounded-xl p-1 transition hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:h-16 sm:w-[142px]"
                     aria-label="Go to ASKOXY.AI home"
                   >
                     <img
                       src={Logo}
                       alt="ASKOXY.AI"
-                      className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+                      className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                     />
                   </button>
 
-                  <div
-                    className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-fuchsia-300/25 xs:w-auto bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-4 py-3 shadow-[0_12px_34px_rgba(168,85,247,.16)]"
-                    aria-label="OXY BFSI Sovereign AI"
-                  >
-                    <span className="block truncate text-base font-black tracking-tight text-white sm:text-xl">
-                      Sovereign AI
-                    </span>
-                    <span className="mt-1 block truncate text-[10px] font-bold uppercase tracking-[0.16em] text-fuchsia-200 sm:text-xs">
-                      OXY BFSI • Powered by ASKOXY.AI
-                    </span>
+                  <span className="h-9 w-px shrink-0 bg-white/15 sm:h-11" aria-hidden="true" />
+
+                  <div className="group flex h-14 w-[132px] shrink-0 items-center justify-center rounded-xl p-1 sm:h-16 sm:w-[168px]">
+                    <img
+                      src={SovereignBlack}
+                      alt="SOVEREIGN.AI"
+                      className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
                   </div>
                 </div>
 

@@ -166,7 +166,7 @@ const Footer: React.FC = () => {
 
             {/* LinkedIn */}
             <a
-              href="https://www.linkedin.com/in/askoxy-ai-5a2157349/"
+              href="https://www.linkedin.com/company/askoxy/posts/?viewAsMember=true"
               target="_blank"
               rel="noreferrer"
             >

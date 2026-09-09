@@ -279,7 +279,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 21 * 60 + 45;
+      const closeTimeInMinutes = 11 * 60 + 11;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,
@@ -537,7 +537,7 @@ const PlanOfTheDay: React.FC = () => {
     setAiLoading(true);
     try {
       const response = await employeeApi.post(
-        `${BASE_URL}/ai-service/agent/new-chat-openai`,
+        `${BASE_URL}/ai-service/agent/agentChat1`,
         {
           agentId: "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0",
           userId: userId,
@@ -840,10 +840,7 @@ const PlanOfTheDay: React.FC = () => {
                   {formatTime(todayTask.planCreatedAt)}
                 </Tag>
               </Tooltip>
-              {/* Show plain text on mobile for touch devices */}
-              <span className="block sm:hidden text-xs text-gray-600 ml-2">
-                Submitted at {formatTime(todayTask.planCreatedAt)}
-              </span>
+             
 
               <Button
                 type="link"
@@ -878,7 +875,7 @@ const PlanOfTheDay: React.FC = () => {
         <span>
           You can submit your <strong>Plan of the Day</strong> only between
           <br />
-          <strong>7:00 AM to 10:45 AM</strong> (daily).
+          <strong>7:00 AM to 11:11 AM</strong> (daily).
           <br />
           Please come back during this window tomorrow.
         </span>

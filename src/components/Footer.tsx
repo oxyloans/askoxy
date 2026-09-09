@@ -57,7 +57,7 @@ const Footer: React.FC = () => {
     },
     {
       icon: <Linkedin className="h-4 w-4" />,
-      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
+      href: "https://www.linkedin.com/company/askoxy/posts/?viewAsMember=true",
       label: "LinkedIn",
       iconColor: "#0A66C2",
     },

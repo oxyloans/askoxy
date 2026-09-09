@@ -53,8 +53,8 @@ type Comment = {
 const DEFAULT_CAMPAIGN_ID = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
 
 // ✅ Amazon listing (updated)
-const AMAZON_BOOK_PRICE_INR = 299;
-const AMAZON_BOOK_URL = "https://amzn.in/d/2Ie3hEg";
+const AMAZON_BOOK_PRICE_INR = 199;
+const AMAZON_BOOK_URL = "/main/itemsdisplay/b3e1bf52-9f80-4179-b533-c9410affd8d2";
 
 // ✅ hero book image (no crop)
 const HERO_IMG = "https://i.ibb.co/xt5tZN4K/book1.png";
@@ -236,7 +236,7 @@ export default function CampaignBlogPage() {
   const [openAuthorFaqId, setOpenAuthorFaqId] = useState<string>("who");
 
   const openAmazon = () => {
-    window.open(AMAZON_BOOK_URL, "_blank", "noopener,noreferrer");
+   navigate(AMAZON_BOOK_URL);
   };
 
   const shareUrl = useMemo(() => {

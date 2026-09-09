@@ -987,12 +987,12 @@ const fetchTasksByDate = async () => {
 
   return (
     <UserPanelLayout>
-      <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
+      <div className="min-h-screen  p-2 sm:p-4 md:p-6">
         <Card
-          className="overflow-hidden rounded-xl border-0 shadow-md"
+          className="overflow-hidden"
           bodyStyle={{ padding: 0 }}
         >
-          <div className="bg-gradient-to-r from-white to-blue-50 p-4 sm:p-5">
+          <div className="bg-gradient-to-r from-white to-white-50 p-4 sm:p-5">
             <Title level={4} className="mb-1 text-gray-900">
               Daily Activity Status
             </Title>

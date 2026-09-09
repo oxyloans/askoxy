@@ -1,35 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import customerApi from "../utils/axiosInstances";
 import {
+  Alert,
   Button,
-  Card,
-  Col,
   Empty,
   Image,
   Input,
-  Row,
-  Select,
   Spin,
-  Statistic,
   Table,
+  Tabs,
   Tag,
+  Tooltip,
   Typography,
-  Alert,
 } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import {
   EditOutlined,
+  EyeOutlined,
   PlusOutlined,
   SearchOutlined,
-  AppstoreOutlined,
   ShoppingOutlined,
   ToolOutlined,
-  FileTextOutlined,
 } from "@ant-design/icons";
+import customerApi from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
 const { Title, Text } = Typography;
-
 const USER_ID_KEY = "userId";
 
 type MembersType = "PRODUCT" | "SERVICE";
@@ -96,489 +92,197 @@ const MODE_COLOR: Record<ServiceMode, string> = {
   HYBRID: "purple",
 };
 
-const fmt = (n: number | null) =>
-  n != null ? `₹${n.toLocaleString("en-IN")}` : "—";
+const fmt = (value: number | null) =>
+  value != null ? `₹${value.toLocaleString("en-IN")}` : "—";
 
-/* ── Placeholder image when no imageUrl ── */
-const Placeholder: React.FC<{ isProduct: boolean }> = ({ isProduct }) => (
-  <div
-    style={{
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "linear-gradient(135deg, #f3f0ff 0%, #e9e4f8 100%)",
-      gap: 4,
-    }}
-  >
-    {isProduct ? (
-      <ShoppingOutlined style={{ fontSize: 28, color: "#7c3aed" }} />
-    ) : (
-      <ToolOutlined style={{ fontSize: 28, color: "#4f46e5" }} />
-    )}
-    <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>
-      {isProduct ? "PRODUCT" : "SERVICE"}
-    </span>
-  </div>
-);
-
-/* ── Entry Card ── */
-const EntryCard: React.FC<{
-  entry: Entry;
-  onEdit: (id: string) => void;
-  openId: string | null;
-  onToggle: (id: string) => void;
-}> = ({ entry, onEdit, openId, onToggle }) => {
+const ListingImage: React.FC<{ entry: Entry }> = ({ entry }) => {
   const isProduct = entry.membersType === "PRODUCT";
-  const isOpen = openId === entry.id;
 
-  const detailItems = isProduct
-    ? [
-      { label: "Brand", value: entry.brand },
-      { label: "Selling Price", value: fmt(entry.price) },
-      { label: "MRP", value: fmt(entry.mrp) },
-      { label: "Price Type", value: PRICE_TYPE_LABEL[entry.priceType] },
-      {
-        label: "Quantity",
-        value:
-          entry.quantity != null
-            ? `${entry.quantity} ${entry.quantityUnit ?? ""}`.trim()
-            : null,
-      },
-      {
-        label: "Stock",
-        value:
-          entry.stockQuantity != null
-            ? `${entry.stockQuantity} units`
-            : null,
-      },
-      { label: "Variant", value: entry.variant },
-      { label: "Color", value: entry.color },
-      { label: "Availability", value: entry.availability },
-      { label: "Delivery Time", value: entry.deliveryTime },
-      {
-        label: "Return Policy",
-        value:
-          entry.returnAvailable === true
-            ? `Yes — ${entry.returnDays ?? "?"} days`
-            : entry.returnAvailable === false
-              ? "No returns"
-              : null,
-      },
-      {
-        label: "Warranty",
-        value:
-          entry.warrantyAvailable === true
-            ? `Yes — ${entry.warrantyPeriod ?? ""}`
-            : entry.warrantyAvailable === false
-              ? "No warranty"
-              : null,
-      },
-    ]
-    : [
-      { label: "Provider", value: entry.providerName },
-      { label: "Business", value: entry.businessName },
-      { label: "Price", value: fmt(entry.price) },
-      { label: "Price Type", value: PRICE_TYPE_LABEL[entry.priceType] },
-      { label: "Service Mode", value: entry.serviceMode },
-      { label: "Location", value: entry.serviceLocation },
-      { label: "Duration", value: entry.serviceDuration },
-      { label: "Availability", value: entry.availability },
-      {
-        label: "Booking",
-        value:
-          entry.bookingRequired === true
-            ? "Required"
-            : entry.bookingRequired === false
-              ? "Walk-in"
-              : null,
-      },
-      { label: "Target Customers", value: entry.targetCustomers },
-      { label: "Cancellation", value: entry.cancellationPolicy },
-      { label: "Refund Policy", value: entry.refundPolicy },
-    ];
-
-  const filledItems = detailItems.filter((i) => i.value);
+  if (entry.imageUrl) {
+    return (
+      <Image
+        src={entry.imageUrl}
+        alt={entry.name}
+        width={46}
+        height={46}
+        preview={{
+          mask: <EyeOutlined style={{ fontSize: 15 }} />,
+        }}
+        style={{
+          objectFit: "cover",
+          borderRadius: 9,
+          border: "1px solid #f0f0f0",
+          background: "#fff",
+          cursor: "pointer",
+        }}
+      />
+    );
+  }
 
   return (
-    <Card
+    <div
       style={{
-        borderRadius: 8,
-        overflow: "hidden",
-        border: "1px solid #e5e7eb",
-        boxShadow: isOpen
-          ? "0 4px 20px rgba(124,58,237,0.12)"
-          : "0 1px 4px rgba(0,0,0,0.06)",
-        transition: "box-shadow 0.2s",
+        width: 46,
+        height: 46,
+        borderRadius: 9,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#faf5ff",
+        color: "#7c3aed",
+        border: "1px solid #ede9fe",
+        fontSize: 19,
       }}
-      bodyStyle={{ padding: 0 }}
     >
-      {/* ── Fixed-height summary row ── */}
+      {isProduct ? <ShoppingOutlined /> : <ToolOutlined />}
+    </div>
+  );
+};
+
+const DetailGrid: React.FC<{ entry: Entry }> = ({ entry }) => {
+  const isProduct = entry.membersType === "PRODUCT";
+
+  const details = isProduct
+    ? [
+      ["Brand", entry.brand],
+      ["Sub-category", entry.subCategory],
+      ["Selling Price", fmt(entry.price)],
+      ["MRP", fmt(entry.mrp)],
+      ["Price Type", PRICE_TYPE_LABEL[entry.priceType]],
+      [
+        "Quantity",
+        entry.quantity != null
+          ? `${entry.quantity} ${entry.quantityUnit ?? ""}`.trim()
+          : null,
+      ],
+      [
+        "Stock",
+        entry.stockQuantity != null ? `${entry.stockQuantity} units` : null,
+      ],
+      ["Variant", entry.variant],
+      ["Color", entry.color],
+      ["Availability", entry.availability],
+      ["Delivery Time", entry.deliveryTime],
+      [
+        "Returns",
+        entry.returnAvailable === true
+          ? `Available${entry.returnDays ? ` · ${entry.returnDays} days` : ""}`
+          : entry.returnAvailable === false
+            ? "Not available"
+            : null,
+      ],
+      [
+        "Warranty",
+        entry.warrantyAvailable === true
+          ? entry.warrantyPeriod || "Available"
+          : entry.warrantyAvailable === false
+            ? "Not available"
+            : null,
+      ],
+    ]
+    : [
+      ["Provider", entry.providerName],
+      ["Business", entry.businessName],
+      ["Sub-category", entry.subCategory],
+      ["Service Fee", fmt(entry.price)],
+      ["Price Type", PRICE_TYPE_LABEL[entry.priceType]],
+      ["Service Mode", entry.serviceMode],
+      ["Location", entry.serviceLocation],
+      ["Duration", entry.serviceDuration],
+      ["Availability", entry.availability],
+      [
+        "Booking",
+        entry.bookingRequired === true
+          ? "Required"
+          : entry.bookingRequired === false
+            ? "Not required"
+            : null,
+      ],
+      ["Target Customers", entry.targetCustomers],
+      ["Cancellation Policy", entry.cancellationPolicy],
+      ["Refund Policy", entry.refundPolicy],
+    ];
+
+  const filled = details.filter(([, value]) => value != null && value !== "" && value !== "—");
+
+  return (
+    <div style={{ padding: "6px 8px 10px" }}>
       <div
         style={{
-          display: "flex",
-          alignItems: "stretch",
-          height: 110,
-          padding: "0 24px 0 0",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          border: "1px solid #f0f0f0",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "#fff",
         }}
       >
-        {/* Image */}
-        <div
-          style={{
-            width: 110,
-            minWidth: 110,
-            height: 110,
-            flexShrink: 0,
-            padding: 8,
-            boxSizing: "border-box",
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
-          {entry.imageUrl ? (
-            <Image
-              src={entry.imageUrl}
-              alt={entry.name}
-              width={94}
-              height={94}
-              style={{ objectFit: "cover", display: "block", borderRadius: 8 }}
-              preview={{ mask: <span style={{ fontSize: 11 }}>View</span> }}
-              fallback=""
-              placeholder={
-                <div style={{ width: 94, height: 94, borderRadius: 8, overflow: "hidden" }}>
-                  <Placeholder isProduct={isProduct} />
-                </div>
-              }
-            />
-          ) : (
-            <div style={{ width: 94, height: 94, borderRadius: 8, overflow: "hidden" }}>
-              <Placeholder isProduct={isProduct} />
-            </div>
-          )}
+        {filled.map(([label, value]) => (
           <div
+            key={String(label)}
             style={{
-              position: "absolute",
-              bottom: 8,
-              left: 8,
-              right: 8,
-              background: isProduct ? "rgba(109,40,217,0.82)" : "rgba(67,56,202,0.82)",
-              color: "#fff",
-              fontSize: 9,
-              fontWeight: 700,
-              textAlign: "center",
-              padding: "2px 0",
-              letterSpacing: 0.5,
-              borderBottomLeftRadius: 8,
-              borderBottomRightRadius: 8,
+              minHeight: 62,
+              padding: "10px 14px",
+              borderRight: "1px solid #f5f5f5",
+              borderBottom: "1px solid #f5f5f5",
             }}
           >
-            {isProduct ? "PRODUCT" : "SERVICE"}
-          </div>
-        </div>
-
-        {/* Info — px-6 = 24px left padding */}
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            paddingLeft: 24,
-            paddingRight: 8,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: 4,
-            overflow: "hidden",
-          }}
-        >
-          {/* Name + badge */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
             <Text
-              strong
-              style={{
-                fontSize: 14,
-                lineHeight: 1.3,
-                color: "#111827",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: "100%",
-              }}
+              type="secondary"
+              style={{ display: "block", fontSize: 11, marginBottom: 3 }}
             >
-              {entry.name}
+              {label}
             </Text>
-            {isProduct && entry.productCondition && (
-              <Tag color={CONDITION_COLOR[entry.productCondition]} style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>
-                {entry.productCondition}
-              </Tag>
-            )}
-            {!isProduct && entry.serviceMode && (
-              <Tag color={MODE_COLOR[entry.serviceMode]} style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>
-                {entry.serviceMode}
-              </Tag>
-            )}
+            <Text style={{ fontSize: 13, fontWeight: 600, color: "#262626" }}>
+              {String(value)}
+            </Text>
           </div>
-
-          {/* Category */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
-            <Tag color="purple" style={{ margin: 0, fontSize: 11 }}>
-              {entry.category}
-            </Tag>
-            {entry.subCategory && (
-              <Text type="secondary" style={{ fontSize: 11 }}>{entry.subCategory}</Text>
-            )}
-          </div>
-
-          {/* Price */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-            {entry.price != null && (
-              <Text strong style={{ fontSize: 14, color: "#7c3aed" }}>
-                {fmt(entry.price)}
-              </Text>
-            )}
-            {isProduct && entry.mrp != null && entry.mrp !== entry.price && (
-              <Text delete type="secondary" style={{ fontSize: 12 }}>
-                {fmt(entry.mrp)}
-              </Text>
-            )}
-            <Tag style={{ margin: 0, fontSize: 10, background: "#f3f4f6", border: "1px solid #e5e7eb", color: "#6b7280" }}>
-              {PRICE_TYPE_LABEL[entry.priceType]}
-            </Tag>
-            {entry.availability && (
-              <Tag color="green" style={{ margin: 0, fontSize: 10 }}>
-                {entry.availability}
-              </Tag>
-            )}
-          </div>
-        </div>
-
-        {/* Actions — right side */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            gap: 8,
-            flexShrink: 0,
-          }}
-        >
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(entry.id)}
-            style={{
-              background: "linear-gradient(135deg, #4C1D95, #7C3AED)",
-              border: "none",
-              borderRadius: 4,
-              fontSize: 12,
-              fontWeight: 700,
-              boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            size="small"
-            onClick={() => onToggle(entry.id)}
-            style={{
-              borderRadius: 4,
-              fontSize: 11,
-              fontWeight: 600,
-              color: isOpen ? "#7c3aed" : "#6b7280",
-              borderColor: isOpen ? "#c4b5fd" : "#e5e7eb",
-              background: isOpen ? "#f5f3ff" : "#fff",
-            }}
-          >
-            {isOpen ? "Hide Details ▲" : "View Details ▼"}
-          </Button>
-        </div>
+        ))}
       </div>
 
-      {/* ── Collapsible details panel ── */}
-      {isOpen && (
+      {(entry.description || entry.keyFeatures) && (
         <div
           style={{
-            borderTop: "1px solid #ede9fe",
-            background: "linear-gradient(to bottom, #faf5ff, #fff)",
-            padding: "16px 24px 20px",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 10,
+            marginTop: 10,
           }}
         >
-          <Table
-            dataSource={filledItems.map((item, i) => ({
-              key: i,
-              field: item.label,
-              value: item.value,
-            }))}
-            columns={[
-              {
-                title: "Field",
-                dataIndex: "field",
-                key: "field",
-                width: "38%",
-                render: (text: string) => (
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: "#6b7280",
-                      textTransform: "uppercase",
-                      letterSpacing: 0.4,
-                    }}
-                  >
-                    {text}
-                  </Text>
-                ),
-              },
-              {
-                title: "Value",
-                dataIndex: "value",
-                key: "value",
-                render: (text: string) => (
-                  <Text style={{ fontSize: 13, fontWeight: 600, color: "#1f2937" }}>
-                    {text}
-                  </Text>
-                ),
-              },
-            ]}
-            pagination={false}
-            size="small"
-            showHeader={false}
-            style={{ marginBottom: 12, borderRadius: 4 }}
-          />
-
-          {entry.keyFeatures && (
-            <div
-              style={{
-                background: "#fffbeb",
-                border: "1px solid #fde68a",
-                borderRadius: 4,
-                padding: "10px 14px",
-                marginBottom: 8,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#d97706",
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                  display: "block",
-                  marginBottom: 4,
-                }}
-              >
-                Key Features
-              </Text>
-              <Text style={{ fontSize: 13, color: "#374151", lineHeight: 1.6 }}>
-                {entry.keyFeatures}
-              </Text>
-            </div>
-          )}
-
           {entry.description && (
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 4,
-                padding: "10px 14px",
-                marginBottom: 8,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#9ca3af",
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                  display: "block",
-                  marginBottom: 4,
-                }}
-              >
+            <div style={{ border: "1px solid #f0f0f0", borderRadius: 10, padding: 12 }}>
+              <Text type="secondary" style={{ display: "block", fontSize: 11, marginBottom: 4 }}>
                 Description
               </Text>
-              <Text style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.6 }}>
-                {entry.description}
-              </Text>
+              <Text style={{ fontSize: 13, lineHeight: 1.6 }}>{entry.description}</Text>
             </div>
           )}
-
-          {entry.brochureUrl && (
-            <Button
-              type="default"
-              size="small"
-              icon={<FileTextOutlined />}
-              href={entry.brochureUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                borderRadius: 4,
-                fontSize: 12,
-                fontWeight: 600,
-                borderColor: "#c4b5fd",
-                color: "#7c3aed",
-              }}
-            >
-              View Brochure / Portfolio
-            </Button>
+          {entry.keyFeatures && (
+            <div style={{ border: "1px solid #f0f0f0", borderRadius: 10, padding: 12 }}>
+              <Text type="secondary" style={{ display: "block", fontSize: 11, marginBottom: 4 }}>
+                Key Features
+              </Text>
+              <Text style={{ fontSize: 13, lineHeight: 1.6 }}>{entry.keyFeatures}</Text>
+            </div>
           )}
         </div>
       )}
-    </Card>
+
+      {entry.membersType === "SERVICE" && entry.brochureUrl && (
+        <Button
+          href={entry.brochureUrl}
+          target="_blank"
+          rel="noreferrer"
+          size="small"
+          style={{ marginTop: 10, borderRadius: 8, color: "#7c3aed", borderColor: "#c4b5fd" }}
+        >
+          View Brochure / Portfolio
+        </Button>
+      )}
+    </div>
   );
 };
 
-/* ── Stats Bar ── */
-const StatBar: React.FC<{ entries: Entry[] }> = ({ entries }) => {
-  const products = entries.filter((e) => e.membersType === "PRODUCT").length;
-  const services = entries.filter((e) => e.membersType === "SERVICE").length;
-  return (
-    <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
-      {[
-        { title: "Total Listings", value: entries.length, color: "#7c3aed", bg: "#f5f3ff", icon: <AppstoreOutlined /> },
-        { title: "Products", value: products, color: "#4f46e5", bg: "#eef2ff", icon: <ShoppingOutlined /> },
-        { title: "Services", value: services, color: "#6d28d9", bg: "#faf5ff", icon: <ToolOutlined /> },
-      ].map((s) => (
-        <Col xs={8} key={s.title}>
-          <Card
-            style={{ borderRadius: 14, border: "1px solid #e5e7eb", background: s.bg }}
-            bodyStyle={{ padding: "12px 14px" }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  background: s.color,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontSize: 16,
-                  flexShrink: 0,
-                }}
-              >
-                {s.icon}
-              </div>
-              <Statistic
-                title={<span style={{ fontSize: 10, color: "#6b7280", fontWeight: 600 }}>{s.title}</span>}
-                value={s.value}
-                valueStyle={{ fontSize: 20, fontWeight: 800, color: "#111827", lineHeight: 1 }}
-              />
-            </div>
-          </Card>
-        </Col>
-      ))}
-    </Row>
-  );
-};
-
-/* ── Main Page ── */
 const MyProductsServices: React.FC = () => {
   const navigate = useNavigate();
   const memberId = localStorage.getItem(USER_ID_KEY) || "";
@@ -586,14 +290,9 @@ const MyProductsServices: React.FC = () => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"ALL" | "PRODUCT" | "SERVICE">("ALL");
+  const [activeTab, setActiveTab] = useState<MembersType>("PRODUCT");
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  const handleToggle = (id: string) => {
-    setOpenId((prev) => (prev === id ? null : id));
-  };
+  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
 
   const loadEntries = () => {
     if (!memberId) {
@@ -601,243 +300,445 @@ const MyProductsServices: React.FC = () => {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     setError(null);
+
     customerApi
       .get(`${BASE_URL}/marketing-service/campgin/products-services/${memberId}`)
       .then((res) => {
-        setEntries(Array.isArray(res.data) ? res.data.reverse() : []);
-        setLoading(false);
+        setEntries(Array.isArray(res.data) ? [...res.data] : []);
       })
-      .catch((e) => {
-        setError(e.message || "Something went wrong.");
-        setLoading(false);
-      });
+      .catch((err) => {
+        setError(err?.response?.data?.message || err?.message || "Something went wrong.");
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadEntries();
-  }, [memberId]); // eslint-disable-line
+  }, [memberId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleEdit = (id: string) => {
-    navigate("/main/dashboard/addproduct-service", { state: { editId: id } });
-  };
-
-  const categories = Array.from(
-    new Set(entries.map((e) => e.category).filter(Boolean)),
+  const products = useMemo(
+    () => entries.filter((entry) => entry.membersType === "PRODUCT"),
+    [entries],
   );
 
-  const filtered = entries.filter((e) => {
-    const matchTab = activeTab === "ALL" || e.membersType === activeTab;
-    const matchCat = !categoryFilter || e.category === categoryFilter;
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      e.name.toLowerCase().includes(q) ||
-      e.category.toLowerCase().includes(q) ||
-      (e.description ?? "").toLowerCase().includes(q) ||
-      (e.brand ?? "").toLowerCase().includes(q) ||
-      (e.providerName ?? "").toLowerCase().includes(q);
-    return matchTab && matchCat && matchSearch;
+  const services = useMemo(
+    () => entries.filter((entry) => entry.membersType === "SERVICE"),
+    [entries],
+  );
+
+  const visibleRows = useMemo(() => {
+    const source = activeTab === "PRODUCT" ? products : services;
+    const query = search.trim().toLowerCase();
+    if (!query) return source;
+
+    return source.filter((entry) =>
+      [
+        entry.name,
+        entry.category,
+        entry.subCategory,
+        entry.brand,
+        entry.providerName,
+        entry.businessName,
+        entry.serviceLocation,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    );
+  }, [activeTab, products, services, search]);
+
+  const handleEdit = (id: string) => {
+    navigate(`/main/dashboard/addproduct-service?editId=${encodeURIComponent(id)}`);
+  };
+
+  const handleAddListing = () => {
+    navigate(`/main/dashboard/addproduct-service?tab=${activeTab}`);
+  };
+
+  const commonNameColumn = (kind: MembersType) => ({
+    title: kind === "PRODUCT" ? "Product" : "Service",
+    key: "listing",
+    width: 290,
+
+    render: (_: unknown, entry: Entry) => (
+      <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
+        <ListingImage entry={entry} />
+        <div style={{ minWidth: 0 }}>
+          <Tooltip title={entry.name}>
+            <Text
+              strong
+              style={{
+                display: "block",
+                maxWidth: 205,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontSize: 13,
+                color: "#111827",
+              }}
+            >
+              {entry.name}
+            </Text>
+          </Tooltip>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            {entry.category || "Uncategorized"}
+          </Text>
+        </div>
+      </div>
+    ),
   });
 
-  const products = filtered.filter((e) => e.membersType === "PRODUCT");
-  const services = filtered.filter((e) => e.membersType === "SERVICE");
+  const serialColumn = {
+    title: "S.No",
+    key: "serial",
+    width: 72,
+    align: "center" as const,
+    render: (_: unknown, __: Entry, index: number) => (
+      <Text style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>
+        {index + 1}
+      </Text>
+    ),
+  };
 
-  const tabItems = [
-    { key: "ALL", label: `All (${entries.length})` },
-    { key: "PRODUCT", label: `Products (${entries.filter((e) => e.membersType === "PRODUCT").length})` },
-    { key: "SERVICE", label: `Services (${entries.filter((e) => e.membersType === "SERVICE").length})` },
+  const actionColumn = {
+    title: "Actions",
+    key: "action",
+    width: 190,
+
+    align: "center" as const,
+    render: (_: unknown, entry: Entry) => {
+      const isExpanded = expandedRowKeys.includes(entry.id);
+      return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <Button
+            size="middle"
+            icon={<EyeOutlined />}
+            onClick={(event) => {
+              event.stopPropagation();
+              setExpandedRowKeys((prev) =>
+                prev.includes(entry.id)
+                  ? prev.filter((key) => key !== entry.id)
+                  : [...prev, entry.id],
+              );
+            }}
+            style={{
+              borderRadius: 7,
+              fontWeight: 600,
+              color: "#6d28d9",
+              borderColor: "#c4b5fd",
+              background: "#fff",
+            }}
+          >
+            {isExpanded ? "Hide" : "View Details"}
+          </Button>
+          <Button
+            type="primary"
+            size="middle"
+            icon={<EditOutlined />}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleEdit(entry.id);
+            }}
+            style={{
+              borderRadius: 7,
+              background: "#7c3aed",
+              borderColor: "#7c3aed",
+              fontWeight: 600,
+            }}
+          >
+            Edit
+          </Button>
+        </div>
+      );
+    },
+  };
+
+  const productColumns: ColumnsType<Entry> = [
+    serialColumn,
+    commonNameColumn("PRODUCT"),
+    {
+      title: "Price",
+      dataIndex: "price",
+      align: "center",
+      key: "price",
+      width: 120,
+      render: (value: number | null, entry) => (
+        <div>
+          <Text strong style={{ color: "#7c3aed", fontSize: 13 }}>{fmt(value)}</Text>
+          {entry.mrp != null && entry.mrp !== entry.price && (
+            <Text delete type="secondary" style={{ display: "block", fontSize: 11 }}>
+              {fmt(entry.mrp)}
+            </Text>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Stock",
+      dataIndex: "stockQuantity",
+      key: "stockQuantity",
+      align: "center",
+      width: 95,
+      render: (value: number | null) => (
+        <Text style={{ fontSize: 12 }}>{value != null ? value : "—"}</Text>
+      ),
+    },
+    {
+      title: "Quantity",
+      key: "quantity",
+      align: "center",
+      width: 125,
+      render: (_: unknown, entry: Entry) => (
+        <Text style={{ fontSize: 12 }}>
+          {entry.quantity != null
+            ? `${entry.quantity}${entry.quantityUnit ? ` ${entry.quantityUnit}` : ""}`
+            : "—"}
+        </Text>
+      ),
+    },
+    {
+      title: "Delivery Time",
+      dataIndex: "deliveryTime",
+      key: "deliveryTime",
+      width: 140,
+
+      align: "center",
+      render: (value: string | null) => (
+        <Text style={{ fontSize: 12 }}>{value || "—"}</Text>
+      ),
+    },
+    {
+      title: "Condition",
+      dataIndex: "productCondition",
+      key: "productCondition",
+      align: "center",
+      width: 120,
+      render: (value: ProductCondition | null) =>
+        value ? <Tag color={CONDITION_COLOR[value]} style={{ margin: 0 }}>{value}</Tag> : "—",
+    },
+    {
+      title: "Availability",
+      dataIndex: "availability",
+      align: "center",
+      key: "availability",
+      width: 150,
+      render: (value: string | null) =>
+        value ? <Tag color="green" style={{ margin: 0 }}>{value}</Tag> : "—",
+    },
+    actionColumn,
   ];
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#fff", padding: "20px 12px 80px" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+  const serviceColumns: ColumnsType<Entry> = [
+    serialColumn,
+    commonNameColumn("SERVICE"),
+    {
+      title: "Service Fee",
+      dataIndex: "price",
+      key: "price",
+      align: "center",
+      width: 130,
+      render: (value: number | null, entry) => (
+        <div>
+          <Text strong style={{ color: "#7c3aed", fontSize: 13 }}>{fmt(value)}</Text>
+          <Text type="secondary" style={{ display: "block", fontSize: 10 }}>
+            {PRICE_TYPE_LABEL[entry.priceType]}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "Mode",
+      dataIndex: "serviceMode",
+      key: "serviceMode",
+      align: "center",
+      width: 105,
+      render: (value: ServiceMode | null) =>
+        value ? <Tag color={MODE_COLOR[value]} style={{ margin: 0 }}>{value}</Tag> : "—",
+    },
+    {
+      title: "Location",
+      dataIndex: "serviceLocation",
+      key: "serviceLocation",
+      width: 180,
+      align: "center",
+      ellipsis: true,
+      render: (value: string | null) => <Text style={{ fontSize: 12 }}>{value || "—"}</Text>,
+    },
+    {
+      title: "Availability",
+      dataIndex: "availability",
+      key: "availability",
+      align: "center",
+      width: 150,
+      render: (value: string | null) =>
+        value ? <Tag color="green" style={{ margin: 0 }}>{value}</Tag> : "—",
+    },
+    actionColumn,
+  ];
 
-        {/* ── Header ── */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+  const currentCount = activeTab === "PRODUCT" ? products.length : services.length;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#fff", padding: "22px 12px 40px" }}>
+      <div className="mx-auto w-full max-w-7xl">
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 18,
+          }}
+        >
           <div>
             <Title level={3} style={{ margin: 0, color: "#111827", fontWeight: 800 }}>
               My Products &amp; Services
             </Title>
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              {loading
-                ? "Fetching your listings…"
-                : entries.length === 0
-                  ? "No listings yet — add your first one!"
-                  : `Showing ${filtered.length} of ${entries.length} listing${entries.length !== 1 ? "s" : ""}`}
-            </Text>
+
           </div>
+
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            size="middle"
-            onClick={() => navigate("/main/dashboard/addproduct-service")}
+            onClick={handleAddListing}
             style={{
-              background: "linear-gradient(135deg, #4C1D95, #7C3AED)",
-              border: "none",
-              borderRadius: 10,
-              fontWeight: 700,
               height: 40,
-              paddingInline: 20,
-              boxShadow: "0 4px 14px rgba(124,58,237,0.3)",
+              borderRadius: 9,
+              paddingInline: 17,
+              fontWeight: 700,
+              background: "#7c3aed",
+              borderColor: "#7c3aed",
             }}
           >
-            Add Product / Service
+            Add {activeTab === "PRODUCT" ? "Product" : "Service"}
           </Button>
         </div>
 
-        {/* ── Stats ── */}
-        {!loading && !error && entries.length > 0 && <StatBar entries={entries} />}
-
-        {/* ── Filters ── */}
-        <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-          {/* Search */}
-          <Input
-            prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
-            placeholder="Search by name, brand, category…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            allowClear
-            style={{ flex: 1, minWidth: 200, borderRadius: 10, height: 38 }}
-          />
-
-          {/* Type tabs as segmented buttons */}
-          <div style={{ display: "flex", height: 38, borderRadius: 10, padding: 4, gap: 2, border: "1px solid #e5e7eb" }}>
-            {tabItems.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setActiveTab(t.key as "ALL" | "PRODUCT" | "SERVICE")}
-                style={{
-                  padding: "5px 14px",
-                  height: 30,
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  transition: "all 0.2s",
-                  background:
-                    activeTab === t.key
-                      ? "linear-gradient(135deg, #4C1D95, #7C3AED)"
-                      : "transparent",
-                  color: activeTab === t.key ? "#fff" : "#6b7280",
-                  boxShadow: activeTab === t.key ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-        
-        </div>
-
-        {/* ── Loading ── */}
-        {loading && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: 16 }}>
-            <Spin size="large" />
-            <Text type="secondary">Loading your listings…</Text>
-          </div>
-        )}
-
-        {/* ── Error ── */}
-        {!loading && error && (
-          <Alert
-            type="error"
-            message="Failed to load listings"
-            description={error}
-            showIcon
-            style={{ borderRadius: 12, marginBottom: 16 }}
-          />
-        )}
-
-        {/* ── Empty ── */}
-        {!loading && !error && filtered.length === 0 && (
-          <Empty
-            description={
-              <span style={{ color: "#6b7280", fontSize: 14 }}>
-                {entries.length === 0
-                  ? "No products or services yet"
-                  : "No results match your filters"}
-              </span>
-            }
-            style={{ padding: "60px 0" }}
+        <div
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              padding: "0 16px",
+              borderBottom: "1px solid #f0f0f0",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
           >
-            {entries.length === 0 ? (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate("/main/dashboard/addproduct-service")}
-                style={{
-                  background: "linear-gradient(135deg, #4C1D95, #7C3AED)",
-                  border: "none",
-                  borderRadius: 10,
-                  fontWeight: 700,
-                }}
-              >
-                Add Now
-              </Button>
-            ) : (
-              <Button
-                onClick={() => { setSearch(""); setCategoryFilter(""); setActiveTab("ALL"); }}
-                style={{ borderRadius: 10 }}
-              >
-                Clear Filters
-              </Button>
-            )}
-          </Empty>
-        )}
+            <Tabs
+              activeKey={activeTab}
+              onChange={(key) => {
+                setActiveTab(key as MembersType);
+                setSearch("");
+                setExpandedRowKeys([]);
+              }}
+              items={[
+                {
+                  key: "PRODUCT",
+                  label: (
+                    <span>
+                      <ShoppingOutlined /> Products ({products.length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "SERVICE",
+                  label: (
+                    <span>
+                      <ToolOutlined /> Services ({services.length})
+                    </span>
+                  ),
+                },
+              ]}
+              style={{ marginBottom: -1, minWidth: 260 }}
+            />
 
-        {/* ── Products ── */}
-        {!loading && !error && products.length > 0 && (activeTab === "ALL" || activeTab === "PRODUCT") && (
-          <div style={{ marginBottom: 24 }}>
-            {activeTab === "ALL" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#7c3aed" }} />
-                <Text strong style={{ color: "#7c3aed", fontSize: 13, letterSpacing: 0.3 }}>
-                  Products{" "}
-                  <Text type="secondary" style={{ fontWeight: 400 }}>
-                    ({products.length})
-                  </Text>
-                </Text>
-              </div>
-            )}
-            <Row gutter={[12, 12]}>
-              {products.map((e) => (
-                <Col key={e.id} xs={24} sm={24} md={12} lg={12} xl={12}>
-                  <EntryCard entry={e} onEdit={handleEdit} openId={openId} onToggle={handleToggle} />
-                </Col>
-              ))}
-            </Row>
+            <Input
+              prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
+              placeholder={`Search ${activeTab === "PRODUCT" ? "products" : "services"}...`}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              allowClear
+              style={{ width: 260, maxWidth: "100%", borderRadius: 8 }}
+            />
           </div>
-        )}
 
-        {/* ── Services ── */}
-        {!loading && !error && services.length > 0 && (activeTab === "ALL" || activeTab === "SERVICE") && (
-          <div>
-            {activeTab === "ALL" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4f46e5" }} />
-                <Text strong style={{ color: "#4f46e5", fontSize: 13, letterSpacing: 0.3 }}>
-                  Services{" "}
-                  <Text type="secondary" style={{ fontWeight: 400 }}>
-                    ({services.length})
-                  </Text>
-                </Text>
+          {loading ? (
+            <div style={{ minHeight: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <Spin size="large" />
+                <div style={{ marginTop: 12 }}>
+                  <Text type="secondary">Loading your listings…</Text>
+                </div>
               </div>
-            )}
-            <Row gutter={[12, 12]}>
-              {services.map((e) => (
-                <Col key={e.id} xs={24} sm={24} md={12} lg={12} xl={12}>
-                  <EntryCard entry={e} onEdit={handleEdit} openId={openId} onToggle={handleToggle} />
-                </Col>
-              ))}
-            </Row>
-          </div>
-        )}
+            </div>
+          ) : error ? (
+            <div style={{ padding: 16 }}>
+              <Alert
+                type="error"
+                showIcon
+                message="Failed to load listings"
+                description={error}
+                action={<Button size="small" onClick={loadEntries}>Retry</Button>}
+              />
+            </div>
+          ) : currentCount === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={`No ${activeTab === "PRODUCT" ? "products" : "services"} added yet`}
+              style={{ padding: "70px 16px" }}
+            >
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddListing}>
+                Add {activeTab === "PRODUCT" ? "Product" : "Service"}
+              </Button>
+            </Empty>
+          ) : visibleRows.length === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="No matching results"
+              style={{ padding: "60px 16px" }}
+            >
+              <Button onClick={() => setSearch("")}>Clear Search</Button>
+            </Empty>
+          ) : (
+            <Table<Entry>
+              rowKey="id"
+              dataSource={visibleRows}
+              bordered
+              columns={activeTab === "PRODUCT" ? productColumns : serviceColumns}
+              pagination={{
+                pageSize: 8,
+                showSizeChanger: false,
+                showTotal: (total) => `${total} ${activeTab === "PRODUCT" ? "products" : "services"}`,
+                position: ["bottomRight"],
+              }}
+              size="middle"
 
+              scroll={{ x: true }}
+              expandable={{
+                expandedRowKeys,
+                onExpandedRowsChange: (keys) => setExpandedRowKeys([...keys]),
+                expandedRowRender: (record) => <DetailGrid entry={record} />,
+                expandRowByClick: false,
+                rowExpandable: () => true,
+                showExpandColumn: false,
+              }}
+              onRow={() => ({
+                style: { cursor: "default" },
+              })}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

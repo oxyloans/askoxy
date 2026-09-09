@@ -37,6 +37,10 @@ import JobPostForm from "./Employee/JobPostForm";
 import AddCompanyEmployeeNew from "./AskoxyAdmin/Addcompanyemployeenew";
 import ProductServiceManager from "./Dashboard/ProductServiceManager";
 import MyProductsServices from "./Dashboard/MyProductsServices";
+import MyCompanies from "./Dashboard/MyCompanies";
+import TaskDashboard from "./Taskmanagement/TaskDashboard";
+import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
+// import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -357,6 +361,9 @@ const OfferScreen = lazy(() => import("./kart/OfferScreen"));
 const AdminSidebar = lazy(() => import("./AskoxyAdmin/Sider"));
 const Home = lazy(() => import("./Dashboard/Home"));
 const CampaignsAdd = lazy(() => import("./AskoxyAdmin/CampaignsAdd"));
+const CompanyProductServiceList = lazy(
+  () => import("./AskoxyAdmin/CompanyProductServiceList"),
+);
 const AllCampaignsDetails = lazy(
   () => import("./AskoxyAdmin/AllCampaignDetail"),
 );
@@ -449,6 +456,7 @@ const UniversityOffers = lazy(() => import("./Dashboard/Offerletter"));
 const PinkFunding = lazy(() => import("./components/PinkFunding"));
 const CurrentLandingPage = lazy(() => import("./components/CurrentLandinPage"));
 const PlanOfTheDay = lazy(() => import("./Taskmanagement/PlanOfTheDay"));
+// const TaskDashboard = lazy(() => import("./Taskmanagement/TaskDashboard"));
 
 const AllStatusPage = lazy(() => import("./Taskmanagement/AllStatus"));
 
@@ -1639,11 +1647,35 @@ const App: React.FC = () => {
                 }
               />
               {/* Employee / Internal */}
-              <Route
+              {/* <Route
                 path="/userPanelLayout"
                 element={
                   <TaskProtectedRoute>
-                    <PlanOfTheDay />
+                    <TaskDashboard />
+                  </TaskProtectedRoute>
+                }
+              /> */}
+              {/* <Route
+                path="/taskmanagement/assignedtasks"
+                element={
+                  <TaskProtectedRoute>
+                    <TaskBasedOnUserId />
+                  </TaskProtectedRoute>
+                }
+              /> */}
+              <Route
+                path="/taskmanagement/dashboard"
+                element={
+                  <TaskProtectedRoute>
+                    <TaskDashboard />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/taskmanagement/assignedtasks"
+                element={
+                  <TaskProtectedRoute>
+                    <TaskBasedOnUserId />
                   </TaskProtectedRoute>
                 }
               />
@@ -1989,7 +2021,11 @@ const App: React.FC = () => {
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/addproduct-service" element={<ProductServiceManager />} />
+                <Route path="/main/dashboard/addproduct-service" element={<ProductServiceManager />} />
                 <Route path="dashboard/my-products-services" element={<MyProductsServices />} />
+                <Route path="/main/dashboard/my-products-services" element={<MyProductsServices />} />
+                <Route path="dashboard/my-companies" element={<MyCompanies />} />
+                <Route path="/main/dashboard/my-companies" element={<MyCompanies />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
                 <Route
                   path="dashboard/leaguejourneys"
@@ -2171,6 +2207,10 @@ const App: React.FC = () => {
                   element={<AllCampaignsDetails />}
                 />
                 <Route path="campaignsadd" element={<CampaignsAdd />} />
+                <Route
+                  path="company-product-services"
+                  element={<CompanyProductServiceList />}
+                />
                 <Route
                   path="addcompanyemployeenew"
                   element={<AddCompanyEmployeeNew />}

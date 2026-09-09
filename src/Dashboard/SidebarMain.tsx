@@ -294,7 +294,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "Blog Management",
           icon: <AiFillFileText size={16} />,
         },
-       
+
       ],
     },
 
@@ -321,18 +321,25 @@ const Sidebar: React.FC<SidebarProps> = ({
       type: "dropdown",
       key: "products_services",
       icon: <AiFillProduct size={18} />,
-      label: "Products & Services",
+      label: "Companies & Products",
       items: [
+        {
+          to: "/main/dashboard/addproduct-service",
+          label: "Add Company, Product & Service",
+          icon: <FaPlusCircle size={16} />,
+        },
+        
         {
           to: "/main/dashboard/my-products-services",
           label: "My Products & Services",
-          icon: <FaStore size={16} />,
+          icon: <AiFillProduct size={16} />,
         },
         {
-          to: "/main/dashboard/addproduct-service",
-          label: "Add Product / Service",
-          icon: <FaPlusCircle size={16} />,
+          to: "/main/dashboard/my-companies",
+          label: "My Companies",
+          icon: <FaStore size={16} />,
         },
+       
       ],
     },
     {
@@ -341,7 +348,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <FaComments size={18} />,
       label: "Oxy Community",
     },
-    
+
   ];
 
   const isActive = (to: string) => {
@@ -353,9 +360,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Header */}
       <div className="hidden md:flex items-center justify-between p-4 border-b border-gray-100 min-h-[60px] flex-shrink-0">
         <div
-          className={`flex items-center transition-all duration-300 ${
-            isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
-          }`}
+          className={`flex items-center transition-all duration-300 ${isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+            }`}
         />
         <button
           onClick={() => onCollapse(!isCollapsed)}
@@ -382,32 +388,27 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onItemClick?.()}
                 className={`group relative flex items-center rounded-lg transition-all duration-200 min-h-[44px]
                   ${isExpanded || isMobile ? "px-3" : "px-0 justify-center"}
-                  ${
-                    active
-                      ? "bg-purple-50 text-purple-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                  ${active
+                    ? "bg-purple-50 text-purple-700 font-medium"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
                   }`}
               >
                 {active && (
                   <div className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 rounded-r-full" />
                 )}
                 <div
-                  className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                    isExpanded || isMobile ? "mr-3" : "mx-auto"
-                  } ${
-                    active ? "text-purple-600" : "group-hover:text-purple-600"
-                  }`}
+                  className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isExpanded || isMobile ? "mr-3" : "mx-auto"
+                    } ${active ? "text-purple-600" : "group-hover:text-purple-600"
+                    }`}
                 >
                   {group.icon}
                 </div>
                 <span
-                  className={`font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-                    isExpanded || showLabels
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 -translate-x-2 absolute"
-                  } ${
-                    active ? "text-purple-700" : "group-hover:text-purple-600"
-                  }`}
+                  className={`font-medium text-sm transition-all duration-300 whitespace-nowrap ${isExpanded || showLabels
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 -translate-x-2 absolute"
+                    } ${active ? "text-purple-700" : "group-hover:text-purple-600"
+                    }`}
                 >
                   {group.label}
                 </span>
@@ -433,41 +434,36 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => toggleDropdown(group.key)}
                 className={`w-full group relative flex items-center rounded-lg transition-all duration-200 min-h-[44px]
                   ${isExpanded || isMobile ? "px-3" : "px-0 justify-center"}
-                  ${
-                    hasActiveChild
-                      ? "bg-purple-50 text-purple-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                  ${hasActiveChild
+                    ? "bg-purple-50 text-purple-700 font-medium"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
                   }`}
               >
                 {hasActiveChild && (
                   <div className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 rounded-r-full" />
                 )}
                 <div
-                  className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                    isExpanded || isMobile ? "mr-3" : "mx-auto"
-                  } ${
-                    hasActiveChild
+                  className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isExpanded || isMobile ? "mr-3" : "mx-auto"
+                    } ${hasActiveChild
                       ? "text-purple-600"
                       : "group-hover:text-purple-600"
-                  }`}
+                    }`}
                 >
                   {group.icon}
                 </div>
 
                 <span
-                  className={`flex-1 text-left font-medium text-sm transition-all ${
-                    isExpanded || showLabels
-                      ? "opacity-100"
-                      : "opacity-0 absolute -translate-x-2"
-                  }`}
+                  className={`flex-1 text-left font-medium text-sm transition-all ${isExpanded || showLabels
+                    ? "opacity-100"
+                    : "opacity-0 absolute -translate-x-2"
+                    }`}
                 >
                   {group.label}
                 </span>
 
                 <div
-                  className={`${
-                    isExpanded || showLabels ? "block" : "hidden"
-                  } transition-transform`}
+                  className={`${isExpanded || showLabels ? "block" : "hidden"
+                    } transition-transform`}
                 >
                   {isOpen ? (
                     <FaChevronDown size={14} />
@@ -487,11 +483,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Dropdown content */}
               <div
-                className={`overflow-hidden transition-all duration-300 ${
-                  isExpanded && openDropdowns.has(group.key)
-                    ? "max-h-96 opacity-100"
-                    : "max-h-0 opacity-0"
-                }`}
+                className={`overflow-hidden transition-all duration-300 ${isExpanded && openDropdowns.has(group.key)
+                  ? "max-h-96 opacity-100"
+                  : "max-h-0 opacity-0"
+                  }`}
               >
                 <div className="pl-8 pr-3 pb-2 pt-1 space-y-1">
                   {group.items.map((item) => {
@@ -501,11 +496,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                         key={item.to}
                         to={item.to}
                         onClick={() => onItemClick?.()}
-                        className={`flex items-center rounded-md px-3 py-2 text-sm transition-colors ${
-                          active
-                            ? "bg-purple-100 text-purple-700 font-medium"
-                            : "text-gray-600 hover:bg-gray-100 hover:text-purple-600"
-                        }`}
+                        className={`flex items-center rounded-md px-3 py-2 text-sm transition-colors ${active
+                          ? "bg-purple-100 text-purple-700 font-medium"
+                          : "text-gray-600 hover:bg-gray-100 hover:text-purple-600"
+                          }`}
                       >
                         {item.icon && (
                           <span className="mr-2 flex-shrink-0">
@@ -543,24 +537,21 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-3 border-t border-gray-100 flex-shrink-0">
           <button
             onClick={handleSignout}
-            className={`group w-full flex items-center rounded-lg transition-all duration-200 min-h-[44px] text-red-600 hover:bg-red-50 ${
-              isExpanded ? "px-3" : "px-0 justify-center"
-            }`}
+            className={`group w-full flex items-center rounded-lg transition-all duration-200 min-h-[44px] text-red-600 hover:bg-red-50 ${isExpanded ? "px-3" : "px-0 justify-center"
+              }`}
           >
             <div
-              className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                isExpanded ? "mr-3" : "mx-auto"
-              }`}
+              className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isExpanded ? "mr-3" : "mx-auto"
+                }`}
             >
               <IoLogOut size={18} />
             </div>
 
             <span
-              className={`font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-                isExpanded || showLabels
-                  ? "opacity-100"
-                  : "opacity-0 -translate-x-2 absolute"
-              }`}
+              className={`font-medium text-sm transition-all duration-300 whitespace-nowrap ${isExpanded || showLabels
+                ? "opacity-100"
+                : "opacity-0 -translate-x-2 absolute"
+                }`}
             >
               Sign Out
             </span>

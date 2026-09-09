@@ -56,7 +56,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     metadata: { category: "AI&GENAI" },
     response_format: "",
     image: "https://i.ibb.co/TDbh09NT/gt-faabf5888a4cb8cb7d81.png",
-    link: "https://amzn.in/d/2Ie3hEg",
+    link: "/main/itemsdisplay/b3e1bf52-9f80-4179-b533-c9410affd8d2",
   },
   {
     id: "2",

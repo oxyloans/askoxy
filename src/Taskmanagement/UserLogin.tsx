@@ -70,8 +70,8 @@ const UserLogin: React.FC = () => {
       return;
     }
     if (token && type === "EMPLOYEE") {
-      window.history.replaceState(null, '', '/userPanelLayout');
-      navigate("/userPanelLayout", { replace: true });
+      window.history.replaceState(null, '', '/taskmanagement/dashboard');
+      navigate("/taskmanagement/dashboard", { replace: true });
     }
   }, [navigate]);
 
@@ -97,7 +97,7 @@ const UserLogin: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 10000, 
+          timeout: 10000,
         }
       );
 
@@ -119,8 +119,8 @@ const UserLogin: React.FC = () => {
             const intendedRoute = getIntendedRoute();
             clearIntendedRoute();
             // Clear login page from history and navigate
-            window.history.replaceState(null, '', intendedRoute || "/userPanelLayout");
-            navigate(intendedRoute || "/userPanelLayout", { replace: true });
+            window.history.replaceState(null, '', intendedRoute || "/taskmanagement/dashboard");
+            navigate(intendedRoute || "/taskmanagement/dashboard", { replace: true });
           }, 1000);
         } else if (
           primaryType === "SELLER" ||

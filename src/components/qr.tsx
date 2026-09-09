@@ -107,7 +107,7 @@ const QR = () => {
           </a>
 
           <a
-            href="https://www.linkedin.com/in/askoxy-ai-5a2157349/"
+            href="https://www.linkedin.com/company/askoxy/posts/?viewAsMember=true"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 bg-[#0077B5] text-white rounded-lg shadow-md hover:bg-[#006699] active:bg-[#00557A] transition duration-300 w-full"

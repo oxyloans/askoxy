@@ -723,7 +723,7 @@ const TaskUpdate: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <Card
           title={
             <div className="flex items-center justify-between gap-3">

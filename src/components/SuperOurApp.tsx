@@ -167,8 +167,8 @@ export default function SuperOurApp() {
           <div className="flex flex-col-reverse items-center gap-6 sm:gap-8 lg:flex-row lg:items-end lg:gap-12">
             <div className="flex w-full items-end justify-center lg:w-[48%] lg:justify-start">
               <a
-                href="https://amzn.in/d/2Ie3hEg"
-                target="_blank"
+                href="/main/itemsdisplay/b3e1bf52-9f80-4179-b533-c9410affd8d2"
+               
                 rel="noopener noreferrer"
                 aria-label="Open AI book on Amazon"
                 className="block w-full"
