@@ -643,32 +643,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </button>
 
-            {!isMobile && (
-              <div className="header-search-container">
-                <AutoComplete
-                  value={searchValue}
-                  options={searchOptions}
-                  onSearch={(value) => setSearchValue(value)}
-                  onSelect={handleSearchSelect}
-                  filterOption={false}
-                  popupClassName="header-search-popup"
-                  style={{ width: "80%" }}
-                >
-                  <Input
-                    prefix={
-                      <SearchOutlined
-                        style={{
-                          color: normalizedSearch ? "#2563eb" : "#94a3b8",
-                        }}
-                      />
-                    }
-                    placeholder="Search pages, tasks, reports, leave..."
-                    allowClear
-                    aria-label="Search Task Management"
-                  />
-                </AutoComplete>
-              </div>
-            )}
+
           </div>
 
           <div className="ml-2 flex shrink-0 items-center gap-1 sm:gap-2">

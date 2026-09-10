@@ -3,10 +3,8 @@ import {
   Alert,
   Avatar,
   Button,
-  Card,
   Col,
   DatePicker,
-  Divider,
   Form,
   Grid,
   Input,
@@ -36,12 +34,10 @@ import { employeeApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
 const PRIMARY = "#008cba";
-const PRIMARY_DARK = "#006f94";
-const SECONDARY = "#1ab394";
 
 const PLATFORMS = [
   { value: "oxybricks", label: "Oxybricks", short: "OB" },
@@ -667,7 +663,9 @@ const EmployeeProfilePage: React.FC = () => {
       value:
         cleanText(aiToolsHigh) ||
         parseToolUsage(profile.toolUsage).high,
-      className: "tool-chip tool-chip--high",
+      chipClass:
+        "inline-flex rounded-lg border border-green-200 bg-white px-2.5 py-1 text-xs font-semibold text-green-800",
+      titleClass: "text-green-700",
     },
     {
       title: "Moderate Usage",
@@ -675,7 +673,9 @@ const EmployeeProfilePage: React.FC = () => {
       value:
         cleanText(aiToolsModerate) ||
         parseToolUsage(profile.toolUsage).moderate,
-      className: "tool-chip tool-chip--moderate",
+      chipClass:
+        "inline-flex rounded-lg border border-orange-200 bg-white px-2.5 py-1 text-xs font-semibold text-orange-700",
+      titleClass: "text-orange-700",
     },
     {
       title: "Low Usage",
@@ -683,179 +683,190 @@ const EmployeeProfilePage: React.FC = () => {
       value:
         cleanText(aiToolsLow) ||
         parseToolUsage(profile.toolUsage).low,
-      className: "tool-chip tool-chip--low",
+      chipClass:
+        "inline-flex rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-xs font-semibold text-sky-800",
+      titleClass: "text-sky-700",
     },
   ];
 
   const renderOverview = () => (
     <>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={8}>
-          <Card className="profile-section-card" bordered={false}>
-            <div className="section-title">
-              <BuildOutlined />
-              <span>Platforms Access</span>
-            </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)] sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+            <BuildOutlined className="text-[#008cba]" />
+            <span>Platforms Access</span>
+          </div>
 
-            {platforms.length ? (
-              <div className="platform-grid">
-                {platforms.map((platform) => {
-                  const item = PLATFORMS.find(
-                    (option) => option.value === platform,
-                  );
-
-                  return (
-                    <div className="platform-tile" key={platform}>
-                      <div className="platform-icon">
-                        {item?.short || platform.slice(0, 2).toUpperCase()}
-                      </div>
-                      <span>{item?.label || platform}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="empty-copy">
-                No working platforms added yet.
-              </div>
-            )}
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={8}>
-          <Card className="profile-section-card" bordered={false}>
-            <div className="section-title">
-              <RobotOutlined />
-              <span>AI Tools Usage</span>
-            </div>
-
-            <div className="tool-groups">
-              {toolChipData.map((group) => {
-                const tools = splitCommaValues(group.value);
+          {platforms.length ? (
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {platforms.map((platform) => {
+                const item = PLATFORMS.find((option) => option.value === platform);
 
                 return (
-                  <div className="tool-group" key={group.level}>
-                    <div
-                      className={`tool-group-title tool-group-title--${group.level}`}
-                    >
-                      {group.title}
+                  <div
+                    key={platform}
+                    className="flex min-h-[76px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-center text-xs font-semibold text-slate-700"
+                  >
+                    <div className="grid h-8 w-8 place-items-center rounded-full border border-slate-200 bg-white text-[11px] font-extrabold text-[#006f94]">
+                      {item?.short || platform.slice(0, 2).toUpperCase()}
                     </div>
-
-                    {tools.length ? (
-                      <div className="tool-chip-wrap">
-                        {tools.map((tool) => (
-                          <span
-                            className={group.className}
-                            key={`${group.level}-${tool}`}
-                          >
-                            {tool}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="tool-empty">No tools added</span>
-                    )}
+                    <span className="max-w-full break-words">
+                      {item?.label || platform}
+                    </span>
                   </div>
                 );
               })}
             </div>
-          </Card>
-        </Col>
+          ) : (
+            <p className="m-0 text-xs text-slate-400">
+              No working platforms added yet.
+            </p>
+          )}
+        </section>
 
-        <Col xs={24} lg={8}>
-          <Card className="profile-section-card" bordered={false}>
-            <div className="section-title">
-              <TeamOutlined />
-              <span>Roles / Designations</span>
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)] sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+            <RobotOutlined className="text-[#008cba]" />
+            <span>AI Tools Usage</span>
+          </div>
+
+          <div className="grid gap-3">
+            {toolChipData.map((group) => {
+              const tools = splitCommaValues(group.value);
+
+              return (
+                <div key={group.level}>
+                  <div className={`mb-1.5 text-xs font-bold ${group.titleClass}`}>
+                    {group.title}
+                  </div>
+
+                  {tools.length ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {tools.map((tool) => (
+                        <span
+                          key={`${group.level}-${tool}`}
+                          className={group.chipClass}
+                        >
+                          {tool}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400">No tools added</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)] sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+            <TeamOutlined className="text-[#008cba]" />
+            <span>Roles / Designations</span>
+          </div>
+
+          {roles?.length ? (
+            <div className="flex flex-wrap gap-1.5">
+              {roles.map((role) => (
+                <span
+                  key={role}
+                  className="rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-xs font-semibold text-sky-800"
+                >
+                  {role}
+                </span>
+              ))}
             </div>
+          ) : (
+            <p className="m-0 text-xs text-slate-400">
+              No roles or designations added yet.
+            </p>
+          )}
+        </section>
+      </div>
 
-            {roles?.length ? (
-              <div className="roles-wrap">
-                {roles.map((role) => (
-                  <Tag
-                    key={role}
-                    className="role-tag"
-                    closable={false}
-                  >
-                    {role}
-                  </Tag>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-copy">
-                No roles or designations added yet.
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      <Card
-        className="profile-about-card"
-        bordered={false}
-        style={{ marginTop: 16 }}
-      >
-        <div className="about-icon">
+      <section className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)] sm:p-5">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-[#008cba]">
           <UserOutlined />
         </div>
-
-        <div className="about-copy">
-          <div className="section-title section-title--compact">
-            <span>About Me</span>
-          </div>
-          <Paragraph style={{ marginBottom: 0, color: "#475569" }}>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 text-sm font-bold text-slate-900">About Me</div>
+          <p className="m-0 break-words text-sm leading-7 text-slate-600">
             {aboutMe}
-          </Paragraph>
+          </p>
         </div>
-      </Card>
+      </section>
     </>
   );
 
   const fieldDisabled =
     saving || pageLoading || (!isEditMode && hasProfileData);
 
+  const fieldClass =
+    "!rounded-xl !border-slate-300 hover:!border-slate-400 focus:!border-[#008cba] focus:!shadow-[0_0_0_3px_rgba(0,140,186,0.08)]";
+
+  const selectClass =
+    "w-full [&_.ant-select-selector]:!min-h-[38px] [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border-slate-300 [&_.ant-select-selector]:!shadow-none hover:[&_.ant-select-selector]:!border-slate-400 [&.ant-select-focused_.ant-select-selector]:!border-[#008cba] [&.ant-select-focused_.ant-select-selector]:!shadow-[0_0_0_3px_rgba(0,140,186,0.08)] max-md:[&_.ant-select-selector]:!min-h-[42px]";
+
+  const sectionClass =
+    "mb-3 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4";
+
+  const sectionHeadingClass =
+    "mb-3 border-b border-slate-100 pb-2.5 sm:mb-4";
+
   const renderEditForm = () => (
-    <Card className="edit-card" bordered={false}>
-      <Spin
-        spinning={saving}
-        tip="Updating employee profile..."
-      >
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_2px_10px_rgba(15,23,42,0.04)] sm:p-4">
+      <Spin spinning={saving} tip="Updating employee profile...">
         <Form
           form={form}
           layout="vertical"
           requiredMark
           validateTrigger={["onChange", "onBlur"]}
           scrollToFirstError={{ behavior: "smooth", block: "center" }}
+          className="[&_.ant-form-item]:!mb-4 [&_.ant-form-item-label>label]:!h-auto [&_.ant-form-item-label>label]:!text-[13px] [&_.ant-form-item-label>label]:!font-semibold [&_.ant-form-item-label>label]:!text-slate-700 [&_.ant-form-item-explain-error]:!mt-1 [&_.ant-form-item-explain-error]:!text-xs"
         >
           {mobErr && (
             <Alert
               type="error"
               showIcon
               message={mobErr}
-              style={{ marginBottom: 18, borderRadius: 10 }}
+              className="!mb-4 !rounded-xl"
             />
           )}
 
-          <section className="form-section-panel" aria-labelledby="personal-information-title">
-            <div className="form-section-heading">
-              <div>
-                <div id="personal-information-title" className="form-section-title">Personal Information</div>
-                <Text className="form-section-subtitle">Keep your core employee details accurate and up to date.</Text>
+          <section className={sectionClass} aria-labelledby="personal-information-title">
+            <div className={sectionHeadingClass}>
+              <div
+                id="personal-information-title"
+                className="text-sm font-bold text-slate-900"
+              >
+                Personal Information
               </div>
+              <p className="mb-0 mt-1 text-xs leading-5 text-slate-500">
+                Keep your core employee details accurate and up to date.
+              </p>
             </div>
 
-            <Row gutter={[18, 4]}>
+            <Row gutter={[16, 0]}>
               <Col xs={24} md={12}>
                 <Form.Item
                   label="Employee Mobile Number"
                   name="mobileNumber"
                   rules={[
                     { required: true, message: "Employee mobile number is required." },
-                    { pattern: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number." },
+                    {
+                      pattern: /^[6-9]\d{9}$/,
+                      message: "Enter a valid 10-digit Indian mobile number.",
+                    },
                     {
                       validator: (_, value) =>
                         /^(\d)\1{9}$/.test(String(value || ""))
-                          ? Promise.reject(new Error("Mobile number cannot contain the same digit repeatedly."))
+                          ? Promise.reject(
+                            new Error(
+                              "Mobile number cannot contain the same digit repeatedly.",
+                            ),
+                          )
                           : Promise.resolve(),
                     },
                   ]}
@@ -863,14 +874,17 @@ const EmployeeProfilePage: React.FC = () => {
                   <Input
                     size="middle"
                     addonBefore="+91"
-                    prefix={<PhoneOutlined />}
+                    prefix={<PhoneOutlined className="text-slate-400" />}
                     maxLength={10}
                     inputMode="numeric"
                     autoComplete="tel"
                     disabled={fieldDisabled}
                     placeholder="Enter 10-digit mobile number"
+                    className={fieldClass}
                     onChange={(event) => {
-                      form.setFieldsValue({ mobileNumber: digits10(event.target.value) });
+                      form.setFieldsValue({
+                        mobileNumber: digits10(event.target.value),
+                      });
                       if (mobErr) setMobErr("");
                     }}
                   />
@@ -890,10 +904,11 @@ const EmployeeProfilePage: React.FC = () => {
                 >
                   <Input
                     size="middle"
-                    prefix={<EnvironmentOutlined />}
+                    prefix={<EnvironmentOutlined className="text-slate-400" />}
                     autoComplete="organization-locality"
                     disabled={fieldDisabled}
                     placeholder="e.g. Hyderabad, Telangana"
+                    className={fieldClass}
                   />
                 </Form.Item>
               </Col>
@@ -902,18 +917,26 @@ const EmployeeProfilePage: React.FC = () => {
                 <Form.Item
                   label="Employee Joining Date"
                   name="dateOfJoining"
-                  rules={[{ required: true, message: "Employee joining date is required." }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Employee joining date is required.",
+                    },
+                  ]}
                 >
                   <DatePicker
                     size="middle"
                     format="DD MMM YYYY"
                     disabledDate={(current) =>
-                      Boolean(current && current.startOf("day").isAfter(dayjs().startOf("day")))
+                      Boolean(
+                        current &&
+                        current.startOf("day").isAfter(dayjs().startOf("day")),
+                      )
                     }
                     placeholder="Select joining date"
                     suffixIcon={<CalendarOutlined />}
                     disabled={fieldDisabled}
-                    style={{ width: "100%" }}
+                    className={`w-full max-md:!min-h-[42px] ${fieldClass}`}
                   />
                 </Form.Item>
               </Col>
@@ -931,9 +954,10 @@ const EmployeeProfilePage: React.FC = () => {
                 >
                   <Input
                     size="middle"
-                    prefix={<BuildOutlined />}
+                    prefix={<BuildOutlined className="text-slate-400" />}
                     disabled={fieldDisabled}
                     placeholder="React, TypeScript, Git, Ant Design..."
+                    className={fieldClass}
                   />
                 </Form.Item>
               </Col>
@@ -955,27 +979,38 @@ const EmployeeProfilePage: React.FC = () => {
                     showCount
                     disabled={fieldDisabled}
                     placeholder="Briefly describe your experience, responsibilities, strengths, and current focus..."
+                    className={`${fieldClass} !leading-6`}
                   />
                 </Form.Item>
               </Col>
             </Row>
           </section>
 
-          <section className="form-section-panel" aria-labelledby="work-information-title">
-            <div className="form-section-heading">
-              <div>
-                <div id="work-information-title" className="form-section-title">Work Information</div>
-                <Text className="form-section-subtitle">Choose the platforms and roles that best describe your current work.</Text>
+          <section className={sectionClass} aria-labelledby="work-information-title">
+            <div className={sectionHeadingClass}>
+              <div
+                id="work-information-title"
+                className="text-sm font-bold text-slate-900"
+              >
+                Work Information
               </div>
+              <p className="mb-0 mt-1 text-xs leading-5 text-slate-500">
+                Choose the platforms and roles that best describe your current work.
+              </p>
             </div>
 
-            <Row gutter={[18, 4]}>
+            <Row gutter={[16, 0]}>
               <Col xs={24} md={12}>
                 <Form.Item
                   label="Employee Working Platforms"
                   name="projectType"
                   rules={[
-                    { required: true, type: "array", min: 1, message: "Please select at least one working platform." },
+                    {
+                      required: true,
+                      type: "array",
+                      min: 1,
+                      message: "Please select at least one working platform.",
+                    },
                   ]}
                 >
                   <Select
@@ -988,7 +1023,11 @@ const EmployeeProfilePage: React.FC = () => {
                     optionFilterProp="label"
                     placeholder="Search and select platforms"
                     suffixIcon={<BuildOutlined />}
-                    options={PLATFORMS.map((item) => ({ label: item.label, value: item.value }))}
+                    className={selectClass}
+                    options={PLATFORMS.map((item) => ({
+                      label: item.label,
+                      value: item.value,
+                    }))}
                   />
                 </Form.Item>
               </Col>
@@ -998,7 +1037,12 @@ const EmployeeProfilePage: React.FC = () => {
                   label="Employee Roles / Designations"
                   name="designation"
                   rules={[
-                    { required: true, type: "array", min: 1, message: "Please select at least one employee role." },
+                    {
+                      required: true,
+                      type: "array",
+                      min: 1,
+                      message: "Please select at least one employee role.",
+                    },
                   ]}
                 >
                   <Select
@@ -1011,54 +1055,72 @@ const EmployeeProfilePage: React.FC = () => {
                     optionFilterProp="label"
                     placeholder="Search and select roles"
                     suffixIcon={<TeamOutlined />}
-                    options={ROLE_OPTIONS.map((role) => ({ label: role, value: role }))}
+                    className={selectClass}
+                    options={ROLE_OPTIONS.map((role) => ({
+                      label: role,
+                      value: role,
+                    }))}
                   />
                 </Form.Item>
               </Col>
             </Row>
           </section>
 
-          <section className="form-section-panel" aria-labelledby="ai-tools-title">
-            <div className="form-section-heading">
-              <div>
-                <div id="ai-tools-title" className="form-section-title">AI Tools & Usage Levels</div>
-                <Text className="form-section-subtitle">Add comma-separated tools based on how frequently you use them.</Text>
+          <section className={sectionClass} aria-labelledby="ai-tools-title">
+            <div className={sectionHeadingClass}>
+              <div id="ai-tools-title" className="text-sm font-bold text-slate-900">
+                AI Tools &amp; Usage Levels
               </div>
+              <p className="mb-0 mt-1 text-xs leading-5 text-slate-500">
+                Add comma-separated tools based on how frequently you use them.
+              </p>
             </div>
 
-            <Row gutter={[18, 4]}>
+            <Row gutter={[16, 0]}>
               <Col xs={24} md={8}>
-                <Form.Item label={<Tag color="green">High Usage</Tag>} name="aiToolsHigh">
+                <Form.Item
+                  label={<span className="font-semibold text-green-700">High Usage</span>}
+                  name="aiToolsHigh"
+                >
                   <Input.TextArea
                     autoSize={{ minRows: 3, maxRows: 5 }}
                     maxLength={300}
                     showCount
                     disabled={fieldDisabled}
                     placeholder="ChatGPT, Claude, Gemini AI"
+                    className={`${fieldClass} !leading-6`}
                   />
                 </Form.Item>
               </Col>
 
               <Col xs={24} md={8}>
-                <Form.Item label={<Tag color="gold">Moderate Usage</Tag>} name="aiToolsModerate">
+                <Form.Item
+                  label={<span className="font-semibold text-orange-700">Moderate Usage</span>}
+                  name="aiToolsModerate"
+                >
                   <Input.TextArea
                     autoSize={{ minRows: 3, maxRows: 5 }}
                     maxLength={300}
                     showCount
                     disabled={fieldDisabled}
                     placeholder="Copilot, Cursor AI..."
+                    className={`${fieldClass} !leading-6`}
                   />
                 </Form.Item>
               </Col>
 
               <Col xs={24} md={8}>
-                <Form.Item label={<Tag color="blue">Low Usage</Tag>} name="aiToolsLow">
+                <Form.Item
+                  label={<span className="font-semibold text-sky-700">Low Usage</span>}
+                  name="aiToolsLow"
+                >
                   <Input.TextArea
                     autoSize={{ minRows: 3, maxRows: 5 }}
                     maxLength={300}
                     showCount
                     disabled={fieldDisabled}
                     placeholder="Other AI tools..."
+                    className={`${fieldClass} !leading-6`}
                   />
                 </Form.Item>
               </Col>
@@ -1066,18 +1128,13 @@ const EmployeeProfilePage: React.FC = () => {
           </section>
 
           {isEditMode && (
-            <div className="form-actions">
+            <div className="sticky bottom-0 z-10 -mx-3 -mb-3 mt-2 flex flex-wrap gap-2.5 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:mb-0 sm:mt-3 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-4 sm:backdrop-blur-none">
               <Button
                 type="primary"
                 size="middle"
                 loading={saving}
                 onClick={handleSave}
-                style={{
-                  background: PRIMARY,
-                  borderColor: PRIMARY,
-                  minWidth: 150,
-                  fontWeight: 700,
-                }}
+                className="!h-10 !min-w-[150px] !rounded-xl !border-[#008cba] !bg-[#008cba] !font-bold hover:!border-[#007da6] hover:!bg-[#007da6] max-sm:!w-full"
               >
                 {hasProfileData ? "Update Profile" : "Save Profile"}
               </Button>
@@ -1088,6 +1145,7 @@ const EmployeeProfilePage: React.FC = () => {
                   icon={<CloseOutlined />}
                   disabled={saving}
                   onClick={handleCancel}
+                  className="!h-10 !rounded-xl max-sm:!w-full"
                 >
                   Cancel
                 </Button>
@@ -1096,57 +1154,45 @@ const EmployeeProfilePage: React.FC = () => {
           )}
         </Form>
       </Spin>
-    </Card>
+    </div>
   );
 
   return (
     <UserPanelLayout>
-      <div className="profile-page">
-        <Spin
-          spinning={pageLoading}
-          tip="Loading employee profile..."
-          size="large"
-        >
-          <div className="page-heading">
+      <div className="mx-auto w-full max-w-[1400px] bg-white px-2 pb-6 pt-2 sm:px-3 sm:pt-3 lg:px-4">
+        <Spin spinning={pageLoading} tip="Loading employee profile..." size="large">
+          <header className="mb-3 flex items-center justify-between">
             <div>
               <Title
                 level={isMobile ? 4 : 3}
-                style={{ margin: 0, color: "#0f172a" }}
+                className="!m-0 !text-slate-950"
               >
                 My Profile
               </Title>
-              <div className="heading-line" />
+              <div className="mt-1.5 h-[3px] w-9 rounded-full bg-[#008cba]" />
             </div>
-          </div>
+          </header>
 
-          <Card
-            className="profile-hero"
-            bordered={false}
-          >
-            <div className="hero-content">
-              <div className="hero-avatar-area">
-                <div className="avatar-wrap">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)] sm:p-5 lg:p-6">
+            <div className="grid grid-cols-1 items-center gap-4 text-center md:grid-cols-[auto_minmax(0,1fr)] md:text-left lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-5">
+              <div className="flex justify-center md:justify-start">
+                <div className="relative inline-flex">
                   <Avatar
                     size={isMobile ? 104 : 128}
                     src={profileImage || undefined}
                     icon={!profileImage ? <UserOutlined /> : undefined}
-                    style={{
-                      background: "#dbeafe",
-                      color: PRIMARY,
-                      border: "4px solid rgba(255,255,255,.95)",
-                      boxShadow: "0 8px 24px rgba(15,23,42,.12)",
-                    }}
+                    className="!border-4 !border-white !bg-blue-100 !text-[#008cba] !shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
                   />
 
                   <button
                     type="button"
-                    className="camera-button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={!canUploadImage}
                     aria-label="Upload profile image"
+                    className="absolute -right-0.5 bottom-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-md transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {uploadingImage ? (
-                      <span className="camera-spinner" />
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-100 border-t-[#008cba]" />
                     ) : (
                       <CameraOutlined />
                     )}
@@ -1155,705 +1201,96 @@ const EmployeeProfilePage: React.FC = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                     hidden
                     onChange={handleImageUpload}
                   />
                 </div>
               </div>
 
-              <div className="hero-main">
-                <div className="hero-title-row">
+              <div className="min-w-0 md:text-left">
+                <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
                   <Title
                     level={2}
-                    style={{
-                      margin: 0,
-                      fontSize: isMobile ? 24 : 30,
-                      color: "#0f172a",
-                    }}
+                    className="!m-0 !text-2xl !text-slate-950 sm:!text-[30px]"
                   >
                     {employeeName}
                   </Title>
-                  <Tag color="green" className="active-tag">
+                  <Tag
+                    color="green"
+                    className="!m-0 !rounded-full !px-2.5 !font-semibold"
+                  >
                     Active
                   </Tag>
                 </div>
 
-                <Text className="designation-text">
+                <Text className="!mt-1 block !text-base !font-semibold !text-slate-700">
                   {primaryDesignation}
                 </Text>
 
-                <div className="contact-row">
+                <div className="mt-2.5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-slate-700 md:justify-start">
                   {employeeEmail && (
-                    <span className="contact-item">
-                      <MailOutlined />
+                    <span className="inline-flex min-w-0 items-center gap-2 break-all">
+                      <MailOutlined className="shrink-0 text-[#008cba]" />
                       {employeeEmail}
                     </span>
                   )}
 
                   {mobileNumber && (
-                    <span className="contact-item">
-                      <PhoneOutlined />
+                    <span className="inline-flex items-center gap-2">
+                      <PhoneOutlined className="text-[#008cba]" />
                       +91 {mobileNumber}
                     </span>
                   )}
                 </div>
 
-                <div className="location-row">
-                  <EnvironmentOutlined />
-                  <span>{location}</span>
+                <div className="mt-2 inline-flex items-start gap-2 text-sm text-slate-700">
+                  <EnvironmentOutlined className="mt-0.5 shrink-0 text-[#008cba]" />
+                  <span className="break-words">{location}</span>
                 </div>
               </div>
 
-              <div className="hero-side">
+              <div className="flex w-full flex-col gap-3 md:col-span-2 md:flex-row md:items-center md:justify-between lg:col-span-1 lg:w-auto lg:min-w-[190px] lg:flex-col lg:items-stretch">
                 <Button
                   type="primary"
                   icon={<EditOutlined />}
-                  onClick={() => {
-                    setIsEditMode(true);
-                  }}
+                  onClick={() => setIsEditMode(true)}
                   disabled={pageLoading || saving}
-                  style={{
-                    background: PRIMARY,
-                    borderColor: PRIMARY,
-                    fontWeight: 700,
-                    height: 42,
-                    borderRadius: 9,
-                  }}
+                  className="!h-10 !rounded-xl !border-[#008cba] !bg-[#008cba] !font-bold hover:!border-[#007da6] hover:!bg-[#007da6]"
                 >
                   Edit Profile
                 </Button>
 
-                <div className="side-meta">
-                  <div className="side-meta-item">
-                    <CalendarOutlined />
-                    <div>
-                      <span className="side-label">Joined On</span>
-                      <strong>
+                <div className="grid w-full grid-cols-1 gap-2.5 text-left sm:grid-cols-2 md:w-auto lg:w-full lg:grid-cols-1">
+                  <div className="grid grid-cols-[24px_minmax(0,1fr)] items-start gap-2 text-slate-700">
+                    <CalendarOutlined className="mt-0.5 text-base text-slate-900" />
+                    <div className="min-w-0">
+                      <span className="block text-xs text-slate-500">Joined On</span>
+                      <strong className="block break-words text-[13px] text-slate-900">
                         {formatJoiningDate(profile.dateOfJoining)}
                       </strong>
                     </div>
                   </div>
 
-                  <div className="side-meta-item">
-                    <BuildOutlined />
-                    <div>
-                      <span className="side-label">Designation</span>
-                      <strong>{primaryDesignation}</strong>
+                  <div className="grid grid-cols-[24px_minmax(0,1fr)] items-start gap-2 text-slate-700">
+                    <BuildOutlined className="mt-0.5 text-base text-slate-900" />
+                    <div className="min-w-0">
+                      <span className="block text-xs text-slate-500">Designation</span>
+                      <strong className="block break-words text-[13px] text-slate-900">
+                        {primaryDesignation}
+                      </strong>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </Card>
+          </section>
 
-          <div className="profile-content profile-content--no-tabs">
+          <main className="mt-3">
             {!isEditMode ? renderOverview() : renderEditForm()}
-          </div>
+          </main>
         </Spin>
       </div>
-
-      <style>{`
-        .profile-page {
-          width: 100%;
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 20px 14px 32px;
-          background: #fff;
-        }
-
-        .page-heading {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 14px;
-        }
-
-        .heading-line {
-          width: 34px;
-          height: 3px;
-          margin-top: 7px;
-          border-radius: 999px;
-          background: ${PRIMARY};
-        }
-
-        .profile-hero {
-          overflow: hidden;
-          border: 1px solid #e2e8f0 !important;
-          border-radius: 16px !important;
-          background: #ffffff !important;
-          box-shadow: 0 8px 28px rgba(15, 23, 42, .05);
-        }
-
-        .profile-hero .ant-card-body {
-          padding: 28px 32px;
-        }
-
-        .hero-content {
-          display: grid;
-          grid-template-columns: auto minmax(0, 1fr) auto;
-          align-items: center;
-          gap: 28px;
-        }
-
-        .avatar-wrap {
-          position: relative;
-          display: inline-flex;
-        }
-
-        .camera-button {
-          position: absolute;
-          right: -2px;
-          bottom: 2px;
-          width: 38px;
-          height: 38px;
-          border: 1px solid #dbe3ed;
-          border-radius: 50%;
-          background: #fff;
-          color: #0f172a;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(15, 23, 42, .12);
-        }
-
-        .camera-button:disabled {
-          opacity: .65;
-          cursor: not-allowed;
-        }
-
-        .camera-spinner {
-          width: 15px;
-          height: 15px;
-          border-radius: 50%;
-          border: 2px solid #dbeafe;
-          border-top-color: ${PRIMARY};
-          animation: cameraSpin .7s linear infinite;
-        }
-
-        @keyframes cameraSpin {
-          to { transform: rotate(360deg); }
-        }
-
-        .hero-title-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .active-tag {
-          border-radius: 999px !important;
-          font-weight: 600;
-          padding-inline: 10px !important;
-        }
-
-        .designation-text {
-          display: block;
-          margin-top: 5px;
-          color: #334155;
-          font-size: 16px;
-          font-weight: 600;
-        }
-
-        .contact-row {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px 20px;
-          margin-top: 16px;
-        }
-
-        .contact-item,
-        .location-row {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          color: #334155;
-          font-size: 14px;
-        }
-
-        .contact-item .anticon,
-        .location-row .anticon {
-          color: ${PRIMARY};
-        }
-
-        .location-row {
-          margin-top: 12px;
-        }
-
-        .hero-side {
-          min-width: 190px;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 18px;
-        }
-
-        .side-meta {
-          width: 100%;
-          display: grid;
-          gap: 13px;
-        }
-
-        .side-meta-item {
-          display: grid;
-          grid-template-columns: 24px minmax(0, 1fr);
-          gap: 10px;
-          align-items: start;
-          color: #334155;
-        }
-
-        .side-meta-item > .anticon {
-          margin-top: 3px;
-          color: #0f172a;
-          font-size: 17px;
-        }
-
-        .side-meta-item strong,
-        .side-label {
-          display: block;
-        }
-
-        .side-label {
-          margin-bottom: 2px;
-          color: #64748b;
-          font-size: 12px;
-        }
-
-        .side-meta-item strong {
-          color: #0f172a;
-          font-size: 13px;
-        }
-
-        .profile-content {
-          margin-top: 18px;
-        }
-
-        .profile-content--no-tabs {
-          margin-top: 18px;
-        }
-
-        .edit-card .ant-form-item-required::before {
-          margin-inline-end: 5px !important;
-        }
-
-        .edit-card .ant-form-item {
-          margin-bottom: 18px;
-        }
-
-        .profile-section-card {
-          height: 100%;
-          background: #ffffff !important;
-          min-height: 310px;
-          border: 1px solid #e2e8f0 !important;
-          border-radius: 14px !important;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
-        }
-
-        .section-title {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 16px;
-          color: #0f172a;
-          font-weight: 800;
-          font-size: 15px;
-        }
-
-        .section-title .anticon {
-          color: ${PRIMARY};
-        }
-
-        .section-title--compact {
-          margin-bottom: 6px;
-        }
-
-        .platform-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
-        }
-
-        .platform-tile {
-          min-height: 88px;
-          padding: 10px 7px;
-          border: 1px solid #e2e8f0;
-          border-radius: 11px;
-          background: #fff;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          color: #334155;
-          text-align: center;
-          font-size: 12px;
-          font-weight: 600;
-        }
-
-        .platform-icon {
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          background: #ffffff;
-          border: 1px solid #dbeafe;
-          color: ${PRIMARY_DARK};
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .tool-groups {
-          display: grid;
-          gap: 18px;
-        }
-
-        .tool-group-title {
-          margin-bottom: 8px;
-          font-size: 13px;
-          font-weight: 800;
-        }
-
-        .tool-group-title--high { color: #15803d; }
-        .tool-group-title--moderate { color: #c2410c; }
-        .tool-group-title--low { color: #0369a1; }
-
-        .tool-chip-wrap,
-        .roles-wrap {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 7px;
-        }
-
-        .tool-chip {
-          display: inline-flex;
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 600;
-        }
-
-        .tool-chip--high {
-          color: #166534;
-          background: #ecfdf3;
-        }
-
-        .tool-chip--moderate {
-          color: #c2410c;
-          background: #fff7ed;
-        }
-
-        .tool-chip--low {
-          color: #075985;
-          background: #eff6ff;
-        }
-
-        .tool-empty,
-        .empty-copy {
-          color: #94a3b8;
-          font-size: 12px;
-        }
-
-        .role-tag {
-          margin: 0 !important;
-          padding: 6px 10px !important;
-          border: 0 !important;
-          border-radius: 8px !important;
-          color: #075985 !important;
-          background: #eff6ff !important;
-          font-size: 12px !important;
-          font-weight: 600;
-        }
-
-        .profile-about-card {
-          background: #ffffff !important;
-          border: 1px solid #e2e8f0 !important;
-          border-radius: 14px !important;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, .03);
-        }
-
-        .profile-about-card .ant-card-body {
-          display: flex;
-          align-items: flex-start;
-          gap: 14px;
-        }
-
-        .about-icon {
-          width: 42px;
-          height: 42px;
-          flex: 0 0 42px;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          color: ${PRIMARY};
-          background: #ffffff;
-          border: 1px solid #dbeafe;
-        }
-
-        .about-copy {
-          min-width: 0;
-          flex: 1;
-        }
-
-        .edit-card {
-          border: 1px solid #e2e8f0 !important;
-          border-radius: 16px !important;
-          background: #ffffff !important;
-          box-shadow: 0 8px 28px rgba(15, 23, 42, .045);
-        }
-
-        .edit-card .ant-card-body {
-          padding: 22px;
-        }
-
-        .form-section-panel {
-          padding: 20px;
-          margin-bottom: 16px;
-          border: 1px solid #e7eaf0;
-          border-radius: 14px;
-          background: #ffffff;
-        }
-
-        .form-section-heading {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 18px;
-          padding-bottom: 14px;
-          border-bottom: 1px solid #eef1f5;
-        }
-
-        .form-section-title {
-          color: #0f172a;
-          font-size: 15px;
-          font-weight: 800;
-          letter-spacing: -.01em;
-        }
-
-        .form-section-subtitle {
-          display: block;
-          margin-top: 4px;
-          color: #64748b !important;
-          font-size: 12px;
-          line-height: 1.5;
-        }
-
-        .edit-card .ant-form-item-label > label {
-          height: auto;
-          color: #334155;
-          font-size: 13px;
-          font-weight: 700;
-        }
-
-        .edit-card .ant-input,
-        .edit-card .ant-input-affix-wrapper,
-        .edit-card .ant-input-group-addon,
-        .edit-card .ant-picker,
-        .edit-card .ant-select-selector {
-          border-color: #d8dee8 !important;
-          border-radius: 10px !important;
-          background: #ffffff !important;
-          box-shadow: none !important;
-          transition: border-color .18s ease, box-shadow .18s ease;
-        }
-
-        .edit-card .ant-input,
-        .edit-card .ant-input-affix-wrapper,
-        .edit-card .ant-picker {
-          min-height: 38px;
-        }
-
-        .edit-card .ant-select-single .ant-select-selector,
-        .edit-card .ant-select-multiple .ant-select-selector {
-          min-height: 38px !important;
-          padding-top: 3px !important;
-          padding-bottom: 3px !important;
-        }
-
-        .edit-card .ant-input:hover,
-        .edit-card .ant-input-affix-wrapper:hover,
-        .edit-card .ant-picker:hover,
-        .edit-card .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-          border-color: #94a3b8 !important;
-        }
-
-        .edit-card .ant-input:focus,
-        .edit-card .ant-input-focused,
-        .edit-card .ant-input-affix-wrapper-focused,
-        .edit-card .ant-picker-focused,
-        .edit-card .ant-select-focused .ant-select-selector {
-          border-color: ${PRIMARY} !important;
-          box-shadow: 0 0 0 3px rgba(0, 140, 186, .09) !important;
-        }
-
-        .edit-card .ant-input-prefix,
-        .edit-card .ant-picker-suffix,
-        .edit-card .ant-select-arrow {
-          color: #94a3b8;
-        }
-
-        .edit-card .ant-form-item-explain-error {
-          margin-top: 4px;
-          font-size: 12px;
-          line-height: 1.45;
-        }
-
-        .edit-card .ant-select-selection-overflow {
-          gap: 3px 2px;
-        }
-
-        .edit-card .ant-select-selection-item {
-          max-width: 100%;
-        }
-
-        .edit-card .ant-input-disabled,
-        .edit-card .ant-input-affix-wrapper-disabled,
-        .edit-card .ant-picker-disabled,
-        .edit-card .ant-select-disabled .ant-select-selector {
-          color: #475569 !important;
-          background: #f8fafc !important;
-          border-color: #e2e8f0 !important;
-          cursor: default;
-        }
-
-        .edit-card textarea.ant-input {
-          resize: vertical;
-          line-height: 1.6;
-        }
-
-        .form-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 14px;
-          padding-top: 18px;
-          border-top: 1px solid #e2e8f0;
-        }
-
-        @media (max-width: 991px) {
-          .hero-content {
-            grid-template-columns: auto minmax(0, 1fr);
-          }
-
-          .hero-side {
-            grid-column: 1 / -1;
-            width: 100%;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-          }
-
-          .side-meta {
-            width: auto;
-            grid-template-columns: repeat(2, minmax(140px, 1fr));
-          }
-
-          .profile-section-card {
-            min-height: auto;
-          }
-        }
-
-        @media (max-width: 767px) {
-          .profile-page {
-            padding: 12px 4px 24px;
-          }
-
-          .profile-hero .ant-card-body {
-            padding: 20px 16px;
-          }
-
-          .hero-content {
-            grid-template-columns: 1fr;
-            text-align: center;
-            gap: 18px;
-          }
-
-          .hero-avatar-area {
-            display: flex;
-            justify-content: center;
-          }
-
-          .hero-main {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-          }
-
-          .hero-title-row,
-          .contact-row,
-          .location-row {
-            justify-content: center;
-          }
-
-          .hero-side {
-            flex-direction: column;
-            align-items: stretch;
-          }
-
-          .side-meta {
-            width: 100%;
-            grid-template-columns: 1fr 1fr;
-            text-align: left;
-          }
-
-          .platform-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .profile-about-card .ant-card-body {
-            padding: 16px;
-          }
-
-          .edit-card .ant-card-body {
-            padding: 14px 10px;
-          }
-
-          .form-section-panel {
-            padding: 16px 12px;
-            border-radius: 12px;
-          }
-
-          .form-section-heading {
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-          }
-
-          .edit-card .ant-input,
-          .edit-card .ant-input-affix-wrapper,
-          .edit-card .ant-picker,
-          .edit-card .ant-select-single .ant-select-selector,
-          .edit-card .ant-select-multiple .ant-select-selector {
-            min-height: 42px !important;
-          }
-
-          .form-actions {
-            position: sticky;
-            bottom: 0;
-            z-index: 5;
-            margin: 8px -10px -14px;
-            padding: 12px 10px 14px;
-            background: rgba(255,255,255,.96);
-            backdrop-filter: blur(8px);
-          }
-
-          .form-actions .ant-btn {
-            flex: 1 1 100%;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .side-meta {
-            grid-template-columns: 1fr;
-          }
-
-          .platform-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-      `}</style>
     </UserPanelLayout>
   );
 };
