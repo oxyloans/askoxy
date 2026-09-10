@@ -537,7 +537,7 @@ const PlanOfTheDay: React.FC = () => {
     setAiLoading(true);
     try {
       const response = await employeeApi.post(
-        `${BASE_URL}/ai-service/agent/agentChat1`,
+        `${BASE_URL}/ai-service/agent/new-chat-openai`,
         {
           agentId: "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0",
           userId: userId,

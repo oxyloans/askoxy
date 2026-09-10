@@ -149,7 +149,7 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
       hasSilver = true;
     }
   });
-
+   console.log("hasGold:", hasGold, "hasSilver:", hasSilver);
   if (hasGold) return "GOLD";
   if (hasSilver) return "SILVER";
 
@@ -192,11 +192,11 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
     email: "",
     whatsappNumber: "",
   });
-  const [merchantTransactionId, setMerchantTransactionId] = useState<
-    string | undefined
-  >();
-  const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] =
-    useState(false);
+  // const [merchantTransactionId, setMerchantTransactionId] = useState<
+  //   string | undefined
+  // >();
+  // const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] =
+  //   useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
@@ -210,12 +210,9 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [minOrderForWallet, setMinOrderForWallet] = useState(500);
   const [minOrderAmount, setMinOrderAmount] = useState(499);
   const [couponsLoading, setCouponsLoading] = useState(false);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [showOtherOptions, setShowOtherOptions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [exchangePolicyAccepted, setExchangePolicyAccepted] = useState(false);
   const customerId = localStorage.getItem("userId");
-  const token = localStorage.getItem("accessToken");
   const userData = localStorage.getItem("profileData");
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [minOrderToPlace, setMinOrderToPlace] = useState(0);
@@ -223,11 +220,13 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [smallCartFee, setSmallCartFee] = useState<number>(0);
   const [serviceFee, setServiceFee] = useState<number>(0);
 const [cashfree, setCashfree] = useState<Cashfree | null>(null);
+const [orderCategory, setOrderCategory] = useState<string | boolean | null>(null);
+const [cashfreeLoading, setCashfreeLoading] = useState<boolean>(false);
 
 useEffect(() => {
   const initializeCashfree = async () => {
     const instance = await load({
-      mode: "production",
+      mode: "production", // Change to "production" for live environment
     });
 
     setCashfree(instance);
@@ -303,7 +302,7 @@ useEffect(() => {
   useEffect(() => {
     fetchCartData();
     getWalletAmount();
-    let isEligible: boolean = false;
+    
     if (selectedAddress?.latitude && selectedAddress?.longitude) {
       (async () => {
         const isEligible = await checkEligibility();
@@ -316,23 +315,41 @@ useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(queryParams.entries());
     const order = params.trans;
+    const orderCategoryParam = params.orderCategory;
     setOrderId(order);
     if (userData) {
       setProfileData(JSON.parse(userData));
     }
-    getPreciousMetalCategory(cartData)
+    setOrderCategory(orderCategoryParam || getPreciousMetalCategory(cartData));
   }, []);
 
   useEffect(() => {
     const trans = localStorage.getItem("merchantTransactionId");
     const paymentId = localStorage.getItem("paymentId");
-    if (getPreciousMetalCategory(cartData) === "GOLD" || getPreciousMetalCategory(cartData) === "SILVER") {
-          customerApi
+    if (orderCategory === "GOLD" || orderCategory === "SILVER") {
+      // console.log("Precious metal order detected. Skipping Cashfree verification.", getPreciousMetalCategory(cartData));
+        cashfreePaymentVerification(orderId || "");
+      }else if (trans === orderId && paymentId) {
+            Requery(paymentId);
+            }
+  }, [orderId]);
+
+  useEffect(() => {
+    if (selectedTimeSlot && !isDeliveryTimelineModalVisible) {
+      setIsDeliveryTimelineModalVisible(true);
+    }
+  }, [selectedTimeSlot]);
+
+  const cashfreePaymentVerification = async (orderId: string) => {
+    try { 
+      setCashfreeLoading(true);
+    await customerApi
             .post(
-              `${BASE_URL}/order-service/verify-cashfree-payment/${localStorage.getItem("merchantTransactionId")}`
+              `${BASE_URL}/order-service/verify-cashfree-payment/${orderId}`,{}
             )
             .then((secondResponse:any) => {
-              if (secondResponse.paymentStatus === "SUCCESS") {
+              if (secondResponse.data.paymentStatus === "SUCCESS") {
+                console.log("Payment successful",secondResponse.data);
                 customerApi.get(
                   `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
                     "merchantTransactionId",
@@ -345,39 +362,40 @@ useEffect(() => {
                     console.error("Error in payment confirmation:", error);
                   });
                 applyBmvCashBack();
-                localStorage.removeItem("paymentId");
+                // localStorage.removeItem("paymentId");
                 localStorage.removeItem("merchantTransactionId");
                 fetchCartData();
-                if (secondResponse.paymentStatus === "SUCCESS") {
+                if (secondResponse.data.paymentStatus === "SUCCESS") {
                   Modal.success({
                     title: "Success",
                     content: "Order placed successfully.",
                     onOk: () => {
                       navigate("/main/myorders");
                       fetchCartData();
+                      setCashfreeLoading(false);
                     },
                   });
-                } else {
+                } 
+              }else {
                   Modal.error({
                     title: "Payment Failed",
-                    content: `Payment status: ${secondResponse.paymentStatus || "FAILED"}`,
+                    content: `Payment status: ${secondResponse.data.paymentStatus || "FAILED"}`,
+                    onOk: () => {
+                      setCashfreeLoading(false);
+                    },
                   });
                 }
-              }
             })
             .catch((error) => {
               console.error("Error in payment confirmation:", error);
-            })
-      }else if (trans === orderId && paymentId) {
-            Requery(paymentId);
-            }
-  }, [orderId]);
-
-  useEffect(() => {
-    if (selectedTimeSlot && !isDeliveryTimelineModalVisible) {
-      setIsDeliveryTimelineModalVisible(true);
+              setCashfreeLoading(false);
+            });
     }
-  }, [selectedTimeSlot]);
+  catch (error) {
+      console.error("Error verifying payment:", error);
+      setCashfreeLoading(false);
+    }
+  }
 
   // Place this after your interfaces
   const isRiceOnlyCart = (cartData: CartItem[] = []) => {
@@ -933,200 +951,201 @@ useEffect(() => {
         setGrandTotalAmount(0);
         setComboPricing(emptyComboPricing());
       }
+      console.log("cart excuted");
     } catch (error) {
       console.error("Error fetching cart items:", error);
       message.error("Failed to fetch cart items");
     }
   };
 
-  const fetchInitialData = async () => {
-    try {
-      setPricesLoading(true);
+  // const fetchInitialData = async () => {
+  //   try {
+  //     setPricesLoading(true);
 
-      const cartResponse = await customerApi.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
-      );
+  //     const cartResponse = await customerApi.get(
+  //       `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
+  //     );
 
-      if (cartResponse.data.customerCartResponseList) {
-        const cartItems = cartResponse.data.customerCartResponseList;
-        setCartData(cartItems || []);
+  //     if (cartResponse.data.customerCartResponseList) {
+  //       const cartItems = cartResponse.data.customerCartResponseList;
+  //       setCartData(cartItems || []);
 
-        const totalQuantity = cartItems.reduce(
-          (sum: number, item: CartItem) =>
-            sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0),
-          0,
-        );
-        setCount(totalQuantity);
+  //       const totalQuantity = cartItems.reduce(
+  //         (sum: number, item: CartItem) =>
+  //           sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0),
+  //         0,
+  //       );
+  //       setCount(totalQuantity);
 
-        const amountToPay = cartItems
-          .filter((item: CartItem) => item.status === "ADD")
-          .reduce(
-            (sum: number, item: CartItem) =>
-              sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
-            0,
-          );
+  //       const amountToPay = cartItems
+  //         .filter((item: CartItem) => item.status === "ADD")
+  //         .reduce(
+  //           (sum: number, item: CartItem) =>
+  //             sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
+  //           0,
+  //         );
 
-        const gstAmount = parseFloat(
-          cartResponse.data.totalGstAmountToPay || "0",
-        );
+  //       const gstAmount = parseFloat(
+  //         cartResponse.data.totalGstAmountToPay || "0",
+  //       );
 
-        let deliveryFee: number | null = 0;
-        let handlingFee = 0;
-        if (
-          isPreciousMetalOnlyCart(cartItems) &&
-          selectedAddress?.latitude !== undefined &&
-          selectedAddress?.longitude !== undefined
-        ) {
-          setIsPreciousMetalDistanceFeeLoading(true);
-          let result;
-          try {
-            result = await calculateDistanceDeliveryFee(
-              selectedAddress.latitude,
-              selectedAddress.longitude,
-            );
-          } finally {
-            setIsPreciousMetalDistanceFeeLoading(false);
-          }
-          deliveryFee = result.fee;
-          handlingFee = 0;
-          setCanPlaceOrder(true);
-          setDeliveryFeeMessage(
-            result.fee == null
-              ? result.errorMessage || result.message || "Delivery fee will be calculated and collected at the time of delivery."
-              : ""
-          );
-        } else if (
-          cartItems.length > 0 &&
-          selectedAddress?.latitude !== undefined &&
-          selectedAddress?.longitude !== undefined
-        ) {
-          console.log(
-            "Calculating delivery fee for coordinates:",
-            selectedAddress.latitude,
-            selectedAddress.longitude,
-            totalAmount,
-          );
-          setIsDeliveryFeeLoading(true);
-          const { fee, handlingFee: calculatedHandlingFee } =
-            await calculateDeliveryFee(
-              selectedAddress.latitude,
-              selectedAddress.longitude,
-              amountToPay,
-            );
-          setIsDeliveryFeeLoading(false);
-          deliveryFee = fee ?? 0;
-          handlingFee = calculatedHandlingFee;
-          setDeliveryFeeMessage("");
-        } else if (cartItems.length > 0) {
-          console.error("Latitude or Longitude is undefined");
-        }
+  //       let deliveryFee: number | null = 0;
+  //       let handlingFee = 0;
+  //       if (
+  //         isPreciousMetalOnlyCart(cartItems) &&
+  //         selectedAddress?.latitude !== undefined &&
+  //         selectedAddress?.longitude !== undefined
+  //       ) {
+  //         setIsPreciousMetalDistanceFeeLoading(true);
+  //         let result;
+  //         try {
+  //           result = await calculateDistanceDeliveryFee(
+  //             selectedAddress.latitude,
+  //             selectedAddress.longitude,
+  //           );
+  //         } finally {
+  //           setIsPreciousMetalDistanceFeeLoading(false);
+  //         }
+  //         deliveryFee = result.fee;
+  //         handlingFee = 0;
+  //         setCanPlaceOrder(true);
+  //         setDeliveryFeeMessage(
+  //           result.fee == null
+  //             ? result.errorMessage || result.message || "Delivery fee will be calculated and collected at the time of delivery."
+  //             : ""
+  //         );
+  //       } else if (
+  //         cartItems.length > 0 &&
+  //         selectedAddress?.latitude !== undefined &&
+  //         selectedAddress?.longitude !== undefined
+  //       ) {
+  //         console.log(
+  //           "Calculating delivery fee for coordinates:",
+  //           selectedAddress.latitude,
+  //           selectedAddress.longitude,
+  //           totalAmount,
+  //         );
+  //         setIsDeliveryFeeLoading(true);
+  //         const { fee, handlingFee: calculatedHandlingFee } =
+  //           await calculateDeliveryFee(
+  //             selectedAddress.latitude,
+  //             selectedAddress.longitude,
+  //             amountToPay,
+  //           );
+  //         setIsDeliveryFeeLoading(false);
+  //         deliveryFee = fee ?? 0;
+  //         handlingFee = calculatedHandlingFee;
+  //         setDeliveryFeeMessage("");
+  //       } else if (cartItems.length > 0) {
+  //         console.error("Latitude or Longitude is undefined");
+  //       }
 
-        setSubGst(gstAmount);
-        const subtotalForFees = applyComboPricingToTotals(amountToPay, cartItems);
-        setDeliveryFee(deliveryFee);
-        setHandlingFee(handlingFee);
+  //       setSubGst(gstAmount);
+  //       const subtotalForFees = applyComboPricingToTotals(amountToPay, cartItems);
+  //       setDeliveryFee(deliveryFee);
+  //       setHandlingFee(handlingFee);
 
-        const totalWithGst = subtotalForFees + gstAmount;
-        const totalWithFees =
-          totalWithGst +
-          (cartItems.length > 0
-            ? (deliveryFee ?? 0) + handlingFee + smallCartFee + serviceFee
-            : 0);
-        setGrandTotalAmount(totalWithFees);
+  //       const totalWithGst = subtotalForFees + gstAmount;
+  //       const totalWithFees =
+  //         totalWithGst +
+  //         (cartItems.length > 0
+  //           ? (deliveryFee ?? 0) + handlingFee + smallCartFee + serviceFee
+  //           : 0);
+  //       setGrandTotalAmount(totalWithFees);
 
-        try {
-          const walletResponse = await customerApi.post(
-            `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
-            { customerId }
-          );
+  //       try {
+  //         const walletResponse = await customerApi.post(
+  //           `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
+  //           { customerId }
+  //         );
 
-          const usableAmount =
-            walletResponse.data.usableWalletAmountForOrder || 0;
-          setWalletAmount(usableAmount);
-          setAfterWallet(usableAmount);
-          setWalletMessage(walletResponse.data.message || "");
-        } catch (walletError) {
-          console.error("Error fetching wallet amount:", walletError);
-        }
+  //         const usableAmount =
+  //           walletResponse.data.usableWalletAmountForOrder || 0;
+  //         setWalletAmount(usableAmount);
+  //         setAfterWallet(usableAmount);
+  //         setWalletMessage(walletResponse.data.message || "");
+  //       } catch (walletError) {
+  //         console.error("Error fetching wallet amount:", walletError);
+  //       }
 
-        fetchTimeSlots(isEligibleToday);
+  //       fetchTimeSlots(isEligibleToday);
 
-        requestAnimationFrame(() => {
-          setPricesLoading(false);
-        });
-      } else {
-        setCartData([]);
-        setCount(0);
-        setGrandTotal(0);
-        setSubGst(0);
-        setDeliveryFee(0);
-        setHandlingFee(0);
-        setTotalAmount(0);
-        setGrandTotalAmount(0);
-        setPricesLoading(false);
-      }
-    } catch (error) {
-      console.error("Error fetching initial data:", error);
-      message.error("Failed to load checkout data");
-      setPricesLoading(false);
-    }
-  };
+  //       requestAnimationFrame(() => {
+  //         setPricesLoading(false);
+  //       });
+  //     } else {
+  //       setCartData([]);
+  //       setCount(0);
+  //       setGrandTotal(0);
+  //       setSubGst(0);
+  //       setDeliveryFee(0);
+  //       setHandlingFee(0);
+  //       setTotalAmount(0);
+  //       setGrandTotalAmount(0);
+  //       setPricesLoading(false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching initial data:", error);
+  //     message.error("Failed to load checkout data");
+  //     setPricesLoading(false);
+  //   }
+  // };
 
-  const handlingFeeCalculation = (
-    fee: number | null,
-    handlingFee: number | null,
-  ) => {
-    if (fee === null || handlingFee === null) {
-      console.error("Invalid fee or handling fee received:", {
-        fee,
-        handlingFee,
-      });
-      message.error("Failed to calculate delivery fee.");
-      return;
-    }
-    setDeliveryFee(fee);
-    setHandlingFee(handlingFee);
-  };
+  // const handlingFeeCalculation = (
+  //   fee: number | null,
+  //   handlingFee: number | null,
+  // ) => {
+  //   if (fee === null || handlingFee === null) {
+  //     console.error("Invalid fee or handling fee received:", {
+  //       fee,
+  //       handlingFee,
+  //     });
+  //     message.error("Failed to calculate delivery fee.");
+  //     return;
+  //   }
+  //   setDeliveryFee(fee);
+  //   setHandlingFee(handlingFee);
+  // };
 
-  const handleInterested = async () => {
-    try {
-      setIsSubmitting(true);
-      const userId = localStorage.getItem("userId");
-      const mobileNumber = localStorage.getItem("whatsappNumber");
-      const formData = {
-        askOxyOfers: "FREESAMPLE",
-        userId: userId,
-        mobileNumber: mobileNumber,
-        projectType: "ASKOXY",
-      };
+  // const handleInterested = async () => {
+  //   try {
+  //     setIsSubmitting(true);
+  //     const userId = localStorage.getItem("userId");
+  //     const mobileNumber = localStorage.getItem("whatsappNumber");
+  //     const formData = {
+  //       askOxyOfers: "FREESAMPLE",
+  //       userId: userId,
+  //       mobileNumber: mobileNumber,
+  //       projectType: "ASKOXY",
+  //     };
 
-      const response = await customerApi.post(
-        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-        formData
-      );
-      localStorage.setItem("askOxyOfers", response.data.askData);
+  //     const response = await customerApi.post(
+  //       `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
+  //       formData
+  //     );
+  //     localStorage.setItem("askOxyOfers", response.data.askData);
 
-      Modal.success({
-        title: "Thank You!",
-        content: "Your interest has been successfully registered.",
-        okText: "OK",
-        onOk: () => navigate("/main/myorders"),
-      });
-    } catch (error) {
-      const axiosError = error as any;
-      if (
-        axiosError.response?.status === 500 ||
-        axiosError.response?.status === 400
-      ) {
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", axiosError);
-        message.error("Failed to submit your interest. Please try again.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  //     Modal.success({
+  //       title: "Thank You!",
+  //       content: "Your interest has been successfully registered.",
+  //       okText: "OK",
+  //       onOk: () => navigate("/main/myorders"),
+  //     });
+  //   } catch (error) {
+  //     const axiosError = error as any;
+  //     if (
+  //       axiosError.response?.status === 500 ||
+  //       axiosError.response?.status === 400
+  //     ) {
+  //       message.warning("You have already participated. Thank you!");
+  //     } else {
+  //       console.error("API Error:", axiosError);
+  //       message.error("Failed to submit your interest. Please try again.");
+  //     }
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const handleApplyCoupon = () => {
     // Validate coupon code - trim whitespace and check if empty
@@ -1558,10 +1577,26 @@ useEffect(() => {
                 return;
               }
 
-              await cashfree.checkout({
-                paymentSessionId: response.data.paymentSessionId,
-                redirectTarget: "_self",
-              });
+              let checkoutOptions: any = {
+                    paymentSessionId: response.data.paymentSessionId,
+                    returnUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.txnId}&orderCategory=${getPreciousMetalCategory(cartData)}`,
+                    redirectTarget: "_self" // or "_blank", "_modal" for popup
+                };
+              localStorage.setItem("merchantTransactionId",response.data.paymentId)
+
+              await  cashfree.checkout(checkoutOptions).then(function (result:any) {
+                    if (result.error) {
+                        console.error(result.error.message);
+                    }
+                    if (result.redirect) {
+                        console.log("Redirection");
+                    }
+                });
+
+              // await cashfree.checkout({
+              //   paymentSessionId: response.data.paymentSessionId,
+              //   redirectTarget: "_self",
+              // });
           } else {
             message.error("Unable to process payment. Please try again.");
           }
@@ -1943,6 +1978,14 @@ useEffect(() => {
       </Modal>
     );
   };
+
+  if(cashfreeLoading){
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-10 h-10 animate-spin text-purple-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
