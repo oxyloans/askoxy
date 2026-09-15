@@ -53,6 +53,9 @@ const Whiteboardtheme: React.FC = () => {
     "signin",
   );
   const LOGIN_URL = "/whatsapplogin";
+  const LOANS_WALKIN_ROUTE = "/sep-19-loans-walkin";
+  const LOANS_WALKIN_IMAGE_URL =
+    "https://i.ibb.co/pvhXgZPr/we-loans1.png";
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
   const handleSignIn = () => {
     try {
@@ -288,13 +291,13 @@ const Whiteboardtheme: React.FC = () => {
                   <div className="flex h-[148px] w-[148px] items-center justify-center">
                     <button
                       type="button"
-                      onClick={() => navigate("/main/dashboard/products?type=SILVER")}
+                      onClick={() => navigate(LOANS_WALKIN_ROUTE)}
                       className="flex h-full w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95"
-                      aria-label="Speak with Sovereign AI"
+                      aria-label="September 19 Loans, DSA and Lenders Walk-In"
                     >
                       <img
-                        src={"https://i.ibb.co/Ps1yQ2yB/we-vinayak.png"}
-                        alt="Speak with Sovereign AI"
+                        src={LOANS_WALKIN_IMAGE_URL}
+                        alt="September 19 Loans, DSA and Lenders Walk-In"
                         className="h-full w-full object-contain"
                       />
                     </button>
@@ -328,17 +331,17 @@ const Whiteboardtheme: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/main/dashboard/products?type=SILVER")}
+                    onClick={() => navigate(LOANS_WALKIN_ROUTE)}
                     className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                     style={{
                       width: "clamp(140px, 12vw, 196px)",
                       height: "clamp(120px, 10.4vw, 164px)",
                     }}
-                    aria-label="Speak with Sovereign AI"
+                    aria-label="September 19 Loans, DSA and Lenders Walk-In"
                   >
                     <img
-                      src={"https://i.ibb.co/Ps1yQ2yB/we-vinayak.png"}
-                      alt="Speak with Sovereign AI"
+                      src={LOANS_WALKIN_IMAGE_URL}
+                      alt="September 19 Loans, DSA and Lenders Walk-In"
                       className="h-full w-full object-contain"
                     />
                   </button>
