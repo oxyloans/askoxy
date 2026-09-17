@@ -41,6 +41,7 @@ import MyCompanies from "./Dashboard/MyCompanies";
 import TaskDashboard from "./Taskmanagement/TaskDashboard";
 import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 import Sep19LoansWalkIn from "./components/sep19walkin";
+import JourneysPagewithoutlogin from "./components/Journeyspagewithoutlogin";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -1171,6 +1172,10 @@ const App: React.FC = () => {
               <Route
   path="/sep-19-loans-walkin"
   element={<Sep19LoansWalkIn />}
+/>
+ <Route
+  path="/alljourneys"
+  element={<JourneysPagewithoutlogin />}
 />
               <Route path="/internships" element={<InternshipPage />} />
               <Route

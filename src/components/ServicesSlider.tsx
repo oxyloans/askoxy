@@ -49,7 +49,6 @@ interface Job {
 const ServicesSlider: React.FC = () => {
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllBlogs, setShowAllBlogs] = useState(false);
-  const [showAllLeagueJourneys, setShowAllLeagueJourneys] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(true);
@@ -363,9 +362,7 @@ const ServicesSlider: React.FC = () => {
       .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
   }, [journeyItems]);
 
-  const displayedLeagueJourneys = showAllLeagueJourneys
-    ? leagueJourneyCampaigns
-    : leagueJourneyCampaigns.slice(0, 4);
+  const displayedLeagueJourneys = leagueJourneyCampaigns.slice(0, 4);
 
   const displayedBlogs = showAllBlogs
     ? blogCampaigns
@@ -529,6 +526,10 @@ const ServicesSlider: React.FC = () => {
     }
   };
 
+  const handleJourneyNavigate = () => {
+    navigate("/alljourneys");
+  };
+
   const handleJobNavigate = (id: string | null) => {
     const userId = localStorage.getItem("userId");
     const pathPrefix = userId ? "/main/viewjobdetails" : "/viewjobdetails";
@@ -613,14 +614,15 @@ const ServicesSlider: React.FC = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="relative z-10 bg-gradient-to-r from-violet-700 to-indigo-700 text-white font-semibold px-6 py-2.5 rounded-full shadow-md shadow-indigo-900/15 hover:from-violet-800 hover:to-indigo-800 transition-all duration-300 text-sm sm:text-base"
-              onClick={() => setShowAllLeagueJourneys(!showAllLeagueJourneys)}
+              onClick={handleJourneyNavigate}
             >
-              {showAllLeagueJourneys ? "Show Less ↑" : "View All →"}
+              View All Journeys
+              <span className="ml-2 inline-block text-sm">→</span>
             </motion.button>
           )}
         </div>
 
-        {campaignsLoading ? (
+        {journeysLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {Array.from({ length: 4}).map((_, i) => (
               <div key={i} className="h-64 rounded-2xl border border-slate-100">

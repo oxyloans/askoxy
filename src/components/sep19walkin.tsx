@@ -1,16 +1,20 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "./Header";
+
 import {
+  ArrowRight,
+  Bot,
   CalendarDays,
   Clock3,
+  ExternalLink,
   HandCoins,
   Handshake,
   Landmark,
   MapPin,
   PlayCircle,
   ShieldCheck,
-  ExternalLink,
 } from "lucide-react";
 
 const GOOGLE_MAPS_URL =
@@ -28,9 +32,17 @@ const OXYLOANS_LOGO =
 const WALKIN_IMAGE =
   "https://i.ibb.co/wZycB3C1/walkin-miyapur.png";
 
+const AI_AGENT_PATH = "/br-loan-application";
+
 const fadeUp = {
-  hidden: { opacity: 0, y: 22 },
-  show: { opacity: 1, y: 0 },
+  hidden: {
+    opacity: 0,
+    y: 22,
+  },
+  show: {
+    opacity: 1,
+    y: 0,
+  },
 };
 
 const Sep19LoansWalkIn: React.FC = () => {
@@ -42,55 +54,83 @@ const Sep19LoansWalkIn: React.FC = () => {
     <>
       <Header />
 
-      {/* Keeps hero below your existing fixed Header */}
-      <div className="h-[68px] sm:h-[72px] lg:h-[78px]" aria-hidden="true" />
+      {/* Space for fixed header */}
+      <div
+        className="h-[68px] sm:h-[72px] lg:h-[78px]"
+        aria-hidden="true"
+      />
 
       <main className="min-h-screen overflow-x-hidden bg-[#F2F6FC] text-slate-900">
-        {/* HERO */}
+        {/* =========================================================
+            HERO
+        ========================================================= */}
         <section className="relative overflow-hidden bg-gradient-to-br from-[#0A2C59] via-[#0B4697] to-[#1388C9]">
+          {/* Decorative glow */}
           <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
+
           <div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-emerald-300/10 blur-3xl" />
 
           <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
             <div className="grid items-center gap-8 lg:grid-cols-[1fr_0.92fr] lg:gap-12">
-              {/* LEFT CONTENT */}
+              {/* =====================================================
+                  LEFT CONTENT
+              ===================================================== */}
               <motion.div
                 variants={fadeUp}
                 initial="hidden"
                 animate="show"
-                transition={{ duration: 0.55 }}
+                transition={{
+                  duration: 0.55,
+                }}
                 className="text-center lg:text-left"
               >
+                {/* Small badge */}
+                <div className="mb-4 flex justify-center lg:justify-start">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-50 backdrop-blur sm:text-xs">
+                    <span className="h-2 w-2 rounded-full bg-[#7BE39F]" />
+                    Meet • Discuss • Explore
+                  </span>
+                </div>
+
+                {/* Main heading */}
                 <h1 className="mx-auto max-w-3xl text-[36px] font-black leading-[1.05] tracking-[-0.04em] text-white sm:text-5xl lg:mx-0 lg:text-[58px] xl:text-[62px]">
                   Sep 19 Walk-In
+
                   <span className="mt-1 block text-[#7BE39F]">
                     Loans • DSA • Lenders
                   </span>
                 </h1>
 
+                {/* Description */}
                 <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-blue-100 sm:text-base lg:mx-0">
                   Meet our team and explore the right opportunity for you.
                 </p>
 
-                {/* SIMPLE DATE + TIME */}
+                {/* =====================================================
+                    DATE + TIME
+                ===================================================== */}
                 <div className="mx-auto mt-6 flex max-w-xl flex-wrap justify-center gap-3 lg:mx-0 lg:justify-start">
                   <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur">
                     <CalendarDays className="h-5 w-5 text-emerald-300" />
-                    Sep 19, 2026
+
+                    <span>Sep 19, 2026</span>
                   </div>
 
                   <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur">
                     <Clock3 className="h-5 w-5 text-emerald-300" />
-                    10:00 AM – 6:00 PM
+
+                    <span>10:00 AM – 6:00 PM</span>
                   </div>
                 </div>
 
-                {/* DIRECT LOCATION LINK */}
+                {/* =====================================================
+                    LOCATION
+                ===================================================== */}
                 <a
                   href={GOOGLE_MAPS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group mx-auto mt-4 flex max-w-xl items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur transition hover:bg-white/15 lg:mx-0"
+                  className="group mx-auto mt-4 flex max-w-xl items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur transition duration-300 hover:bg-white/15 lg:mx-0"
                   aria-label="Open AI Research Center location in Google Maps"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#20B15A] text-white shadow-lg shadow-emerald-950/20">
@@ -101,6 +141,7 @@ const Sep19LoansWalkIn: React.FC = () => {
                     <p className="text-sm font-extrabold text-white">
                       AI Research Center
                     </p>
+
                     <p className="mt-1 text-xs leading-5 text-blue-100 sm:text-sm">
                       Entrance D, SE02 Concourse, Miyapur Metro Station,
                       Hyderabad, Telangana 500049
@@ -110,27 +151,123 @@ const Sep19LoansWalkIn: React.FC = () => {
                   <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-blue-200 transition group-hover:text-white" />
                 </a>
 
-                <button
-                  type="button"
-                  onClick={openVideo}
-                  className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-extrabold text-[#0B4697] shadow-lg shadow-blue-950/10 transition hover:-translate-y-0.5 hover:bg-blue-50"
-                >
-                  <PlayCircle className="h-5 w-5" />
-                  Watch Video
-                </button>
+                {/* =====================================================
+                    CTA BUTTONS
+                ===================================================== */}
+                <div className="mx-auto mt-5 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center lg:mx-0 lg:justify-start">
+                  {/* PRIMARY CTA - AI AGENT */}
+                  <Link
+                    to={AI_AGENT_PATH}
+                    className="
+                      group
+                      inline-flex
+                      h-12
+                      w-full
+                      items-center
+                      justify-center
+                      gap-2.5
+                      rounded-xl
+                      border
+                      border-emerald-300/40
+                      bg-[#20B15A]
+                      px-5
+                      text-sm
+                      font-extrabold
+                      text-white
+                      shadow-[0_14px_35px_-15px_rgba(32,177,90,0.9)]
+                      transition
+                      duration-300
+                      hover:-translate-y-0.5
+                      hover:bg-[#17994C]
+                      hover:shadow-[0_18px_40px_-15px_rgba(32,177,90,1)]
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-emerald-300
+                      focus-visible:ring-offset-2
+                      focus-visible:ring-offset-[#0B4697]
+                      sm:w-auto
+                    "
+                  >
+                    <Bot className="h-5 w-5 shrink-0" />
+
+                    <span>Explore with AI Agent</span>
+
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+
+                  {/* SECONDARY CTA - VIDEO */}
+                  <button
+                    type="button"
+                    onClick={openVideo}
+                    className="
+                      inline-flex
+                      h-12
+                      w-full
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-xl
+                      border
+                      border-white/25
+                      bg-white
+                      px-5
+                      text-sm
+                      font-extrabold
+                      text-[#0B4697]
+                      shadow-lg
+                      shadow-blue-950/10
+                      transition
+                      duration-300
+                      hover:-translate-y-0.5
+                      hover:bg-blue-50
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-white
+                      focus-visible:ring-offset-2
+                      focus-visible:ring-offset-[#0B4697]
+                      sm:w-auto
+                    "
+                  >
+                    <PlayCircle className="h-5 w-5" />
+
+                    <span>Watch Video</span>
+                  </button>
+                </div>
+
+                {/* Small AI helper text */}
+                <div className="mx-auto mt-3 flex max-w-xl items-center justify-center gap-2 text-[11px] font-medium text-blue-100/90 sm:text-xs lg:mx-0 lg:justify-start">
+                  <Bot className="h-3.5 w-3.5 text-emerald-300" />
+
+                  <span>
+                    Talk to our AI Agent and explore your loan requirement.
+                  </span>
+                </div>
               </motion.div>
 
-              {/* RIGHT IMAGE */}
+              {/* =====================================================
+                  RIGHT IMAGE
+              ===================================================== */}
               <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.65, delay: 0.12 }}
+                initial={{
+                  opacity: 0,
+                  x: 30,
+                }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                transition={{
+                  duration: 0.65,
+                  delay: 0.12,
+                }}
                 className="relative mx-auto w-full max-w-[560px]"
               >
                 <div className="pointer-events-none absolute inset-x-[14%] bottom-0 h-14 rounded-full bg-black/25 blur-3xl" />
 
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
+                  animate={{
+                    y: [0, -6, 0],
+                  }}
                   transition={{
                     duration: 5,
                     repeat: Infinity,
@@ -152,15 +289,22 @@ const Sep19LoansWalkIn: React.FC = () => {
           </div>
         </section>
 
-        {/* LOAN AMOUNT */}
+        {/* =========================================================
+            LOAN AMOUNT
+        ========================================================= */}
         <section className="relative overflow-hidden bg-gradient-to-b from-[#EAF2FF] to-[#E2ECF8]">
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
             <motion.div
               variants={fadeUp}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.45 }}
+              viewport={{
+                once: true,
+                amount: 0.25,
+              }}
+              transition={{
+                duration: 0.45,
+              }}
               className="mx-auto max-w-3xl text-center"
             >
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#0B4697]">
@@ -194,7 +338,9 @@ const Sep19LoansWalkIn: React.FC = () => {
           </div>
         </section>
 
-        {/* OPPORTUNITIES */}
+        {/* =========================================================
+            OPPORTUNITIES
+        ========================================================= */}
         <section className="relative overflow-hidden bg-gradient-to-br from-[#182443] via-[#20345C] to-[#27496D]">
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
             <div className="text-center">
@@ -235,7 +381,91 @@ const Sep19LoansWalkIn: React.FC = () => {
           </div>
         </section>
 
-        {/* TERMS */}
+        {/* =========================================================
+            AI AGENT CTA SECTION
+        ========================================================= */}
+        <section className="relative overflow-hidden bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="show"
+              viewport={{
+                once: true,
+                amount: 0.2,
+              }}
+              transition={{
+                duration: 0.45,
+              }}
+              className="relative overflow-hidden rounded-[28px] border border-blue-100 bg-gradient-to-br from-[#F4F8FF] via-white to-[#EEFBF3] px-5 py-8 shadow-[0_25px_70px_-45px_rgba(15,23,42,0.5)] sm:px-8 sm:py-10 lg:px-12"
+            >
+              {/* Decorative glow */}
+              <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-blue-300/20 blur-3xl" />
+
+              <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-emerald-300/20 blur-3xl" />
+
+              <div className="relative flex flex-col items-center gap-6 text-center lg:flex-row lg:justify-between lg:text-left">
+                {/* Text */}
+                <div className="max-w-2xl">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0B4697] to-[#1388C9] text-white shadow-lg shadow-blue-900/15 lg:mx-0">
+                    <Bot className="h-6 w-6" />
+                  </div>
+
+                  <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.14em] text-[#0B4697]">
+                    AI Powered Assistance
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#10213C] sm:text-3xl">
+                    Explore your loan with our AI Agent
+                  </h2>
+
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+                    Start a simple conversation, share your requirement and
+                    explore the next steps through our AI-assisted loan
+                    experience.
+                  </p>
+                </div>
+
+                {/* CTA */}
+                <Link
+                  to={AI_AGENT_PATH}
+                  className="
+                    group
+                    inline-flex
+                    h-12
+                    w-full
+                    shrink-0
+                    items-center
+                    justify-center
+                    gap-2.5
+                    rounded-xl
+                    bg-[#20B15A]
+                    px-6
+                    text-sm
+                    font-extrabold
+                    text-white
+                    shadow-[0_15px_35px_-15px_rgba(32,177,90,0.9)]
+                    transition
+                    duration-300
+                    hover:-translate-y-0.5
+                    hover:bg-[#17994C]
+                    sm:w-auto
+                  "
+                >
+                  <Bot className="h-5 w-5" />
+
+                  <span>Explore with AI Agent</span>
+
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            TERMS
+        ========================================================= */}
         <section className="bg-gradient-to-b from-[#E7EEF8] to-[#DEE8F4]">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex items-start gap-3 rounded-2xl border border-blue-200/60 bg-gradient-to-r from-[#DCEAFF] to-[#E3F3EA] p-4 sm:p-5">
@@ -256,6 +486,10 @@ const Sep19LoansWalkIn: React.FC = () => {
   );
 };
 
+/* ===============================================================
+   LOAN CARD
+================================================================ */
+
 type LoanCardProps = {
   logo: string;
   name: string;
@@ -275,12 +509,25 @@ const LoanCard: React.FC<LoanCardProps> = ({
 }) => {
   const styles = {
     blue: {
-      card: "border-blue-300/60 bg-gradient-to-br from-[#BED9FF] via-[#D4E7FF] to-[#AECDF7]",
+      card: `
+        border-blue-300/60
+        bg-gradient-to-br
+        from-[#BED9FF]
+        via-[#D4E7FF]
+        to-[#AECDF7]
+      `,
       badge: "bg-[#0B4697] text-white",
       title: "text-[#083B83]",
     },
+
     green: {
-      card: "border-emerald-300/60 bg-gradient-to-br from-[#BCEBCF] via-[#D1F4DF] to-[#ACE0C2]",
+      card: `
+        border-emerald-300/60
+        bg-gradient-to-br
+        from-[#BCEBCF]
+        via-[#D1F4DF]
+        to-[#ACE0C2]
+      `,
       badge: "bg-emerald-700 text-white",
       title: "text-emerald-800",
     },
@@ -291,14 +538,33 @@ const LoanCard: React.FC<LoanCardProps> = ({
       variants={fadeUp}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45, delay }}
-      whileHover={{ y: -7 }}
-      className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_22px_45px_-28px_rgba(15,23,42,0.42)] sm:p-6 ${styles[accent].card}`}
+      viewport={{
+        once: true,
+        amount: 0.2,
+      }}
+      transition={{
+        duration: 0.45,
+        delay,
+      }}
+      whileHover={{
+        y: -7,
+      }}
+      className={`
+        relative
+        overflow-hidden
+        rounded-[24px]
+        border
+        p-5
+        shadow-[0_22px_45px_-28px_rgba(15,23,42,0.42)]
+        sm:p-6
+        ${styles[accent].card}
+      `}
     >
+      {/* Top shine */}
       <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/30 to-transparent" />
 
       <div className="relative flex flex-wrap items-center justify-between gap-4">
+        {/* Logo */}
         <div className="rounded-2xl bg-white/65 p-2.5 shadow-sm backdrop-blur">
           <img
             src={logo}
@@ -307,14 +573,32 @@ const LoanCard: React.FC<LoanCardProps> = ({
           />
         </div>
 
+        {/* Amount badge */}
         <span
-          className={`rounded-full px-3.5 py-2 text-xs font-extrabold shadow-sm sm:text-sm ${styles[accent].badge}`}
+          className={`
+            rounded-full
+            px-3.5
+            py-2
+            text-xs
+            font-extrabold
+            shadow-sm
+            sm:text-sm
+            ${styles[accent].badge}
+          `}
         >
           {amount}
         </span>
       </div>
 
-      <h3 className={`relative mt-5 text-xl font-black ${styles[accent].title}`}>
+      <h3
+        className={`
+          relative
+          mt-5
+          text-xl
+          font-black
+          ${styles[accent].title}
+        `}
+      >
         {name}
       </h3>
 
@@ -324,6 +608,10 @@ const LoanCard: React.FC<LoanCardProps> = ({
     </motion.article>
   );
 };
+
+/* ===============================================================
+   OPPORTUNITY CARD
+================================================================ */
 
 type OpportunityCardProps = {
   icon: React.ReactNode;
@@ -342,15 +630,32 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
 }) => {
   const tones = {
     blue: {
-      card: "border-blue-300/40 bg-gradient-to-br from-[#2F62AB] to-[#1B4279]",
+      card: `
+        border-blue-300/40
+        bg-gradient-to-br
+        from-[#2F62AB]
+        to-[#1B4279]
+      `,
       icon: "bg-[#72AAFF] text-white",
     },
+
     purple: {
-      card: "border-violet-300/40 bg-gradient-to-br from-[#7356C9] to-[#4D358D]",
+      card: `
+        border-violet-300/40
+        bg-gradient-to-br
+        from-[#7356C9]
+        to-[#4D358D]
+      `,
       icon: "bg-[#AC96FF] text-white",
     },
+
     amber: {
-      card: "border-amber-300/40 bg-gradient-to-br from-[#DDA01D] to-[#A86E05]",
+      card: `
+        border-amber-300/40
+        bg-gradient-to-br
+        from-[#DDA01D]
+        to-[#A86E05]
+      `,
       icon: "bg-[#FFD56F] text-[#684400]",
     },
   };
@@ -360,22 +665,53 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
       variants={fadeUp}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45, delay }}
-      whileHover={{ y: -7 }}
-      className={`relative overflow-hidden rounded-[22px] border p-5 shadow-[0_22px_45px_-28px_rgba(0,0,0,0.5)] sm:p-6 ${tones[tone].card}`}
+      viewport={{
+        once: true,
+        amount: 0.2,
+      }}
+      transition={{
+        duration: 0.45,
+        delay,
+      }}
+      whileHover={{
+        y: -7,
+      }}
+      className={`
+        relative
+        overflow-hidden
+        rounded-[22px]
+        border
+        p-5
+        shadow-[0_22px_45px_-28px_rgba(0,0,0,0.5)]
+        sm:p-6
+        ${tones[tone].card}
+      `}
     >
       <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/12 to-transparent" />
 
       <div
-        className={`relative flex h-12 w-12 items-center justify-center rounded-xl shadow-md ${tones[tone].icon}`}
+        className={`
+          relative
+          flex
+          h-12
+          w-12
+          items-center
+          justify-center
+          rounded-xl
+          shadow-md
+          ${tones[tone].icon}
+        `}
       >
         {icon}
       </div>
 
-      <h3 className="relative mt-4 text-xl font-black text-white">{title}</h3>
+      <h3 className="relative mt-4 text-xl font-black text-white">
+        {title}
+      </h3>
 
-      <p className="relative mt-2 text-sm leading-6 text-white/85">{text}</p>
+      <p className="relative mt-2 text-sm leading-6 text-white/85">
+        {text}
+      </p>
     </motion.article>
   );
 };
