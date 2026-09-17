@@ -225,7 +225,7 @@ const AssistantDetails: React.FC = () => {
     },
     {
       id: "p4",
-      src: "https://i.ibb.co/zVYCGLzT/i4.png",
+      src: "https://i.ibb.co/pBfdLwhM/i4.png",
       alt: "ASKOXY.AI",
       href: "/main/dashboard/home", // internal
     },
