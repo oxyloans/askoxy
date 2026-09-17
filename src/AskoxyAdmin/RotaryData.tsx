@@ -225,7 +225,7 @@ const theme = {
 };
 
 const PAGE_SIZE = 20;
-const TABLE_SCROLL_WIDTH = 3450;
+const TABLE_SCROLL_WIDTH = 3700;
 const DEFAULT_DISTRICT_ID = 3150;
 
 const RotaryDataAdmin: React.FC = () => {
@@ -504,7 +504,7 @@ const RotaryDataAdmin: React.FC = () => {
   /* ---- Table columns ---- */
   const columns: ColumnsType<RotaryApiMember> = [
     {
-      title: <div style={{ textAlign: "center" }}>S.No</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>S.No</div>,
       key: "serialNumber",
       align: "center",
       width: 70,
@@ -516,34 +516,52 @@ const RotaryDataAdmin: React.FC = () => {
               ? updatedPage
               : page;
         return (
-          <Text strong style={{ color: "#6b7280" }}>
+          <Text strong style={{ color: "#6b7280", whiteSpace: "nowrap" }}>
             {currentPage * PAGE_SIZE + index + 1}
           </Text>
         );
       },
     },
     {
-      title: <div style={{ textAlign: "center" }}>Rotary ID</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Rotary ID</div>,
       dataIndex: "rotaryId",
       key: "rotaryId",
       align: "center",
-      width: 130,
+      width: 150,
       render: (v: string | null) =>
-        v ? <Text strong>{v}</Text> : <Text type="secondary">-</Text>,
+        v ? (
+          <span
+            style={{
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              letterSpacing: "0.5px",
+              display: "inline-block",
+            }}
+          >
+            {v}
+          </span>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Name</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Name</div>,
       dataIndex: "name",
       key: "name",
       align: "center",
-      width: 190,
+      width: 220,
       render: (v: string | null, r) =>
         v ? (
           <Tooltip title="Click to view complete 360° profile">
             <Typography.Link
               strong
               onClick={() => openMemberModal(r)}
-              style={{ color: "#0E6B4F", display: "block" }}
+              style={{
+                color: "#0E6B4F",
+                whiteSpace: "nowrap",
+                display: "inline-block",
+                fontWeight: 600,
+              }}
             >
               {v}
             </Typography.Link>
@@ -553,16 +571,16 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Mobile</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Mobile</div>,
       dataIndex: "mobileNumbers",
       key: "mobileNumbers",
       align: "center",
-      width: 150,
+      width: 160,
       render: (v: string | null) =>
         v ? (
           <a
             href={`tel:${v.split(",")[0]}`}
-            style={{ color: "#0E6B4F", whiteSpace: "nowrap" }}
+            style={{ color: "#0E6B4F", whiteSpace: "nowrap", display: "inline-block" }}
           >
             {v.split(",")[0]}
           </a>
@@ -571,15 +589,15 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Email</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Email</div>,
       dataIndex: "emails",
       key: "emails",
       align: "center",
-      width: 220,
+      width: 240,
       render: (v: string | null) =>
         v ? (
           <Tooltip title={v}>
-            <Text ellipsis style={{ display: "block" }}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
               {v.split(",")[0]}
             </Text>
           </Tooltip>
@@ -588,73 +606,15 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Club</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Club</div>,
       dataIndex: "clubName",
       key: "clubName",
       align: "center",
-      width: 160,
-      render: (v: string | null) =>
-        v ? (
-          <Text ellipsis style={{ display: "block" }}>
-            {v}
-          </Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>District ID</div>,
-      dataIndex: "districtId",
-      key: "districtId",
-      align: "center",
-      width: 110,
-      render: (v: number | null) =>
-        isFilled(v) ? <Text>{v}</Text> : <Text type="secondary">-</Text>,
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>Secondary Mobile</div>,
-      dataIndex: "secondaryMobile",
-      key: "secondaryMobile",
-      align: "center",
-      width: 150,
-      render: (v: string | null) =>
-        v ? (
-          <a
-            href={`tel:${v.split(",")[0]}`}
-            style={{ color: "#0E6B4F", whiteSpace: "nowrap" }}
-          >
-            {v.split(",")[0]}
-          </a>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>City / State</div>,
-      key: "location",
-      align: "center",
-      width: 170,
-      render: (_: unknown, r: RotaryApiMember) => {
-        const loc = [r.city, r.state].filter(isFilled).join(", ");
-        return loc ? (
-          <Text ellipsis style={{ display: "block" }}>
-            {loc}
-          </Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        );
-      },
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>Address</div>,
-      dataIndex: "address",
-      key: "address",
-      align: "center",
-      width: 200,
+      width: 180,
       render: (v: string | null) =>
         v ? (
           <Tooltip title={v}>
-            <Text ellipsis style={{ display: "block" }}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
               {v}
             </Text>
           </Tooltip>
@@ -663,14 +623,80 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Blood Group</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>District ID</div>,
+      dataIndex: "districtId",
+      key: "districtId",
+      align: "center",
+      width: 120,
+      render: (v: number | null) =>
+        isFilled(v) ? (
+          <Text style={{ whiteSpace: "nowrap" }}>{v}</Text>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Secondary Mobile</div>,
+      dataIndex: "secondaryMobile",
+      key: "secondaryMobile",
+      align: "center",
+      width: 160,
+      render: (v: string | null) =>
+        v ? (
+          <a
+            href={`tel:${v.split(",")[0]}`}
+            style={{ color: "#0E6B4F", whiteSpace: "nowrap", display: "inline-block" }}
+          >
+            {v.split(",")[0]}
+          </a>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>City / State</div>,
+      key: "location",
+      align: "center",
+      width: 180,
+      render: (_: unknown, r: RotaryApiMember) => {
+        const loc = [r.city, r.state].filter(isFilled).join(", ");
+        return loc ? (
+          <Tooltip title={loc}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
+              {loc}
+            </Text>
+          </Tooltip>
+        ) : (
+          <Text type="secondary">-</Text>
+        );
+      },
+    },
+    {
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Address</div>,
+      dataIndex: "address",
+      key: "address",
+      align: "center",
+      width: 240,
+      render: (v: string | null) =>
+        v ? (
+          <Tooltip title={v}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
+              {v}
+            </Text>
+          </Tooltip>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Blood Group</div>,
       dataIndex: "bloodGroup",
       key: "bloodGroup",
       align: "center",
-      width: 110,
+      width: 120,
       render: (v: string | null) =>
         v ? (
-          <Tag color="red" style={{ fontWeight: 600 }}>
+          <Tag color="red" style={{ fontWeight: 600, whiteSpace: "nowrap" }}>
             {v}
           </Tag>
         ) : (
@@ -678,45 +704,15 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Classification</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Classification</div>,
       dataIndex: "classification",
       key: "classification",
-      align: "center",
-      width: 170,
-      render: (v: string | null) =>
-        v ? (
-          <Text ellipsis style={{ display: "block" }}>
-            {v}
-          </Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>Business Name</div>,
-      dataIndex: "businessName",
-      key: "businessName",
       align: "center",
       width: 180,
       render: (v: string | null) =>
         v ? (
-          <Text strong ellipsis style={{ display: "block" }}>
-            {v}
-          </Text>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>Business Email</div>,
-      dataIndex: "businessEmail",
-      key: "businessEmail",
-      align: "center",
-      width: 200,
-      render: (v: string | null) =>
-        v ? (
           <Tooltip title={v}>
-            <Text ellipsis style={{ display: "block" }}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
               {v}
             </Text>
           </Tooltip>
@@ -725,16 +721,50 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Business Phone</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Business Name</div>,
+      dataIndex: "businessName",
+      key: "businessName",
+      align: "center",
+      width: 200,
+      render: (v: string | null) =>
+        v ? (
+          <Tooltip title={v}>
+            <Text strong ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
+              {v}
+            </Text>
+          </Tooltip>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Business Email</div>,
+      dataIndex: "businessEmail",
+      key: "businessEmail",
+      align: "center",
+      width: 220,
+      render: (v: string | null) =>
+        v ? (
+          <Tooltip title={v}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
+              {v}
+            </Text>
+          </Tooltip>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Business Phone</div>,
       dataIndex: "businessPhone",
       key: "businessPhone",
       align: "center",
-      width: 150,
+      width: 160,
       render: (v: string | null) =>
         v ? (
           <a
             href={`tel:${v.split(",")[0]}`}
-            style={{ color: "#0E6B4F", whiteSpace: "nowrap" }}
+            style={{ color: "#0E6B4F", whiteSpace: "nowrap", display: "inline-block" }}
           >
             {v.split(",")[0]}
           </a>
@@ -743,15 +773,15 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Business Address</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Business Address</div>,
       dataIndex: "businessAddress",
       key: "businessAddress",
       align: "center",
-      width: 200,
+      width: 240,
       render: (v: string | null) =>
         v ? (
           <Tooltip title={v}>
-            <Text ellipsis style={{ display: "block" }}>
+            <Text ellipsis style={{ display: "block", whiteSpace: "nowrap" }}>
               {v}
             </Text>
           </Tooltip>
@@ -760,7 +790,7 @@ const RotaryDataAdmin: React.FC = () => {
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>GST Details</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>GST Details</div>,
       key: "gstDetails",
       align: "center",
       width: 180,
@@ -769,9 +799,9 @@ const RotaryDataAdmin: React.FC = () => {
           return <Text type="secondary">-</Text>;
         }
         return (
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1" style={{ whiteSpace: "nowrap" }}>
             {r.gstNumber && (
-              <Tag color="cyan" style={{ fontWeight: 600, margin: 0 }}>
+              <Tag color="cyan" style={{ fontWeight: 600, margin: 0, whiteSpace: "nowrap" }}>
                 {r.gstNumber}
               </Tag>
             )}
@@ -780,7 +810,7 @@ const RotaryDataAdmin: React.FC = () => {
                 href={r.gstDocumentUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[12px] text-[#0E6B4F] hover:underline inline-flex items-center gap-1 font-medium"
+                className="text-[12px] text-[#0E6B4F] hover:underline inline-flex items-center gap-1 font-medium whitespace-nowrap"
               >
                 <FileTextOutlined /> View Doc
               </a>
@@ -790,16 +820,20 @@ const RotaryDataAdmin: React.FC = () => {
       },
     },
     {
-      title: <div style={{ textAlign: "center" }}>Anniversary</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Anniversary</div>,
       dataIndex: "anniversary",
       key: "anniversary",
       align: "center",
-      width: 140,
+      width: 150,
       render: (v: string | number | null) =>
-        v ? <Text>{formatAnniversary(v)}</Text> : <Text type="secondary">-</Text>,
+        v ? (
+          <Text style={{ whiteSpace: "nowrap" }}>{formatAnniversary(v)}</Text>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Products</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Products</div>,
       key: "products",
       align: "center",
       width: 140,
@@ -963,7 +997,7 @@ const RotaryDataAdmin: React.FC = () => {
               </div>
             }
           >
-            <Tag color="green" style={{ cursor: "pointer", fontWeight: 600 }}>
+            <Tag color="green" style={{ cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
               {prodList.length} Product{prodList.length > 1 ? "s" : ""}
             </Tag>
           </Popover>
@@ -971,7 +1005,7 @@ const RotaryDataAdmin: React.FC = () => {
       },
     },
     {
-      title: <div style={{ textAlign: "center" }}>Services</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Services</div>,
       key: "services",
       align: "center",
       width: 140,
@@ -1134,7 +1168,7 @@ const RotaryDataAdmin: React.FC = () => {
               </div>
             }
           >
-            <Tag color="gold" style={{ cursor: "pointer", fontWeight: 600 }}>
+            <Tag color="gold" style={{ cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
               {servList.length} Service{servList.length > 1 ? "s" : ""}
             </Tag>
           </Popover>
@@ -1169,7 +1203,7 @@ const RotaryDataAdmin: React.FC = () => {
     //   },
     // },
     {
-      title: <div style={{ textAlign: "center" }}>Actions</div>,
+      title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Actions</div>,
       key: "actions",
       align: "center",
       width: 120,
@@ -1185,6 +1219,7 @@ const RotaryDataAdmin: React.FC = () => {
             borderRadius: 6,
             fontWeight: 600,
             fontSize: 13,
+            whiteSpace: "nowrap",
           }}
         >
           Inspect
@@ -1196,6 +1231,14 @@ const RotaryDataAdmin: React.FC = () => {
   return (
     <ConfigProvider theme={theme}>
       <style>{`
+        .rotary-custom-table .ant-table-thead > tr > th {
+          white-space: nowrap !important;
+          text-align: center !important;
+        }
+        .rotary-custom-table .ant-table-tbody > tr > td {
+          white-space: nowrap !important;
+          vertical-align: middle !important;
+        }
         .rotary-row-alt > td {
           background: #FAFBFC;
         }
@@ -1546,6 +1589,7 @@ const RotaryDataAdmin: React.FC = () => {
             )}
             <div style={{ width: "100%", overflowX: "auto" }}>
               <Table<RotaryApiMember>
+                className="rotary-custom-table"
                 rowKey="id"
                 columns={columns}
                 dataSource={visibleRows}

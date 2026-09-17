@@ -1055,11 +1055,11 @@ const App: React.FC = () => {
               <Route path="/oxygpt/claude" element={<OxyStreamClaude />} />
               <Route path="/loan-application" element={<BorrowerChatPage />} />
               <Route
-                path="/salaried-br-loan-application"
+                path="/br-loan-application"
                 element={<SalariedBorrowerChatPage />}
               />
               <Route
-                path="/application-status"
+                path="/br-application-status"
                 element={<AdminDashboardPage />}
               />
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import BASE_URL from "../Config";
+import BASE_URL from "../Config"; 
 
 interface BorrowerChatSession {
   bfSessionId: string;
@@ -7,17 +7,28 @@ interface BorrowerChatSession {
   bfBorrowerName?: string;
   bfPhoneNumber?: string;
   bfRequestedLoanAmount?: number;
-  bfEmploymentType?: string;
+  bfApprovedLoanAmount?: number;
+  bfLoanPurpose?: string;
+  bfBorrowerType?: string;
+  bfBorrowerId?: string;
+  bfRiskScore?: string;
   bfRiskBucket?: string;
+  bfCreditScore?: number;
+  bfMonthlySalary?: number;
+  bfMonthlyIncomeFromBank?: number;
+  bfMonthlyExpensesFromBank?: number;
+  bfExpenseRatio?: number;
+  bfOtpVerified?: boolean;
+  bfAffordabilityConsent?: boolean;
+  bfCreditRiskConsent?: boolean;
+  bfOfferAccepted?: boolean;
+  bfSocialShareUrl?: string;
   bfCreatedAt?: string;
   bfUpdatedAt?: string;
-  bfChatType?: string;
-  bfCompanyName?: string;
-  bfMonthlySalary?: number;
-  bfSalaryCreditBank?: string;
 }
 
 interface BorrowerChatMessage {
+  bfMessageId?: number;
   bfSessionId: string;
   bfRole: "USER" | "ASSISTANT" | "SYSTEM";
   bfContent: string;
@@ -32,7 +43,16 @@ interface BorrowerLoanDocument {
   bfExtractedJson?: string;
   bfProcessingStatus?: string;
   bfS3Url?: string;
+  bfExtractedName?: string;
+  bfNameMatchStatus?: string;
   bfUploadedAt?: string;
+}
+
+interface BorrowerConversationHistoryDTO {
+  bfSessionId: string;
+  session: BorrowerChatSession;
+  messages: BorrowerChatMessage[];
+  documents: BorrowerLoanDocument[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,18 +63,29 @@ const riskColors: Record<string, string> = {
 };
 
 const stageColors: Record<string, string> = {
-  FRESH: "bg-slate-100 text-slate-600",
+  LOAN_AMOUNT: "bg-slate-100 text-slate-700",
+  LOAN_PURPOSE: "bg-blue-100 text-blue-700",
+  LOGIN_MOBILE: "bg-indigo-100 text-indigo-700",
+  LOGIN_OTP: "bg-amber-100 text-amber-700",
+  BORROWER_TYPE: "bg-purple-100 text-purple-700",
+  AWAITING_PAN: "bg-cyan-100 text-cyan-700",
+  AWAITING_AADHAAR: "bg-teal-100 text-teal-700",
   AWAITING_INCOME_PROOF: "bg-blue-100 text-blue-700",
-  AWAITING_PAYSLIP: "bg-blue-100 text-blue-700",
   AWAITING_BANK_STATEMENT: "bg-purple-100 text-purple-700",
-  AWAITING_ID_PROOF: "bg-orange-100 text-orange-700",
-  PROCESSED: "bg-green-100 text-green-700",
-  CLOSED: "bg-gray-100 text-gray-500",
+  AFFORDABILITY_CONSENT: "bg-yellow-100 text-yellow-800",
+  AWAITING_CREDIT_REPORT: "bg-orange-100 text-orange-700",
+  CREDIT_RISK_CONSENT: "bg-amber-100 text-amber-800",
+  OFFER_CONSENT: "bg-emerald-100 text-emerald-700",
+  SOCIAL_MEDIA_CONSENT: "bg-pink-100 text-pink-700",
+  SUBMITTED: "bg-green-100 text-green-700",
+  DECLINED: "bg-red-100 text-red-700",
 };
 
 const docStatusColors: Record<string, string> = {
   ACCEPTED: "bg-emerald-100 text-emerald-700",
   REJECTED: "bg-red-100 text-red-600",
+  CLAIMED: "bg-blue-100 text-blue-700",
+  SUPERSEDED: "bg-gray-100 text-gray-500",
 };
 
 function formatDate(dt?: string) {
@@ -85,55 +116,57 @@ function fmtDocType(t: string) {
 export default function AdminDashboardPage() {
   const [sessions, setSessions] = useState<BorrowerChatSession[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedSessionDetail, setSelectedSessionDetail] = useState<BorrowerChatSession | null>(null);
   const [messages, setMessages] = useState<BorrowerChatMessage[]>([]);
   const [documents, setDocuments] = useState<BorrowerLoanDocument[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [chatTypeFilter, setChatTypeFilter] = useState<"GENERIC" | "SALARIED">("GENERIC");
+  const [borrowerTypeFilter, setBorrowerTypeFilter] = useState<string>("ALL");
   const [search, setSearch] = useState("");
   // mobile: track whether the detail pane is shown (true) or list (false)
   const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     loadSessions();
-  }, [chatTypeFilter]);
+  }, []);
 
-  // ── API: GET /admin/sessions ───────────────────────────────────────────────
-  const loadSessions = async (type = chatTypeFilter) => {
+  // ── API: GET /sessions ───────────────────────────────────────────────
+  const loadSessions = async () => {
     setLoadingSessions(true);
     try {
-      const res = await fetch(`${BASE_URL}/vibecode-service/borrower/admin/sessions?chatType=${type}`);
+      const res = await fetch(`${BASE_URL}/vibecode-service/borrower/sessions`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: BorrowerChatSession[] = await res.json();
-      // Newest first
       data.sort(
         (a, b) =>
           new Date(b.bfCreatedAt ?? 0).getTime() -
           new Date(a.bfCreatedAt ?? 0).getTime()
       );
       setSessions(data);
-    } catch {
+    } catch (err) {
+      console.error("Failed to load sessions:", err);
       setSessions([]);
     } finally {
       setLoadingSessions(false);
     }
   };
 
-  // ── API: GET /admin/sessions/{id}/messages + /documents ───────────────────
+  // ── API: GET /history/{id} ───────────────────
   const loadSessionDetail = async (id: string) => {
     setSelectedId(id);
     setShowDetail(true); // mobile: switch to detail view
     setLoadingDetail(true);
     try {
-      const [msgRes, docRes] = await Promise.all([
-        fetch(`${BASE_URL}/vibecode-service/borrower/admin/sessions/${encodeURIComponent(id)}/messages`),
-        fetch(`${BASE_URL}/vibecode-service/borrower/admin/sessions/${encodeURIComponent(id)}/documents`),
-      ]);
-      const msgData: BorrowerChatMessage[] = await msgRes.json();
-      const docData: BorrowerLoanDocument[] = await docRes.json();
-      // Filter out SYSTEM messages — they contain internal AI prior-session context, not for admin view
-      setMessages(msgData.filter((m) => m.bfRole !== "SYSTEM"));
-      setDocuments(docData);
-    } catch {
+      const res = await fetch(
+        `${BASE_URL}/vibecode-service/borrower/history/${encodeURIComponent(id)}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: BorrowerConversationHistoryDTO = await res.json();
+      setSelectedSessionDetail(data.session ?? null);
+      setMessages((data.messages ?? []).filter((m) => m.bfRole !== "SYSTEM"));
+      setDocuments(data.documents ?? []);
+    } catch (err) {
+      console.error("Failed to load session history:", err);
       setMessages([]);
       setDocuments([]);
     } finally {
@@ -141,32 +174,32 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // ── Filtering (name, phone, stage, employment) ────────────────────────────
+  // ── Filtering (name, phone, stage, borrowerType) ────────────────────────────
   const filteredSessions = sessions.filter((s) => {
+    if (borrowerTypeFilter !== "ALL" && (s.bfBorrowerType ?? "").toUpperCase() !== borrowerTypeFilter) {
+      return false;
+    }
     const q = search.toLowerCase();
     return (
       s.bfSessionId.toLowerCase().includes(q) ||
       (s.bfBorrowerName ?? "").toLowerCase().includes(q) ||
       (s.bfPhoneNumber ?? "").includes(q) ||
-      s.bfStage.toLowerCase().includes(q) ||
-      (s.bfEmploymentType ?? "").toLowerCase().includes(q)
+      (s.bfBorrowerId ?? "").toLowerCase().includes(q) ||
+      (s.bfStage ?? "").toLowerCase().includes(q) ||
+      (s.bfBorrowerType ?? "").toLowerCase().includes(q)
     );
   });
 
-  const selectedSession = sessions.find((s) => s.bfSessionId === selectedId);
+  const selectedSession = selectedSessionDetail || sessions.find((s) => s.bfSessionId === selectedId);
 
   // ── Quick stats ────────────────────────────────────────────────────────────
   const total = sessions.length;
-  const processed = sessions.filter(
-    (s) => s.bfStage === "PROCESSED" || s.bfStage === "CLOSED"
-  ).length;
+  const submitted = sessions.filter((s) => s.bfStage === "SUBMITTED").length;
   const active = sessions.filter(
-    (s) =>
-      s.bfStage !== "PROCESSED" &&
-      s.bfStage !== "CLOSED" &&
-      s.bfStage !== "FRESH"
+    (s) => s.bfStage !== "SUBMITTED" && s.bfStage !== "DECLINED"
   ).length;
-  const highRisk = sessions.filter((s) => s.bfRiskBucket === "HIGH").length;
+  const highRisk = sessions.filter((s) => s.bfRiskScore === "HIGH").length;
+
 
   // ──────────────────────────────────────────────────────────────────────────
   return (
@@ -183,7 +216,7 @@ export default function AdminDashboardPage() {
           {[
             { label: "Total Sessions", value: total, color: "text-white" },
             { label: "In Progress", value: active, color: "text-blue-300" },
-            { label: "Processed", value: processed, color: "text-emerald-400" },
+            { label: "Submitted", value: submitted, color: "text-emerald-400" },
             { label: "High Risk", value: highRisk, color: "text-red-400" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
@@ -205,7 +238,7 @@ export default function AdminDashboardPage() {
         {[
           { label: "Total", value: total, color: "text-white" },
           { label: "Active", value: active, color: "text-blue-300" },
-          { label: "Done", value: processed, color: "text-emerald-400" },
+          { label: "Done", value: submitted, color: "text-emerald-400" },
           { label: "High Risk", value: highRisk, color: "text-red-400" },
         ].map((stat) => (
           <div key={stat.label} className="text-center">
@@ -222,33 +255,31 @@ export default function AdminDashboardPage() {
           showDetail ? "hidden md:flex" : "flex"
         } w-full md:w-[320px] md:min-w-[320px] flex-col bg-[#f0ede5] border-r border-[#e2ddd2]`}>
           <div className="px-4 pt-4 pb-2 shrink-0">
-            {/* Chat Type Filter Tabs */}
-            <div className="flex bg-[#e2ddd2] p-1 rounded-xl mb-3">
-              <button
-                onClick={() => setChatTypeFilter("GENERIC")}
-                className={`flex-1 text-[12px] font-semibold py-1.5 rounded-lg transition-all text-center ${
-                  chatTypeFilter === "GENERIC"
-                    ? "bg-white text-[#1c2b45] shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                💬 Generic
-              </button>
-              <button
-                onClick={() => setChatTypeFilter("SALARIED")}
-                className={`flex-1 text-[12px] font-semibold py-1.5 rounded-lg transition-all text-center ${
-                  chatTypeFilter === "SALARIED"
-                    ? "bg-[#1c2b45] text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                💼 Salaried
-              </button>
+            {/* Borrower Type Filter Tabs */}
+            <div className="flex bg-[#e2ddd2] p-1 rounded-xl mb-3 overflow-x-auto">
+              {[
+                { key: "ALL", label: "All" },
+                { key: "SALARIED", label: "Salaried" },
+                { key: "STUDENT", label: "Student" },
+                { key: "SELF_EMPLOYED", label: "Business" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setBorrowerTypeFilter(tab.key)}
+                  className={`flex-1 text-[11.5px] font-semibold py-1 px-2 rounded-lg transition-all text-center whitespace-nowrap ${
+                    borrowerTypeFilter === tab.key
+                      ? "bg-white text-[#1c2b45] shadow-sm"
+                      : "text-slate-600 hover:text-slate-800"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, phone, stage…"
+              placeholder="Search name, phone, stage, ID…"
               className="w-full text-[12.5px] border border-[#ddd8cc] rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-[#c39a4b] placeholder-slate-400"
             />
           </div>
@@ -259,61 +290,64 @@ export default function AdminDashboardPage() {
             ) : filteredSessions.length === 0 ? (
               <div className="px-4 py-6 text-[13px] text-slate-400">No sessions found.</div>
             ) : (
-              filteredSessions.map((s) => (
-                <div
-                  key={s.bfSessionId}
-                  onClick={() => loadSessionDetail(s.bfSessionId)}
-                  className={`mx-1 mb-1.5 px-3 py-2.5 rounded-lg cursor-pointer border transition-all ${
-                    selectedId === s.bfSessionId
-                      ? "bg-white border-[#c39a4b] shadow-sm"
-                      : "bg-transparent border-transparent hover:bg-white/70"
-                  }`}
-                >
-                  {/* Name + Risk */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[13px] font-semibold text-[#1f2430] truncate">
-                      {s.bfBorrowerName || "Unnamed borrower"}
-                    </span>
-                    {s.bfRiskBucket && (
+              filteredSessions.map((s) => {
+                const risk = s.bfRiskScore || s.bfRiskBucket;
+                return (
+                  <div
+                    key={s.bfSessionId}
+                    onClick={() => loadSessionDetail(s.bfSessionId)}
+                    className={`mx-1 mb-1.5 px-3 py-2.5 rounded-lg cursor-pointer border transition-all ${
+                      selectedId === s.bfSessionId
+                        ? "bg-white border-[#c39a4b] shadow-sm"
+                        : "bg-transparent border-transparent hover:bg-white/70"
+                    }`}
+                  >
+                    {/* Name + Risk */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[13px] font-semibold text-[#1f2430] truncate">
+                        {s.bfBorrowerName || (s.bfBorrowerId ? `Borrower ${s.bfBorrowerId}` : "Unnamed session")}
+                      </span>
+                      {risk && (
+                        <span
+                          className={`shrink-0 text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border ${
+                            riskColors[risk] ?? "bg-slate-100 text-slate-500 border-slate-200"
+                          }`}
+                        >
+                          {risk}
+                        </span>
+                      )}
+                    </div>
+                    {/* Phone + Loan Amount */}
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-slate-500">
+                        {s.bfPhoneNumber ? `📞 ${s.bfPhoneNumber}` : (s.bfLoanPurpose ? `🎯 ${s.bfLoanPurpose}` : "No phone yet")}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        {s.bfRequestedLoanAmount != null ? formatAmount(s.bfRequestedLoanAmount) : ""}
+                      </span>
+                    </div>
+                    {/* Stage + Borrower Type chips */}
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span
-                        className={`shrink-0 text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border ${
-                          riskColors[s.bfRiskBucket] ?? "bg-slate-100 text-slate-500 border-slate-200"
+                        className={`text-[9.5px] font-semibold px-1.5 py-0.5 rounded-full ${
+                          stageColors[s.bfStage] ?? "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        {s.bfRiskBucket}
+                        {(s.bfStage ?? "").replaceAll("_", " ")}
                       </span>
-                    )}
+                      {s.bfBorrowerType && (
+                        <span className="text-[9.5px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full font-medium">
+                          {s.bfBorrowerType.replaceAll("_", " ")}
+                        </span>
+                      )}
+                    </div>
+                    {/* Date */}
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {formatDate(s.bfCreatedAt)}
+                    </div>
                   </div>
-                  {/* Phone + Loan Amount */}
-                  <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-slate-500">
-                      {s.bfPhoneNumber ? `📞 ${s.bfPhoneNumber}` : "No phone yet"}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {s.bfRequestedLoanAmount != null ? formatAmount(s.bfRequestedLoanAmount) : ""}
-                    </span>
-                  </div>
-                  {/* Stage + Employment chips */}
-                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    <span
-                      className={`text-[9.5px] font-semibold px-1.5 py-0.5 rounded-full ${
-                        stageColors[s.bfStage] ?? "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {s.bfStage.replaceAll("_", " ")}
-                    </span>
-                    {s.bfEmploymentType && (
-                      <span className="text-[9.5px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full font-medium">
-                        {s.bfEmploymentType.replaceAll("_", " ")}
-                      </span>
-                    )}
-                  </div>
-                  {/* Date */}
-                  <div className="text-[10px] text-slate-400 mt-0.5">
-                    {formatDate(s.bfCreatedAt)}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -340,39 +374,63 @@ export default function AdminDashboardPage() {
                 </button>
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-[16px] font-bold text-[#1f2430]">
-                      {selectedSession?.bfBorrowerName || "Unnamed borrower"}
+                    <div className="text-[16px] font-bold text-[#1f2430] flex items-center gap-2">
+                      <span>{selectedSession?.bfBorrowerName || "Unnamed borrower"}</span>
+                      {selectedSession?.bfBorrowerId && (
+                        <span className="text-[12px] bg-[#1c2b45] text-white px-2 py-0.5 rounded font-mono font-normal">
+                          {selectedSession.bfBorrowerId}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-1 text-[12px] text-slate-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-1.5 text-[12px] text-slate-600">
                       {selectedSession?.bfPhoneNumber && (
                         <span>📞 {selectedSession.bfPhoneNumber}</span>
                       )}
                       {selectedSession?.bfRequestedLoanAmount != null && (
-                        <span>💰 {formatAmount(selectedSession.bfRequestedLoanAmount)}</span>
+                        <span>💰 Requested: {formatAmount(selectedSession.bfRequestedLoanAmount)}</span>
                       )}
-                      {selectedSession?.bfEmploymentType && (
-                        <span>💼 {selectedSession.bfEmploymentType.replaceAll("_", " ")}</span>
+                      {selectedSession?.bfApprovedLoanAmount != null && (
+                        <span className="text-emerald-700 font-medium">✓ Offer: {formatAmount(selectedSession.bfApprovedLoanAmount)}</span>
                       )}
-                      {selectedSession?.bfCompanyName && (
-                        <span>🏢 {selectedSession.bfCompanyName}</span>
+                      {selectedSession?.bfLoanPurpose && (
+                        <span>🎯 Purpose: {selectedSession.bfLoanPurpose}</span>
+                      )}
+                      {selectedSession?.bfBorrowerType && (
+                        <span>💼 Type: {selectedSession.bfBorrowerType.replaceAll("_", " ")}</span>
                       )}
                       {selectedSession?.bfMonthlySalary != null && (
                         <span>💵 Salary: {formatAmount(selectedSession.bfMonthlySalary)}/mo</span>
                       )}
-                      {selectedSession?.bfSalaryCreditBank && (
-                        <span>🏦 Bank: {selectedSession.bfSalaryCreditBank}</span>
+                      {selectedSession?.bfMonthlyIncomeFromBank != null && (
+                        <span>🏦 Bank Income: {formatAmount(selectedSession.bfMonthlyIncomeFromBank)}/mo</span>
+                      )}
+                      {selectedSession?.bfMonthlyExpensesFromBank != null && (
+                        <span>📉 Expenses: {formatAmount(selectedSession.bfMonthlyExpensesFromBank)}/mo</span>
+                      )}
+                      {selectedSession?.bfCreditScore != null && (
+                        <span>⭐ Credit Score: {selectedSession.bfCreditScore}</span>
+                      )}
+                      {selectedSession?.bfSocialShareUrl && (
+                        <a
+                          href={selectedSession.bfSocialShareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline font-medium"
+                        >
+                          📱 Social Post Link
+                        </a>
                       )}
                     </div>
-                    <div className="text-[10.5px] text-slate-400 font-mono mt-0.5">{selectedId}</div>
+                    <div className="text-[10.5px] text-slate-400 font-mono mt-1">{selectedId}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {selectedSession?.bfRiskBucket && (
+                    {(selectedSession?.bfRiskScore || selectedSession?.bfRiskBucket) && (
                       <span
                         className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-                          riskColors[selectedSession.bfRiskBucket] ?? "bg-slate-100 text-slate-500 border-slate-200"
+                          riskColors[selectedSession?.bfRiskScore || selectedSession?.bfRiskBucket || ""] ?? "bg-slate-100 text-slate-500 border-slate-200"
                         }`}
                       >
-                        {selectedSession.bfRiskBucket} RISK
+                        {selectedSession?.bfRiskScore || selectedSession?.bfRiskBucket} RISK
                       </span>
                     )}
                     <span
@@ -389,6 +447,7 @@ export default function AdminDashboardPage() {
                   <span>Updated: {formatDate(selectedSession?.bfUpdatedAt)}</span>
                 </div>
               </div>
+
 
               {loadingDetail ? (
                 <div className="flex-1 flex items-center justify-center text-slate-400 text-[14px]">
@@ -479,6 +538,19 @@ export default function AdminDashboardPage() {
                                 {formatDate(d.bfUploadedAt)}
                               </div>
                             )}
+                            {d.bfExtractedName && (
+                              <div className="text-[11px] text-slate-600 mt-1">
+                                <span className="font-medium">Name on doc:</span> {d.bfExtractedName}
+                                {d.bfNameMatchStatus && (
+                                  <span className={`ml-1.5 text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                                    d.bfNameMatchStatus === "MATCH" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                    d.bfNameMatchStatus === "MISMATCH" ? "bg-red-50 text-red-700 border border-red-200" : "bg-slate-100 text-slate-600"
+                                  }`}>
+                                    {d.bfNameMatchStatus}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             {d.bfS3Url && (
                               <div className="mt-2 text-[12px]">
                                 <a
@@ -487,7 +559,7 @@ export default function AdminDashboardPage() {
                                   rel="noopener noreferrer"
                                   className="text-[#204fd2] hover:underline font-semibold flex items-center gap-1"
                                 >
-                                  🔗 View Document
+                                  🔗 View / Download from S3
                                 </a>
                               </div>
                             )}

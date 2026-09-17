@@ -47,6 +47,7 @@ interface Item {
   weightUnit: string;
   units: string;
   category: string;
+  categoryType?: string;
   image: string;
   quantity: number;
   status?: string;
@@ -92,6 +93,16 @@ interface ItemImage {
   itemId: string;
 }
 
+interface GoldRateBreakdown {
+  gstAmount: number;
+  totalAmount: number;
+  itemPrice: number;
+  gstPercentage: number;
+  itemAmount: number;
+  makingAmount: number;
+  makingCharges: number;
+}
+
 const ItemDisplayPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const { state } = useLocation();
@@ -116,6 +127,7 @@ const ItemDisplayPage = () => {
   const token = localStorage.getItem("accessToken");
   const [showChatSection, setShowChatSection] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const breakdownRef = useRef<HTMLDivElement>(null);
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
     status: { [key: string]: string };
@@ -160,6 +172,10 @@ const ItemDisplayPage = () => {
   const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(
     new Set(),
   );
+  const [goldRateBreakdown, setGoldRateBreakdown] =
+    useState<GoldRateBreakdown | null>(null);
+  const [goldRateLoading, setGoldRateLoading] = useState(false);
+  const [showGoldBreakdown, setShowGoldBreakdown] = useState(false);
 
   const context = useContext(CartContext);
 
@@ -176,6 +192,21 @@ const ItemDisplayPage = () => {
     const cleanedValue = String(value).replace(/[^0-9.]/g, "");
     const parsed = Number(cleanedValue);
     return isNaN(parsed) ? null : parsed;
+  };
+
+  const fetchGoldRateBreakdown = async (id: string) => {
+    setGoldRateLoading(true);
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/product-service/getAllGoldAndSilverRates?itemId=${id}`,
+      );
+      setGoldRateBreakdown(response.data);
+    } catch (error) {
+      console.error("Error fetching gold rate breakdown:", error);
+      setGoldRateBreakdown(null);
+    } finally {
+      setGoldRateLoading(false);
+    }
   };
 
   const fetchItemImages = async (id: string) => {
@@ -203,6 +234,28 @@ const ItemDisplayPage = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+  useEffect(() => {
+    const isPreciousMetal = itemDetails?.categoryType
+      ? ["GOLD", "SILVER"].includes(itemDetails.categoryType.toUpperCase())
+      : false;
+
+    if (itemDetails && isPreciousMetal) {
+      fetchGoldRateBreakdown(itemDetails.itemId);
+    } else {
+      setGoldRateBreakdown(null);
+      setShowGoldBreakdown(false);
+    }
+  }, [itemDetails?.itemId, itemDetails?.categoryType]);
+  useEffect(() => {
+    if (showGoldBreakdown && breakdownRef.current) {
+      setTimeout(() => {
+        breakdownRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [showGoldBreakdown]);
 
   const fetchItemDetails = async (id: string) => {
     try {
@@ -214,6 +267,7 @@ const ItemDisplayPage = () => {
           category.itemsResponseDtoList.map((item: any) => ({
             ...item,
             category: category.categoryName,
+            categoryType: group.categoryType, // ADDED
           })),
         ),
       );
@@ -243,6 +297,26 @@ const ItemDisplayPage = () => {
     }
   };
 
+  const resolveCategoryType = async (id: string) => {
+    try {
+      const response = await customerApi.get(
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
+      );
+      const matchingGroup = response.data.find((group: any) =>
+        group.categories.some((category: any) =>
+          category.itemsResponseDtoList.some((item: any) => item.itemId === id),
+        ),
+      );
+      if (matchingGroup?.categoryType) {
+        setItemDetails((prev) =>
+          prev ? { ...prev, categoryType: matchingGroup.categoryType } : prev,
+        );
+      }
+    } catch (error) {
+      console.error("Error resolving category type:", error);
+    }
+  };
+
   const fetchComboAddOns = async () => {
     try {
       const response = await customerApi.get(
@@ -267,10 +341,11 @@ const ItemDisplayPage = () => {
   useEffect(() => {
     if (itemId) {
       if (!state?.item) {
-        fetchItemDetails(itemId);
+        fetchItemDetails(itemId); // already attaches categoryType
       } else {
         setItemDetails(state.item);
         fetchItemImages(itemId);
+        resolveCategoryType(itemId); // NEW — backfills categoryType when missing
       }
       fetchCartData("");
       fetchRelatedItems();
@@ -469,13 +544,19 @@ const ItemDisplayPage = () => {
 
       console.log("Fetched Categories:", response.data);
 
-      const matchingCategory = response.data
-        .flatMap((group: any) => group.categories)
-        .find((category: any) =>
+      const matchingGroup = response.data.find((group: any) =>
+        group.categories.some((category: any) =>
           category.itemsResponseDtoList.some(
             (item: any) => item.itemId === itemDetails.itemId,
           ),
-        );
+        ),
+      );
+
+      const matchingCategory = matchingGroup?.categories.find((category: any) =>
+        category.itemsResponseDtoList.some(
+          (item: any) => item.itemId === itemDetails.itemId,
+        ),
+      );
 
       if (
         matchingCategory &&
@@ -491,6 +572,7 @@ const ItemDisplayPage = () => {
           .map((item: any) => ({
             ...item,
             category: matchingCategory.categoryName,
+            categoryType: matchingGroup.categoryType, // ADDED
           }));
 
         console.log("Related Items:", categoryItems);
@@ -612,10 +694,10 @@ const ItemDisplayPage = () => {
         return;
       }
 
-      await customerApi.patch(
-        `${BASE_URL}/cart-service/cart/minusCartItem`,
-        { customerId, itemId },
-      );
+      await customerApi.patch(`${BASE_URL}/cart-service/cart/minusCartItem`, {
+        customerId,
+        itemId,
+      });
 
       message.success("Item removed from cart successfully.");
       await fetchCartData("");
@@ -647,10 +729,10 @@ const ItemDisplayPage = () => {
 
     try {
       if (!increment && cartItems[item.itemId] <= 1) {
-        await customerApi.patch(
-          `${BASE_URL}/cart-service/cart/minusCartItem`,
-          { customerId, itemId: item.itemId },
-        );
+        await customerApi.patch(`${BASE_URL}/cart-service/cart/minusCartItem`, {
+          customerId,
+          itemId: item.itemId,
+        });
         message.success("Item removed from cart successfully.");
       } else {
         const requestData = { customerId, itemId: item.itemId };
@@ -659,10 +741,7 @@ const ItemDisplayPage = () => {
           await customerApi.post(endpoint, requestData);
         } else {
           try {
-            const patchRes = await customerApi.patch(
-              endpoint,
-              requestData,
-            );
+            const patchRes = await customerApi.patch(endpoint, requestData);
             console.log("PATCH success:", patchRes.status, patchRes.data);
           } catch (error) {
             if (error instanceof AxiosError && error.response) {
@@ -821,9 +900,13 @@ const ItemDisplayPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}/student-service/user/chat1`, updatedMessages, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axios.post(
+        `${BASE_URL}/student-service/user/chat1`,
+        updatedMessages,
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
 
       const data = response.data;
       const isImageUrl = data.startsWith("http");
@@ -884,9 +967,13 @@ const ItemDisplayPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}/student-service/user/chat1`, backendMessages, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axios.post(
+        `${BASE_URL}/student-service/user/chat1`,
+        backendMessages,
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
 
       const data = response.data;
       const isImageUrl = data.startsWith("http");
@@ -1048,6 +1135,9 @@ const ItemDisplayPage = () => {
     "619bd23a-0267-46da-88da-30977037225a",
     "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
   ];
+  const isGoldItem = itemDetails?.categoryType
+    ? ["GOLD", "SILVER"].includes(itemDetails.categoryType.toUpperCase())
+    : false;
 
   const handleGoldPriceModalClose = () => {
     setGoldPriceModal({ visible: false, urls: [], images: [] });
@@ -1105,7 +1195,9 @@ const ItemDisplayPage = () => {
                     {getAllImages().length > 0 ? (
                       <>
                         <img
-                          src={resolveAskoxyUrl(getAllImages()[currentImageIndex]?.imageUrl)}
+                          src={resolveAskoxyUrl(
+                            getAllImages()[currentImageIndex]?.imageUrl,
+                          )}
                           alt={itemDetails?.itemName}
                           onClick={() =>
                             openFullscreen(
@@ -1229,6 +1321,22 @@ const ItemDisplayPage = () => {
                           </>
                         )}
                     </div>
+
+                    {isGoldItem && goldRateBreakdown && (
+                      <button
+                        onClick={() => setShowGoldBreakdown((prev) => !prev)}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-300 px-3 py-1.5 rounded-full transition-colors mt-1 w-fit"
+                      >
+                        <Info className="w-4 h-4" />
+                        <span>View price breakdown</span>
+                        {showGoldBreakdown ? (
+                          <ChevronRight className="w-4 h-4 rotate-90 transition-transform" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 -rotate-90 transition-transform" />
+                        )}
+                      </button>
+                    )}
+
                     <p className="text-sm text-gray-600">
                       Weight: {itemDetails?.itemWeight || itemDetails?.weight}
                       {itemDetails?.weightUnit || itemDetails?.units}
@@ -1393,6 +1501,185 @@ const ItemDisplayPage = () => {
                   </p>
                 </div>
               )}
+              {isGoldItem &&
+                showGoldBreakdown &&
+                (() => {
+                  const metalLabel =
+                    itemDetails?.categoryType?.toUpperCase() === "SILVER"
+                      ? "Silver"
+                      : "Gold";
+
+                  const rawWeight =
+                    itemDetails?.itemWeight ?? itemDetails?.weight;
+                  const weightNum =
+                    rawWeight !== undefined
+                      ? parseFloat(String(rawWeight))
+                      : null;
+                  const weightUnit =
+                    itemDetails?.weightUnit || itemDetails?.units || "";
+
+                  const rate =
+                    goldRateBreakdown && weightNum
+                      ? (goldRateBreakdown.itemPrice / weightNum).toFixed(2)
+                      : null;
+
+                  const subtotal = goldRateBreakdown
+                    ? goldRateBreakdown.itemPrice +
+                      goldRateBreakdown.makingAmount
+                    : 0;
+
+                  return (
+                    <div
+                      ref={breakdownRef}
+                      className="mt-2 w-full rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white"
+                    >
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-5 rounded-full bg-amber-500" />
+                          <h3 className="font-bold text-gray-900 text-base">
+                            Price Breakup
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => setShowGoldBreakdown(false)}
+                          className="text-xs font-semibold text-amber-700 hover:text-amber-900 flex items-center gap-1"
+                        >
+                          View Less
+                          <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                        </button>
+                      </div>
+
+                      {goldRateLoading ? (
+                        <div className="flex items-center text-sm text-gray-500 p-5">
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />{" "}
+                          Loading...
+                        </div>
+                      ) : goldRateBreakdown ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm text-left border-collapse">
+                            <thead>
+                              <tr className="text-gray-500 text-[11px] uppercase tracking-wider">
+                                <th className="py-2.5 px-5 font-semibold">
+                                  Component
+                                </th>
+                                <th className="py-2.5 px-3 font-semibold">
+                                  Rate
+                                </th>
+                                <th className="py-2.5 px-3 font-semibold">
+                                  Weight
+                                </th>
+                                <th className="py-2.5 px-3 font-semibold">
+                                  Value
+                                </th>
+                                <th className="py-2.5 px-3 font-semibold">
+                                  Discount
+                                </th>
+                                <th className="py-2.5 px-5 font-semibold">
+                                  Final Value
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              <tr>
+                                <td colSpan={6} className="pt-2 pb-1 px-5">
+                                  <span className="inline-block text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                                    {metalLabel}
+                                  </span>
+                                </td>
+                              </tr>
+                              <tr className="text-gray-700 hover:bg-gray-50/60 transition-colors">
+                                <td className="py-2.5 px-5">
+                                  {weightNum
+                                    ? `${weightNum}${weightUnit} ${metalLabel}`
+                                    : metalLabel}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  {rate ? `₹${rate}` : "-"}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  {weightNum
+                                    ? `${weightNum}${weightUnit}`
+                                    : "-"}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  ₹{goldRateBreakdown.itemPrice.toFixed(2)}
+                                </td>
+                                <td className="py-2.5 px-3 text-gray-400">
+                                  ₹0
+                                </td>
+                                <td className="py-2.5 px-5 font-medium">
+                                  ₹{goldRateBreakdown.itemPrice.toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr className="text-gray-700 hover:bg-gray-50/60 transition-colors">
+                                <td className="py-2.5 px-5">
+                                  Making Charges (
+                                  {goldRateBreakdown.makingCharges}%)
+                                </td>
+                                <td className="py-2.5 px-3 text-gray-400">-</td>
+                                <td className="py-2.5 px-3 text-gray-400">-</td>
+                                <td className="py-2.5 px-3">
+                                  ₹{goldRateBreakdown.makingAmount.toFixed(2)}
+                                </td>
+                                <td className="py-2.5 px-3 text-gray-400">-</td>
+                                <td className="py-2.5 px-5 font-medium">
+                                  ₹{goldRateBreakdown.makingAmount.toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr className="font-semibold text-gray-900 bg-gray-50">
+                                <td className="py-2.5 px-5">Total</td>
+                                <td className="py-2.5 px-3"></td>
+                                <td className="py-2.5 px-3"></td>
+                                <td className="py-2.5 px-3">
+                                  ₹{subtotal.toFixed(2)}
+                                </td>
+                                <td className="py-2.5 px-3 text-gray-400 font-normal">
+                                  -
+                                </td>
+                                <td className="py-2.5 px-5">
+                                  ₹{subtotal.toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr className="text-gray-700 hover:bg-gray-50/60 transition-colors">
+                                <td className="py-2.5 px-5">
+                                  GST ({goldRateBreakdown.gstPercentage}%)
+                                </td>
+                                <td className="py-2.5 px-3"></td>
+                                <td className="py-2.5 px-3"></td>
+                                <td className="py-2.5 px-3">
+                                  ₹{goldRateBreakdown.gstAmount.toFixed(2)}
+                                </td>
+                                <td className="py-2.5 px-3"></td>
+                                <td className="py-2.5 px-5 font-medium">
+                                  ₹{goldRateBreakdown.gstAmount.toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr className="font-bold text-gray-900 bg-amber-50/60 border-t-2 border-amber-200">
+                                <td className="py-3.5 px-5 text-[15px]">
+                                  Grand Total
+                                </td>
+                                <td className="py-3.5 px-3"></td>
+                                <td className="py-3.5 px-3"></td>
+                                <td className="py-3.5 px-3 text-[15px]">
+                                  ₹{goldRateBreakdown.totalAmount.toFixed(2)}
+                                </td>
+                                <td className="py-3.5 px-3"></td>
+                                <td className="py-3.5 px-5 text-[15px] text-amber-800">
+                                  ₹{goldRateBreakdown.totalAmount.toFixed(2)}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 p-5">
+                          Unable to load price breakdown.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
             </div>
           </div>
 
@@ -1498,7 +1785,9 @@ const ItemDisplayPage = () => {
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                             {item.itemImage || item.image ? (
                               <img
-                                src={resolveAskoxyUrl(item.itemImage || item.image)}
+                                src={resolveAskoxyUrl(
+                                  item.itemImage || item.image,
+                                )}
                                 alt={item.itemName}
                                 className="w-full h-full object-contain"
                               />
