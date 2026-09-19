@@ -1,6 +1,7 @@
 export interface NewsFeedItem {
   paperclipId: string;
   articleName: string;
+  fileName?: string | null;
   domain: string | null;
   category: string | null;
   shortSummary: string;
@@ -73,6 +74,8 @@ export interface Summary {
   detailedSummary: string;
   keyPoints: string[];
   actionItems: string[];
+  shortSummaryHtml?: string | null;
+  detailedSummaryHtml?: string | null;
 }
 
 export interface Person {
@@ -127,6 +130,7 @@ export interface PaperclipDetail {
   imageUrl?: string;
   imageUrls?: string[];
   blogUrl?: string;
+  blogImageUrl?: string;
   uploadedAt?: string;
   analysis: PaperclipAnalysisResult;
 }
@@ -136,6 +140,34 @@ export interface ChatMessage {
   content: string;
   sources?: string[];
 }
+export interface RbiPressRelease {
+  id: number;
+  title: string;
+  url: string;
+  publishedDate: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  category: string | null;
+}
+
+export interface RbiCampaignPressRelease {
+  id: string;
+  date: number[];
+  name: string;
+  fileUrl: string;
+  enumIs: string;
+  pipeline: string;
+  type: string;
+}
+
+export interface RbiCampaignResponse {
+  status: string;
+  type: string;
+  date: string;
+  count: number;
+  notifications: RbiCampaignPressRelease[];
+}
+
 export interface ExternalNewsArticle {
   id: number;
   url: string;

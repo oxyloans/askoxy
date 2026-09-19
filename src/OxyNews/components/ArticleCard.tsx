@@ -164,7 +164,11 @@ export default function ArticleCard({
   small?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
-  const showOverlay = !item.imageUrl || imgError;
+  const isNewspaperImg = !!item.imageUrl && (
+    item.imageUrl.toLowerCase().includes("whatsapp image") ||
+    item.imageUrl.toLowerCase().includes("/paperclips/")
+  );
+  const showOverlay = !item.imageUrl || imgError || isNewspaperImg;
 
   return (
     <motion.div
@@ -178,6 +182,7 @@ export default function ArticleCard({
     >
       <Link
         to={`/article/${item.paperclipId}`}
+        state={{ imageUrl: item.imageUrl }}
         className="group flex flex-col bg-white rounded-xl shadow-card focus-ring h-full"
         style={{ overflow: "visible" }}
       >
@@ -185,15 +190,20 @@ export default function ArticleCard({
           className="relative rounded-t-xl"
           style={{ background: getCardGradient(item.category), overflow: "hidden" }}
         >
-          <img
-            src={showOverlay ? FALLBACK_IMG : item.imageUrl!}
-            alt={displayTitle(item)}
-            className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
-            style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
-            onError={() => setImgError(true)}
-          />
+          {!showOverlay && (
+            <img
+              src={item.imageUrl!}
+              alt={displayTitle(item)}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
+              onError={() => setImgError(true)}
+            />
+          )}
           {showOverlay && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div
+              className="flex items-center justify-center pointer-events-none"
+              style={{ minHeight: featured ? 140 : 110 }}
+            >
               <CategoryOverlay category={item.category} />
             </div>
           )}
@@ -221,7 +231,14 @@ export default function ArticleCard({
               <OpportunityMeter score={item.overallScore} size={22} strokeWidth={3} />
               <span className="text-[10px] font-semibold text-plum hidden sm:inline">Opportunities</span>
             </div>
-            <span className="text-[10px] text-ink-faint font-mono">{timeAgo(item.createdAt)}</span>
+            <div className="flex items-center gap-1.5">
+              {item.domain && item.domain !== "General" && (
+                <span className="rounded-full bg-plum/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-plum">
+                  {item.domain}
+                </span>
+              )}
+              <span className="text-[10px] text-ink-faint font-mono">{timeAgo(item.createdAt)}</span>
+            </div>
           </div>
         </div>
       </Link>

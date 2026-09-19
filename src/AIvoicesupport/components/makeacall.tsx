@@ -77,6 +77,8 @@ const SCENARIO_COLORS: Record<OutboundScenario, string> = {
   LEAD_FOLLOWUP: "text-emerald-500",
   ORDER_STATUS_UPDATE: "text-cyan-500",
   BIRTHDAY_WISH: "text-pink-500",
+  RECOVERY: "text-red-500",
+  USER_QUERY: "text-violet-500",
 };
 
 const SCENARIO_FIELD_SUGGESTIONS: Record<OutboundScenario, string[]> = {
@@ -86,6 +88,8 @@ const SCENARIO_FIELD_SUGGESTIONS: Record<OutboundScenario, string[]> = {
   LEAD_FOLLOWUP: ["Lead Source", "Area of Interest"],
   ORDER_STATUS_UPDATE: ["Order ID", "Expected Delivery Date"],
   BIRTHDAY_WISH: ["Customer Name", "Date of Birth"],
+  RECOVERY: ["Loan Account No", "Outstanding Amount", "Due Date"],
+  USER_QUERY: ["User Name", "Query", "Context"],
 };
 
 interface CustomField {
@@ -130,6 +134,7 @@ const MakeCall: React.FC = () => {
   );
   const [phoneNumber, setPhoneNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [userQuery, setUserQuery] = useState("");
   const [customFields, setCustomFields] = useState<CustomField[]>([
     emptyField(),
   ]);
@@ -221,6 +226,9 @@ const MakeCall: React.FC = () => {
         platform,
         payload: {
           customerName: customerName.trim(),
+          ...(scenario === "USER_QUERY" && userQuery.trim()
+            ? { userQuery: userQuery.trim() }
+            : {}),
           ...extraPayload,
         },
       });
@@ -228,6 +236,7 @@ const MakeCall: React.FC = () => {
       setLastResult({ phoneNumber: normalized, platform, scenario });
       setPhoneNumber("");
       setCustomerName("");
+      setUserQuery("");
       setCustomFields([emptyField()]);
     } catch (err) {
       message.error("Failed to place the call. Please try again.");
@@ -345,6 +354,25 @@ const MakeCall: React.FC = () => {
               />
             </div>
           </div>
+
+          {scenario === "USER_QUERY" && (
+            <div className="mb-6">
+              <div className="text-xs font-medium text-slate-500 mb-1.5">
+                User Query
+              </div>
+
+              <Input.TextArea
+                size="large"
+                rows={4}
+                placeholder="Enter user query here..."
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                className="rounded-lg"
+                maxLength={1000}
+                showCount
+              />
+            </div>
+          )}
 
           {/* Free-form call details, same builder for every platform and scenario */}
           <div className="flex items-center justify-between mb-3">

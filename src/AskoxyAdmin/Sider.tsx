@@ -50,6 +50,8 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
   EnvironmentOutlined,
+  FileTextOutlined,
+  LinkedinOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdWork } from "react-icons/md";
@@ -126,8 +128,7 @@ const Sidebar: React.FC = () => {
     const primaryType = localStorage.getItem("admin_primaryType");
     if (
       !primaryType ||
-      (primaryType !== "HELPDESKSUPERADMIN" &&
-        primaryType !== "HELPDESKADMIN")
+      (primaryType !== "HELPDESKSUPERADMIN" && primaryType !== "HELPDESKADMIN")
     ) {
       navigate("/admin", { replace: true });
       startTokenRefresh();
@@ -202,13 +203,13 @@ const Sidebar: React.FC = () => {
             title: "Askoxy Assigned Data",
             icon: <FaClipboardList className="text-yellow-400" />,
             link: "/admin/assignedData",
-            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+            roles: ["HELPDESKADMIN"],
           },
           {
             title: "Users Recent Orders ",
             icon: <FaClipboardList className="text-yellow-400" />,
             link: "/admin/userOrdersIntegration",
-            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+            roles: ["HELPDESKADMIN"],
           },
 
           {
@@ -257,6 +258,30 @@ const Sidebar: React.FC = () => {
             title: "All Talwar Data",
             icon: <SafetyCertificateOutlined className="text-red-500" />,
             link: "/admin/talwardata",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Radha LinkedIn",
+            icon: <LinkedinOutlined className="text-blue-600" />,
+            link: "/admin/radha-linkedin",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "AMFI Reports",
+            icon: <FileTextOutlined className="text-blue-500" />,
+            link: "/admin/amfireports",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Naukri Records",
+            icon: <SolutionOutlined className="text-blue-500" />,
+            link: "/admin/naukri-records",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Tahsildar Records",
+            icon: <EnvironmentOutlined className="text-blue-500" />,
+            link: "/admin/tahsildar-records",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
           {
@@ -518,7 +543,7 @@ const Sidebar: React.FC = () => {
 
   const isCategoryActive = (category: SidebarCategory) => {
     return category.items.some(
-      (item) => item.roles.includes(userRole!) && isActive(item.link)
+      (item) => item.roles.includes(userRole!) && isActive(item.link),
     );
   };
 
@@ -530,8 +555,7 @@ const Sidebar: React.FC = () => {
     if (
       !primaryType ||
       primaryType === undefined ||
-      (primaryType !== "HELPDESKSUPERADMIN" &&
-        primaryType !== "HELPDESKADMIN")
+      (primaryType !== "HELPDESKSUPERADMIN" && primaryType !== "HELPDESKADMIN")
     ) {
       message.info("Your not Supposed to Login to the SuperAdmin");
       navigate("/admin");
@@ -546,17 +570,13 @@ const Sidebar: React.FC = () => {
 
     const activeCategory = sidebarCategories.find((category) =>
       category.items.some(
-        (item) => item.roles.includes(userRole) && isActive(item.link)
-      )
+        (item) => item.roles.includes(userRole) && isActive(item.link),
+      ),
     );
 
     if (!activeCategory) return;
 
-    setExpandedCategories((prev) =>
-      prev.includes(activeCategory.title)
-        ? prev
-        : [...prev, activeCategory.title]
-    );
+    setExpandedCategories([activeCategory.title]);
   }, [location.pathname, userRole, sidebarCategories]);
 
   useEffect(() => {
@@ -589,19 +609,17 @@ const Sidebar: React.FC = () => {
   const toggleCategory = (categoryTitle: string) => {
     setExpandedCategories((prev) => {
       if (prev.includes(categoryTitle)) {
-        return prev.filter((cat) => cat !== categoryTitle);
+        return [];
       }
 
-      return [...prev, categoryTitle];
+      return [categoryTitle];
     });
   };
 
   const handleCategoryClick = (categoryTitle: string) => {
     if (collapsed && !isMobile) {
       setCollapsed(false);
-      setExpandedCategories((prev) =>
-        prev.includes(categoryTitle) ? prev : [...prev, categoryTitle]
-      );
+      setExpandedCategories([categoryTitle]);
       return;
     }
 
@@ -615,11 +633,11 @@ const Sidebar: React.FC = () => {
   const visibleCategories = sidebarCategories.filter(
     (category) =>
       category.roles.includes(userRole) &&
-      category.items.some((item) => item.roles.includes(userRole))
+      category.items.some((item) => item.roles.includes(userRole)),
   );
 
   const visibleStandaloneItems = standaloneItems.filter((item) =>
-    item.roles.includes(userRole)
+    item.roles.includes(userRole),
   );
 
   return (
@@ -665,17 +683,19 @@ const Sidebar: React.FC = () => {
 
         <aside
           className={`fixed inset-y-0 left-0 z-50 h-dvh transform overflow-hidden bg-gray-800 transition-all duration-300 ease-in-out
-            ${isMobile
-              ? isMobileOpen
-                ? "translate-x-0"
-                : "-translate-x-full"
-              : "translate-x-0"
+            ${
+              isMobile
+                ? isMobileOpen
+                  ? "translate-x-0"
+                  : "-translate-x-full"
+                : "translate-x-0"
             }
-            ${isMobile
-              ? "w-[86vw] max-w-72"
-              : collapsed && !isMobileOpen
-                ? "w-20"
-                : "w-64"
+            ${
+              isMobile
+                ? "w-[86vw] max-w-72"
+                : collapsed && !isMobileOpen
+                  ? "w-20"
+                  : "w-64"
             }
           `}
           style={{
@@ -729,7 +749,7 @@ const Sidebar: React.FC = () => {
             >
               {visibleCategories.map((category, categoryIndex) => {
                 const categoryItems = category.items.filter((item) =>
-                  item.roles.includes(userRole!)
+                  item.roles.includes(userRole!),
                 );
 
                 if (categoryItems.length === 0) return null;
@@ -741,21 +761,26 @@ const Sidebar: React.FC = () => {
                   <li key={categoryIndex} className="mb-1">
                     <div
                       className={`group relative flex cursor-pointer items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                        ${isActiveCat
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
-                          : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                        ${
+                          isActiveCat
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                            : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                         }`}
                       onClick={() => handleCategoryClick(category.title)}
                     >
                       <span
-                        className={`z-10 text-lg transition-all duration-300 ${collapsed ? "ml-1" : "ml-0"
-                          }`}
+                        className={`z-10 text-lg transition-all duration-300 ${
+                          collapsed ? "ml-1" : "ml-0"
+                        }`}
                       >
-                        {React.cloneElement(category.icon as React.ReactElement, {
-                          className: isActiveCat
-                            ? "text-white"
-                            : "text-white group-hover:text-gray-800 transition-colors duration-300",
-                        })}
+                        {React.cloneElement(
+                          category.icon as React.ReactElement,
+                          {
+                            className: isActiveCat
+                              ? "text-white"
+                              : "text-white group-hover:text-gray-800 transition-colors duration-300",
+                          },
+                        )}
                       </span>
 
                       {collapsed && !isMobileOpen ? (
@@ -765,27 +790,30 @@ const Sidebar: React.FC = () => {
                       ) : (
                         <>
                           <span
-                            className={`z-10 ml-2 flex-1 truncate transition-colors duration-300 ${isActiveCat
+                            className={`z-10 ml-2 flex-1 truncate transition-colors duration-300 ${
+                              isActiveCat
                                 ? "text-white"
                                 : "text-white group-hover:text-gray-800"
-                              }`}
+                            }`}
                           >
                             {category.title}
                           </span>
                           <span className="z-10 ml-2 transition-all duration-300">
                             {isExpanded ? (
                               <FaChevronDown
-                                className={`text-sm transition-all duration-300 ${isActiveCat
+                                className={`text-sm transition-all duration-300 ${
+                                  isActiveCat
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800"
-                                  }`}
+                                }`}
                               />
                             ) : (
                               <FaChevronRight
-                                className={`text-sm transition-all duration-300 ${isActiveCat
+                                className={`text-sm transition-all duration-300 ${
+                                  isActiveCat
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800"
-                                  }`}
+                                }`}
                               />
                             )}
                           </span>
@@ -798,10 +826,11 @@ const Sidebar: React.FC = () => {
                     </div>
 
                     <div
-                      className={`overflow-hidden transition-all duration-400 ease-in-out ${isExpanded && !collapsed
+                      className={`overflow-hidden transition-all duration-400 ease-in-out ${
+                        isExpanded && !collapsed
                           ? "mt-1 max-h-[1000px] opacity-100"
                           : "max-h-0 opacity-0"
-                        }`}
+                      }`}
                     >
                       <ul className="ml-4 space-y-1 border-l-2 border-gray-600 pl-3">
                         {categoryItems.map((item, itemIndex) => (
@@ -809,9 +838,10 @@ const Sidebar: React.FC = () => {
                             <Link
                               to={item.link}
                               className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                                ${isActive(item.link)
-                                  ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                                  : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                                ${
+                                  isActive(item.link)
+                                    ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
+                                    : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                                 }`}
                               onClick={(e) => {
                                 if (item.onClick) {
@@ -829,14 +859,15 @@ const Sidebar: React.FC = () => {
                                     className: isActive(item.link)
                                       ? "text-white"
                                       : "text-white group-hover:text-gray-800 transition-colors duration-300",
-                                  }
+                                  },
                                 )}
                               </span>
                               <span
-                                className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${isActive(item.link)
+                                className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${
+                                  isActive(item.link)
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800"
-                                  }`}
+                                }`}
                               >
                                 {item.title}
                               </span>
@@ -861,9 +892,10 @@ const Sidebar: React.FC = () => {
                   <Link
                     to={item.link}
                     className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                      ${isActive(item.link)
-                        ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                        : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                      ${
+                        isActive(item.link)
+                          ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
+                          : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                       }`}
                     onClick={(e) => {
                       if (item.onClick) {
@@ -875,8 +907,9 @@ const Sidebar: React.FC = () => {
                     }}
                   >
                     <span
-                      className={`z-10 text-lg transition-all duration-300 ${collapsed ? "ml-1" : "ml-0"
-                        }`}
+                      className={`z-10 text-lg transition-all duration-300 ${
+                        collapsed ? "ml-1" : "ml-0"
+                      }`}
                     >
                       {React.cloneElement(item.icon as React.ReactElement, {
                         className: isActive(item.link)
@@ -890,10 +923,11 @@ const Sidebar: React.FC = () => {
                       </span>
                     ) : (
                       <span
-                        className={`z-10 ml-3 truncate text-base font-medium transition-colors duration-300 ${isActive(item.link)
+                        className={`z-10 ml-3 truncate text-base font-medium transition-colors duration-300 ${
+                          isActive(item.link)
                             ? "text-white"
                             : "text-white group-hover:text-gray-800"
-                          }`}
+                        }`}
                       >
                         {item.title}
                       </span>
@@ -964,7 +998,9 @@ const Sidebar: React.FC = () => {
               className="flex cursor-pointer items-center rounded-lg px-4 py-2 text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md hover:scale-105"
             >
               <FaSignOutAlt className="mr-2" />
-              <span className="hidden text-sm font-medium sm:inline">Log out</span>
+              <span className="hidden text-sm font-medium sm:inline">
+                Log out
+              </span>
             </div>
           </div>
         </header>
@@ -972,8 +1008,9 @@ const Sidebar: React.FC = () => {
         <div className="h-16 w-full" />
 
         <div
-          className={`transition-all duration-300 ease-in-out ${isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"
-            }`}
+          className={`transition-all duration-300 ease-in-out ${
+            isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"
+          }`}
           style={{
             minHeight: "calc(100vh - 64px)",
             paddingBottom: "2rem",

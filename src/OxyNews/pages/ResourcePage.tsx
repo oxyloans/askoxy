@@ -44,19 +44,10 @@ export default function ResourcePage() {
         </span>
       </div>
 
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6">
         <h1 className="font-display text-2xl sm:text-4xl font-semibold text-plum-dark leading-[1.05]">
           {link.name}
         </h1>
-
-        <a
-          href={link.url}
-          target="_blank"
-          rel="noreferrer"
-          className="focus-ring w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1.5 bg-gold text-plum font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gold-soft transition-colors"
-        >
-          Visit official site ↗
-        </a>
       </div>
 
       {link.description && (

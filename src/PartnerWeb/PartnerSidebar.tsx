@@ -152,6 +152,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <FileTextOutlined />,
       label: "Create From Image & Text",
     },
+    {
+      key: "/home/riceContainer",
+      icon: <QrcodeOutlined />,
+      label: "Rice Container Data",
+    },
+
 
     // {
     //   key: "/home/feedback",

@@ -8,9 +8,9 @@ import ArticleChatWidget from "./ArticleChatWidget";
 import { ChatContext } from "./ChatContext";
 
 const primaryLinks = [
-  { to: "/oxynews", label: "Home", end: true },
-  { to: "/explore", label: "Explore", end: false },
-  { to: "/radhai-news", label: "RadhAI News", end: false },
+  { to: "/oxynews", label: "Home", icon: null, end: true },
+  { to: "/explore", label: "Explore", icon: null, end: false },
+  { to: "/radhai-news", label: "RadhAI News", icon: "radhai", end: false },
 ];
 
 export default function OxyLayout() {
@@ -70,50 +70,57 @@ export default function OxyLayout() {
           <header className="bg-plum text-paper shadow-md">
             <div className="mx-auto max-w-7xl px-3 py-2 sm:px-6 sm:py-3">
 
-              {/* ── Single row: logo | nav (desktop) | actions ── */}
+              {/* ── Single row: back+logo | nav (desktop) | actions ── */}
               <div className="flex items-center justify-between gap-2">
 
-                {/* LEFT: Logo */}
-                <Link
-                  to="/oxynews"
-                  aria-label="OxyNews home"
-                  className="focus-ring flex shrink-0 items-center gap-2 rounded-lg"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm sm:h-11 sm:w-11">
-                    <img src={Logo} alt="AskOxy" className="h-full w-full object-contain" />
-                  </span>
-                  <span className="font-display text-xl font-bold leading-none sm:text-2xl">
-                    Oxy<span className="text-gold">News</span>
-                  </span>
-                </Link>
+                {/* LEFT: Back button + Logo */}
+                <div className="flex shrink-0 items-center gap-2">
+                  {articleMatch?.params.id && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(-1)}
+                      className="focus-ring inline-flex items-center gap-1 rounded-full border border-paper/30 bg-white/10 px-3 py-1.5 text-sm font-semibold text-paper transition hover:bg-white/20"
+                    >
+                      ← Back
+                    </button>
+                  )}
+                  <Link
+                    to="/oxynews"
+                    aria-label="OxyNews home"
+                    className="focus-ring flex shrink-0 items-center gap-2 rounded-lg"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm sm:h-11 sm:w-11">
+                      <img src={Logo} alt="AskOxy" className="h-full w-full object-contain" />
+                    </span>
+                    <span className="font-display text-xl font-bold leading-none sm:text-2xl">
+                      Oxy<span className="text-gold">News</span>
+                    </span>
+                  </Link>
+                </div>
 
                 {/* CENTER: Nav links — desktop only */}
                 <nav
                   aria-label="OxyNews primary navigation"
                   className="hidden lg:flex flex-1 items-center justify-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
-                  {articleMatch?.params.id && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(-1)}
-                      className="focus-ring inline-flex min-h-9 shrink-0 items-center rounded-full border border-paper/25 px-4 text-sm font-semibold text-paper transition hover:bg-white/10"
-                    >
-                      ← Back
-                    </button>
-                  )}
                   {primaryLinks.map((link) => (
                     <NavLink
                       key={link.to}
                       to={link.to}
                       end={link.end}
                       className={({ isActive }) =>
-                        `focus-ring inline-flex min-h-9 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                        `focus-ring inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors ${
                           isActive
                             ? "bg-gold text-plum shadow-sm"
                             : "text-paper/85 hover:bg-white/10 hover:text-paper"
                         }`
                       }
                     >
+                      {link.icon === "radhai" && (
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor">
+                          <path d="M12 2a1 1 0 0 1 .95.68l2.05 6.32 6.32 2.05a1 1 0 0 1 0 1.9l-6.32 2.05-2.05 6.32a1 1 0 0 1-1.9 0L8.95 14.95 2.68 12.9a1 1 0 0 1 0-1.9l6.27-2.05L11 2.68A1 1 0 0 1 12 2z"/>
+                        </svg>
+                      )}
                       {link.label}
                     </NavLink>
                   ))}
@@ -132,19 +139,8 @@ export default function OxyLayout() {
                   )}
                 </nav>
 
-                {/* RIGHT: desktop/tablet — always-visible search bar | mobile — icon toggle */}
+                {/* RIGHT: search bar | ask button (mobile) */}
                 <div className="flex shrink-0 items-center gap-2">
-
-                  {/* Article action buttons (back + ask) */}
-                  {articleMatch?.params.id && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(-1)}
-                      className="lg:hidden focus-ring inline-flex items-center gap-1 rounded-full border border-paper/30 bg-white/10 px-3 py-1.5 text-sm font-semibold text-paper transition hover:bg-white/20"
-                    >
-                      ← Back
-                    </button>
-                  )}
                   {articleMatch?.params.id && (
                     <button
                       type="button"
@@ -244,7 +240,7 @@ export default function OxyLayout() {
         </div>
 
         {/* ── Page content — offset by header height ── */}
-        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6 mt-[160px]">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6 mt-[130px]">
           {articleMatch?.params.id && chatOpen ? (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr,380px]">
               <div className="lg:col-start-1">

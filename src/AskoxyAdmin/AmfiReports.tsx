@@ -5,6 +5,7 @@ import {
   Button,
   Spin,
   Pagination,
+  Space,
   Typography,
   Input,
   Empty,
@@ -14,12 +15,11 @@ import {
   ReloadOutlined,
   SearchOutlined,
   TeamOutlined,
+  EnvironmentOutlined,
   MailOutlined,
   PhoneOutlined,
   UserOutlined,
-  BankOutlined,
-  IdcardOutlined,
-  EnvironmentOutlined,
+  NumberOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
 import BASE_URL from "../Config";
@@ -27,21 +27,22 @@ import BASE_URL from "../Config";
 const { Text, Title } = Typography;
 const { Search } = Input;
 
-interface SudheerDataItem {
+interface AmfiReportItem {
   id: string;
-  name: string;
-  title: string;
-  company: string;
-  phoneNumber: string | null;
-  mailId: string | null;
-  address: string | null;
+  holdersName: string;
+  pin: string;
+  email: string | null;
+  city: string;
+  telephoneR: string;
+  telephoneO: string;
 }
 
 const DEFAULT_PAGE_SIZE = 100;
+
 const PRIMARY_COLOR = "#008cba";
 
-const SudheerVakkalagadda: React.FC = () => {
-  const [records, setRecords] = useState<SudheerDataItem[]>([]);
+const AmfiReports: React.FC = () => {
+  const [records, setRecords] = useState<AmfiReportItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
@@ -50,7 +51,7 @@ const SudheerVakkalagadda: React.FC = () => {
 
   const [searchText, setSearchText] = useState("");
 
-  const hasValue = (value: string | number | null | undefined) => {
+  const hasValue = (value: string | null | undefined) => {
     if (value === null || value === undefined) return false;
     const text = String(value).trim();
     return text !== "" && text !== "-" && text.toLowerCase() !== "null";
@@ -61,7 +62,7 @@ const SudheerVakkalagadda: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/ai-service/entity-records/sudheer-data`,
+        `${BASE_URL}/ai-service/entity-records/amfi-reports`,
         {
           params: { page, size },
         },
@@ -92,6 +93,16 @@ const SudheerVakkalagadda: React.FC = () => {
     fetchRecords();
   }, [fetchRecords]);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 576);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 576);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const filteredRecords = useMemo(() => {
     let data = [...records];
 
@@ -100,19 +111,19 @@ const SudheerVakkalagadda: React.FC = () => {
 
       data = data.filter(
         (item) =>
-          item.name?.toLowerCase().includes(search) ||
-          item.title?.toLowerCase().includes(search) ||
-          item.company?.toLowerCase().includes(search) ||
-          item.phoneNumber?.toLowerCase().includes(search) ||
-          item.mailId?.toLowerCase().includes(search) ||
-          item.address?.toLowerCase().includes(search),
+          item.holdersName?.toLowerCase().includes(search) ||
+          item.city?.toLowerCase().includes(search) ||
+          item.pin?.toLowerCase().includes(search) ||
+          item.telephoneR?.toLowerCase().includes(search) ||
+          item.telephoneO?.toLowerCase().includes(search) ||
+          item.email?.toLowerCase().includes(search),
       );
     }
 
     return data;
   }, [records, searchText]);
 
-  const columns: ColumnsType<SudheerDataItem> = [
+  const columns: ColumnsType<AmfiReportItem> = [
     {
       title: <div style={{ textAlign: "center" }}>S.No</div>,
       key: "serialNumber",
@@ -128,16 +139,16 @@ const SudheerVakkalagadda: React.FC = () => {
       title: (
         <div style={{ textAlign: "center" }}>
           <UserOutlined style={{ marginRight: 6 }} />
-          Name
+          Holder's Name
         </div>
       ),
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "holdersName",
+      key: "holdersName",
       align: "center",
-      width: 180,
+      width: 220,
       render: (value: string) => (
         <Text strong style={{ color: "#1f2937" }}>
-          {hasValue(value) ? value : "-"}
+          {value || "-"}
         </Text>
       ),
     },
@@ -145,14 +156,41 @@ const SudheerVakkalagadda: React.FC = () => {
       title: (
         <div style={{ textAlign: "center" }}>
           <PhoneOutlined style={{ marginRight: 6 }} />
-          Mobile Number
+          Telephone (R)
         </div>
       ),
-      dataIndex: "phoneNumber",
-      key: "phoneNumber",
+      dataIndex: "telephoneR",
+      key: "telephoneR",
       align: "center",
-      width: 150,
-      render: (value: string | null) =>
+      width: 160,
+      render: (value: string) =>
+        hasValue(value) ? (
+          <a
+            href={`tel:${value}`}
+            style={{
+              color: PRIMARY_COLOR,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            {value}
+          </a>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <PhoneOutlined style={{ marginRight: 6 }} />
+          Telephone (O)
+        </div>
+      ),
+      dataIndex: "telephoneO",
+      key: "telephoneO",
+      align: "center",
+      width: 160,
+      render: (value: string) =>
         hasValue(value) ? (
           <a
             href={`tel:${value}`}
@@ -175,8 +213,8 @@ const SudheerVakkalagadda: React.FC = () => {
           Email
         </div>
       ),
-      dataIndex: "mailId",
-      key: "mailId",
+      dataIndex: "email",
+      key: "email",
       align: "center",
       width: 220,
       render: (value: string | null) =>
@@ -195,42 +233,27 @@ const SudheerVakkalagadda: React.FC = () => {
       title: (
         <div style={{ textAlign: "center" }}>
           <EnvironmentOutlined style={{ marginRight: 6 }} />
-          Address
+          City
         </div>
       ),
-      dataIndex: "address",
-      key: "address",
+      dataIndex: "city",
+      key: "city",
       align: "center",
-      width: 220,
-      render: (value: string | null) => (
-        <Text>{hasValue(value) ? value : "-"}</Text>
-      ),
+      width: 140,
+      render: (value: string) => <Text>{value || "-"}</Text>,
     },
     {
       title: (
         <div style={{ textAlign: "center" }}>
-          <IdcardOutlined style={{ marginRight: 6 }} />
-          Title
+          <NumberOutlined style={{ marginRight: 6 }} />
+          PIN
         </div>
       ),
-      dataIndex: "title",
-      key: "title",
+      dataIndex: "pin",
+      key: "pin",
       align: "center",
-      width: 220,
-      render: (value: string) => <Text>{hasValue(value) ? value : "-"}</Text>,
-    },
-    {
-      title: (
-        <div style={{ textAlign: "center" }}>
-          <BankOutlined style={{ marginRight: 6 }} />
-          Company
-        </div>
-      ),
-      dataIndex: "company",
-      key: "company",
-      align: "center",
-      width: 200,
-      render: (value: string) => <Text>{hasValue(value) ? value : "-"}</Text>,
+      width: 100,
+      render: (value: string) => <Text>{value || "-"}</Text>,
     },
   ];
 
@@ -258,10 +281,10 @@ const SudheerVakkalagadda: React.FC = () => {
             level={4}
             style={{ margin: 0, color: "#1f2937", fontWeight: 700 }}
           >
-            Sudheer Vakkalagadda Data
+            AMFI Reports
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            View Sudheer Vakkalagadda entity records
+            View AMFI entity records
           </Text>
         </div>
         <Button
@@ -323,7 +346,7 @@ const SudheerVakkalagadda: React.FC = () => {
                 lineHeight: 1.2,
               }}
             >
-              {total.toLocaleString()}
+              {total}
             </div>
             <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
               Total Records
@@ -346,12 +369,12 @@ const SudheerVakkalagadda: React.FC = () => {
         >
           <Search
             allowClear
-            placeholder="Search by name, title, company, email, phone or address"
+            placeholder="Search by name, city, PIN, phone or email"
             prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{
-              maxWidth: 360,
+              maxWidth: 320,
               width: "100%",
               borderRadius: 8,
             }}
@@ -382,7 +405,7 @@ const SudheerVakkalagadda: React.FC = () => {
               pagination={false}
               bordered
               size="middle"
-              scroll={{ x: 1200 }}
+              scroll={{ x: 1100 }}
               locale={{
                 emptyText: (
                   <Empty
@@ -419,7 +442,7 @@ const SudheerVakkalagadda: React.FC = () => {
                 pageSize={size}
                 total={total}
                 showSizeChanger={false}
-                showTotal={(totalRecords) => `Total ${totalRecords.toLocaleString()} records`}
+                showTotal={(totalRecords) => `Total ${totalRecords} records`}
                 onChange={(pageNumber) => setPage(pageNumber - 1)}
               />
             </div>
@@ -430,4 +453,4 @@ const SudheerVakkalagadda: React.FC = () => {
   );
 };
 
-export default SudheerVakkalagadda;
+export default AmfiReports;

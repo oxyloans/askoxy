@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { RESOURCE_CATEGORIES } from "../data/resourceLinks";
 
-const ALL_CATEGORIES = [...RESOURCE_CATEGORIES];
+const ALL_CATEGORIES = [...RESOURCE_CATEGORIES, { id: "no-life-without-wife", label: "No Life Without Wife", links: [] }];
 
 export const PLATFORMS = [
   {
@@ -110,10 +110,10 @@ export default function ResourceNavBar() {
       onPointerLeave={(e) => { if (e.pointerType === "touch") return; setOpenId(null); }}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-2 justify-start lg:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto py-1.5 justify-start [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             to="/oxynews"
-            className="focus-ring flex min-h-10 shrink-0 items-center rounded-full bg-white px-4 text-sm font-semibold tracking-wide text-plum-dark transition-colors hover:bg-white/90 lg:border lg:border-ink/10"
+            className="focus-ring flex min-h-7 shrink-0 items-center rounded-full bg-white px-3 text-xs font-semibold tracking-wide text-plum-dark transition-colors hover:bg-white/90 border border-ink/10"
           >
             Home
           </Link>
@@ -125,11 +125,11 @@ export default function ResourceNavBar() {
             onClick={(e) => { setPlatformsOpen((o) => !o); setOpenId(null); setPlatformsAnchorCenter(e.currentTarget.getBoundingClientRect().left + e.currentTarget.getBoundingClientRect().width / 2); }}
             aria-expanded={platformsOpen}
             aria-haspopup="menu"
-            className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors border border-ink/10 ${platformsOpen ? "bg-gold text-plum shadow-sm" : "bg-white text-ink-soft hover:bg-white/90"
+            className={`focus-ring flex min-h-7 shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs transition-colors border border-ink/10 ${platformsOpen ? "bg-gold text-plum shadow-sm" : "bg-white text-ink-soft hover:bg-white/90"
               }`}
           >
-            <span className="font-semibold text-sm tracking-wide">Our Platforms</span>
-            <span className={`text-[10px] transition-transform ${platformsOpen ? "rotate-180" : ""}`}>▾</span>
+            <span className="font-semibold tracking-wide">Our Platforms</span>
+            <span className={`text-[9px] transition-transform ${platformsOpen ? "rotate-180" : ""}`}>▾</span>
           </button>
 
           {ALL_CATEGORIES.map((cat) => {
@@ -143,20 +143,23 @@ export default function ResourceNavBar() {
                 onFocus={(e) => openFrom(cat.id, e.currentTarget)}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors ${isOpen
+                className={`focus-ring flex min-h-7 shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs transition-colors ${isOpen
                     ? "bg-white text-plum-dark border border-ink/10 shadow-sm"
                     : "bg-white text-ink-soft border border-ink/10 hover:bg-white/90"
                   }`}
               >
-                <span className="font-semibold text-sm tracking-wide">{cat.label}</span>
-                <span className={`text-[10px] transition-transform ${isOpen ? "rotate-180" : ""}`}>▾</span>
+                <span className="font-semibold tracking-wide">{cat.label}</span>
+                <span className={`text-[9px] transition-transform ${isOpen ? "rotate-180" : ""}`}>▾</span>
               </button>
             );
           })}
           <Link
             to="/radhai-news"
-            className="focus-ring flex min-h-10 shrink-0 items-center rounded-full bg-white px-4 text-sm font-semibold tracking-wide text-plum-dark transition-colors hover:bg-white/90 border border-ink/10"
+            className="focus-ring flex min-h-7 shrink-0 items-center gap-1 rounded-full bg-white px-3 text-xs font-semibold tracking-wide text-plum-dark transition-colors hover:bg-white/90 border border-ink/10"
           >
+            <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0 text-violet-500" fill="currentColor">
+              <path d="M12 2a1 1 0 0 1 .95.68l2.05 6.32 6.32 2.05a1 1 0 0 1 0 1.9l-6.32 2.05-2.05 6.32a1 1 0 0 1-1.9 0L8.95 14.95 2.68 12.9a1 1 0 0 1 0-1.9l6.27-2.05L11 2.68A1 1 0 0 1 12 2z"/>
+            </svg>
             RadhAI News
           </Link>
         </div>
@@ -209,7 +212,7 @@ export default function ResourceNavBar() {
                     key={link.id}
                     type="button"
                     role="menuitem"
-                    onClick={() => navigate(`/resources/${activeCategory.id}/${link.id}`)}
+                    onClick={() => link.url.startsWith("/") ? navigate(link.url) : navigate(`/resources/${activeCategory.id}/${link.id}`)}
                     className="focus-ring w-64 max-w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-royal/5"
                   >
                     <div className="text-sm font-medium text-royal">{link.name}</div>

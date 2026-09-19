@@ -41,7 +41,16 @@ import MyCompanies from "./Dashboard/MyCompanies";
 import TaskDashboard from "./Taskmanagement/TaskDashboard";
 import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 import Sep19LoansWalkIn from "./components/sep19walkin";
+import RBINewsPage from "./OxyNews/pages/RBINewsPage";
+import RiceContainerData from "./PartnerWeb/RiceContainerData";
 import JourneysPagewithoutlogin from "./components/Journeyspagewithoutlogin";
+import OxyLoansIntegration from "./components/OxyLoansIntegration";
+import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
+import OxyLoansSummary from "./components/OxyLoansSummary";
+import AmfiReports from "./AskoxyAdmin/AmfiReports";
+import RadhaLinkedin from "./AskoxyAdmin/RadhaLinkedin";
+import SaNaukariRecords from "./AskoxyAdmin/SaNaukariRecords";
+import TahsildarRecords from "./AskoxyAdmin/TahsildarRecords";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -1091,6 +1100,7 @@ const App: React.FC = () => {
                   element={<ExternalArticlePage />}
                 />
                 <Route path="/radhai-news" element={<RadhaiNewsPage />} />
+                <Route path="/rbi-news" element={<RBINewsPage />} />
               </Route>
               {/* OXY BFSAI Engine — full layout with fixed header */}
               <Route element={<FinvibeLayout />}>
@@ -2041,6 +2051,9 @@ const App: React.FC = () => {
                   path="dashboard/leaguejourneys"
                   element={<LeagueJourneysPage />}
                 />
+                <Route path="oxyloans" element={<OxyLoansIntegration />} />
+                <Route path="oxyloans/referral-network" element={<OxyLoansReferralNetwork />} />
+                <Route path="oxyloans/summary" element={<OxyLoansSummary />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />
@@ -2174,6 +2187,7 @@ const App: React.FC = () => {
                   path="createFromImageText"
                   element={<CreateFromImageText />}
                 />
+                <Route path="riceContainer" element={<RiceContainerData />} />
               </Route>
 
               <Route path="/voiceadmin" element={<VoiceAdminLogin />} />
@@ -2273,6 +2287,22 @@ const App: React.FC = () => {
                 <Route
                   path="sudheervakkalagadda"
                   element={<SudheerVakkalagadda />}
+                />
+                <Route
+                  path="amfireports"
+                  element={<AmfiReports />}
+                />
+                <Route
+                  path="radha-linkedin"
+                  element={<RadhaLinkedin />}
+                />
+                <Route
+                  path="naukri-records"
+                  element={<SaNaukariRecords />}
+                />
+                <Route
+                  path="tahsildar-records"
+                  element={<TahsildarRecords />}
                 />
                 <Route
                   path="kukatpallyassignedData"

@@ -53,6 +53,8 @@ const SCENARIO_COLORS: Record<OutboundScenario, string> = {
   LEAD_FOLLOWUP: "text-emerald-500",
   ORDER_STATUS_UPDATE: "text-cyan-500",
   BIRTHDAY_WISH: "text-pink-500",
+  RECOVERY: "text-red-500",
+  USER_QUERY: "text-violet-500",
 };
 
 const AgentInstructions: React.FC = () => {

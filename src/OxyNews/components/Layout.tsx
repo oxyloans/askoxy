@@ -125,7 +125,7 @@ export default function OxyLayout() {
         <ResourceNavBar />
       </div>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6">
+      <main className="w-full flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
         <Outlet />
       </main>
 

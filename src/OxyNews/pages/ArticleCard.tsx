@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { NewsFeedItem } from "../types";
-import OpportunityMeter from "../components/OpportunityMeter";
 
 function timeAgo(iso: string | null) {
   if (!iso) return "";
@@ -13,7 +12,7 @@ function timeAgo(iso: string | null) {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${days}d ago`; 
 }
 
 // Older/unbackfilled articles have no articleName yet. Rather than a bare
@@ -146,10 +145,12 @@ export default function ArticleCard({
   small?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
-  const isPaperImage = hasPagerImage(item);
-  const useRealImage = !!item.imageUrl && !isPaperImage && !imgError;
+  const isNewspaperImg = !!item.imageUrl && (
+    item.imageUrl.toLowerCase().includes("whatsapp image") ||
+    item.imageUrl.toLowerCase().includes("/paperclips/")
+  );
+  const useRealImage = !!item.imageUrl && !isNewspaperImg && !imgError;
   const showOverlay = !useRealImage;
-  const imgSrc = useRealImage ? item.imageUrl! : FALLBACK_IMG;
 
   return (
     <motion.div
@@ -163,6 +164,7 @@ export default function ArticleCard({
     >
       <Link
         to={`/article/${item.paperclipId}`}
+        state={{ imageUrl: item.imageUrl }}
         className="group flex flex-col bg-white rounded-xl shadow-card focus-ring h-full"
         style={{ overflow: "visible" }}
       >
@@ -170,15 +172,20 @@ export default function ArticleCard({
           className="relative rounded-t-xl"
           style={{ background: getCardGradient(item.category), overflow: "hidden", minHeight: featured ? 140 : 110 }}
         >
-          <img
-            src={imgSrc}
-            alt={displayTitle(item)}
-            className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 ${showOverlay ? "opacity-20" : ""}`}
-            style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
-            onError={() => setImgError(true)}
-          />
+          {useRealImage && (
+            <img
+              src={item.imageUrl!}
+              alt={displayTitle(item)}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
+              onError={() => setImgError(true)}
+            />
+          )}
           {showOverlay && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div
+              className="flex items-center justify-center pointer-events-none"
+              style={{ minHeight: featured ? 140 : 110 }}
+            >
               <CategoryOverlay category={item.category} />
             </div>
           )}
@@ -201,11 +208,7 @@ export default function ArticleCard({
               {item.shortSummary}
             </p>
           )}
-          <div className="mt-2 flex items-center justify-between gap-1">
-            <div className="flex items-center gap-1.5">
-              <OpportunityMeter score={item.overallScore} size={22} strokeWidth={3} />
-              <span className="text-[10px] font-semibold text-plum hidden sm:inline">Opportunities</span>
-            </div>
+          <div className="mt-2 flex items-center justify-end">
             <span className="text-[10px] text-ink-faint font-mono">{timeAgo(item.createdAt)}</span>
           </div>
         </div>

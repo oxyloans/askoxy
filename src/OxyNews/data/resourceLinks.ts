@@ -28,7 +28,7 @@ export const RESOURCE_CATEGORIES: ResourceCategory[] = [
     id: "banking",
     label: "Banking",
     links: [
-      // Add banking links here.
+      { id: "rbi-news", name: "RBI News", url: "/rbi-news", description: "RBI press releases & circulars" },
     ],
   },
   {

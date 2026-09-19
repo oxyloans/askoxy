@@ -17,6 +17,8 @@ import {
   FaRegCheckCircle,
   FaCog,
   FaComments,
+  FaInfoCircle,
+  FaChartBar,
 } from "react-icons/fa";
 import { IoLayers, IoLogOut } from "react-icons/io5";
 import { FaCreditCard, FaRobot, FaBriefcase } from "react-icons/fa6";
@@ -340,6 +342,29 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaStore size={16} />,
         },
        
+      ],
+    },
+     {
+      type: "dropdown",
+      key: "oxyloans",
+      icon: <FaPlusCircle size={18} />,
+      label: "OxyLoans Partner Network",
+      items: [
+        {
+          to: "/main/oxyloans",
+          label: "Overview",
+          icon: <FaInfoCircle size={16} />,
+        },
+        {
+          to: "/main/oxyloans/referral-network",
+          label: "Referral Network",
+          icon: <FaUsers size={16} />,
+        },
+        {
+          to: "/main/oxyloans/summary",
+          label: "Summary",
+          icon: <FaChartBar size={16} />,
+        },
       ],
     },
     {

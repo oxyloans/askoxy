@@ -8,6 +8,8 @@ import type {
   NewsFeedItem,
   PageResponse,
   PaperclipDetail,
+  RbiPressRelease,
+  RbiCampaignResponse,
 } from "../types";
 const BASE_URL1 = `${BASE_URL}/ai-automation`;
 const LOCAL_BASE = "http://localhost:9041/api/ai-automation";
@@ -146,6 +148,24 @@ export const api = {
       method: "POST",
     }),
 
+  getRbiPressReleases: (page = 0, size = 50) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    return request<PageResponse<RbiPressRelease>>(`/news/external/rbi?${q.toString()}`);
+  },
+
+  getRbiFeedItems: (): Promise<NewsFeedItem[]> =>
+    fetch(`${BASE_URL}/ai-automation/paperclip/rbi`, {
+      headers: getRequestHeaders(),
+    }).then(res => res.json()).then(body => body?.data ?? []),
+
+  getRbiCampaignPressReleases: (): Promise<RbiCampaignResponse> =>
+    fetch(`${BASE_URL}/marketing-service/campgin/press-releases?type=PRESS_RELEASE`)
+      .then(res => res.json()),
+
+  getRbiDailyPressReleases: (): Promise<RbiCampaignResponse> =>
+    fetch(`${BASE_URL}/marketing-service/campgin/daily-press-release`)
+      .then(res => res.json()),
+
   search: (query: string, page = 0, size = 12) => {
     const q = new URLSearchParams({ q: query, page: String(page), size: String(size) });
     return request<PageResponse<NewsFeedItem>>(`/news/search?${q.toString()}`);
@@ -154,7 +174,7 @@ export const api = {
   getPaperclip: (id: string) => request<PaperclipDetail>(`/paperclip/${id}`),
 
   chat: (id: string, message: string, webSearch = false, conversationId?: string) =>
-    fetch(`${BASE_URL1}/paperclip/${id}/chat`, {
+    fetch(`${BASE_URL}/ai-automation/paperclip/${id}/chat`, {
       method: "POST",
       headers: getRequestHeaders(),
       body: JSON.stringify({ message, webSearch, conversationId }),

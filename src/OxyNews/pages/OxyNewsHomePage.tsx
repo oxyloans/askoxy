@@ -5,6 +5,7 @@ import type { NewsFeedItem, ExternalNewsArticle } from "../types";
 import ArticleCard, { isDisplayableArticle } from "../components/ArticleCard";
 import NewsBackground3D from "../components/NewsBackground3D";
 import PlatformAdsBanner from "../components/PlatformAdsBanner";
+import RBINewsSection from "../components/RBINewsSection";
 
 const ROTATE_MS = 8000;
 
@@ -445,8 +446,12 @@ export default function OxyNewsHomePage() {
                     </button>
                   </div>
                 )}
+
+                <RBINewsSection />
               </div>
             )}
+
+
 
 
 

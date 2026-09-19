@@ -27,6 +27,10 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Maximize2,
+  Sparkles,
+  Gem,
+  Tag,
+  CheckCircle2,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
@@ -176,7 +180,8 @@ const ItemDisplayPage = () => {
     useState<GoldRateBreakdown | null>(null);
   const [goldRateLoading, setGoldRateLoading] = useState(false);
   const [showGoldBreakdown, setShowGoldBreakdown] = useState(false);
-
+  const [showSilverOfferModal, setShowSilverOfferModal] = useState(false);
+  const [silverOfferShown, setSilverOfferShown] = useState(false);
   const context = useContext(CartContext);
 
   if (!context) {
@@ -246,6 +251,19 @@ const ItemDisplayPage = () => {
       setShowGoldBreakdown(false);
     }
   }, [itemDetails?.itemId, itemDetails?.categoryType]);
+  useEffect(() => {
+    const isSilverCategory =
+      itemDetails?.categoryType?.toUpperCase() === "SILVER";
+
+    if (isSilverCategory && itemDetails?.itemId && !silverOfferShown) {
+      const timer = setTimeout(() => {
+        setShowSilverOfferModal(true);
+        setSilverOfferShown(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [itemDetails?.itemId, itemDetails?.categoryType, silverOfferShown]);
+
   useEffect(() => {
     if (showGoldBreakdown && breakdownRef.current) {
       setTimeout(() => {
@@ -1145,6 +1163,194 @@ const ItemDisplayPage = () => {
 
   return (
     <div className="min-h-screen">
+      <style>{`
+.invoice-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #ffffff;
+}
+
+/* Header row */
+.invoice-table thead th {
+  padding: 11px 16px; 
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+  background: #ffffff;
+  border-bottom: 1px solid #ececec;
+}
+
+.invoice-table thead th:nth-child(2),
+.invoice-table thead th:nth-child(3) {
+  text-align: center;
+}
+
+.invoice-table thead th:last-child {
+  text-align: right;
+}
+
+/* Body */
+.invoice-table tbody td {
+   padding: 14px 16px;  
+  font-size: 15px; 
+  color: #333333;
+  background: #ffffff;
+  border-bottom: 1px solid #f2f2f2;
+  vertical-align: middle;
+}
+
+.invoice-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.invoice-table tbody td:first-child {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.invoice-table tbody td:nth-child(2),
+.invoice-table tbody td:nth-child(3) {
+  text-align: center;
+  color: #555555;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.invoice-table tbody td:last-child {
+  text-align: right;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.invoice-table tbody tr:hover td {
+  background: #fafafa;
+}
+
+/* Subtotal-style row (e.g. "Total" before GST) */
+.invoice-table tbody tr.subtotal-line td {
+  background: #f7f7f7;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Discount row */
+.invoice-table tbody tr.discount-line td {
+  color: #b0793a;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.invoice-table tbody tr.discount-line td:last-child {
+  color: #c07d2e;
+  font-size: 16px;
+}
+
+/* Grand Total */
+.invoice-table tfoot td {
+  padding: 20px 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #fdf6e9;
+  border-top: 1px solid #f1e2bd;
+}
+
+.invoice-table tfoot td:last-child {
+  text-align: right;
+  font-size: 22px;
+  font-weight: 800;
+  color: #b8752f;
+  white-space: nowrap;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .invoice-table thead th {
+    padding: 11px 10px;
+    font-size: 11px;
+  }
+  .invoice-table tbody td {
+    padding: 14px 10px;
+    font-size: 14px;
+  }
+  .invoice-table tbody td:nth-child(2),
+  .invoice-table tbody td:nth-child(3) {
+    font-size: 13px;
+  }
+  .invoice-table tbody td:last-child {
+    font-size: 15px;
+  }
+  .invoice-table tfoot td {
+    padding: 17px 10px;
+    font-size: 15px;
+  }
+  .invoice-table tfoot td:last-child {
+    font-size: 18px;
+  }
+}
+
+.silver-offer-modal .ant-modal-content {
+  border-radius: 32px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: 0 25px 60px -12px rgba(88, 28, 135, 0.25), 0 8px 24px -8px rgba(0,0,0,0.08);
+  border: 1px solid rgba(196, 181, 253, 0.35);
+  animation: modalGlow 3s ease-in-out infinite;
+}
+
+@keyframes modalGlow {
+  0%, 100% {
+    box-shadow: 0 25px 60px -12px rgba(88, 28, 135, 0.25), 0 0 0 0 rgba(168, 85, 247, 0.15);
+  }
+  50% {
+    box-shadow: 0 25px 70px -10px rgba(88, 28, 135, 0.35), 0 0 0 10px rgba(168, 85, 247, 0.06);
+  }
+}
+
+@keyframes shimmerSweep {
+  0% { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+
+.silver-offer-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: shimmerSweep 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.silver-offer-modal .ant-modal-close {
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.silver-offer-modal .ant-modal-close:hover {
+  background: rgba(255,255,255,0.95);
+}
+
+.silver-offer-modal .ant-modal-body {
+  padding: 0;
+}
+`}</style>
       <Modal
         title="Special Offer!"
         open={offerModal.visible}
@@ -1491,189 +1697,328 @@ const ItemDisplayPage = () => {
                   </button>
                 </div>
               </div>
-              {itemDetails?.itemDescription && (
-                <div className="mt-4 w-full">
-                  <h3 className="font-bold text-purple-700 mb-2 font-bold">
-                    Description :
+              {(itemDetails?.itemDescription ||
+                (itemDetails as any)?.description ||
+                (itemDetails as any)?.desc) && (
+                <div className="mt-5 pt-5 border-t border-slate-100 w-full">
+                  <h3 className="font-semibold text-slate-800 text-sm mb-2 flex items-center gap-1.5">
+                    <Info className="w-4 h-4 text-slate-400" />
+                    Description
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed w-full">
-                    {itemDetails.itemDescription}
+                  <p className="text-slate-500 text-sm leading-relaxed w-full">
+                    {itemDetails?.itemDescription ||
+                      (itemDetails as any)?.description ||
+                      (itemDetails as any)?.desc}
                   </p>
                 </div>
               )}
               {isGoldItem &&
                 showGoldBreakdown &&
                 (() => {
-                  const metalLabel =
-                    itemDetails?.categoryType?.toUpperCase() === "SILVER"
-                      ? "Silver"
-                      : "Gold";
+                  const isSilverItem =
+                    itemDetails?.categoryType?.toUpperCase() === "SILVER";
+
+                  const metalLabel = isSilverItem ? "Silver" : "Gold";
 
                   const rawWeight =
                     itemDetails?.itemWeight ?? itemDetails?.weight;
+
                   const weightNum =
                     rawWeight !== undefined
                       ? parseFloat(String(rawWeight))
                       : null;
+
                   const weightUnit =
                     itemDetails?.weightUnit || itemDetails?.units || "";
 
-                  const rate =
-                    goldRateBreakdown && weightNum
+                  /*
+                   * ==========================================
+                   * GST PERCENTAGE
+                   * ==========================================
+                   *
+                   * Always take GST percentage from API.
+                   * No hardcoded 3%.
+                   */
+                  const gstPercent = goldRateBreakdown?.gstPercentage ?? 0;
+
+                  /*
+                   * ==========================================
+                   * SILVER VALUES FROM API
+                   * ==========================================
+                   *
+                   * API response:
+                   *
+                   * itemPrice    = 2575
+                   * gstAmount    = 77.25
+                   * totalAmount  = 2652.25
+                   * gstPercentage = 3
+                   *
+                   * We use these values directly.
+                   */
+                  const silverItemPrice = isSilverItem
+                    ? (goldRateBreakdown?.itemPrice ?? 0)
+                    : 0;
+
+                  const silverGstAmount = isSilverItem
+                    ? (goldRateBreakdown?.gstAmount ?? 0)
+                    : 0;
+
+                  const silverTotalAmount = isSilverItem
+                    ? (goldRateBreakdown?.totalAmount ?? 0)
+                    : 0;
+
+                  /*
+                   * ==========================================
+                   * SILVER DISCOUNT
+                   * ==========================================
+                   *
+                   * Discount is exactly the same as GST amount.
+                   */
+                  const silverDiscount = isSilverItem ? silverGstAmount : 0;
+
+                  /*
+                   * ==========================================
+                   * SILVER GRAND TOTAL
+                   * ==========================================
+                   *
+                   * Total Amount - GST Amount
+                   *
+                   * 2652.25 - 77.25 = 2575
+                   */
+                  const silverGrandTotal = isSilverItem
+                    ? silverTotalAmount - silverDiscount
+                    : 0;
+
+                  /*
+                   * ==========================================
+                   * RATE
+                   * ==========================================
+                   *
+                   * Silver:
+                   * API itemPrice / weight
+                   *
+                   * Gold:
+                   * Existing calculation
+                   */
+                  const rate = isSilverItem
+                    ? silverItemPrice && weightNum
+                      ? (silverItemPrice / weightNum).toFixed(2)
+                      : null
+                    : goldRateBreakdown && weightNum
                       ? (goldRateBreakdown.itemPrice / weightNum).toFixed(2)
                       : null;
 
-                  const subtotal = goldRateBreakdown
-                    ? goldRateBreakdown.itemPrice +
-                      goldRateBreakdown.makingAmount
-                    : 0;
+                  /*
+                   * ==========================================
+                   * GOLD SUBTOTAL
+                   * ==========================================
+                   *
+                   * Keep existing Gold logic unchanged.
+                   */
+                  const goldSubtotal =
+                    !isSilverItem && goldRateBreakdown
+                      ? goldRateBreakdown.itemPrice +
+                        goldRateBreakdown.makingAmount
+                      : 0;
+
+                  /*
+                   * ==========================================
+                   * FINAL GRAND TOTAL
+                   * ==========================================
+                   */
+                  const grandTotal = (
+                    isSilverItem
+                      ? silverGrandTotal
+                      : (goldRateBreakdown?.totalAmount ?? 0)
+                  ).toFixed(2);
 
                   return (
                     <div
                       ref={breakdownRef}
-                      className="mt-2 w-full rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white"
+                      className="mt-4 w-full rounded-2xl overflow-hidden shadow-lg"
                     >
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-5 rounded-full bg-amber-500" />
-                          <h3 className="font-bold text-gray-900 text-base">
-                            Price Breakup
-                          </h3>
+                      {/* ==========================================
+            HEADER
+           ========================================== */}
+
+                      <div className="relative px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b-2 border-amber-400 overflow-hidden">
+                        <div className="relative flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                            <Gem className="w-5 h-5 text-amber-600" />
+                          </div>
+
+                          <div>
+                            <h3 className="font-bold text-neutral-900 text-lg leading-tight">
+                              Price Breakup
+                            </h3>
+
+                            <span className="text-xs text-neutral-500 font-medium">
+                              {metalLabel}
+                              {weightNum ? ` · ${weightNum}${weightUnit}` : ""}
+                            </span>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => setShowGoldBreakdown(false)}
-                          className="text-xs font-semibold text-amber-700 hover:text-amber-900 flex items-center gap-1"
-                        >
-                          View Less
-                          <ChevronRight className="w-3.5 h-3.5 rotate-90" />
-                        </button>
                       </div>
+
+                      {/* ==========================================
+            LOADING
+           ========================================== */}
 
                       {goldRateLoading ? (
                         <div className="flex items-center text-sm text-gray-500 p-5">
-                          <Loader2 className="w-4 h-4 animate-spin mr-2" />{" "}
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
                           Loading...
                         </div>
                       ) : goldRateBreakdown ? (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm text-left border-collapse">
+                        <div className="p-4 bg-white">
+                          <table className="invoice-table">
                             <thead>
-                              <tr className="text-gray-500 text-[11px] uppercase tracking-wider">
-                                <th className="py-2.5 px-5 font-semibold">
-                                  Component
-                                </th>
-                                <th className="py-2.5 px-3 font-semibold">
-                                  Rate
-                                </th>
-                                <th className="py-2.5 px-3 font-semibold">
-                                  Weight
-                                </th>
-                                <th className="py-2.5 px-3 font-semibold">
-                                  Value
-                                </th>
-                                <th className="py-2.5 px-3 font-semibold">
-                                  Discount
-                                </th>
-                                <th className="py-2.5 px-5 font-semibold">
-                                  Final Value
-                                </th>
+                              <tr>
+                                <th>Component</th>
+                                <th>Rate</th>
+                                <th>Weight</th>
+                                <th>Amount</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+
+                            <tbody>
+                              {/* ==========================================
+                    SILVER / GOLD ITEM PRICE
+                   ========================================== */}
+
                               <tr>
-                                <td colSpan={6} className="pt-2 pb-1 px-5">
-                                  <span className="inline-block text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
-                                    {metalLabel}
-                                  </span>
-                                </td>
-                              </tr>
-                              <tr className="text-gray-700 hover:bg-gray-50/60 transition-colors">
-                                <td className="py-2.5 px-5">
+                                <td>
                                   {weightNum
-                                    ? `${weightNum}${weightUnit} ${metalLabel}`
-                                    : metalLabel}
+                                    ? `${weightNum}${weightUnit} `
+                                    : ""}
+                                  {metalLabel}
                                 </td>
-                                <td className="py-2.5 px-3">
-                                  {rate ? `₹${rate}` : "-"}
-                                </td>
-                                <td className="py-2.5 px-3">
+
+                                <td>{rate ? `₹${rate}` : "-"}</td>
+
+                                <td>
                                   {weightNum
                                     ? `${weightNum}${weightUnit}`
                                     : "-"}
                                 </td>
-                                <td className="py-2.5 px-3">
-                                  ₹{goldRateBreakdown.itemPrice.toFixed(2)}
-                                </td>
-                                <td className="py-2.5 px-3 text-gray-400">
-                                  ₹0
-                                </td>
-                                <td className="py-2.5 px-5 font-medium">
-                                  ₹{goldRateBreakdown.itemPrice.toFixed(2)}
+
+                                <td>
+                                  ₹
+                                  {isSilverItem
+                                    ? silverItemPrice.toFixed(2)
+                                    : goldRateBreakdown.itemPrice.toFixed(2)}
                                 </td>
                               </tr>
-                              <tr className="text-gray-700 hover:bg-gray-50/60 transition-colors">
-                                <td className="py-2.5 px-5">
-                                  Making Charges (
-                                  {goldRateBreakdown.makingCharges}%)
-                                </td>
-                                <td className="py-2.5 px-3 text-gray-400">-</td>
-                                <td className="py-2.5 px-3 text-gray-400">-</td>
-                                <td className="py-2.5 px-3">
-                                  ₹{goldRateBreakdown.makingAmount.toFixed(2)}
-                                </td>
-                                <td className="py-2.5 px-3 text-gray-400">-</td>
-                                <td className="py-2.5 px-5 font-medium">
-                                  ₹{goldRateBreakdown.makingAmount.toFixed(2)}
-                                </td>
-                              </tr>
-                              <tr className="font-semibold text-gray-900 bg-gray-50">
-                                <td className="py-2.5 px-5">Total</td>
-                                <td className="py-2.5 px-3"></td>
-                                <td className="py-2.5 px-3"></td>
-                                <td className="py-2.5 px-3">
-                                  ₹{subtotal.toFixed(2)}
-                                </td>
-                                <td className="py-2.5 px-3 text-gray-400 font-normal">
-                                  -
-                                </td>
-                                <td className="py-2.5 px-5">
-                                  ₹{subtotal.toFixed(2)}
-                                </td>
-                              </tr>
-                              <tr className="text-gray-700 hover:bg-gray-50/60 transition-colors">
-                                <td className="py-2.5 px-5">
-                                  GST ({goldRateBreakdown.gstPercentage}%)
-                                </td>
-                                <td className="py-2.5 px-3"></td>
-                                <td className="py-2.5 px-3"></td>
-                                <td className="py-2.5 px-3">
-                                  ₹{goldRateBreakdown.gstAmount.toFixed(2)}
-                                </td>
-                                <td className="py-2.5 px-3"></td>
-                                <td className="py-2.5 px-5 font-medium">
-                                  ₹{goldRateBreakdown.gstAmount.toFixed(2)}
-                                </td>
-                              </tr>
-                              <tr className="font-bold text-gray-900 bg-amber-50/60 border-t-2 border-amber-200">
-                                <td className="py-3.5 px-5 text-[15px]">
-                                  Grand Total
-                                </td>
-                                <td className="py-3.5 px-3"></td>
-                                <td className="py-3.5 px-3"></td>
-                                <td className="py-3.5 px-3 text-[15px]">
-                                  ₹{goldRateBreakdown.totalAmount.toFixed(2)}
-                                </td>
-                                <td className="py-3.5 px-3"></td>
-                                <td className="py-3.5 px-5 text-[15px] text-amber-800">
-                                  ₹{goldRateBreakdown.totalAmount.toFixed(2)}
-                                </td>
-                              </tr>
+
+                              {/* ==========================================
+                    GOLD MAKING CHARGES
+                   ========================================== */}
+
+                              {!isSilverItem && (
+                                <tr>
+                                  <td>
+                                    Making Charges (
+                                    {goldRateBreakdown.makingCharges}%)
+                                  </td>
+
+                                  <td>-</td>
+                                  <td>-</td>
+
+                                  <td>
+                                    ₹{goldRateBreakdown.makingAmount.toFixed(2)}
+                                  </td>
+                                </tr>
+                              )}
+
+                              {/* ==========================================
+                    GOLD GST
+                   ========================================== */}
+
+                              {!isSilverItem && (
+                                <tr>
+                                  <td>
+                                    GST ({goldRateBreakdown.gstPercentage}
+                                    %)
+                                  </td>
+
+                                  <td>-</td>
+                                  <td>-</td>
+
+                                  <td>
+                                    ₹{goldRateBreakdown.gstAmount.toFixed(2)}
+                                  </td>
+                                </tr>
+                              )}
+
+                              {/* ==========================================
+                    SILVER GST
+                   ========================================== */}
+
+                              {isSilverItem && (
+                                <tr>
+                                  <td>GST ({gstPercent}%)</td>
+
+                                  <td>-</td>
+
+                                  <td>-</td>
+
+                                  <td>₹{silverGstAmount.toFixed(2)}</td>
+                                </tr>
+                              )}
+
+                              {/* ==========================================
+                    SILVER TOTAL BEFORE DISCOUNT
+                   ========================================== */}
+
+                              {isSilverItem && (
+                                <tr className="subtotal-line">
+                                  <td>Total</td>
+
+                                  <td>-</td>
+
+                                  <td>-</td>
+
+                                  <td>₹{silverTotalAmount.toFixed(2)}</td>
+                                </tr>
+                              )}
+
+                              {/* ==========================================
+                    SILVER DISCOUNT
+                   ========================================== */}
+
+                              {isSilverItem && (
+                                <tr className="discount-line">
+                                  <td>
+                                    <span className="flex items-center gap-1.5">
+                                      <Tag className="w-3.5 h-3.5" />
+                                      Discount ({gstPercent}%)
+                                    </span>
+                                  </td>
+
+                                  <td>-</td>
+
+                                  <td>-</td>
+
+                                  <td>-₹{silverDiscount.toFixed(2)}</td>
+                                </tr>
+                              )}
                             </tbody>
+
+                            {/* ==========================================
+                  GRAND TOTAL
+                 ========================================== */}
+
+                            <tfoot>
+                              <tr>
+                                <td colSpan={3}>Grand Total</td>
+
+                                <td>₹{grandTotal}</td>
+                              </tr>
+                            </tfoot>
                           </table>
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500 p-5">
+                        <p className="text-sm text-gray-500 p-5 bg-white">
                           Unable to load price breakdown.
                         </p>
                       )}
@@ -2334,6 +2679,179 @@ const ItemDisplayPage = () => {
       </Modal>
 
       <Footer />
+      <Modal
+        open={showSilverOfferModal}
+        onCancel={() => setShowSilverOfferModal(false)}
+        footer={null}
+        centered
+        width={420}
+        closeIcon={<X className="w-4 h-4 text-slate-500" />}
+        className="silver-offer-modal"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="relative overflow-hidden rounded-[32px] bg-gradient-to-b from-purple-50 via-white to-amber-50/40 ring-1 ring-purple-200/60"
+        >
+          <div className="silver-offer-shine" />
+          {/* Soft glow blobs */}
+          <motion.div
+            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-purple-200/50 blur-3xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{
+              duration: 4.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5,
+            }}
+            className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-amber-200/50 blur-3xl"
+          />
+
+          {/* Floating sparkles */}
+          <motion.div
+            animate={{
+              y: [0, -8, 0],
+              rotate: [0, 15, 0],
+              opacity: [0.6, 1, 0.6],
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-6 left-8 text-purple-300"
+          >
+            <Sparkles className="w-5 h-5" />
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, 10, 0],
+              rotate: [0, -15, 0],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 3.4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.6,
+            }}
+            className="absolute top-10 right-10 text-amber-400"
+          >
+            <Sparkles className="w-4 h-4" />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, -6, 0], opacity: [0.4, 0.9, 0.4] }}
+            transition={{
+              duration: 2.6,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+            className="absolute bottom-24 left-12 text-indigo-300"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+          </motion.div>
+
+          <div className="relative pt-12 pb-8 px-8 text-center">
+            <div className="relative mx-auto mb-5 w-20 h-20 flex items-center justify-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                className="absolute -inset-1 rounded-full bg-[conic-gradient(from_0deg,#a855f7,#f59e0b,#a855f7)] opacity-60 blur-md"
+              />
+              <motion.div
+                animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{
+                  duration: 2.2,
+                  repeat: Infinity,
+                  ease: "easeOut",
+                }}
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-300 to-amber-300"
+              />
+              <motion.div
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{
+                  delay: 0.15,
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 18,
+                }}
+                className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-purple-200"
+              >
+                <Gem className="w-8 h-8 text-white" />
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 text-amber-700 text-xs font-bold px-3 py-1 rounded-full mb-3 shadow-sm"
+            >
+              <Tag className="w-3 h-3" />
+              Limited-Time Discount
+            </motion.div>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-extrabold bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2"
+            >
+              Exclusive Silver Offer
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className="text-sm text-gray-500 mb-6 leading-relaxed px-2"
+            >
+              A special discount has been applied to this item's price — check
+              the breakdown below to see how much you're saving.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex items-center justify-center gap-2 mb-7 flex-wrap"
+            >
+              <span className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="text-xs font-semibold text-indigo-700">
+                  Verified Price
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5">
+                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span className="text-xs font-semibold text-amber-700">
+                  Best Price
+                </span>
+              </span>
+            </motion.div>
+
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              whileHover={{
+                scale: 1.02,
+                boxShadow: "0 12px 24px -8px rgba(147, 51, 234, 0.4)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowSilverOfferModal(false)}
+              className="relative overflow-hidden w-full py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 shadow-lg shadow-purple-200 transition-shadow"
+            >
+              <span className="absolute inset-0 -translate-x-full hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              Claim Now
+            </motion.button>
+          </div>
+        </motion.div>
+      </Modal>
     </div>
   );
 };

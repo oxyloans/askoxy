@@ -103,6 +103,8 @@ export const OUTBOUND_SCENARIOS = [
   "LEAD_FOLLOWUP",
   "ORDER_STATUS_UPDATE",
   "BIRTHDAY_WISH",
+  "RECOVERY",
+  "USER_QUERY"
 ] as const;
  
 export type OutboundScenario = (typeof OUTBOUND_SCENARIOS)[number];
@@ -114,6 +116,8 @@ export const OUTBOUND_SCENARIO_LABELS: Record<OutboundScenario, string> = {
   LEAD_FOLLOWUP: "Lead Follow-up",
   ORDER_STATUS_UPDATE: "Order Status Update",
   BIRTHDAY_WISH: "Birthday Wish",
+  RECOVERY:"Recovery calls",
+  USER_QUERY: "User Query",
 };
 
 
@@ -155,6 +159,14 @@ export const SCENARIO_PAYLOAD_FIELDS: Record<OutboundScenario, PayloadFieldConfi
   BIRTHDAY_WISH: [
     { key: "customerName", label: "Customer Name", type: "text", placeholder: "Ravi Kumar" },
     { key: "dateOfBirth", label: "Date of Birth", type: "date" },
+  ],
+   RECOVERY: [
+    { key: "customerName", label: "Customer Name", type: "text", placeholder: "Raj Kumar" },
+    { key: "loan amount", label: "loan amount", type: "text" },
+  ],
+    USER_QUERY: [
+    { key: "customerName", label: "Customer Name", type: "text", placeholder: "Ravi Kumar" },
+    { key: "userQuery", label: "User Query", type: "text", placeholder: "I want to know my loan status" },
   ],
 };
  

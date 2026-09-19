@@ -17,9 +17,12 @@ import {
   MailOutlined,
   PhoneOutlined,
   UserOutlined,
-  BankOutlined,
-  IdcardOutlined,
   EnvironmentOutlined,
+  IdcardOutlined,
+  DollarOutlined,
+  FieldTimeOutlined,
+  TagsOutlined,
+  BookOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
 import BASE_URL from "../Config";
@@ -27,21 +30,31 @@ import BASE_URL from "../Config";
 const { Text, Title } = Typography;
 const { Search } = Input;
 
-interface SudheerDataItem {
+interface SaNaukariItem {
   id: string;
-  name: string;
-  title: string;
-  company: string;
-  phoneNumber: string | null;
-  mailId: string | null;
-  address: string | null;
+  candidateName: string;
+  workExperience: string;
+  location: string;
+  salary: string;
+  currentDesignationAndCompany: string;
+  contactNo: string;
+  emailIds: string;
+  keySkills: string;
+  keywords: string;
+  savedSearchGroup: string;
+  education: string;
+  resumeHeadline: string;
+  previousExperience: string;
+  preferredLocation: string;
+  recordId: number | string;
 }
 
 const DEFAULT_PAGE_SIZE = 100;
+
 const PRIMARY_COLOR = "#008cba";
 
-const SudheerVakkalagadda: React.FC = () => {
-  const [records, setRecords] = useState<SudheerDataItem[]>([]);
+const SaNaukariRecords: React.FC = () => {
+  const [records, setRecords] = useState<SaNaukariItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
@@ -61,7 +74,7 @@ const SudheerVakkalagadda: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/ai-service/entity-records/sudheer-data`,
+        `${BASE_URL}/ai-service/entity-records/sa-naukari-records`,
         {
           params: { page, size },
         },
@@ -92,6 +105,16 @@ const SudheerVakkalagadda: React.FC = () => {
     fetchRecords();
   }, [fetchRecords]);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 576);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 576);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const filteredRecords = useMemo(() => {
     let data = [...records];
 
@@ -100,19 +123,24 @@ const SudheerVakkalagadda: React.FC = () => {
 
       data = data.filter(
         (item) =>
-          item.name?.toLowerCase().includes(search) ||
-          item.title?.toLowerCase().includes(search) ||
-          item.company?.toLowerCase().includes(search) ||
-          item.phoneNumber?.toLowerCase().includes(search) ||
-          item.mailId?.toLowerCase().includes(search) ||
-          item.address?.toLowerCase().includes(search),
+          item.candidateName?.toLowerCase().includes(search) ||
+          item.currentDesignationAndCompany?.toLowerCase().includes(search) ||
+          item.location?.toLowerCase().includes(search) ||
+          item.preferredLocation?.toLowerCase().includes(search) ||
+          item.contactNo?.toLowerCase().includes(search) ||
+          item.emailIds?.toLowerCase().includes(search) ||
+          item.keySkills?.toLowerCase().includes(search) ||
+          item.education?.toLowerCase().includes(search) ||
+          item.savedSearchGroup?.toLowerCase().includes(search) ||
+          item.workExperience?.toLowerCase().includes(search) ||
+          item.salary?.toLowerCase().includes(search),
       );
     }
 
     return data;
   }, [records, searchText]);
 
-  const columns: ColumnsType<SudheerDataItem> = [
+  const columns: ColumnsType<SaNaukariItem> = [
     {
       title: <div style={{ textAlign: "center" }}>S.No</div>,
       key: "serialNumber",
@@ -128,13 +156,13 @@ const SudheerVakkalagadda: React.FC = () => {
       title: (
         <div style={{ textAlign: "center" }}>
           <UserOutlined style={{ marginRight: 6 }} />
-          Name
+          Candidate Name
         </div>
       ),
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "candidateName",
+      key: "candidateName",
       align: "center",
-      width: 180,
+      width: 170,
       render: (value: string) => (
         <Text strong style={{ color: "#1f2937" }}>
           {hasValue(value) ? value : "-"}
@@ -148,11 +176,11 @@ const SudheerVakkalagadda: React.FC = () => {
           Mobile Number
         </div>
       ),
-      dataIndex: "phoneNumber",
-      key: "phoneNumber",
+      dataIndex: "contactNo",
+      key: "contactNo",
       align: "center",
-      width: 150,
-      render: (value: string | null) =>
+      width: 140,
+      render: (value: string) =>
         hasValue(value) ? (
           <a
             href={`tel:${value}`}
@@ -175,10 +203,10 @@ const SudheerVakkalagadda: React.FC = () => {
           Email
         </div>
       ),
-      dataIndex: "mailId",
-      key: "mailId",
+      dataIndex: "emailIds",
+      key: "emailIds",
       align: "center",
-      width: 220,
+      width: 210,
       render: (value: string | null) =>
         hasValue(value) ? (
           <a
@@ -195,14 +223,14 @@ const SudheerVakkalagadda: React.FC = () => {
       title: (
         <div style={{ textAlign: "center" }}>
           <EnvironmentOutlined style={{ marginRight: 6 }} />
-          Address
+          Location
         </div>
       ),
-      dataIndex: "address",
-      key: "address",
+      dataIndex: "location",
+      key: "location",
       align: "center",
-      width: 220,
-      render: (value: string | null) => (
+      width: 140,
+      render: (value: string) => (
         <Text>{hasValue(value) ? value : "-"}</Text>
       ),
     },
@@ -210,27 +238,76 @@ const SudheerVakkalagadda: React.FC = () => {
       title: (
         <div style={{ textAlign: "center" }}>
           <IdcardOutlined style={{ marginRight: 6 }} />
-          Title
+          Current Designation & Company
         </div>
       ),
-      dataIndex: "title",
-      key: "title",
+      dataIndex: "currentDesignationAndCompany",
+      key: "currentDesignationAndCompany",
       align: "center",
-      width: 220,
-      render: (value: string) => <Text>{hasValue(value) ? value : "-"}</Text>,
+      width: 260,
+      render: (value: string) => (
+        <Text>{hasValue(value) ? value : "-"}</Text>
+      ),
     },
     {
       title: (
         <div style={{ textAlign: "center" }}>
-          <BankOutlined style={{ marginRight: 6 }} />
-          Company
+          <FieldTimeOutlined style={{ marginRight: 6 }} />
+          Experience
         </div>
       ),
-      dataIndex: "company",
-      key: "company",
+      dataIndex: "workExperience",
+      key: "workExperience",
+      align: "center",
+      width: 110,
+      render: (value: string) => (
+        <Text>{hasValue(value) ? value : "-"}</Text>
+      ),
+    },
+    {
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <DollarOutlined style={{ marginRight: 6 }} />
+          Salary
+        </div>
+      ),
+      dataIndex: "salary",
+      key: "salary",
+      align: "center",
+      width: 110,
+      render: (value: string) => (
+        <Text>{hasValue(value) ? value : "-"}</Text>
+      ),
+    },
+    {
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <TagsOutlined style={{ marginRight: 6 }} />
+          Key Skills
+        </div>
+      ),
+      dataIndex: "keySkills",
+      key: "keySkills",
+      align: "center",
+      width: 240,
+      render: (value: string) => (
+        <Text>{hasValue(value) ? value : "-"}</Text>
+      ),
+    },
+    {
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <BookOutlined style={{ marginRight: 6 }} />
+          Education
+        </div>
+      ),
+      dataIndex: "education",
+      key: "education",
       align: "center",
       width: 200,
-      render: (value: string) => <Text>{hasValue(value) ? value : "-"}</Text>,
+      render: (value: string) => (
+        <Text>{hasValue(value) ? value : "-"}</Text>
+      ),
     },
   ];
 
@@ -258,10 +335,10 @@ const SudheerVakkalagadda: React.FC = () => {
             level={4}
             style={{ margin: 0, color: "#1f2937", fontWeight: 700 }}
           >
-            Sudheer Vakkalagadda Data
+            Naukri Records
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            View Sudheer Vakkalagadda entity records
+            View Naukri candidate records
           </Text>
         </div>
         <Button
@@ -323,7 +400,7 @@ const SudheerVakkalagadda: React.FC = () => {
                 lineHeight: 1.2,
               }}
             >
-              {total.toLocaleString()}
+              {total}
             </div>
             <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
               Total Records
@@ -346,12 +423,12 @@ const SudheerVakkalagadda: React.FC = () => {
         >
           <Search
             allowClear
-            placeholder="Search by name, title, company, email, phone or address"
+            placeholder="Search by name, designation, company, skills or location"
             prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{
-              maxWidth: 360,
+              maxWidth: 340,
               width: "100%",
               borderRadius: 8,
             }}
@@ -382,7 +459,7 @@ const SudheerVakkalagadda: React.FC = () => {
               pagination={false}
               bordered
               size="middle"
-              scroll={{ x: 1200 }}
+              scroll={{ x: 1650 }}
               locale={{
                 emptyText: (
                   <Empty
@@ -419,7 +496,7 @@ const SudheerVakkalagadda: React.FC = () => {
                 pageSize={size}
                 total={total}
                 showSizeChanger={false}
-                showTotal={(totalRecords) => `Total ${totalRecords.toLocaleString()} records`}
+                showTotal={(totalRecords) => `Total ${totalRecords} records`}
                 onChange={(pageNumber) => setPage(pageNumber - 1)}
               />
             </div>
@@ -430,4 +507,4 @@ const SudheerVakkalagadda: React.FC = () => {
   );
 };
 
-export default SudheerVakkalagadda;
+export default SaNaukariRecords;
