@@ -105,6 +105,7 @@ interface GoldRateBreakdown {
   itemAmount: number;
   makingAmount: number;
   makingCharges: number;
+  discountAmount?: number;
 }
 
 const ItemDisplayPage = () => {
@@ -115,6 +116,7 @@ const ItemDisplayPage = () => {
     state?.item || null,
   );
   const [itemImages, setItemImages] = useState<ItemImage[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
@@ -227,11 +229,12 @@ const ItemDisplayPage = () => {
       setItemImages([]);
     }
   };
+
   const scrollToBottom = () => {
     if (chatEndRef.current) {
-      const chatContainer = chatEndRef.current.parentElement; // Get the parent container with overflow-y-auto
+      const chatContainer = chatEndRef.current.parentElement;
       if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom of the chat container
+        chatContainer.scrollTop = chatContainer.scrollHeight;
       }
     }
   };
@@ -239,145 +242,6 @@ const ItemDisplayPage = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  useEffect(() => {
-    const isPreciousMetal = itemDetails?.categoryType
-      ? ["GOLD", "SILVER"].includes(itemDetails.categoryType.toUpperCase())
-      : false;
-
-    if (itemDetails && isPreciousMetal) {
-      fetchGoldRateBreakdown(itemDetails.itemId);
-    } else {
-      setGoldRateBreakdown(null);
-      setShowGoldBreakdown(false);
-    }
-  }, [itemDetails?.itemId, itemDetails?.categoryType]);
-  useEffect(() => {
-    const isSilverCategory =
-      itemDetails?.categoryType?.toUpperCase() === "SILVER";
-
-    if (isSilverCategory && itemDetails?.itemId && !silverOfferShown) {
-      const timer = setTimeout(() => {
-        setShowSilverOfferModal(true);
-        setSilverOfferShown(true);
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [itemDetails?.itemId, itemDetails?.categoryType, silverOfferShown]);
-
-  useEffect(() => {
-    if (showGoldBreakdown && breakdownRef.current) {
-      setTimeout(() => {
-        breakdownRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 100);
-    }
-  }, [showGoldBreakdown]);
-
-  const fetchItemDetails = async (id: string) => {
-    try {
-      const response = await customerApi.get(
-        `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
-      );
-      const allItems = response.data.flatMap((group: any) =>
-        group.categories.flatMap((category: any) =>
-          category.itemsResponseDtoList.map((item: any) => ({
-            ...item,
-            category: category.categoryName,
-            categoryType: group.categoryType, // ADDED
-          })),
-        ),
-      );
-
-      // Exclude sold-out items (quantity === 0)
-      const availableItems = allItems.filter(
-        (it: any) => it.quantity === undefined || it.quantity > 0,
-      );
-
-      const item = availableItems.find((item: Item) => item.itemId === id);
-      if (item) {
-        setItemDetails(item);
-        await fetchItemImages(id);
-      } else {
-        // Item is sold out or unavailable
-        Modal.info({
-          title: "Item unavailable",
-          content: "This item is currently sold out or unavailable.",
-        });
-        // navigate back after short delay
-        setTimeout(() => {
-          navigate(-1);
-        }, 1200);
-      }
-    } catch (error) {
-      console.error("Error fetching item details:", error);
-    }
-  };
-
-  const resolveCategoryType = async (id: string) => {
-    try {
-      const response = await customerApi.get(
-        `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
-      );
-      const matchingGroup = response.data.find((group: any) =>
-        group.categories.some((category: any) =>
-          category.itemsResponseDtoList.some((item: any) => item.itemId === id),
-        ),
-      );
-      if (matchingGroup?.categoryType) {
-        setItemDetails((prev) =>
-          prev ? { ...prev, categoryType: matchingGroup.categoryType } : prev,
-        );
-      }
-    } catch (error) {
-      console.error("Error resolving category type:", error);
-    }
-  };
-
-  const fetchComboAddOns = async () => {
-    try {
-      const response = await customerApi.get(
-        `${BASE_URL}/product-service/combo-offers`,
-      );
-      const comboItems = response.data?.content || [];
-
-      const addOns = comboItems.flatMap((combo: any) => combo.items || []);
-
-      if (addOns.length > 0) {
-        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
-      }
-    } catch (err) {
-      console.error("Error fetching combo offers:", err);
-    }
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-
-  useEffect(() => {
-    if (itemId) {
-      if (!state?.item) {
-        fetchItemDetails(itemId); // already attaches categoryType
-      } else {
-        setItemDetails(state.item);
-        fetchItemImages(itemId);
-        resolveCategoryType(itemId); // NEW — backfills categoryType when missing
-      }
-      fetchCartData("");
-      fetchRelatedItems();
-    }
-  }, [itemId, state]);
-
-  const handleRelatedItemClick = (item: Item) => {
-    setItemDetails(item);
-    fetchItemImages(item.itemId);
-    navigate(`/main/itemsdisplay/${item.itemId}`, {
-      state: { item },
-      replace: true,
-    });
-  };
 
   const fetchCartData = async (itemId: string) => {
     const userId = localStorage.getItem("userId");
@@ -552,63 +416,210 @@ const ItemDisplayPage = () => {
     }
   };
 
-  const fetchRelatedItems = async () => {
-    if (!itemDetails) return;
-
+  const loadAllPageData = async (id: string) => {
+    setPageLoading(true);
+    setGoldRateLoading(true);
     try {
-      const response = await customerApi.get(
+      const groupItemsPromise = customerApi.get(
         `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
+      const imagesPromise = customerApi.get(
+        `${BASE_URL}/product-service/ImagesViewBasedOnItemId?itemId=${id}`,
+      );
+      const cartPromise = fetchCartData("");
 
-      console.log("Fetched Categories:", response.data);
+      const [groupResResult, imagesResResult] = await Promise.allSettled([
+        groupItemsPromise,
+        imagesPromise,
+      ]);
 
-      const matchingGroup = response.data.find((group: any) =>
-        group.categories.some((category: any) =>
-          category.itemsResponseDtoList.some(
-            (item: any) => item.itemId === itemDetails.itemId,
+      let loadedItem: Item | null = null;
+      let categoryTypeUpper = "";
+
+      if (groupResResult.status === "fulfilled") {
+        const groupRes = groupResResult.value;
+        const allItems = (groupRes.data || []).flatMap((group: any) =>
+          (group.categories || []).flatMap((category: any) =>
+            (category.itemsResponseDtoList || []).map((item: any) => ({
+              ...item,
+              category: category.categoryName,
+              categoryType: group.categoryType,
+            })),
           ),
-        ),
-      );
+        );
 
-      const matchingCategory = matchingGroup?.categories.find((category: any) =>
-        category.itemsResponseDtoList.some(
-          (item: any) => item.itemId === itemDetails.itemId,
-        ),
-      );
+        const availableItems = allItems.filter(
+          (it: any) => it.quantity === undefined || it.quantity > 0,
+        );
 
-      if (
-        matchingCategory &&
-        Array.isArray(matchingCategory.itemsResponseDtoList)
-      ) {
-        const categoryItems = matchingCategory.itemsResponseDtoList
-          .filter(
-            (item: any) =>
-              item.itemId !== itemDetails.itemId &&
-              (item.quantity === undefined || item.quantity > 0),
-          )
-          .slice(0, 4)
-          .map((item: any) => ({
-            ...item,
-            category: matchingCategory.categoryName,
-            categoryType: matchingGroup.categoryType, // ADDED
-          }));
+        const item =
+          availableItems.find((it: Item) => it.itemId === id) ||
+          allItems.find((it: Item) => it.itemId === id);
 
-        console.log("Related Items:", categoryItems);
-        setRelatedItems(categoryItems);
+        if (item) {
+          loadedItem = item;
+          setItemDetails(item);
+          categoryTypeUpper = item.categoryType?.toUpperCase() || "";
+
+          const matchingGroup = (groupRes.data || []).find((group: any) =>
+            (group.categories || []).some((category: any) =>
+              (category.itemsResponseDtoList || []).some(
+                (it: any) => it.itemId === item.itemId,
+              ),
+            ),
+          );
+
+          const matchingCategory = matchingGroup?.categories.find(
+            (category: any) =>
+              (category.itemsResponseDtoList || []).some(
+                (it: any) => it.itemId === item.itemId,
+              ),
+          );
+
+          if (
+            matchingCategory &&
+            Array.isArray(matchingCategory.itemsResponseDtoList)
+          ) {
+            const categoryItems = matchingCategory.itemsResponseDtoList
+              .filter(
+                (it: any) =>
+                  it.itemId !== item.itemId &&
+                  (it.quantity === undefined || it.quantity > 0),
+              )
+              .slice(0, 4)
+              .map((it: any) => ({
+                ...it,
+                category: matchingCategory.categoryName,
+                categoryType: matchingGroup.categoryType,
+              }));
+            setRelatedItems(categoryItems);
+          } else {
+            setRelatedItems([]);
+          }
+        } else {
+          if (state?.item) {
+            loadedItem = state.item;
+            setItemDetails(state.item);
+            categoryTypeUpper = state.item.categoryType?.toUpperCase() || "";
+          } else {
+            Modal.info({
+              title: "Item unavailable",
+              content: "This item is currently sold out or unavailable.",
+            });
+            setTimeout(() => {
+              navigate(-1);
+            }, 1200);
+          }
+        }
       } else {
-        console.log("No matching category found for this item.");
-        setRelatedItems([]);
+        console.error("Error fetching group items:", groupResResult.reason);
+        if (state?.item) {
+          loadedItem = state.item;
+          setItemDetails(state.item);
+          categoryTypeUpper = state.item.categoryType?.toUpperCase() || "";
+        }
       }
+
+      if (imagesResResult.status === "fulfilled") {
+        setItemImages(imagesResResult.value.data || []);
+        setCurrentImageIndex(0);
+      } else {
+        console.error("Error fetching images:", imagesResResult.reason);
+        setItemImages([]);
+      }
+
+      // If item is precious metal (GOLD or SILVER), fetch rates
+      const isPrecious = ["GOLD", "SILVER"].includes(categoryTypeUpper);
+      if (isPrecious) {
+        try {
+          const ratesResponse = await axios.get(
+            `${BASE_URL}/product-service/getAllGoldAndSilverRates?itemId=${id}`,
+          );
+          setGoldRateBreakdown(ratesResponse.data);
+        } catch (ratesErr) {
+          console.error("Error fetching gold/silver rates:", ratesErr);
+          setGoldRateBreakdown(null);
+        }
+      } else {
+        setGoldRateBreakdown(null);
+        setShowGoldBreakdown(false);
+      }
+
+      await cartPromise;
     } catch (error) {
-      console.error("Error fetching related items:", error);
+      console.error("Error loading page data:", error);
+    } finally {
+      setGoldRateLoading(false);
+      setPageLoading(false);
     }
   };
 
   useEffect(() => {
-    if (itemDetails) {
-      fetchRelatedItems();
+    if (itemId) {
+      setSilverOfferShown(false);
+      loadAllPageData(itemId);
     }
-  }, [itemDetails]);
+  }, [itemId]);
+
+  useEffect(() => {
+    const isSilverCategory =
+      itemDetails?.categoryType?.toUpperCase() === "SILVER";
+
+    if (
+      !pageLoading &&
+      isSilverCategory &&
+      itemDetails?.itemId &&
+      !silverOfferShown
+    ) {
+      const timer = setTimeout(() => {
+        setShowSilverOfferModal(true);
+        setSilverOfferShown(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [itemDetails?.itemId, itemDetails?.categoryType, silverOfferShown, pageLoading]);
+
+  useEffect(() => {
+    if (showGoldBreakdown && breakdownRef.current) {
+      setTimeout(() => {
+        breakdownRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [showGoldBreakdown]);
+
+  const fetchComboAddOns = async () => {
+    try {
+      const response = await customerApi.get(
+        `${BASE_URL}/product-service/combo-offers`,
+      );
+      const comboItems = response.data?.content || [];
+
+      const addOns = comboItems.flatMap((combo: any) => combo.items || []);
+
+      if (addOns.length > 0) {
+        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+      }
+    } catch (err) {
+      console.error("Error fetching combo offers:", err);
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  const handleRelatedItemClick = (item: Item) => {
+    setItemDetails(item);
+    setSilverOfferShown(false);
+    fetchItemImages(item.itemId);
+    navigate(`/main/itemsdisplay/${item.itemId}`, {
+      state: { item },
+      replace: true,
+    });
+  };
 
   const handleAddToCart = async (item: Item & { status?: string }) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -1160,6 +1171,124 @@ const ItemDisplayPage = () => {
   const handleGoldPriceModalClose = () => {
     setGoldPriceModal({ visible: false, urls: [], images: [] });
   };
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50/50">
+        <div className="px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center space-x-2 mb-6">
+            <div className="h-4 w-12 bg-gray-200 rounded"></div>
+            <div className="h-4 w-3 bg-gray-200 rounded"></div>
+            <div className="h-4 w-20 bg-gray-200 rounded"></div>
+            <div className="h-4 w-3 bg-gray-200 rounded"></div>
+            <div className="h-4 w-24 bg-gray-200 rounded"></div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Main Content Area */}
+            <div className="lg:col-span-8 space-y-6">
+              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                  {/* Image placeholder */}
+                  <div>
+                    <div className="aspect-square rounded-lg bg-gray-200 w-full"></div>
+                    <div className="flex space-x-2 mt-4">
+                      <div className="w-16 h-16 rounded-lg bg-gray-200 flex-shrink-0"></div>
+                      <div className="w-16 h-16 rounded-lg bg-gray-200 flex-shrink-0"></div>
+                      <div className="w-16 h-16 rounded-lg bg-gray-200 flex-shrink-0"></div>
+                    </div>
+                  </div>
+
+                  {/* Details placeholder */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                      <div className="flex items-center space-x-2">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-baseline space-x-3">
+                        <div className="h-8 bg-gray-200 rounded w-32"></div>
+                        <div className="h-5 bg-gray-200 rounded w-20"></div>
+                      </div>
+                      <div className="h-4 bg-gray-200 rounded w-28"></div>
+                    </div>
+
+                    <div className="h-6 bg-gray-200 rounded-full w-24 mt-2"></div>
+
+                    <div className="border-t border-gray-100 pt-4 space-y-3">
+                      <div className="h-12 bg-gray-200 rounded-lg w-full"></div>
+                      <div className="h-12 bg-gray-200 rounded-lg w-full"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description placeholder */}
+                <div className="mt-6 pt-5 border-t border-gray-100 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-28 mb-3"></div>
+                  <div className="h-3.5 bg-gray-200 rounded w-full"></div>
+                  <div className="h-3.5 bg-gray-200 rounded w-5/6"></div>
+                  <div className="h-3.5 bg-gray-200 rounded w-4/6"></div>
+                </div>
+
+                {/* Price breakup placeholder */}
+                <div className="mt-6 rounded-2xl border border-gray-100 overflow-hidden bg-gray-50/50 p-4 space-y-3">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <div className="h-5 bg-gray-200 rounded w-32"></div>
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  </div>
+                  <div className="space-y-2.5 pt-2">
+                    <div className="flex justify-between">
+                      <div className="h-4 bg-gray-200 rounded w-28"></div>
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      <div className="h-4 bg-gray-200 rounded w-14"></div>
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-gray-200">
+                      <div className="h-5 bg-gray-200 rounded w-28"></div>
+                      <div className="h-5 bg-gray-200 rounded w-20"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Related Products Sidebar */}
+            <div className="lg:col-span-4">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="h-5 bg-gray-200 rounded w-36 mb-4"></div>
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="border border-gray-100 rounded-lg p-4 flex space-x-3"
+                    >
+                      <div className="w-16 h-16 rounded-lg bg-gray-200 flex-shrink-0"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3.5 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -1772,18 +1901,20 @@ const ItemDisplayPage = () => {
                    * SILVER DISCOUNT
                    * ==========================================
                    *
-                   * Discount is exactly the same as GST amount.
+                   * Discount from API discountAmount (or fallback to GST amount).
                    */
-                  const silverDiscount = isSilverItem ? silverGstAmount : 0;
+                  const silverDiscount = isSilverItem
+                    ? (goldRateBreakdown?.discountAmount !== undefined
+                        ? goldRateBreakdown.discountAmount
+                        : (goldRateBreakdown?.gstAmount ?? 0))
+                    : 0;
 
                   /*
                    * ==========================================
                    * SILVER GRAND TOTAL
                    * ==========================================
                    *
-                   * Total Amount - GST Amount
-                   *
-                   * 2652.25 - 77.25 = 2575
+                   * Total Amount - Discount Amount
                    */
                   const silverGrandTotal = isSilverItem
                     ? silverTotalAmount - silverDiscount
@@ -1991,7 +2122,7 @@ const ItemDisplayPage = () => {
                                   <td>
                                     <span className="flex items-center gap-1.5">
                                       <Tag className="w-3.5 h-3.5" />
-                                      Discount ({gstPercent}%)
+                                      Discount
                                     </span>
                                   </td>
 

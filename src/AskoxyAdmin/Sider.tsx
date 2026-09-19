@@ -52,6 +52,8 @@ import {
   EnvironmentOutlined,
   FileTextOutlined,
   LinkedinOutlined,
+  IdcardOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdWork } from "react-icons/md";
@@ -282,6 +284,36 @@ const Sidebar: React.FC = () => {
             title: "Tahsildar Records",
             icon: <EnvironmentOutlined className="text-blue-500" />,
             link: "/admin/tahsildar-records",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Active Membership",
+            icon: <IdcardOutlined className="text-emerald-500" />,
+            link: "/admin/active-membership",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "AMS Lost Customer Data",
+            icon: <UserOutlined className="text-orange-500" />,
+            link: "/admin/ams-lost-customer-data",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Saksham Data",
+            icon: <TeamOutlined className="text-blue-500" />,
+            link: "/admin/saksham-data",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "TiE Data",
+            icon: <TeamOutlined className="text-emerald-500" />,
+            link: "/admin/tie-data",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Two Years Service Data",
+            icon: <TeamOutlined className="text-purple-500" />,
+            link: "/admin/two-years-service-data",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
           {

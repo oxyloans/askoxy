@@ -51,6 +51,11 @@ import AmfiReports from "./AskoxyAdmin/AmfiReports";
 import RadhaLinkedin from "./AskoxyAdmin/RadhaLinkedin";
 import SaNaukariRecords from "./AskoxyAdmin/SaNaukariRecords";
 import TahsildarRecords from "./AskoxyAdmin/TahsildarRecords";
+import ActiveMembership from "./AskoxyAdmin/ActiveMembership";
+import AmsLostCustomerData from "./AskoxyAdmin/AmsLostCustomerData";
+import SakshamData from "./AskoxyAdmin/SakshamData";
+import TieData from "./AskoxyAdmin/TieData";
+import TwoYearsServiceData from "./AskoxyAdmin/TwoYearsServiceData";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -2303,6 +2308,54 @@ const App: React.FC = () => {
                 <Route
                   path="tahsildar-records"
                   element={<TahsildarRecords />}
+                />
+                <Route
+                  path="active-membership"
+                  element={<ActiveMembership />}
+                />
+                <Route
+                  path="activemembership"
+                  element={<ActiveMembership />}
+                />
+                <Route
+                  path="ams-lost-customer-data"
+                  element={<AmsLostCustomerData />}
+                />
+                <Route
+                  path="amslostcustomerdata"
+                  element={<AmsLostCustomerData />}
+                />
+                <Route
+                  path="saksham-data"
+                  element={<SakshamData />}
+                />
+                <Route
+                  path="sakshamdata"
+                  element={<SakshamData />}
+                />
+                <Route
+                  path="saksham"
+                  element={<SakshamData />}
+                />
+                <Route
+                  path="tie-data"
+                  element={<TieData />}
+                />
+                <Route
+                  path="tiedata"
+                  element={<TieData />}
+                />
+                <Route
+                  path="tie"
+                  element={<TieData />}
+                />
+                <Route
+                  path="two-years-service-data"
+                  element={<TwoYearsServiceData />}
+                />
+                <Route
+                  path="twoyearsservicedata"
+                  element={<TwoYearsServiceData />}
                 />
                 <Route
                   path="kukatpallyassignedData"
