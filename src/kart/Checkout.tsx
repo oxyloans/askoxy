@@ -13,6 +13,8 @@ import {
   ShoppingBag,
   Clock,
   Loader2,
+  Info,
+  ChevronRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
@@ -41,6 +43,8 @@ interface CartItem {
   status: string;
   catergoryName?: string;
   categoryName?: string;
+  weight?: string | number;
+  units?: string;
 }
 
 interface Address {
@@ -118,6 +122,77 @@ const CheckoutPage: React.FC = () => {
   const [isEligibleToday, setIsEligibleToday] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [cartData, setCartData] = useState<CartItem[]>([]);
+  const [silverDiscount, setSilverDiscount] = useState<number>(0);
+  const [silverGst, setSilverGst] = useState<number>(0);
+
+  const isSilverItem = (item: CartItem) =>
+    [
+      item.catergoryName,
+      item.categoryName,
+      (item as any).categoryType,
+      (item as any).category,
+    ]
+      .filter(Boolean)
+      .some((category) => /SILVER/i.test(String(category))) ||
+    /silver/i.test(item.itemName);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSilverRates = async () => {
+      const silverItems = cartData.filter(
+        (item) => isSilverItem(item) && item.status !== "FREE",
+      );
+
+      if (silverItems.length === 0) {
+        if (isMounted) {
+          setSilverDiscount(0);
+          setSilverGst(0);
+        }
+        return;
+      }
+
+      try {
+        const ratePromises = silverItems.map(async (item) => {
+          try {
+            const res = await axios.get(
+              `${BASE_URL}/product-service/getAllGoldAndSilverRates?itemId=${item.itemId}`,
+            );
+            const qty = Number(item.cartQuantity) || 1;
+            const discount =
+              (res.data?.discountAmount !== undefined
+                ? res.data.discountAmount
+                : (res.data?.gstAmount || 0)) * qty;
+            const gst = (res.data?.gstAmount || 0) * qty;
+            return { discount, gst };
+          } catch (e) {
+            console.error("Error fetching silver rates for item:", item.itemId, e);
+            return { discount: 0, gst: 0 };
+          }
+        });
+
+        const results = await Promise.all(ratePromises);
+        if (isMounted) {
+          const totalDiscount = results.reduce((sum, r) => sum + r.discount, 0);
+          const totalGst = results.reduce((sum, r) => sum + r.gst, 0);
+          setSilverDiscount(totalDiscount);
+          setSilverGst(totalGst);
+        }
+      } catch (err) {
+        console.error("Error calculating silver breakdown in checkout:", err);
+        if (isMounted) {
+          setSilverDiscount(0);
+          setSilverGst(0);
+        }
+      }
+    };
+
+    fetchSilverRates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [cartData]);
+
   // Gold and Silver categories follow the distance-fee delivery flow.
   const isPreciousMetalOnlyCart = (items: CartItem[]): boolean =>
     items.length > 0 &&
@@ -2046,7 +2121,7 @@ useEffect(() => {
                         Order Items ({cartData.length})
                       </h3>
                     </div>
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                    <div className="space-y-3 max-h-[32rem] overflow-y-auto">
                       {cartData.length === 0 ? (
                         <p className="text-gray-600 text-center">
                           Your cart is empty
@@ -2055,21 +2130,23 @@ useEffect(() => {
                         cartData.map((item) => (
                           <div
                             key={item.itemId}
-                            className="flex justify-between items-center p-2 border-b"
+                            className="p-2 border-b last:border-b-0"
                           >
-                            <div>
-                              <p className="font-medium">{item.itemName}</p>
-                              <p className="text-gray-600 text-sm">
-                                Qty: {item.cartQuantity}
-                              </p>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">{item.itemName}</p>
+                                <p className="text-gray-600 text-sm">
+                                  Qty: {item.cartQuantity}
+                                </p>
+                              </div>
+                              {isFreeItem(item) ? (
+                                <p className="text-green-600 font-semibold">
+                                  FREE
+                                </p>
+                              ) : (
+                                <p className="font-medium">₹{item.itemPrice}</p>
+                              )}
                             </div>
-                            {isFreeItem(item) ? (
-                              <p className="text-green-600 font-semibold">
-                                FREE
-                              </p>
-                            ) : (
-                              <p className="font-medium">₹{item.itemPrice}</p>
-                            )}
                           </div>
                         ))
                       )}
@@ -2118,15 +2195,25 @@ useEffect(() => {
                         </div>
                       )}
 
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-600">GST</span>
-                        <span>
-                          ₹
-                          {((subGst || 0) - (goldMakingCharges || 0)).toFixed(
-                            2,
-                          )}
-                        </span>
-                      </div>
+                      {(Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) > 0 || silverGst > 0) && (
+                        <div className="flex justify-between py-2">
+                          <span className="text-gray-600">GST</span>
+                          <span>
+                            ₹
+                            {(
+                              Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) +
+                              silverGst
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+
+                      {silverDiscount > 0 && (
+                        <div className="flex justify-between py-2 text-emerald-700 font-medium">
+                          <span>Discount</span>
+                          <span>-₹{silverDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
                       {cartData.length > 0 && deliveryFee !== null && !isDeliveryFeeLoading && !isPreciousMetalDistanceFeeLoading && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Delivery Fee</span>

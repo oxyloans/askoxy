@@ -11,6 +11,11 @@ import {
   Package,
   Plus,
   Minus,
+  ChevronRight,
+  Sparkles,
+  Gem,
+  CheckCircle2,
+  PartyPopper,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
@@ -112,7 +117,7 @@ const CartPage: React.FC = () => {
     incomplete: false,
   });
   const [isItemTotalDropdownOpen, setIsItemTotalDropdownOpen] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<{ [key: string]: number }>({});
   const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>(
@@ -201,6 +206,89 @@ const CartPage: React.FC = () => {
   }
 
   const { setCount } = context;
+
+  const [silverDiscount, setSilverDiscount] = useState<number>(0);
+  const [silverGst, setSilverGst] = useState<number>(0);
+  const [showSilverGstModal, setShowSilverGstModal] = useState<boolean>(false);
+  const [silverGstModalShown, setSilverGstModalShown] = useState<boolean>(false);
+
+  useEffect(() => {
+    if ((silverDiscount > 0 || silverGst > 0) && !silverGstModalShown) {
+      const timer = setTimeout(() => {
+        setShowSilverGstModal(true);
+        setSilverGstModalShown(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [silverDiscount, silverGst, silverGstModalShown]);
+
+  const isSilverItem = (item: CartItem) =>
+    [
+      item.catergoryName,
+      item.categoryName,
+      (item as any).categoryType,
+      (item as any).category,
+    ]
+      .filter(Boolean)
+      .some((category) => /SILVER/i.test(String(category))) ||
+    /silver/i.test(item.itemName);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSilverRates = async () => {
+      const silverItems = cartData.filter(
+        (item) => isSilverItem(item) && item.status !== "FREE",
+      );
+
+      if (silverItems.length === 0) {
+        if (isMounted) {
+          setSilverDiscount(0);
+          setSilverGst(0);
+        }
+        return;
+      }
+
+      try {
+        const ratePromises = silverItems.map(async (item) => {
+          try {
+            const res = await axios.get(
+              `${BASE_URL}/product-service/getAllGoldAndSilverRates?itemId=${item.itemId}`,
+            );
+            const qty = regularCartItems[item.itemId] || item.cartQuantity || 1;
+            const discount =
+              (res.data?.discountAmount !== undefined
+                ? res.data.discountAmount
+                : (res.data?.gstAmount || 0)) * qty;
+            const gst = (res.data?.gstAmount || 0) * qty;
+            return { discount, gst };
+          } catch (e) {
+            console.error("Error fetching silver rates for item:", item.itemId, e);
+            return { discount: 0, gst: 0 };
+          }
+        });
+
+        const results = await Promise.all(ratePromises);
+        if (isMounted) {
+          const totalDiscount = results.reduce((sum, r) => sum + r.discount, 0);
+          const totalGst = results.reduce((sum, r) => sum + r.gst, 0);
+          setSilverDiscount(totalDiscount);
+          setSilverGst(totalGst);
+        }
+      } catch (err) {
+        console.error("Error calculating silver breakdown in cart:", err);
+        if (isMounted) {
+          setSilverDiscount(0);
+          setSilverGst(0);
+        }
+      }
+    };
+
+    fetchSilverRates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [cartData, regularCartItems]);
 
   // Gold and Silver use the distance-fee delivery flow. Prefer the category
   // returned by the cart API; the name check keeps older cart responses working.
@@ -2021,6 +2109,62 @@ const CartPage: React.FC = () => {
       border-top: 1px solid #e8e8e8;
       margin-top: 16px;
     }
+
+    .silver-offer-modal .ant-modal-content {
+      border-radius: 32px;
+      overflow: hidden;
+      padding: 0;
+      box-shadow: 0 25px 60px -12px rgba(88, 28, 135, 0.25), 0 8px 24px -8px rgba(0,0,0,0.08);
+      border: 1px solid rgba(196, 181, 253, 0.35);
+      animation: modalGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes modalGlow {
+      0%, 100% {
+        box-shadow: 0 25px 60px -12px rgba(88, 28, 135, 0.25), 0 0 0 0 rgba(168, 85, 247, 0.15);
+      }
+      50% {
+        box-shadow: 0 25px 70px -10px rgba(88, 28, 135, 0.35), 0 0 0 10px rgba(168, 85, 247, 0.06);
+      }
+    }
+
+    @keyframes shimmerSweep {
+      0% { transform: translateX(-150%) skewX(-15deg); }
+      100% { transform: translateX(250%) skewX(-15deg); }
+    }
+
+    .silver-offer-shine {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+      animation: shimmerSweep 3.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .silver-offer-modal .ant-modal-close {
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .silver-offer-modal .ant-modal-close:hover {
+      background: rgba(255,255,255,0.95);
+    }
+
+    .silver-offer-modal .ant-modal-body {
+      padding: 0;
+    }
   `}
       </style>
       <div className="flex flex-col min-h-screen overflow-x-hidden">
@@ -2381,31 +2525,23 @@ const CartPage: React.FC = () => {
                             })}
                           </span>
                         </div>
-                        {totalGoldGst > 0 && (
-                          <div>
-                            {/* {totalGoldMakingCost > 0 && (
-                              <div className="text-gray-700 text-sm flex justify-between">
-                                <span>Gold Making Cost</span>
-                                <span>
-                                  ₹
-                                  {totalGoldMakingCost.toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                              </div>
-                            )} */}
+                        {(totalGoldGst > 0 || silverGst > 0) && (
+                          <div className="flex justify-between text-gray-700 text-sm mt-1">
+                            <span>GST</span>
+                            <span>
+                              ₹
+                              {(totalGoldGst + silverGst).toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+                        )}
 
-                            <div className="flex justify-between text-gray-700 text-sm mt-1">
-                              <span>GST</span>
-                              <span>
-                                ₹
-                                {totalGoldGst.toLocaleString("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                            </div>
+                        {silverDiscount > 0 && (
+                          <div className="flex justify-between text-emerald-700 text-sm mt-1 font-medium">
+                            <span>Discount</span>
+                            <span>-₹{silverDiscount.toFixed(2)}</span>
                           </div>
                         )}
 
@@ -2898,6 +3034,213 @@ const CartPage: React.FC = () => {
         </div>
       </div>
       <Footer />
+
+      {/* Silver GST Waiver Congratulations Modal */}
+      <Modal
+        open={showSilverGstModal}
+        onCancel={() => setShowSilverGstModal(false)}
+        footer={null}
+        centered
+        width={440}
+        closeIcon={<X className="w-4 h-4 text-slate-500" />}
+        className="silver-offer-modal"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="relative overflow-hidden rounded-[32px] bg-gradient-to-b from-purple-50 via-white to-amber-50/40 ring-1 ring-purple-200/60"
+        >
+          <div className="silver-offer-shine" />
+
+          {/* Soft glow blobs */}
+          <motion.div
+            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-purple-200/50 blur-3xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{
+              duration: 4.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5,
+            }}
+            className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-amber-200/50 blur-3xl"
+          />
+
+          {/* Floating sparkles */}
+          <motion.div
+            animate={{
+              y: [0, -8, 0],
+              rotate: [0, 15, 0],
+              opacity: [0.6, 1, 0.6],
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-6 left-8 text-purple-400"
+          >
+            <Sparkles className="w-5 h-5" />
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, 10, 0],
+              rotate: [0, -15, 0],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 3.4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.6,
+            }}
+            className="absolute top-10 right-10 text-amber-400"
+          >
+            <Sparkles className="w-4 h-4" />
+          </motion.div>
+
+          <div className="relative pt-10 pb-8 px-7 text-center">
+            {/* Animated Celebration Icon */}
+            <div className="relative mx-auto mb-4 w-20 h-20 flex items-center justify-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                className="absolute -inset-1 rounded-full bg-[conic-gradient(from_0deg,#a855f7,#f59e0b,#a855f7)] opacity-60 blur-md"
+              />
+              <motion.div
+                animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{
+                  duration: 2.2,
+                  repeat: Infinity,
+                  ease: "easeOut",
+                }}
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-300 to-amber-300"
+              />
+              <motion.div
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{
+                  delay: 0.15,
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 18,
+                }}
+                className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-purple-200"
+              >
+                <PartyPopper className="w-8 h-8 text-white" />
+              </motion.div>
+            </div>
+
+            {/* Top Pill */}
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-100 via-pink-50 to-amber-100 border border-purple-200 text-purple-800 text-xs font-bold px-3 py-1 rounded-full mb-2 shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              100% GST Paid by Askoxy.ai
+            </motion.div>
+
+            {/* Heading */}
+            <motion.h2
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-extrabold bg-gradient-to-r from-purple-700 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent mb-2"
+            >
+              Congratulations! 🎉
+            </motion.h2>
+
+            {/* Sub-headline */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className="text-sm font-semibold text-gray-700 mb-2"
+            >
+              We are paying the GST amount on your behalf!
+            </motion.p>
+
+            {/* Explanation paragraph */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-xs text-gray-500 mb-5 leading-relaxed px-2"
+            >
+              For your silver purchase, Askoxy.ai covers the complete government GST so you don't have to pay extra. The entire tax amount is waived as an instant discount!
+            </motion.p>
+
+            {/* GST Amount Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.45 }}
+              className="bg-gradient-to-br from-purple-50 via-white to-amber-50/70 border-2 border-dashed border-purple-200 rounded-2xl p-4 mb-5 shadow-inner text-left"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-500">Government GST (3%)</span>
+                <span className="text-xs font-bold text-gray-600 line-through">
+                  ₹{(silverDiscount || silverGst).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-purple-100">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-bold text-purple-900">Askoxy.ai GST Waiver:</span>
+                </div>
+                <span className="text-lg font-black text-green-600">
+                  -₹{(silverDiscount || silverGst).toFixed(2)}
+                </span>
+              </div>
+              <div className="mt-2.5 flex items-center justify-between text-[11px] bg-green-50 border border-green-200/70 text-green-800 rounded-lg px-2.5 py-1.5 font-medium">
+                <span>Your Net Tax Contribution</span>
+                <span className="font-bold text-green-700">₹0.00 (Zero Extra Tax)</span>
+              </div>
+            </motion.div>
+
+            {/* Badges / Highlights */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center justify-center gap-2 mb-6 flex-wrap"
+            >
+              <span className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 rounded-full px-3 py-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                <span className="text-[11px] font-semibold text-purple-700">
+                  100% Tax Covered
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+                <Gem className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px] font-semibold text-amber-700">
+                  Pure Silver Offer
+                </span>
+              </span>
+            </motion.div>
+
+            {/* CTA Button */}
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+              whileHover={{
+                scale: 1.02,
+                boxShadow: "0 12px 24px -8px rgba(147, 51, 234, 0.4)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowSilverGstModal(false)}
+              className="relative overflow-hidden w-full py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 shadow-lg shadow-purple-200 transition-shadow cursor-pointer"
+            >
+              <span className="absolute inset-0 -translate-x-full hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              Awesome, Got It!
+            </motion.button>
+          </div>
+        </motion.div>
+      </Modal>
     </div>
   );
 };
