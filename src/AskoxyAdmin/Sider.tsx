@@ -317,6 +317,24 @@ const Sidebar: React.FC = () => {
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
           {
+            title: "Unknown Data",
+            icon: <TeamOutlined className="text-gray-500" />,
+            link: "/admin/unknown-data",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Naukri RAS",
+            icon: <TeamOutlined className="text-blue-500" />,
+            link: "/admin/naukri-ras",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "K2K Fintech",
+            icon: <TeamOutlined className="text-emerald-500" />,
+            link: "/admin/k2k-fintech",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
             title: "All Mumbai Data",
             icon: <ApartmentOutlined className="text-blue-500" />,
             link: "/admin/mumbaidata",

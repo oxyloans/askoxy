@@ -16,6 +16,11 @@ import {
   Gem,
   CheckCircle2,
   PartyPopper,
+  MapPin,
+  Check,
+  Home,
+  Briefcase,
+  Building,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
@@ -129,6 +134,8 @@ const CartPage: React.FC = () => {
   const [coordinatesReady, setCoordinatesReady] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isAddressSelectModalOpen, setIsAddressSelectModalOpen] =
+    useState<boolean>(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
@@ -2165,12 +2172,61 @@ const CartPage: React.FC = () => {
     .silver-offer-modal .ant-modal-body {
       padding: 0;
     }
+
+    .premium-address-modal .ant-modal-content {
+      border-radius: 28px;
+      overflow: hidden;
+      padding: 0;
+      box-shadow: 0 25px 60px -15px rgba(88, 28, 135, 0.25), 0 10px 30px -10px rgba(0,0,0,0.1);
+      border: 1px solid rgba(196, 181, 253, 0.4);
+    }
+
+    .premium-address-modal .ant-modal-body {
+      padding: 0;
+    }
+
+    .premium-address-modal .ant-modal-header {
+      display: none;
+    }
+
+    .address-custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .address-custom-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+
+    .address-custom-scroll::-webkit-scrollbar-thumb {
+      background: #d8b4fe;
+      border-radius: 9999px;
+    }
+
+    .address-custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #a855f7;
+    }
+
+    /* Prevent modal opening from causing layout shift / jumping */
+    html {
+      scrollbar-gutter: stable;
+    }
+    body {
+      overflow-y: scroll;
+    }
+    body.ant-scrolling-effect,
+    body[style*="overflow"] {
+      overflow-y: scroll !important;
+      width: 100% !important;
+      padding-right: 0px !important;
+      margin-right: 0px !important;
+    }
   `}
       </style>
       <div className="flex flex-col min-h-screen overflow-x-hidden">
         <div className="flex-1 p-4 lg:p-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <main className="flex-1">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            <main className="flex-1 min-w-0">
               <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
                 {isLoading ? (
                   <div className="flex justify-center items-center h-64">
@@ -2401,82 +2457,94 @@ const CartPage: React.FC = () => {
               </div>
             </main>
 
-            <div className="w-full lg:w-1/4 lg:sticky lg:top-4 self-start">
-              {/* Delivery Promise Banner */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-100 rounded-xl p-4 mb-4 shadow-sm flex items-start gap-3">
-                <div className="p-2.5 bg-purple-600 rounded-lg text-white shadow-sm flex-shrink-0">
-                  <Package className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-purple-900 text-sm flex items-center gap-1.5">
-                    Delivery Promise
-                  </h4>
-                  <p className="text-xs text-purple-700 mt-1 leading-relaxed font-medium">
-                    ⚡ Guaranteed dispatch within 24 hours. Fresh and secure delivery straight to your doorstep!
-                  </p>
-                </div>
-              </div>
+            <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-4 self-start">
+              <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 mb-6 border border-gray-200">
+                <div className="flex items-center justify-between w-full min-w-0 mb-3.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MapPin className="w-5 h-5 text-purple-600 shrink-0" />
+                    <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                      Delivery Address
+                    </h2>
+                  </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border">
-                <div className="flex items-center w-full min-w-0 mb-4">
-                  {/* Title shrinks gracefully and never overlaps */}
-                  <h2 className="flex-1 min-w-0 pr-2 text-lg lg:text-base font-semibold text-gray-900 truncate">
-                    Delivery Address
-                  </h2>
-
-                  {/* Compact, good-looking button pinned right */}
-                  <button
-                    onClick={() => setIsAddressModalOpen(true)}
-                    aria-label="Add delivery address"
-                    className="flex-none w-1/4 inline-flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-full
+                  {addresses.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddressSelectModalOpen(true)}
+                      aria-label="Change delivery address"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full
+               bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 text-xs sm:text-sm font-semibold
+               transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 cursor-pointer"
+                    >
+                      Change/Add
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetAddressForm();
+                        setIsAddressModalOpen(true);
+                      }}
+                      aria-label="Add delivery address"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full
                bg-green-600 text-white text-xs sm:text-sm font-medium whitespace-nowrap
                shadow-sm hover:bg-green-700 active:bg-green-800 
-               focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
-                  >
-                    <span className="text-base leading-none font-bold">+</span>
-                    <span>Add</span>
-                  </button>
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 cursor-pointer"
+                    >
+                      <span className="text-base leading-none font-bold">+</span>
+                      <span>Add</span>
+                    </button>
+                  )}
                 </div>
 
-                {addresses.length === 0 ? (
-                  <p className="text-sm text-gray-500 mb-4">No addresses found. Add one to proceed.</p>
+                {selectedAddress ? (
+                  <div className="bg-gradient-to-br from-purple-50/60 via-white to-purple-50/30 border border-purple-200 rounded-xl p-3.5 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100/90 border border-purple-200 px-2 py-0.5 rounded-md">
+                        {selectedAddress.addressType === "Work" ? (
+                          <Briefcase className="w-3 h-3" />
+                        ) : selectedAddress.addressType === "Others" ? (
+                          <Building className="w-3 h-3" />
+                        ) : (
+                          <Home className="w-3 h-3" />
+                        )}
+                        {selectedAddress.addressType || "Home"}
+                      </span>
+                      <span className="text-sm font-bold text-gray-800">
+                        {/flat|house|h\.no|door|plot/i.test(selectedAddress.flatNo)
+                          ? selectedAddress.flatNo
+                          : `House / Flat: ${selectedAddress.flatNo}`}
+                      </span>
+                    </div>
+                    <p className="text-[14px] leading-relaxed text-gray-600 font-normal break-words">
+                      {[
+                        selectedAddress.landMark,
+                        selectedAddress.address,
+                        `PIN: ${selectedAddress.pincode}`,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
+                  </div>
                 ) : (
-                  <div className="mb-4 space-y-2 max-h-56 overflow-y-auto pr-1">
-                    {addresses.map((address) => {
-                      const isSelected = selectedAddress?.id === address.id;
-                      return (
-                        <button
-                          key={address.id}
-                          type="button"
-                          onClick={() => handleAddressChange(address)}
-                          className={`w-full text-left rounded-lg border p-3 transition-all ${isSelected
-                              ? "border-purple-500 bg-purple-50 ring-1 ring-purple-400"
-                              : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
-                            }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <span
-                              className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 ${isSelected
-                                  ? "border-purple-600 bg-purple-600"
-                                  : "border-gray-400 bg-white"
-                                }`}
-                            />
-                            <div className="min-w-0">
-                              <span className="text-[10px] font-semibold uppercase tracking-wide text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">
-                                {address.addressType}
-                              </span>
-                              <p className="mt-1 text-sm font-medium text-gray-800 break-words">
-                                {address.flatNo}
-                              </p>
-                              <p className="text-xs text-gray-500 break-words line-clamp-2">
-                                {address.landMark}, {address.address}
-                              </p>
-                              <p className="text-xs text-gray-500">PIN: {address.pincode}</p>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                  <div className="text-center py-4 px-3 border border-dashed border-gray-300 rounded-xl bg-gray-50/60">
+                    <p className="text-xs sm:text-sm text-gray-500 mb-2">
+                      No delivery address selected.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (addresses.length > 0) {
+                          setIsAddressSelectModalOpen(true);
+                        } else {
+                          resetAddressForm();
+                          setIsAddressModalOpen(true);
+                        }
+                      }}
+                      className="text-xs font-semibold text-purple-600 hover:text-purple-700 underline cursor-pointer"
+                    >
+                      {addresses.length > 0 ? "Select from saved addresses" : "+ Add a delivery address"}
+                    </button>
                   </div>
                 )}
                 <div className="border-t border-gray-200 mt-4 pt-4">
@@ -2501,10 +2569,6 @@ const CartPage: React.FC = () => {
                     </button>
                     {isItemTotalDropdownOpen && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-600 mb-2">
-                          Askoxy.ai has no role to play in the taxes and charges
-                          being levied by the government
-                        </p>
                         <div className="flex justify-between text-gray-700 text-sm">
                           <span>Item Cost</span>
                           <span>₹{itemCostSubtotal.toFixed(2)}</span>
@@ -2702,131 +2766,208 @@ const CartPage: React.FC = () => {
             </div>
 
             {isAddressModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">
-                      {editingAddressId ? "Edit Address" : "Add New Address"}
-                    </h2>
-                    <button
-                      onClick={handleAddressModalClose}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
+              <Modal
+                open={isAddressModalOpen}
+                onCancel={handleAddressModalClose}
+                footer={null}
+                centered
+                width={520}
+                closeIcon={null}
+                className="premium-address-modal"
+              >
+                <div className="relative">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 text-white p-5 sm:p-6 relative overflow-hidden">
+                    <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+                    <div className="absolute left-1/3 -bottom-10 w-40 h-20 rounded-full bg-pink-400/20 blur-2xl pointer-events-none" />
+
+                    <div className="relative z-10 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs">
+                          {editingAddressId ? (
+                            <MapPin className="w-5 h-5 text-white" />
+                          ) : (
+                            <Plus className="w-5 h-5 text-white" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white tracking-tight">
+                            {editingAddressId ? "Edit Delivery Address" : "Add Delivery Address"}
+                          </h3>
+                          <p className="text-xs text-purple-100 font-medium mt-0.5">
+                            Please provide complete details for timely delivery
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddressModalClose}
+                        aria-label="Close modal"
+                        className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white flex items-center justify-center transition-all cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Flat/House No"
-                      value={addressFormData.flatNo}
-                      onChange={(e) =>
-                        setAddressFormData((prev) => ({
-                          ...prev,
-                          flatNo: e.target.value,
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    {addressFormErrors.flatNo && (
-                      <p className="text-red-500 text-sm">
-                        {addressFormErrors.flatNo}
-                      </p>
+                  {/* Form Body */}
+                  <div className="p-5 sm:p-6 bg-gradient-to-b from-gray-50/40 to-white space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-purple-900/80 mb-1.5">
+                        Flat / House / Door No <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Flat 402, House No 12-3"
+                        value={addressFormData.flatNo}
+                        onChange={(e) =>
+                          setAddressFormData((prev) => ({
+                            ...prev,
+                            flatNo: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
+                      />
+                      {addressFormErrors.flatNo && (
+                        <p className="text-red-500 text-xs mt-1 font-medium">
+                          {addressFormErrors.flatNo}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-purple-900/80 mb-1.5">
+                        Landmark <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Near City Hospital, Opposite Metro Station"
+                        value={addressFormData.landMark}
+                        onChange={(e) =>
+                          setAddressFormData((prev) => ({
+                            ...prev,
+                            landMark: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
+                      />
+                      {addressFormErrors.landmark && (
+                        <p className="text-red-500 text-xs mt-1 font-medium">
+                          {addressFormErrors.landmark}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-purple-900/80 mb-1.5">
+                        Complete Address / Street <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Road No 2, Banjara Hills"
+                        value={addressFormData.address}
+                        onChange={(e) =>
+                          setAddressFormData((prev) => ({
+                            ...prev,
+                            address: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
+                      />
+                      {addressFormErrors.address && (
+                        <p className="text-red-500 text-xs mt-1 font-medium">
+                          {addressFormErrors.address}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-purple-900/80 mb-1.5">
+                          Pincode <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 500081"
+                          maxLength={6}
+                          value={addressFormData.pincode}
+                          onChange={(e) =>
+                            setAddressFormData((prev) => ({
+                              ...prev,
+                              pincode: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
+                        />
+                        {addressFormErrors.pincode && (
+                          <p className="text-red-500 text-xs mt-1 font-medium">
+                            {addressFormErrors.pincode}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-purple-900/80 mb-1.5">
+                          Address Type
+                        </label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { type: "Home", icon: Home },
+                            { type: "Work", icon: Briefcase },
+                            { type: "Others", icon: Building },
+                          ].map(({ type, icon: Icon }) => {
+                            const isSelected = addressFormData.addressType === type;
+                            return (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() =>
+                                  setAddressFormData((prev) => ({
+                                    ...prev,
+                                    addressType: type as "Home" | "Work" | "Others",
+                                  }))
+                                }
+                                className={`flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                                  isSelected
+                                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-600 shadow-xs"
+                                    : "bg-white text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50/40"
+                                }`}
+                              >
+                                <Icon className="w-3 h-3 shrink-0" />
+                                <span>{type}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                        {error}
+                      </div>
                     )}
 
-                    <input
-                      type="text"
-                      placeholder="Landmark"
-                      value={addressFormData.landMark}
-                      onChange={(e) =>
-                        setAddressFormData((prev) => ({
-                          ...prev,
-                          landMark: e.target.value,
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                    {addressFormErrors.landmark && (
-                      <p className="text-red-500 text-sm">
-                        {addressFormErrors.landmark}
-                      </p>
-                    )}
-
-                    <input
-                      type="text"
-                      placeholder="Address"
-                      value={addressFormData.address}
-                      onChange={(e) =>
-                        setAddressFormData((prev) => ({
-                          ...prev,
-                          address: e.target.value,
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    {addressFormErrors.address && (
-                      <p className="text-red-500 text-sm">
-                        {addressFormErrors.address}
-                      </p>
-                    )}
-
-                    <input
-                      type="text"
-                      placeholder="Pincode"
-                      value={addressFormData.pincode}
-                      onChange={(e) =>
-                        setAddressFormData((prev) => ({
-                          ...prev,
-                          pincode: e.target.value,
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    {addressFormErrors.pincode && (
-                      <p className="text-red-500 text-sm">
-                        {addressFormErrors.pincode}
-                      </p>
-                    )}
-
-                    <select
-                      value={addressFormData.addressType}
-                      onChange={(e) =>
-                        setAddressFormData((prev) => ({
-                          ...prev,
-                          addressType: e.target.value as
-                            | "Home"
-                            | "Work"
-                            | "Others",
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="Home">Home</option>
-                      <option value="Work">Work</option>
-                      <option value="Others">Others</option>
-                    </select>
-                  </div>
-
-                  {error && (
-                    <p className="text-red-500 text-sm mt-2">{error}</p>
-                  )}
-                  <div className="mt-6 flex justify-end space-x-4">
-                    <button
-                      onClick={handleAddressModalClose}
-                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleAddressSubmit}
-                      className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
-                    >
-                      {editingAddressId ? "Update Address" : "Save Address"}
-                    </button>
+                    <div className="pt-2 flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={handleAddressModalClose}
+                        className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-100 transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddressSubmit}
+                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-200 hover:shadow-lg transition-all cursor-pointer"
+                      >
+                        {editingAddressId ? "Update Address" : "Save Address"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Modal>
             )}
 
             {isReferralModalVisible && (
@@ -3240,6 +3381,178 @@ const CartPage: React.FC = () => {
             </motion.button>
           </div>
         </motion.div>
+      </Modal>
+
+      {/* Select Delivery Address Modal */}
+      <Modal
+        open={isAddressSelectModalOpen}
+        onCancel={() => setIsAddressSelectModalOpen(false)}
+        footer={null}
+        centered
+        width={540}
+        closeIcon={null}
+        className="premium-address-modal"
+      >
+        <div className="relative">
+          {/* Vibrant Medium Purple Header */}
+          <div className="bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 text-white p-5 sm:p-6 relative overflow-hidden">
+            <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+            <div className="absolute left-1/3 -bottom-10 w-40 h-20 rounded-full bg-pink-400/20 blur-2xl pointer-events-none" />
+
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs">
+                  <MapPin className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">
+                    Select Delivery Address
+                  </h3>
+                  <p className="text-xs text-purple-100 font-medium mt-0.5">
+                    Choose where you want your order delivered
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsAddressSelectModalOpen(false)}
+                aria-label="Close modal"
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white flex items-center justify-center transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-5 sm:p-6 bg-gradient-to-b from-gray-50/40 to-white">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-900/70">
+                Saved Addresses ({addresses.length})
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddressSelectModalOpen(false);
+                  resetAddressForm();
+                  setIsAddressModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-3.5 py-1.5 rounded-full shadow-sm shadow-purple-200 hover:shadow-md transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add New Address</span>
+              </button>
+            </div>
+
+            {addresses.length === 0 ? (
+              <div className="text-center py-10 px-4 border-2 border-dashed border-purple-200 rounded-2xl bg-purple-50/40">
+                <div className="w-14 h-14 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                  <MapPin className="w-7 h-7" />
+                </div>
+                <h4 className="text-base font-bold text-gray-800 mb-1">
+                  No saved addresses found
+                </h4>
+                <p className="text-xs text-gray-500 mb-5 max-w-xs mx-auto">
+                  Add your delivery address to proceed with your order smoothly.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddressSelectModalOpen(false);
+                    resetAddressForm();
+                    setIsAddressModalOpen(true);
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-md shadow-purple-200 transition-all cursor-pointer"
+                >
+                  + Add New Address
+                </button>
+              </div>
+            ) : (
+              <div className="address-custom-scroll space-y-3 max-h-[380px] overflow-y-auto pr-1.5 py-1">
+                {addresses.map((address) => {
+                  const isSelected = selectedAddress?.id === address.id;
+                  return (
+                    <div
+                      key={address.id}
+                      onClick={async () => {
+                        await handleAddressChange(address);
+                        setIsAddressSelectModalOpen(false);
+                      }}
+                      className={`group cursor-pointer w-full text-left rounded-2xl p-4 transition-all duration-200 flex items-start gap-3.5 ${
+                        isSelected
+                          ? "bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border-2 border-purple-500 shadow-sm ring-2 ring-purple-300/30"
+                          : "bg-white hover:bg-purple-50/30 border border-gray-200 hover:border-purple-300 hover:shadow-xs"
+                      }`}
+                    >
+                      {/* Radio / Selection Indicator */}
+                      <div className="mt-0.5 shrink-0">
+                        <span
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isSelected
+                              ? "border-purple-600 bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-xs"
+                              : "border-gray-300 bg-white group-hover:border-purple-400"
+                          }`}
+                        >
+                          {isSelected && (
+                            <Check className="w-3 h-3 text-white stroke-[3]" />
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Address Info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                              address.addressType === "Work"
+                                ? "text-indigo-700 bg-indigo-100/90 border-indigo-200/80"
+                                : address.addressType === "Others"
+                                ? "text-amber-800 bg-amber-100/90 border-amber-200/80"
+                                : "text-purple-700 bg-purple-100/90 border-purple-200/80"
+                            }`}
+                          >
+                            {address.addressType === "Work" ? (
+                              <Briefcase className="w-3 h-3" />
+                            ) : address.addressType === "Others" ? (
+                              <Building className="w-3 h-3" />
+                            ) : (
+                              <Home className="w-3 h-3" />
+                            )}
+                            {address.addressType || "Home"}
+                          </span>
+
+                          <span className="text-sm font-bold text-gray-800">
+                            {/flat|house|h\.no|door|plot/i.test(address.flatNo)
+                              ? address.flatNo
+                              : `House / Flat: ${address.flatNo}`}
+                          </span>
+
+                          {isSelected && (
+                            <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              Delivering Here
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[14px] leading-relaxed text-gray-600 font-normal break-words">
+                          {[
+                            address.landMark,
+                            address.address,
+                            `PIN: ${address.pincode}`,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

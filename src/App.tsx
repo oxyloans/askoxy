@@ -56,6 +56,9 @@ import AmsLostCustomerData from "./AskoxyAdmin/AmsLostCustomerData";
 import SakshamData from "./AskoxyAdmin/SakshamData";
 import TieData from "./AskoxyAdmin/TieData";
 import TwoYearsServiceData from "./AskoxyAdmin/TwoYearsServiceData";
+import UnknownData from "./AskoxyAdmin/UnknownData";
+import NaukriRasData from "./AskoxyAdmin/NaukriRasData";
+import K2kFintechData from "./AskoxyAdmin/K2kFintechData";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -2356,6 +2359,34 @@ const App: React.FC = () => {
                 <Route
                   path="twoyearsservicedata"
                   element={<TwoYearsServiceData />}
+                />
+                <Route
+                  path="unknown-data"
+                  element={<UnknownData />}
+                />
+                <Route
+                  path="unknow-data"
+                  element={<UnknownData />}
+                />
+                <Route
+                  path="unknowndata"
+                  element={<UnknownData />}
+                />
+                <Route
+                  path="naukri-ras"
+                  element={<NaukriRasData />}
+                />
+                <Route
+                  path="naukriras"
+                  element={<NaukriRasData />}
+                />
+                <Route
+                  path="k2k-fintech"
+                  element={<K2kFintechData />}
+                />
+                <Route
+                  path="k2kfintech"
+                  element={<K2kFintechData />}
                 />
                 <Route
                   path="kukatpallyassignedData"
