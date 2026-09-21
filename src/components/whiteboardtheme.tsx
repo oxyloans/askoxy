@@ -53,9 +53,9 @@ const Whiteboardtheme: React.FC = () => {
     "signin",
   );
   const LOGIN_URL = "/whatsapplogin";
-  const LOANS_WALKIN_ROUTE = "/sep-19-loans-walkin";
+  const LOANS_WALKIN_ROUTE = "/main/dashboard/products?type=SILVER";
   const LOANS_WALKIN_IMAGE_URL =
-    "https://i.ibb.co/pvhXgZPr/we-loans1.png";
+    "https://i.ibb.co/sdC06xj1/silver.png";
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
   const handleSignIn = () => {
     try {
@@ -293,11 +293,11 @@ const Whiteboardtheme: React.FC = () => {
                       type="button"
                       onClick={() => navigate(LOANS_WALKIN_ROUTE)}
                       className="flex h-full w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95"
-                      aria-label="September 19 Loans, DSA and Lenders Walk-In"
+                      aria-label="Explore Silver Products"
                     >
                       <img
                         src={LOANS_WALKIN_IMAGE_URL}
-                        alt="September 19 Loans, DSA and Lenders Walk-In"
+                        alt="Explore Silver Products"
                         className="h-full w-full object-contain"
                       />
                     </button>
@@ -337,11 +337,11 @@ const Whiteboardtheme: React.FC = () => {
                       width: "clamp(140px, 12vw, 196px)",
                       height: "clamp(120px, 10.4vw, 164px)",
                     }}
-                    aria-label="September 19 Loans, DSA and Lenders Walk-In"
+                    aria-label="Explore Silver Products"
                   >
                     <img
                       src={LOANS_WALKIN_IMAGE_URL}
-                      alt="September 19 Loans, DSA and Lenders Walk-In"
+                      alt="Explore Silver Products"
                       className="h-full w-full object-contain"
                     />
                   </button>
