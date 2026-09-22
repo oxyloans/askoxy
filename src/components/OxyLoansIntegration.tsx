@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Avatar,
   Button,
   Card,
@@ -18,12 +17,13 @@ import type { ColumnsType } from "antd/es/table";
 import {
   ArrowRightOutlined,
   BankOutlined,
-  ExportOutlined,
   TeamOutlined,
   UserOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
+import Swal from "sweetalert2";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const API_BASE = `${BASE_URL.replace(/\/$/, "")}/user-service/integration/oxyloans`;
@@ -68,23 +68,22 @@ const roleConfig: Record<Role, RoleConfig> = {
     title: "Lender",
     icon: <WalletOutlined />,
     registeredKey: "lenderRegistered",
-    accent: "#722ed1", // Ant Design purple
-    soft: "#f9f0ff", // Ant Design purple-1
+    accent: "#722ed1",
+    soft: "#f9f0ff",
   },
   BORROWER: {
     title: "Borrower",
     icon: <UserOutlined />,
     registeredKey: "borrowerRegistered",
-    accent: "#1677ff", // Ant Design blue
-    soft: "#e6f4ff", // Ant Design blue-1
+    accent: "#1677ff",
+    soft: "#e6f4ff",
   },
-
   PARTNER: {
     title: "Partner",
     icon: <TeamOutlined />,
     registeredKey: "partnerRegistered",
-    accent: "#13c2c2", // Ant Design cyan
-    soft: "#e6fffb", // Ant Design cyan-1
+    accent: "#13c2c2",
+    soft: "#e6fffb",
   },
 };
 
@@ -113,60 +112,50 @@ const getUserId = (): string => {
   return "";
 };
 
-const getAccessToken = (): string => {
-  for (const key of ["accessToken", "token", "authToken", "jwtToken"]) {
-    const value = localStorage.getItem(key)?.trim();
-    if (value) return value.replace(/^Bearer\s+/i, "");
+const getApiMessage = (error: unknown): string => {
+  const data = (error as { response?: { data?: { message?: string } } })
+    ?.response?.data;
+  if (typeof data?.message === "string" && data.message.trim()) {
+    return data.message.trim();
   }
-
-  for (const key of ["user", "auth", "authData", "loginData"]) {
-    const value = readJson(key);
-    const token =
-      value?.accessToken ||
-      value?.token ||
-      value?.data?.accessToken ||
-      value?.data?.token ||
-      value?.data?.body?.accessToken;
-    if (token) return String(token).replace(/^Bearer\s+/i, "");
-  }
+  if (error instanceof Error && error.message.trim()) return error.message.trim();
   return "";
 };
 
-const apiRequest = async <T,>(
-  path: string,
-  init?: RequestInit,
-): Promise<ApiEnvelope<T>> => {
-  const token = getAccessToken();
-  if (!token)
-    throw new Error("Your login session is missing. Please sign in again.");
-
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...(init?.headers || {}),
+const showToast = (
+  icon: "success" | "warning" | "error",
+  title: string,
+) => {
+  if (!title) return;
+  Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toastEl) => {
+      toastEl.onmouseenter = Swal.stopTimer;
+      toastEl.onmouseleave = Swal.resumeTimer;
     },
-  });
+  }).fire({ icon, title });
+};
 
-  let payload: any = null;
-  try {
-    payload = await response.json();
-  } catch {
-    // handled below
+const apiGet = async <T,>(path: string): Promise<ApiEnvelope<T>> => {
+  const response = await customerApi.get(`${API_BASE}${path}`);
+  const payload = response.data as ApiEnvelope<T>;
+  if (payload?.success === false) {
+    throw new Error(payload?.message || "");
   }
+  return payload;
+};
 
-  if (response.status === 401 || response.status === 403) {
-    throw new Error(
-      "Your session has expired or you are not authorized. Please sign in again.",
-    );
+const apiPost = async <T,>(path: string, body: unknown): Promise<ApiEnvelope<T>> => {
+  const response = await customerApi.post(`${API_BASE}${path}`, body);
+  const payload = response.data as ApiEnvelope<T>;
+  if (payload?.success === false) {
+    throw new Error(payload?.message || "");
   }
-  if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.message || `Request failed (${response.status})`);
-  }
-  return payload as ApiEnvelope<T>;
+  return payload;
 };
 
 const detectBrowser = () => {
@@ -237,61 +226,56 @@ const OxyLoansIntegration: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [openingRole, setOpeningRole] = useState<Role | null>(null);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
-  const loadData = useCallback(async () => {
-    if (!askoxyUserId) {
-      setError("We could not find your AskOxy user ID. Please sign in again.");
+  const loadData = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!askoxyUserId) {
+        if (!options?.silent) {
+          showToast("error", "We could not find your AskOxy user ID. Please sign in again.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      const [trackingResult, statusResult] = await Promise.allSettled([
+        apiGet<TrackingItem[]>(`/tracking/${encodeURIComponent(askoxyUserId)}`),
+        apiGet<UserStatus>(`/user-status/${encodeURIComponent(askoxyUserId)}`),
+      ]);
+
+      if (trackingResult.status === "fulfilled") {
+        setTracking(
+          Array.isArray(trackingResult.value.data)
+            ? trackingResult.value.data
+            : [],
+        );
+      }
+      if (statusResult.status === "fulfilled") {
+        setStatus(
+          statusResult.value.data || {
+            borrowerRegistered: false,
+            lenderRegistered: false,
+            partnerRegistered: false,
+          },
+        );
+      }
+
+      if (!options?.silent) {
+        const failures = [trackingResult, statusResult].filter(
+          (result) => result.status === "rejected",
+        ) as PromiseRejectedResult[];
+
+        if (failures.length === 2) {
+          const message = getApiMessage(failures[0].reason);
+          if (message) showToast("error", message);
+        } else if (failures.length === 1) {
+          const message = getApiMessage(failures[0].reason);
+          if (message) showToast("warning", message);
+        }
+      }
       setLoading(false);
-      return;
-    }
-
-    setError("");
-    setNotice("");
-    const [trackingResult, statusResult] = await Promise.allSettled([
-      apiRequest<TrackingItem[]>(
-        `/tracking/${encodeURIComponent(askoxyUserId)}`,
-      ),
-      apiRequest<UserStatus>(
-        `/user-status/${encodeURIComponent(askoxyUserId)}`,
-      ),
-    ]);
-
-    if (trackingResult.status === "fulfilled") {
-      setTracking(
-        Array.isArray(trackingResult.value.data)
-          ? trackingResult.value.data
-          : [],
-      );
-    }
-    if (statusResult.status === "fulfilled") {
-      setStatus(
-        statusResult.value.data || {
-          borrowerRegistered: false,
-          lenderRegistered: false,
-          partnerRegistered: false,
-        },
-      );
-    }
-
-    const failures = [trackingResult, statusResult].filter(
-      (result) => result.status === "rejected",
-    );
-    if (failures.length === 2) {
-      const first = failures[0] as PromiseRejectedResult;
-      setError(
-        first.reason instanceof Error
-          ? first.reason.message
-          : "Unable to load OxyLoans data.",
-      );
-    } else if (failures.length) {
-      setNotice(
-        "Some OxyLoans information could not be loaded. Available data is shown below.",
-      );
-    }
-    setLoading(false);
-  }, [askoxyUserId]);
+    },
+    [askoxyUserId],
+  );
 
   useEffect(() => {
     loadData();
@@ -299,7 +283,7 @@ const OxyLoansIntegration: React.FC = () => {
 
   useEffect(() => {
     const refreshOnFocus = () => {
-      if (document.visibilityState === "visible") loadData();
+      if (document.visibilityState === "visible") loadData({ silent: true });
     };
     window.addEventListener("focus", refreshOnFocus);
     document.addEventListener("visibilitychange", refreshOnFocus);
@@ -312,44 +296,58 @@ const OxyLoansIntegration: React.FC = () => {
   const getRoleTracking = (role: Role) =>
     tracking.find((item) => item.role?.toUpperCase() === role);
 
+  const isRoleRegistered = (role: Role) => {
+    const config = roleConfig[role];
+    const item = getRoleTracking(role);
+    return Boolean(status[config.registeredKey] || item?.registered);
+  };
+
+  const registeredRoles = (["BORROWER", "LENDER", "PARTNER"] as Role[]).filter(
+    isRoleRegistered,
+  );
+  const registeredTitles = registeredRoles
+    .map((role) => roleConfig[role].title)
+    .join(", ");
+  const hasRegisteredRole = registeredRoles.length > 0;
+
   const openRoleFlow = async (role: Role) => {
     if (!askoxyUserId || openingRole) return;
+    if (hasRegisteredRole && !isRoleRegistered(role)) return;
+
     setOpeningRole(role);
-    setError("");
-    setNotice("");
     const redirectWindow = window.open("about:blank", "_blank");
 
     try {
       const ipAddress = await getPublicIp();
-      const result = await apiRequest<{
+      const result = await apiPost<{
         trackingId: string;
         redirectUrl: string;
       }>("/click", {
-        method: "POST",
-        body: JSON.stringify({
-          askoxyUserId,
-          browser: detectBrowser(),
-          device: detectDevice(),
-          ipAddress,
-          role,
-        }),
+        askoxyUserId,
+        browser: detectBrowser(),
+        device: detectDevice(),
+        ipAddress,
+        role,
       });
 
       const redirectUrl = result.data?.redirectUrl;
-      if (!redirectUrl)
-        throw new Error("OxyLoans did not return a redirect URL.");
-      await loadData();
+      if (!redirectUrl) {
+        const message = result.message || "";
+        if (message) showToast("error", message);
+        redirectWindow?.close();
+        return;
+      }
+
+      if (result.message) showToast("success", result.message);
+      await loadData({ silent: true });
 
       if (redirectWindow && !redirectWindow.closed)
         redirectWindow.location.href = redirectUrl;
       else window.location.href = redirectUrl;
     } catch (err) {
       redirectWindow?.close();
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to open OxyLoans. Please try again.",
-      );
+      const message = getApiMessage(err);
+      if (message) showToast("error", message);
     } finally {
       setOpeningRole(null);
     }
@@ -357,12 +355,30 @@ const OxyLoansIntegration: React.FC = () => {
 
   const roles: Role[] = ["BORROWER", "LENDER", "PARTNER"];
 
+  // If any role is already registered, display only the registered role card(s).
+  // If nothing is registered yet, display all journey cards.
+  const displayRoles = hasRegisteredRole
+    ? roles.filter((role) => isRoleRegistered(role))
+    : roles;
+
   const trackingColumns: ColumnsType<TrackingItem> = [
+    {
+      title: "Tracking ID",
+      dataIndex: "trackingId",
+      key: "trackingId",
+      align: "center",
+      render: (value: string) => (
+        <Tooltip title={value}>
+          <Text code className="text-xs">
+            #{value.slice(-4) || "—"}
+          </Text>
+        </Tooltip>
+      ),
+    },
     {
       title: "Role",
       dataIndex: "role",
       key: "role",
-
       align: "center",
       render: (value: string) => <Text strong>{value || "—"}</Text>,
     },
@@ -376,14 +392,13 @@ const OxyLoansIntegration: React.FC = () => {
         </Tag>
       ),
     },
-    {
-      title: "Logins",
-      dataIndex: "loginCount",
-      key: "loginCount",
-
-      align: "center",
-      render: (value: number) => value || 0,
-    },
+    // {
+    //   title: "Logins",
+    //   dataIndex: "loginCount",
+    //   key: "loginCount",
+    //   align: "center",
+    //   render: (value: number) => value || 0,
+    // },
     {
       title: "Registration Date",
       dataIndex: "registrationDate",
@@ -402,20 +417,7 @@ const OxyLoansIntegration: React.FC = () => {
         <Text className="whitespace-nowrap text-xs">{formatDate(value)}</Text>
       ),
     },
-    {
-      title: "Tracking ID",
-      dataIndex: "trackingId",
-      key: "trackingId",
-      align: "center",
 
-      render: (value: string) => (
-        <Tooltip title={value}>
-          <Text code className="text-xs">
-            {value.slice(-4) || "—"}
-          </Text>
-        </Tooltip>
-      ),
-    },
     {
       title: "Last Synced",
       dataIndex: "lastSyncedAt",
@@ -450,28 +452,19 @@ const OxyLoansIntegration: React.FC = () => {
       <div className="min-h-full ">
         <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-5 sm:py-5 lg:px-6">
           <div className="mb-4 flex items-center justify-between">
-            <Title level={3} className="!m-0 !text-xl sm:!text-2xl">
-              OxyLoans
-            </Title>
-          </div>
-
-          {(error || notice) && (
-            <Alert
-              className="mb-4"
-              type={error ? "error" : "warning"}
-              showIcon
-              message={
-                error ? "Unable to load OxyLoans information" : "Partial update"
-              }
-              description={error || notice}
-            />
-          )}
+  <Title
+    level={3}
+    className="!m-0 !text-xl !text-purple-800 sm:!text-2xl"
+  >
+    OxyLoans Journeys
+  </Title>
+</div>
 
           {loading ? (
             <Card bordered={false} className="shadow-sm">
               <div className="flex min-h-[220px] items-center justify-center">
                 <Space direction="vertical" align="center">
-                  <Spin size="large" />
+                  <Spin size="default" />
                   <Text type="secondary">
                     Loading your OxyLoans journeys...
                   </Text>
@@ -481,16 +474,13 @@ const OxyLoansIntegration: React.FC = () => {
           ) : (
             <>
               <section className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
-                {roles.map((role) => {
+                {displayRoles.map((role) => {
                   const config = roleConfig[role];
                   const item = getRoleTracking(role);
-
-                  const registered = Boolean(
-                    status[config.registeredKey] || item?.registered,
-                  );
-
+                  const registered = isRoleRegistered(role);
                   const started = Boolean(item);
                   const isOpening = openingRole === role;
+                  const locked = false;
 
                   const statusLabel = registered
                     ? "Registered"
@@ -510,27 +500,29 @@ const OxyLoansIntegration: React.FC = () => {
                       ? `Continue ${config.title}`
                       : `Start ${config.title}`;
 
+                  const lockHint = hasRegisteredRole
+                    ? `You are already registered as ${registeredTitles}. Other roles stay unavailable.`
+                    : "";
+
                   return (
                     <Card
                       key={role}
-                      hoverable
+                      hoverable={!locked}
                       bordered={false}
-                      className="
+                      className={`
           group h-full overflow-hidden
           rounded-lg
           border border-transparent
           shadow-sm
           transition-all duration-300
-          hover:-translate-y-1
-          hover:shadow-md
-        "
+          ${locked ? "opacity-80" : "hover:-translate-y-1 hover:shadow-md"}
+        `}
                       style={{
                         background: `linear-gradient(
             135deg,
             ${config.soft} 0%,
             #ffffff 72%
           )`,
-                        // borderColor: `${config.accent}20`,
                       }}
                       styles={{
                         body: {
@@ -539,7 +531,6 @@ const OxyLoansIntegration: React.FC = () => {
                         },
                       }}
                     >
-                      {/* top accent */}
                       <div
                         className="h-[4px] w-full"
                         style={{
@@ -548,7 +539,6 @@ const OxyLoansIntegration: React.FC = () => {
                       />
 
                       <div className="flex h-full flex-col p-4 sm:p-5">
-                        {/* Header */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar
@@ -576,9 +566,11 @@ const OxyLoansIntegration: React.FC = () => {
                               >
                                 {registered
                                   ? "Your registration is complete"
-                                  : started
-                                    ? "Continue your existing journey"
-                                    : `Start your ${config.title.toLowerCase()} journey`}
+                                  : locked
+                                    ? `Unavailable while you are registered as ${registeredTitles}`
+                                    : started
+                                      ? "Continue your existing journey"
+                                      : `Start your ${config.title.toLowerCase()} journey`}
                               </Text>
                             </div>
                           </div>
@@ -599,7 +591,6 @@ const OxyLoansIntegration: React.FC = () => {
                           </Tag>
                         </div>
 
-                        {/* Action area */}
                         <div
                           className="
               mt-4
@@ -611,37 +602,53 @@ const OxyLoansIntegration: React.FC = () => {
               pt-3
             "
                         >
-                          <Button
-                            type="primary"
-                            size="middle"
-                            block
-                            loading={isOpening}
-                            disabled={Boolean(openingRole) && !isOpening}
-                            onClick={() => openRoleFlow(role)}
-                            style={{
-                              backgroundColor: config.accent,
-                              borderColor: config.accent,
-                            }}
-                            className="
+                          <Tooltip
+                            title={locked ? lockHint : undefined}
+                            placement="top"
+                          >
+                            <span className="block w-full">
+                              <Button
+                                type="primary"
+                                size="middle"
+                                block
+                                loading={isOpening}
+                                disabled={
+                                  locked ||
+                                  (Boolean(openingRole) && !isOpening)
+                                }
+                                onClick={() => openRoleFlow(role)}
+                                style={{
+                                  backgroundColor: locked
+                                    ? undefined
+                                    : config.accent,
+                                  borderColor: locked
+                                    ? undefined
+                                    : config.accent,
+                                }}
+                                className="
                 !h-10
                 !rounded-lg
                 !font-medium
                 shadow-none
               "
-                          >
-                            <span className="flex items-center justify-center gap-2">
-                              {buttonLabel}{" "}
-                              {!isOpening && (
-                                <ArrowRightOutlined
-                                  className="
+                              >
+                                <span className="flex items-center justify-center gap-2">
+                                  {locked
+                                    ? `${config.title} unavailable`
+                                    : buttonLabel}{" "}
+                                  {!isOpening && !locked && (
+                                    <ArrowRightOutlined
+                                      className="
                       transition-transform
                       duration-200
                       group-hover:translate-x-0.5
                     "
-                                />
-                              )}
+                                    />
+                                  )}
+                                </span>
+                              </Button>
                             </span>
-                          </Button>
+                          </Tooltip>
                         </div>
                       </div>
                     </Card>
@@ -649,21 +656,22 @@ const OxyLoansIntegration: React.FC = () => {
                 })}
               </section>
 
-              <Card
-                bordered={false}
-                className="mt-4 shadow-sm"
-                styles={{ body: { padding: 0 } }}
-                title={
-                  <Space size={10}>
-                    <Avatar
-                      size="small"
-                      icon={<BankOutlined />}
-                      style={{ backgroundColor: "#f0f5ff", color: "#2f54eb" }}
-                    />
-                    <Text strong>Journey Activity</Text>
-                  </Space>
-                }
-              >
+              <div className="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3">
+                  <Avatar
+                    size="small"
+                    icon={<BankOutlined />}
+                    style={{
+                      backgroundColor: "#f0f5ff",
+                      color: "#2f54eb",
+                    }}
+                  />
+
+                  <Text strong className="text-base">
+                    Journey Activity
+                  </Text>
+                </div>
+
                 <Table<TrackingItem>
                   rowKey={(item) =>
                     item.trackingId || `${item.role}-${item.askoxyUserId}`
@@ -673,7 +681,10 @@ const OxyLoansIntegration: React.FC = () => {
                   size="middle"
                   pagination={
                     tracking.length > 10
-                      ? { pageSize: 10, showSizeChanger: false }
+                      ? {
+                        pageSize: 10,
+                        showSizeChanger: false,
+                      }
                       : false
                   }
                   scroll={{ x: true }}
@@ -686,7 +697,7 @@ const OxyLoansIntegration: React.FC = () => {
                     ),
                   }}
                 />
-              </Card>
+              </div>
             </>
           )}
         </main>

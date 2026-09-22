@@ -19,9 +19,11 @@ import {
   FaComments,
   FaInfoCircle,
   FaChartBar,
+  FaHandshake,
+  FaRoute,
 } from "react-icons/fa";
 import { IoLayers, IoLogOut } from "react-icons/io5";
-import { FaCreditCard, FaRobot, FaBriefcase } from "react-icons/fa6";
+import { FaCreditCard, FaRobot, FaBriefcase, FaChartPie } from "react-icons/fa6";
 import { TbLayoutDashboardFilled } from "react-icons/tb";
 import { ImUsers } from "react-icons/im";
 import { AiFillFileText, AiFillProduct } from "react-icons/ai";
@@ -330,7 +332,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "Add Company, Product & Service",
           icon: <FaPlusCircle size={16} />,
         },
-        
+
         {
           to: "/main/dashboard/my-products-services",
           label: "My Products & Services",
@@ -341,19 +343,19 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "My Companies",
           icon: <FaStore size={16} />,
         },
-       
+
       ],
     },
-     {
+    {
       type: "dropdown",
       key: "oxyloans",
-      icon: <FaPlusCircle size={18} />,
+      icon: <FaHandshake size={18} />,
       label: "OxyLoans Partner Network",
       items: [
         {
           to: "/main/oxyloans",
-          label: "Overview",
-          icon: <FaInfoCircle size={16} />,
+          label: "OxyLoans Journeys",
+          icon: <FaRoute size={16} />,
         },
         {
           to: "/main/oxyloans/referral-network",
@@ -362,8 +364,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/oxyloans/summary",
-          label: "Summary",
-          icon: <FaChartBar size={16} />,
+          label: "OxyLoans Summary",
+          icon: <FaChartPie size={16} />,
         },
       ],
     },
@@ -377,6 +379,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const isActive = (to: string) => {
+    // OxyLoans "Overview" is the parent path of the other OxyLoans pages.
+    // Keep it exact so Overview does not remain highlighted when
+    // Referral Network or Summary is selected.
+    if (to === "/main/oxyloans") {
+      return location.pathname === to;
+    }
+
     return location.pathname === to || location.pathname.startsWith(to + "/");
   };
 

@@ -44,8 +44,8 @@ import Sep19LoansWalkIn from "./components/sep19walkin";
 import RBINewsPage from "./OxyNews/pages/RBINewsPage";
 import RiceContainerData from "./PartnerWeb/RiceContainerData";
 import JourneysPagewithoutlogin from "./components/Journeyspagewithoutlogin";
-import OxyLoansIntegration from "./components/OxyLoansIntegration";
-import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
+
+
 import OxyLoansSummary from "./components/OxyLoansSummary";
 import AmfiReports from "./AskoxyAdmin/AmfiReports";
 import RadhaLinkedin from "./AskoxyAdmin/RadhaLinkedin";
@@ -59,6 +59,8 @@ import TwoYearsServiceData from "./AskoxyAdmin/TwoYearsServiceData";
 import UnknownData from "./AskoxyAdmin/UnknownData";
 import NaukriRasData from "./AskoxyAdmin/NaukriRasData";
 import K2kFintechData from "./AskoxyAdmin/K2kFintechData";
+import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
+import OxyLoansIntegration from "./components/OxyLoansIntegration";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
