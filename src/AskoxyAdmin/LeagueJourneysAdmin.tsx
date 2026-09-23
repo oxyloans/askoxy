@@ -162,7 +162,8 @@ const LeagueJourneysAdmin: React.FC = () => {
     if (!debouncedTerm) return rows;
     return rows.filter((o) => {
       const mobile = (o.mobileNumber || "").toLowerCase();
-      return mobile.includes(debouncedTerm);
+      const offers = (o.askOxyOfers || "").toLowerCase();
+      return mobile.includes(debouncedTerm) || offers.includes(debouncedTerm);
     });
   }, [rows, debouncedTerm]);
 
@@ -315,7 +316,7 @@ const LeagueJourneysAdmin: React.FC = () => {
             <div className="flex-1 min-w-0">
               <Search
                 allowClear
-                placeholder="Search by mobile number…"
+                placeholder="Search by mobile, Interested In"
                 value={searchText}
                 onChange={(e) => { setSearchText(e.target.value); setCurrentPage(1); }}
                 size={isMobile ? "large" : "middle"}

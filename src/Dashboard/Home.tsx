@@ -191,7 +191,6 @@ const Home: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false); // NEW: State to track hover status
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
-  const IMAGES_PER_SET = 3;
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
     status: { [key: string]: string };
@@ -212,7 +211,6 @@ const Home: React.FC = () => {
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const productsRef = useRef<HTMLDivElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
   const navigate = useNavigate();
   const categoriesFetched = useRef(false);
@@ -705,7 +703,8 @@ const Home: React.FC = () => {
     fetchInitialData();
   }, [fetchCartData, fetchCategories]);
 
-  const [currentSet, setCurrentSet] = useState(0);
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const [bannerStartIndex, setBannerStartIndex] = useState(0);
 
   // New useEffect to trigger offers modal
   useEffect(() => {
@@ -727,33 +726,6 @@ const Home: React.FC = () => {
       });
     }
   }, [userEligibleOffers, offers.length]);
-
-  // Existing useEffect for responsive behavior
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const headerImageVariants = {
-    initial: {
-      scale: 1,
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-    },
-    hover: {
-      scale: 1.1,
-      boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 20,
-      },
-    },
-  };
 
   const headerImages: HeaderImage[] = [
     {
@@ -795,10 +767,10 @@ const Home: React.FC = () => {
       },
     },
     {
-      id: "26kg Offer",
+      id: "10kg Offer",
       src: O5,
-      alt: "26kg Offer",
-      path: "/main/dashboard/products?weight=10.0",
+      alt: "10kg Offer",
+      path: "/main/dashboard/products?type=RICE&weight=10.0",
       onClick: () => {
         navigate("/main/dashboard/products?type=RICE&weight=10.0");
       },
@@ -807,22 +779,36 @@ const Home: React.FC = () => {
       id: "26kg Offer",
       src: O6,
       alt: "26kg Offer",
-      path: "/main/dashboard/products?weight=26.0",
+      path: "/main/dashboard/products?type=RICE&weight=26.0",
       onClick: () => {
         navigate("/main/dashboard/products?type=RICE&weight=26.0");
       },
     },
   ];
 
-  const totalSets = Math.ceil(headerImages.length / IMAGES_PER_SET);
+  const visibleHeaderImages = Array.from(
+    { length: Math.min(3, headerImages.length) },
+    (_, offset) => {
+      const index = (bannerStartIndex + offset) % headerImages.length;
+      return { image: headerImages[index], index };
+    },
+  );
+
   useEffect(() => {
-    if (isHovered) return; // NEW: Skip interval if an image is being hovered
-    const interval = setInterval(() => {
-      setCurrentSet((prev) => (prev + 1) % totalSets);
+    if (isHovered || headerImages.length <= 1) return;
+
+    const timer = window.setTimeout(() => {
+      setBannerIndex((current) => (current + 1) % headerImages.length);
+      setBannerStartIndex((current) => (current + 1) % headerImages.length);
     }, 4500);
 
-    return () => clearInterval(interval);
-  }, [headerImages.length, isHovered]);
+    return () => window.clearTimeout(timer);
+  }, [
+    isHovered,
+    headerImages.length,
+    bannerIndex,
+    bannerStartIndex,
+  ]);
 
   const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
@@ -1874,55 +1860,136 @@ const Home: React.FC = () => {
         )}
       </Modal>
 
-      {/* Header Images Section */}
+      {/* Promotional Banners — equal-size, responsive and no-crop */}
       <div className="w-full py-2">
-        <div className="px-2 sm:px-3 md:px-4 lg:px-5 mx-auto max-w-7xl">
-          <div className="relative" style={{ minHeight: "180px" }}>
-            <div
-              className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3"
-              style={{ perspective: 1000 }}
-            >
+        <div className="mx-auto w-full max-w-7xl px-2 sm:px-3 md:px-4 lg:px-5">
+          {/* Mobile: one full promotion at a time, artwork is never cropped */}
+          <div
+            className="sm:hidden"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div className="relative overflow-hidden">
               <AnimatePresence mode="wait">
-                {headerImages
-                  .slice(
-                    currentSet * (isMobile ? 1 : IMAGES_PER_SET),
-                    currentSet * (isMobile ? 1 : IMAGES_PER_SET) +
-                      (isMobile ? 1 : IMAGES_PER_SET),
-                  )
-
-                  .map((image, idx) => (
-                    <motion.div
-                      key={`${image.id}-${currentSet}-${idx}`}
-                      initial={{ rotateY: 90, opacity: 0 }}
-                      animate={{ rotateY: 0, opacity: 1 }}
-                      exit={{ rotateY: -90, opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="cursor-pointer overflow-hidden rounded-lg flex items-center justify-center"
-                      style={{
-                        transformStyle: "preserve-3d",
-                        backfaceVisibility: "hidden",
-                        height: isMobile ? "100px" : "160px",
-                      }}
-                      onClick={image.onClick}
-                      onMouseEnter={() => setIsHovered(true)}
-                      onMouseLeave={() => setIsHovered(false)}
-                      whileHover={{
-                        scale: 1.05,
-                        rotateY: 0,
-                        transition: { duration: 0.3 },
-                      }}
-                    >
-                      <img
-                        src={image.src}
-                        alt={image.alt || "Header"}
-                        className="max-h-full max-w-full object-contain rounded-lg"
-                        style={{
-                          borderRadius: "12px",
-                        }}
-                      />
-                    </motion.div>
-                  ))}
+                <motion.button
+                  key={headerImages[bannerIndex].id}
+                  type="button"
+                  initial={{ opacity: 0, x: 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -24 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  onClick={headerImages[bannerIndex].onClick}
+                  className="flex h-[100px] w-full items-center justify-center overflow-hidden min-[390px]:h-[112px]"
+                  aria-label={headerImages[bannerIndex].alt || "Promotion"}
+                >
+                  <img
+                    src={headerImages[bannerIndex].src}
+                    alt={headerImages[bannerIndex].alt || "Promotion"}
+                    className="block h-full w-full object-contain"
+                  />
+                </motion.button>
               </AnimatePresence>
+            </div>
+
+            {/* Progress stays below the artwork so banner text/images are never covered */}
+            <div className="mt-2 flex items-center justify-center gap-1.5 px-1">
+              {headerImages.map((banner, index) => {
+                const isActive = bannerIndex === index;
+
+                return (
+                  <button
+                    key={banner.id}
+                    type="button"
+                    aria-label={`Show ${banner.alt || "promotion"}`}
+                    onClick={() => {
+                      setBannerIndex(index);
+                      setBannerStartIndex(index);
+                    }}
+                    className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
+                      isActive ? "w-9 bg-purple-200" : "w-3 bg-gray-300"
+                    }`}
+                  >
+                    {isActive && !isHovered && (
+                      <motion.span
+                        key={`mobile-progress-${bannerIndex}`}
+                        className="absolute inset-y-0 left-0 rounded-full bg-purple-600"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 3.0, ease: "linear" }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tablet/Desktop: three equal-size cards; full artwork remains visible */}
+          <div
+            className="hidden sm:block"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div className="grid grid-cols-3 gap-2 sm:gap-2.5 md:gap-3">
+              <AnimatePresence initial={false} mode="popLayout">
+                {visibleHeaderImages.map(({ image }) => (
+                  <motion.button
+                    layout
+                    key={image.id}
+                    type="button"
+                    onClick={image.onClick}
+                    initial={{ opacity: 0, x: 28, scale: 0.985 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -28, scale: 0.985 }}
+                    transition={{
+                      duration: 0.38,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    whileHover={{ y: -2 }}
+                    className="flex h-[78px] w-full items-center justify-center overflow-hidden sm:h-[82px] md:h-[100px] lg:h-[128px] xl:h-[156px]"
+                    aria-label={image.alt || "Promotion"}
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt || "Promotion"}
+                      className="block h-full w-full object-contain"
+                    />
+                  </motion.button>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            <div className="mt-2.5 flex items-center justify-center gap-1.5">
+              {headerImages.map((banner, index) => {
+                const isActive = bannerStartIndex === index;
+
+                return (
+                  <button
+                    key={banner.id}
+                    type="button"
+                    aria-label={`Start banner view from ${banner.alt || "promotion"}`}
+                    onClick={() => {
+                      setBannerStartIndex(index);
+                      setBannerIndex(index);
+                    }}
+                    className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
+                      isActive
+                        ? "w-10 bg-purple-200"
+                        : "w-4 bg-gray-300 hover:bg-gray-400"
+                    }`}
+                  >
+                    {isActive && !isHovered && (
+                      <motion.span
+                        key={`desktop-progress-${bannerStartIndex}`}
+                        className="absolute inset-y-0 left-0 rounded-full bg-purple-600"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 3.5, ease: "linear" }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

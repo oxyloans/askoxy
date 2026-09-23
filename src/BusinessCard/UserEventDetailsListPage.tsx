@@ -30,6 +30,7 @@ type FieldErrors = Partial<
 const emptyEventForm = (): UserEventDetailsSaveRequest => ({
   content: "",
   emailSubjectName: "",
+  eventDate: "",
   eventName: "",
   eventType: "",
   active: true,
@@ -41,6 +42,7 @@ const recordToForm = (
   id: record.id,
   content: record.content || "",
   emailSubjectName: record.emailSubjectName || "",
+  eventDate: record.eventDate || "",
   eventName: record.eventName || "",
   eventType: record.eventType || "",
   active: record.active !== false,
@@ -71,6 +73,31 @@ const extractApiMessage = (error: unknown): string => {
 };
 
 const displayValue = (value?: string | null) => value?.trim() || "Not provided";
+const formatDisplayDate = (value?: string | null) => {
+  if (!value?.trim()) return "Not provided";
+  const trimmed = value.trim();
+  const parts = trimmed.split("-");
+  if (parts.length === 3 && parts[0].length === 4) {
+    const [y, m, d] = parts.map(Number);
+    const date = new Date(y, m - 1, d);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+  }
+  const date = new Date(trimmed);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+  return trimmed;
+};
 const inputClass =
   "h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-500/10";
 
@@ -199,6 +226,7 @@ const UserEventDetailsListPage: React.FC = () => {
       id: eventForm.id.trim(),
       content: eventForm.content || "",
       emailSubjectName: eventForm.emailSubjectName || "",
+      eventDate: eventForm.eventDate?.trim() || "",
       eventName: eventForm.eventName || "",
       eventType: eventForm.eventType || "",
       active: eventForm.active !== false,
@@ -336,6 +364,19 @@ const UserEventDetailsListPage: React.FC = () => {
                 </label>
                 <label>
                   <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Event date
+                  </span>
+                  <input
+                    type="date"
+                    value={eventForm.eventDate || ""}
+                    onChange={(event) =>
+                      updateField("eventDate", event.target.value)
+                    }
+                    className={inputClass}
+                  />
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
                     Email subject
                   </span>
                   <input
@@ -468,6 +509,12 @@ const UserEventDetailsListPage: React.FC = () => {
                           <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold text-cyan-700 ring-1 ring-inset ring-cyan-200">
                             {formatEventTypeLabel(item.eventType || undefined)}
                           </span>
+                          {item.eventDate?.trim() && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+                              <CalendarDays className="h-3 w-3 text-slate-500" />
+                              {formatDisplayDate(item.eventDate)}
+                            </span>
+                          )}
                           <span
                             className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-inset ${item.active === true ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-600 ring-slate-200"}`}
                           >
@@ -495,6 +542,10 @@ const UserEventDetailsListPage: React.FC = () => {
                       <FieldBlock
                         label="Event name"
                         value={displayValue(item.eventName)}
+                      />
+                      <FieldBlock
+                        label="Event date"
+                        value={formatDisplayDate(item.eventDate)}
                       />
                       <FieldBlock
                         label="Email subject"

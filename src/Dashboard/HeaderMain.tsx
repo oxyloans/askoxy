@@ -245,7 +245,7 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               {isSearchVisible ? <X size={20} /> : <Search size={20} />}
             </button>
 
-            <button
+            {/* <button
               onClick={() => setIsVoiceOpen(true)}
               onMouseEnter={() => setIsVoiceHovered(true)}
               onMouseLeave={() => setIsVoiceHovered(false)}
@@ -270,12 +270,12 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                 )}
               </div>
 
-              {/* <span className="relative z-10 hidden text-sm font-semibold sm:inline whitespace-nowrap">
+              <span className="relative z-10 hidden text-sm font-semibold sm:inline whitespace-nowrap">
                 Voice Assistant
-              </span> */}
+              </span>
 
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000"></div>
-            </button>
+            </button> */}
 {/* 
             <button
               onClick={() => {

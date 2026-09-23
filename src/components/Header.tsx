@@ -58,13 +58,13 @@ const Header: React.FC = () => {
           </div>
 
           <div className="header-actions">
-            <button
+            {/* <button
               className="voice-assistant-btn"
               type="button"
               onClick={() => setShowVoiceAssistant(true)}
             >
               Voice Assistant
-            </button>
+            </button> */}
 
             <button
               className="sign-in-btn"

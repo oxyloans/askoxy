@@ -638,11 +638,13 @@ export interface UserEventDetailsResponse {
   active?: boolean;
   eventType?: string | null;
   emailSubjectName?: string | null;
+  eventDate?: string | null;
 }
 
 export interface UserEventDetailsSaveRequest {
   content?: string;
   emailSubjectName?: string;
+  eventDate?: string;
   eventName?: string;
   eventType?: string;
   id?: string;
@@ -679,6 +681,7 @@ export const saveUserEventDetails = async (
 
   const body: UserEventDetailsSaveRequest & { userId: string } = {
     content: payload.content?.trim() || "",
+    eventDate: payload.eventDate?.trim() || "",
     emailSubjectName: payload.emailSubjectName?.trim() || "",
     eventName: payload.eventName?.trim() || "",
     eventType: payload.eventType?.trim() || "",
