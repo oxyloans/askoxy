@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
     ArrowRight,
     CheckCircle2,
@@ -21,6 +22,46 @@ interface TaskStatusCounts {
     rejectCount: number;
     completedCount: number;
     totalCount: number;
+}
+
+interface EmployeeSkillsResponse {
+    employeeId?: string | null;
+    skills?: string | null;
+    projectType?: string | null;
+    designation?: string | null;
+    toolUsage?: Array<{
+        usageLevel?: string | null;
+        tools?: string[] | null;
+    }> | null;
+    empNumber?: string | null;
+    location?: string | null;
+    dateOfJoining?: string | null;
+    aboutMe?: string | null;
+    imageUrl?: string | null;
+}
+
+interface EmployeeInfoResponse {
+    id?: string | null;
+    email?: string | null;
+    userId?: string | null;
+    homeAddress?: string | null;
+    contactNumber?: string | null;
+    ssc?: string | null;
+    intermediate?: string | null;
+    diploma?: string | null;
+    graduation?: string | null;
+    graduationCourse?: string | null;
+    graduationPassOutYear?: string | null;
+    graduationCollegeAddress?: string | null;
+    graduationCollegeWebsiteUrl?: string | null;
+    bloodGroup?: string | null;
+    panNumber?: string | null;
+    aadharNumber?: string | null;
+    panUrl?: string | null;
+    aadharUrl?: string | null;
+    employeeWorkingStatus?: string | null;
+    employeeIdNumber?: string | null;
+    linkdinUrl?: string | null;
 }
 
 interface RecentTask {
@@ -178,6 +219,13 @@ const STATUS_FILTER_MAP: Record<string, string> = {
 const getTasksUrlByStatus = (status: string) =>
     `/taskmanagement/assignedtasks?status=${encodeURIComponent(status)}`;
 
+const hasProfileValue = (value: unknown): boolean => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === "string") return value.trim().length > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+};
+
 const TaskDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [counts, setCounts] = useState<TaskStatusCounts>(initialCounts);
@@ -187,6 +235,137 @@ const TaskDashboard: React.FC = () => {
     const [error, setError] = useState(false);
     const [recentError, setRecentError] = useState(false);
     const userName = sessionStorage.getItem("Name") || "User";
+
+    const checkEmployeeProfileCompletion = async () => {
+        const userId = sessionStorage.getItem("userId");
+        if (!userId) return;
+
+        try {
+            const [skillsResult, employeeInfoResult] = await Promise.allSettled([
+                employeeApi.get<EmployeeSkillsResponse>(
+                    `${BASE_URL}/user-service/write/getEmployeeSkills/${userId}`,
+                ),
+                employeeApi.get<EmployeeInfoResponse>(
+                    `${BASE_URL}/user-service/write/employee-info/${userId}`,
+                ),
+            ]);
+
+            const getErrorStatus = (reason: unknown) =>
+                (reason as { response?: { status?: number } })?.response?.status;
+
+            const skillsErrorStatus =
+                skillsResult.status === "rejected" ? getErrorStatus(skillsResult.reason) : undefined;
+            const employeeInfoErrorStatus =
+                employeeInfoResult.status === "rejected"
+                    ? getErrorStatus(employeeInfoResult.reason)
+                    : undefined;
+
+            // A 404 means the profile section does not exist yet, so treat it as incomplete.
+            // Other request failures are not treated as missing profile data to avoid false alerts.
+            if (
+                (skillsResult.status === "rejected" && skillsErrorStatus !== 404) ||
+                (employeeInfoResult.status === "rejected" && employeeInfoErrorStatus !== 404)
+            ) {
+                console.error("Unable to verify employee profile completion:", {
+                    skillsError: skillsResult.status === "rejected" ? skillsResult.reason : undefined,
+                    employeeInfoError:
+                        employeeInfoResult.status === "rejected" ? employeeInfoResult.reason : undefined,
+                });
+                return;
+            }
+
+            const skillsData: EmployeeSkillsResponse =
+                skillsResult.status === "fulfilled" && skillsResult.value.data
+                    ? skillsResult.value.data
+                    : {};
+            const employeeInfoData: EmployeeInfoResponse =
+                employeeInfoResult.status === "fulfilled" && employeeInfoResult.value.data
+                    ? employeeInfoResult.value.data
+                    : {};
+            const missingFields: string[] = [];
+
+            // Skills / professional profile API
+            const professionalFields: Array<[keyof EmployeeSkillsResponse, string]> = [
+                ["skills", "Skills"],
+                ["projectType", "Projects / Project Type"],
+                ["designation", "Designation"],
+                ["toolUsage", "Tool Usage"],
+                ["empNumber", "Employee Contact Number"],
+                ["location", "Location"],
+                ["dateOfJoining", "Date of Joining"],
+                ["aboutMe", "About Me"],
+            ];
+
+            professionalFields.forEach(([key, label]) => {
+                if (!hasProfileValue(skillsData?.[key])) missingFields.push(label);
+            });
+
+            // Main employee-info API. Diploma and LinkedIn are intentionally optional.
+            const employeeInfoFields: Array<[keyof EmployeeInfoResponse, string]> = [
+                ["homeAddress", "Home Address"],
+                ["contactNumber", "Contact Number"],
+                ["ssc", "10th / SSC Details"],
+                ["graduation", "Graduation Degree"],
+                ["graduationCourse", "Graduation Specialization"],
+                ["graduationPassOutYear", "Graduation Completion Year"],
+                ["graduationCollegeAddress", "College / University Address"],
+                ["graduationCollegeWebsiteUrl", "College / University Website"],
+                ["bloodGroup", "Blood Group"],
+                ["panNumber", "PAN Number"],
+                ["aadharNumber", "Aadhaar Number"],
+                ["panUrl", "PAN Document"],
+                ["aadharUrl", "Aadhaar Document"],
+                ["employeeWorkingStatus", "Employment Status"],
+                ["employeeIdNumber", "Employee ID"],
+            ];
+
+            employeeInfoFields.forEach(([key, label]) => {
+                if (!hasProfileValue(employeeInfoData?.[key])) missingFields.push(label);
+            });
+
+            // A user may have completed either Intermediate or Diploma.
+            if (
+                !hasProfileValue(employeeInfoData?.intermediate) &&
+                !hasProfileValue(employeeInfoData?.diploma)
+            ) {
+                missingFields.push("12th / Intermediate or Diploma Details");
+            }
+
+            if (missingFields.length === 0) return;
+
+            const visibleMissingFields = missingFields.slice(0, 6);
+            const remainingCount = missingFields.length - visibleMissingFields.length;
+            const missingFieldsHtml = visibleMissingFields
+                .map((field) => `<li style="margin:4px 0">${field}</li>`)
+                .join("");
+
+            const result = await Swal.fire({
+                icon: "warning",
+                title: "Complete Your Employee Profile",
+                html: `
+                    <div style="text-align:left;color:#475569;font-size:14px;line-height:1.6">
+                        <p style="margin:0 0 10px">Some required profile details are still missing. Please complete them for an accurate employee profile.</p>
+                        <div style="font-weight:600;color:#0f172a;margin-bottom:4px">Missing details:</div>
+                        <ul style="margin:0;padding-left:20px">${missingFieldsHtml}</ul>
+                        ${remainingCount > 0 ? `<div style="margin-top:6px">+ ${remainingCount} more field${remainingCount > 1 ? "s" : ""}</div>` : ""}
+                    </div>
+                `,
+                confirmButtonText: "Complete Profile",
+                showCancelButton: true,
+                cancelButtonText: "Later",
+                confirmButtonColor: "#6d28d9",
+                cancelButtonColor: "#64748b",
+                reverseButtons: true,
+                focusConfirm: true,
+            });
+
+            if (result.isConfirmed) {
+                navigate("/employeeprofile");
+            }
+        } catch (profileCheckError) {
+            console.error("Error checking employee profile completion:", profileCheckError);
+        }
+    };
 
     const fetchDashboard = async () => {
         const userId = sessionStorage.getItem("userId");
@@ -246,6 +425,7 @@ const TaskDashboard: React.FC = () => {
 
     useEffect(() => {
         fetchDashboard();
+        checkEmployeeProfileCompletion();
     }, []);
 
     const completionRate = useMemo(() => {

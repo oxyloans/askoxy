@@ -61,6 +61,7 @@ import NaukriRasData from "./AskoxyAdmin/NaukriRasData";
 import K2kFintechData from "./AskoxyAdmin/K2kFintechData";
 import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
 import OxyLoansIntegration from "./components/OxyLoansIntegration";
+import EventDetails from "./AskoxyAdmin/EventDetails";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -2404,6 +2405,7 @@ const App: React.FC = () => {
                 <Route path="orderReport" element={<OrderReport />} />
                 <Route path="feedback" element={<FeedbackDashboard />} />
                 <Route path="helpdashboard" element={<HelpDeskDashboard />} />
+                  <Route path="event-details" element={<EventDetails />} />
                 <Route path="allroleblogs" element={<RoleBasedBlogsList />} />
                 <Route path="addroleblogs" element={<AddRoleBasedBlog />} />
                 <Route path="todaycalls" element={<CallerHistoryPage />} />

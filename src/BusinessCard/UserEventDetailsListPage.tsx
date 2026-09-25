@@ -24,7 +24,10 @@ import {
 
 type Notice = { type: "success" | "warning" | "error"; text: string } | null;
 type FieldErrors = Partial<
-  Record<"eventType" | "eventName" | "emailSubjectName" | "content", string>
+  Record<
+    "eventType" | "eventName" | "emailSubjectName" | "content" | "location",
+    string
+  >
 >;
 
 const emptyEventForm = (): UserEventDetailsSaveRequest => ({
@@ -33,8 +36,28 @@ const emptyEventForm = (): UserEventDetailsSaveRequest => ({
   eventDate: "",
   eventName: "",
   eventType: "",
+  location: "",
   active: true,
 });
+
+// HTML <input type="date"> only accepts YYYY-MM-DD.
+// The API can return values such as "2026-09-25 00:00:00.0" or an ISO timestamp,
+// so keep only the calendar-date portion when pre-filling the edit form.
+const toDateInputValue = (value?: string | null): string => {
+  if (!value?.trim()) return "";
+
+  const trimmed = value.trim();
+  const directMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (directMatch) return `${directMatch[1]}-${directMatch[2]}-${directMatch[3]}`;
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const recordToForm = (
   record: UserEventDetailsResponse,
@@ -42,9 +65,10 @@ const recordToForm = (
   id: record.id,
   content: record.content || "",
   emailSubjectName: record.emailSubjectName || "",
-  eventDate: record.eventDate || "",
+  eventDate: toDateInputValue(record.eventDate),
   eventName: record.eventName || "",
   eventType: record.eventType || "",
+  location: record.location || "",
   active: record.active !== false,
 });
 
@@ -197,6 +221,8 @@ const UserEventDetailsListPage: React.FC = () => {
       errors.emailSubjectName = "Email subject cannot exceed 150 characters.";
     if ((eventForm.content?.trim().length || 0) > 2000)
       errors.content = "Content cannot exceed 2,000 characters.";
+      if(!eventForm.location?.trim())
+      errors.location = "Location is required.";
     return errors;
   };
 
@@ -229,6 +255,7 @@ const UserEventDetailsListPage: React.FC = () => {
       eventDate: eventForm.eventDate?.trim() || "",
       eventName: eventForm.eventName || "",
       eventType: eventForm.eventType || "",
+      location: eventForm.location?.trim() || "",
       active: eventForm.active !== false,
     };
     try {
@@ -374,6 +401,24 @@ const UserEventDetailsListPage: React.FC = () => {
                     }
                     className={inputClass}
                   />
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Location
+                  </span>
+                  <input
+                    value={eventForm.location || ""}
+                    onChange={(event) =>
+                      updateField("location", event.target.value)
+                    }
+                    placeholder="Location"
+                    className={`${inputClass} ${fieldErrors.location ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                  />
+                  {fieldErrors.location && (
+                    <p className="mt-1.5 text-xs text-red-600">
+                      {fieldErrors.location}
+                    </p>
+                  )}
                 </label>
                 <label>
                   <span className="mb-1.5 block text-xs font-semibold text-slate-700">
@@ -550,6 +595,10 @@ const UserEventDetailsListPage: React.FC = () => {
                       <FieldBlock
                         label="Email subject"
                         value={displayValue(item.emailSubjectName)}
+                      />
+                      <FieldBlock
+                        label="Location"
+                        value={displayValue(item.location)}
                       />
                       <FieldBlock
                         label="Status"

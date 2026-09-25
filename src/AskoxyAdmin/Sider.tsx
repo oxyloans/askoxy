@@ -492,6 +492,19 @@ const Sidebar: React.FC = () => {
         ],
       },
       {
+        title: "Events",
+        icon: <FaTachometerAlt className="text-blue-400" />,
+        roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        items: [
+          {
+            title: "Events",
+            icon: <FaTachometerAlt className="text-blue-400" />,
+            link: "/admin/event-details",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+        ]
+      },
+      {
         title: "Stats & Stock",
         icon: <FaChartBar className="text-indigo-400" />,
         roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],

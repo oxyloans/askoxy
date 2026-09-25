@@ -21,7 +21,7 @@ import {
 
 type Tab = "create" | "upload";
 type Notice = { type: "success" | "warning" | "error"; text: string } | null;
-type CreateErrors = Partial<Record<"eventType" | "eventName" | "emailSubjectName" | "content", string>>;
+type CreateErrors = Partial<Record<"eventType" | "eventName" | "location" | "eventDate"| "emailSubjectName" | "content", string>>;
 
 const emptyCreateForm = (): UserEventDetailsSaveRequest => ({
   content: "",
@@ -29,6 +29,7 @@ const emptyCreateForm = (): UserEventDetailsSaveRequest => ({
   eventDate: "",
   eventName: "",
   eventType: "",
+  location:"",
 });
 
 const extractApiMessage = (error: unknown): string => {
@@ -206,6 +207,7 @@ const EventImagesUploadPage: React.FC = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event type <span className="text-red-500">*</span></span><select value={createForm.eventType || ""} onChange={(event) => updateCreateField("eventType", event.target.value)} aria-invalid={Boolean(createErrors.eventType)} className={`${inputClass} ${createErrors.eventType ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}><option value="">Select event type</option>{CEO_EVENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>{createErrors.eventType && <p className="mt-1.5 text-xs text-red-600">{createErrors.eventType}</p>}</label>
                 <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event name <span className="text-red-500">*</span></span><input value={createForm.eventName || ""} onChange={(event) => updateCreateField("eventName", event.target.value)} placeholder="Event name" aria-invalid={Boolean(createErrors.eventName)} className={`${inputClass} ${createErrors.eventName ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`} />{createErrors.eventName && <p className="mt-1.5 text-xs text-red-600">{createErrors.eventName}</p>}</label>
+                <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event location</span><input value={createForm.location || ""} onChange={(event) => updateCreateField("location", event.target.value)} placeholder="Event location" aria-invalid={Boolean(createErrors.location)} className={`${inputClass} ${createErrors.location ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`} />{createErrors.location && <p className="mt-1.5 text-xs text-red-600">{createErrors.location}</p>}</label>
                 <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event date</span><input type="date" value={createForm.eventDate || ""} onChange={(event) => updateCreateField("eventDate", event.target.value)} className={inputClass} /></label>
                 <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Email subject</span><input value={createForm.emailSubjectName || ""} onChange={(event) => updateCreateField("emailSubjectName", event.target.value)} placeholder="Email subject" aria-invalid={Boolean(createErrors.emailSubjectName)} className={`${inputClass} ${createErrors.emailSubjectName ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`} />{createErrors.emailSubjectName && <p className="mt-1.5 text-xs text-red-600">{createErrors.emailSubjectName}</p>}</label>
                 <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Content</span><textarea value={createForm.content || ""} onChange={(event) => updateCreateField("content", event.target.value)} placeholder="Add event content or notes" rows={4} aria-invalid={Boolean(createErrors.content)} className={`w-full resize-y rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-500/10 ${createErrors.content ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`} /><div className="mt-1 flex justify-between gap-3"><span className="text-xs text-red-600">{createErrors.content}</span><span className="text-[10px] text-slate-400">{createForm.content?.length || 0}/2000</span></div></label>

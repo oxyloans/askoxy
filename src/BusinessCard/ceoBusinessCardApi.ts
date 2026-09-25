@@ -647,6 +647,7 @@ export interface UserEventDetailsSaveRequest {
   eventDate?: string;
   eventName?: string;
   eventType?: string;
+  location?: string;
   id?: string;
   active?: boolean;
 }
@@ -684,6 +685,7 @@ export const saveUserEventDetails = async (
     eventDate: payload.eventDate?.trim() || "",
     emailSubjectName: payload.emailSubjectName?.trim() || "",
     eventName: payload.eventName?.trim() || "",
+    location: payload.location?.trim() || "",
     eventType: payload.eventType?.trim() || "",
     userId,
   };

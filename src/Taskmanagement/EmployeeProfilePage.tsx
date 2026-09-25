@@ -130,11 +130,11 @@ const ROLE_OPTIONS = [
 ];
 
 const WORKING_STATUS_OPTIONS = [
-  { value: "FULLTIME", label: "Full Time (FULLTIME)" },
-  { value: "PARTTIME", label: "Part Time (PARTTIME)" },
-  { value: "CONTRACT", label: "Contract (CONTRACT)" },
-  { value: "FREELANCER", label: "Freelancer (FREELANCER)" },
-  { value: "INTERN", label: "Intern (INTERN)" },
+  { value: "FULLTIME", label: "Full Time" },
+  { value: "PARTTIME", label: "Part Time" },
+  { value: "CONTRACT", label: "Contract" },
+  { value: "FREELANCER", label: "Freelancer" },
+  { value: "INTERN", label: "Intern" },
 ];
 
 type UsageLevel = "high" | "moderate" | "low";
@@ -1570,51 +1570,154 @@ const EmployeeProfilePage: React.FC = () => {
 
                       <Row gutter={[16, 0]}>
                         <Col xs={24} sm={12} xl={8} xxl={8}>
-                          <Form.Item label="SSC" name="ssc" rules={[{ max: 150, message: "SSC details cannot exceed 150 characters." }]}>
-                            <Input disabled={fieldDisabled} placeholder="SSC school / qualification details" className={fieldClass} />
-                          </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} xl={8} xxl={8}>
-                          <Form.Item label="Intermediate" name="intermediate" rules={[{ max: 150, message: "Intermediate details cannot exceed 150 characters." }]}>
-                            <Input disabled={fieldDisabled} placeholder="Intermediate / 12th details" className={fieldClass} />
-                          </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} xl={8} xxl={8}>
-                          <Form.Item label="Diploma" name="diploma" rules={[{ max: 150, message: "Diploma details cannot exceed 150 characters." }]}>
-                            <Input disabled={fieldDisabled} placeholder="Diploma details, if applicable" className={fieldClass} />
-                          </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} xl={8} xxl={8}>
-                          <Form.Item label="Graduation" name="graduation" rules={[{ max: 150, message: "Graduation qualification cannot exceed 150 characters." }]}>
-                            <Input disabled={fieldDisabled} placeholder="Graduation qualification" className={fieldClass} />
-                          </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} xl={8} xxl={8}>
-                          <Form.Item label="Graduation Course" name="graduationCourse" rules={[{ max: 100, message: "Graduation course cannot exceed 100 characters." }]}>
-                            <Input disabled={fieldDisabled} placeholder="e.g. B.Tech CSE" className={fieldClass} />
-                          </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} xl={8} xxl={8}>
                           <Form.Item
-                            label="Graduation Pass-out Year"
-                            name="graduationPassOutYear"
-                            rules={[{ pattern: /^(19|20)\d{2}$/, message: "Enter a valid 4-digit pass-out year (e.g. 2024)." }]}
+                            label="10th / SSC Education Details"
+                            name="ssc"
+                            rules={[
+                              {
+                                max: 150,
+                                message: "10th / SSC details cannot exceed 150 characters.",
+                              },
+                            ]}
                           >
-                            <Input disabled={fieldDisabled} inputMode="numeric" maxLength={4} placeholder="e.g. 2024" className={fieldClass} />
+                            <Input
+                              disabled={fieldDisabled}
+                              placeholder="Enter school name, board and year of completion"
+                              className={fieldClass}
+                            />
                           </Form.Item>
                         </Col>
-                        <Col xs={24} sm={12} xl={8} xxl={8}>
-                          <Form.Item label="Graduation College Address" name="graduationCollegeAddress" rules={[{ max: 300, message: "College address cannot exceed 300 characters." }]}>
-                            <Input.TextArea size="large" autoSize={{ minRows: 2, maxRows: 4 }} disabled={fieldDisabled} placeholder="College name and address" className={`${fieldClass} !leading-6`} />
-                          </Form.Item>
-                        </Col>
+
                         <Col xs={24} sm={12} xl={8} xxl={8}>
                           <Form.Item
-                            label="Graduation College Website URL"
+                            label="12th / Intermediate Education Details"
+                            name="intermediate"
+                            rules={[
+                              {
+                                max: 150,
+                                message: "12th / Intermediate details cannot exceed 150 characters.",
+                              },
+                            ]}
+                          >
+                            <Input
+                              disabled={fieldDisabled}
+                              placeholder="Enter college name, board/group and year of completion"
+                              className={fieldClass}
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} sm={12} xl={8} xxl={8}>
+                          <Form.Item
+                            label="Diploma Details"
+                            name="diploma"
+                            rules={[
+                              {
+                                max: 150,
+                                message: "Diploma details cannot exceed 150 characters.",
+                              },
+                            ]}
+                          >
+                            <Input
+                              disabled={fieldDisabled}
+                              placeholder="Enter diploma course, institute and completion year"
+                              className={fieldClass}
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} sm={12} xl={8} xxl={8}>
+                          <Form.Item
+                            label="Graduation Degree"
+                            name="graduation"
+                            rules={[
+                              {
+                                max: 150,
+                                message: "Graduation degree cannot exceed 150 characters.",
+                              },
+                            ]}
+                          >
+                            <Input
+                              disabled={fieldDisabled}
+                              placeholder="Enter your degree, e.g. B.Tech, B.Com, B.Sc"
+                              className={fieldClass}
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} sm={12} xl={8} xxl={8}>
+                          <Form.Item
+                            label="Graduation Specialization"
+                            name="graduationCourse"
+                            rules={[
+                              {
+                                max: 100,
+                                message: "Graduation specialization cannot exceed 100 characters.",
+                              },
+                            ]}
+                          >
+                            <Input
+                              disabled={fieldDisabled}
+                              placeholder="Enter specialization, e.g. Computer Science"
+                              className={fieldClass}
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} sm={12} xl={8} xxl={8}>
+                          <Form.Item
+                            label="Graduation Completion Year"
+                            name="graduationPassOutYear"
+                            rules={[
+                              {
+                                pattern: /^(19|20)\d{2}$/,
+                                message: "Enter a valid 4-digit year, e.g. 2024.",
+                              },
+                            ]}
+                          >
+                            <Input
+                              disabled={fieldDisabled}
+                              inputMode="numeric"
+                              maxLength={4}
+                              placeholder="Enter completion year, e.g. 2024"
+                              className={fieldClass}
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} sm={12} xl={8} xxl={8}>
+                          <Form.Item
+                            label="College / University Address"
+                            name="graduationCollegeAddress"
+                            rules={[
+                              {
+                                max: 300,
+                                message: "College / university address cannot exceed 300 characters.",
+                              },
+                            ]}
+                          >
+                            <Input.TextArea
+                              size="large"
+                              autoSize={{ minRows: 2, maxRows: 4 }}
+                              disabled={fieldDisabled}
+                              placeholder="Enter college / university name and complete address"
+                              className={`${fieldClass} !leading-6`}
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} sm={12} xl={8} xxl={8}>
+                          <Form.Item
+                            label="College / University Website"
                             name="graduationCollegeWebsiteUrl"
                             rules={[{ validator: validateHttpsUrl }]}
                           >
-                            <Input disabled={fieldDisabled} prefix={<LinkOutlined className="text-slate-400" />} placeholder="https://college.edu" className={fieldClass} />
+                            <Input
+                              disabled={fieldDisabled}
+                              prefix={<LinkOutlined className="text-slate-400" />}
+                              placeholder="Enter official website, e.g. https://www.college.edu"
+                              className={fieldClass}
+                            />
                           </Form.Item>
                         </Col>
                       </Row>
