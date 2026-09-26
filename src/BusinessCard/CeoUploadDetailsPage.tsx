@@ -20,32 +20,13 @@ import {
   getLoggedInUserId,
   isBusinessEventType,
 } from "./ceoBusinessCardApi";
+import {
+  extractApiErrorMessage,
+  showToastError,
+  showToastWarning,
+} from "./businessCardAuthUtils";
 
 const PAGE_SIZE = 10;
-
-const extractApiMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as unknown;
-    if (typeof data === "string" && data.trim()) return data.trim();
-    if (data && typeof data === "object") {
-      const body = data as Record<string, unknown>;
-      for (const key of [
-        "message",
-        "errorMessage",
-        "error",
-        "details",
-        "responseMessage",
-      ]) {
-        const value = body[key];
-        if (typeof value === "string" && value.trim()) return value.trim();
-        if (Array.isArray(value) && value.length)
-          return value.map(String).join(", ");
-      }
-    }
-    return error.response?.statusText || error.message;
-  }
-  return error instanceof Error ? error.message : String(error);
-};
 
 const formatMultiValue = (value?: string) =>
   value
@@ -135,7 +116,9 @@ const CeoUploadDetailsPage: React.FC = () => {
 
   const loadUploadDetails = useCallback(async () => {
     if (!loggedInUserId) {
-      setError("Please sign in again to view upload details.");
+      const msg = "Please sign in again to view upload details.";
+      setError(msg);
+      showToastWarning(msg);
       return;
     }
     setLoading(true);
@@ -155,7 +138,9 @@ const CeoUploadDetailsPage: React.FC = () => {
       );
     } catch (requestError) {
       console.error(requestError);
-      setError(extractApiMessage(requestError));
+      const msg = extractApiErrorMessage(requestError, "Failed to load upload details.");
+      setError(msg);
+      showToastError(msg);
       setEventGroups([]);
       setSelectedEventType("");
     } finally {

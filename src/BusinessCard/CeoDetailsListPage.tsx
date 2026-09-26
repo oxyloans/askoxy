@@ -10,7 +10,6 @@ import {
   Select,
   Switch,
   Table,
-  message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import BusinessCardLayout from "./BusinessCardLayout";
@@ -45,6 +44,12 @@ import {
   sortCeoRecordsByActive,
   pickActiveCeoRecord,
 } from "./ceoBusinessCardApi";
+import {
+  extractApiErrorMessage,
+  showToastError,
+  showToastSuccess,
+  showToastWarning,
+} from "./businessCardAuthUtils";
 
 const { TextArea } = Input;
 const { useBreakpoint } = Grid;
@@ -69,7 +74,7 @@ const CeoDetailsListPage: React.FC = () => {
 
   const loadCeoList = useCallback(async () => {
     if (!loggedInUserId) {
-      message.warning("Please login again to view user details.");
+      showToastWarning("Please login again to view user details.");
       return;
     }
 
@@ -84,7 +89,7 @@ const CeoDetailsListPage: React.FC = () => {
       setRows(sortCeoRecordsByActive(owned));
     } catch (error) {
       console.error(error);
-      message.error("Failed to fetch user details.");
+      showToastError(extractApiErrorMessage(error, "Failed to fetch user details."));
     } finally {
       setLoading(false);
     }
@@ -120,11 +125,11 @@ const CeoDetailsListPage: React.FC = () => {
 
   const handleUpdate = async () => {
     if (!editForm?.id) {
-      message.warning("Record ID is missing.");
+      showToastWarning("Record ID is missing.");
       return;
     }
     if (!loggedInUserId) {
-      message.warning("Please login again to update user details.");
+      showToastWarning("Please login again to update user details.");
       return;
     }
 
@@ -132,7 +137,7 @@ const CeoDetailsListPage: React.FC = () => {
     try {
       const wasActivating = editForm.active === true;
       await saveCeoDetails(buildCeoDetailsSavePayload(editForm));
-      message.success(
+      showToastSuccess(
         wasActivating
           ? "Record updated and set as active. Other events are now inactive."
           : "User details updated successfully."
@@ -141,7 +146,7 @@ const CeoDetailsListPage: React.FC = () => {
       await loadCeoList();
     } catch (error) {
       console.error(error);
-      message.error("Failed to update user details.");
+      showToastError(extractApiErrorMessage(error, "Failed to update user details."));
     } finally {
       setSaving(false);
     }

@@ -363,7 +363,7 @@ export const processBusinessCard = async (
     formData.append("mobileNumber", options.mobileNumber.trim());
   }
 
-  const response = await businessCardApi.post<string>(
+  const response = await businessCardApi.post<unknown>(
     `${AI_AGENT_BASE}/process-business-card`,
     formData,
     {
@@ -372,9 +372,15 @@ export const processBusinessCard = async (
     }
   );
 
-  return typeof response.data === "string"
-    ? response.data
-    : "Upload processed successfully.";
+  if (typeof response.data === "string") return response.data;
+  if (response.data && typeof response.data === "object") {
+    const body = response.data as { errorMessage?: unknown; message?: unknown };
+    if (typeof body.errorMessage === "string" && body.errorMessage.trim()) {
+      throw new Error(body.errorMessage.trim());
+    }
+    if (typeof body.message === "string" && body.message.trim()) return body.message;
+  }
+  return "Upload processed successfully.";
 };
 
 /** Separate helper for Process Card page — sends userId (does not change processBusinessCard). */
@@ -408,7 +414,7 @@ export const processBusinessCardUpload = async (
     formData.append("mobileNumber", params.mobileNumber.trim());
   }
 
-  const response = await businessCardApi.post<string>(
+  const response = await businessCardApi.post<unknown>(
     `${AI_AGENT_BASE}/process-business-card`,
     formData,
     {
@@ -417,9 +423,15 @@ export const processBusinessCardUpload = async (
     }
   );
 
-  return typeof response.data === "string"
-    ? response.data
-    : "Upload processed successfully.";
+  if (typeof response.data === "string") return response.data;
+  if (response.data && typeof response.data === "object") {
+    const body = response.data as { errorMessage?: unknown; message?: unknown };
+    if (typeof body.errorMessage === "string" && body.errorMessage.trim()) {
+      throw new Error(body.errorMessage.trim());
+    }
+    if (typeof body.message === "string" && body.message.trim()) return body.message;
+  }
+  return "Upload processed successfully.";
 };
 
 export const fetchCeoDataUploadDetails = async (
@@ -467,6 +479,7 @@ export interface PersonalDetailsWithDocumentResponse {
   documentName?: string;
   documentPath?: string;
   message?: string;
+  errorMessage?: string | null;
 }
 
 export interface SavePersonalDetailsWithDocumentParams {
@@ -588,7 +601,13 @@ export interface EventImageUploadResponse {
   fileName?: string;
   uploadedAt?: string;
   message?: string;
+  errorMessage?: string | null;
   eventType?: string | null;
+  eventName?: string | null;
+  location?: string | null;
+  eventDate?: string | null;
+  emailSubjectName?: string | null;
+  content?: string | null;
 }
 
 export interface UploadEventImagesParams {
@@ -639,6 +658,9 @@ export interface UserEventDetailsResponse {
   eventType?: string | null;
   emailSubjectName?: string | null;
   eventDate?: string | null;
+  /** Returned by the API for application-level failures even when HTTP is 200. */
+  errorMessage?: string | null;
+  message?: string | null;
 }
 
 export interface UserEventDetailsSaveRequest {

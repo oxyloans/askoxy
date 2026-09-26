@@ -19,14 +19,17 @@ import {
   SuccessButton,
 } from "./businessCardUi";
 import {
+  extractApiErrorMessage,
   showAuthError,
   showAuthSuccess,
 } from "./businessCardAuthUtils";
 
 interface RegisterResponse {
-  emailOtpSession: string;
+  emailOtpSession: string | null;
   salt: string;
   userId: string | null;
+  errorMessage?: string | null;
+  status?: string | null;
 }
 
 const BusinessCardRegister: React.FC = () => {
@@ -64,6 +67,11 @@ const BusinessCardRegister: React.FC = () => {
         { email: values.email }
       );
 
+      if (response.data?.errorMessage) {
+        showAuthError(response.data.errorMessage);
+        return;
+      }
+
       if (response.data.emailOtpSession) {
         setEmail(values.email);
         setEmailOtpSession(response.data.emailOtpSession);
@@ -71,10 +79,17 @@ const BusinessCardRegister: React.FC = () => {
         setStep(1);
         showAuthSuccess("OTP has been sent to your email", 2000);
       } else {
-        showAuthError("Failed to generate OTP. Please try again.");
+        showAuthError(
+          response.data?.errorMessage || "Failed to generate OTP. Please try again."
+        );
       }
-    } catch {
-      showAuthError("Network error. Please try again later.");
+    } catch (err) {
+      showAuthError(
+        extractApiErrorMessage(
+          err,
+          "Failed to send verification code. Please try again."
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -100,7 +115,12 @@ const BusinessCardRegister: React.FC = () => {
         name: values.name,
       };
 
-      await axios.post(`${BASE_URL}/user-service/userEmailPassword`, requestData);
+      const response = await axios.post(`${BASE_URL}/user-service/userEmailPassword`, requestData);
+
+      if (response.data?.errorMessage) {
+        showAuthError(response.data.errorMessage);
+        return;
+      }
 
       setRegistrationSuccess(true);
       setStep(0);
@@ -109,18 +129,12 @@ const BusinessCardRegister: React.FC = () => {
       setEmailOtpSession("");
       setSalt("");
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        const statusCode = err.response.status;
-        if (statusCode === 400) {
-          showAuthError("Invalid OTP or registration data. Please check and try again.");
-        } else if (statusCode === 409) {
-          showAuthError("Email already registered. Please use another email or login.");
-        } else {
-          showAuthError("Registration failed. Please try again.");
-        }
-      } else {
-        showAuthError("Registration failed. Check your OTP and try again.");
-      }
+      showAuthError(
+        extractApiErrorMessage(
+          err,
+          "Registration failed. Check your OTP and try again."
+        )
+      );
     } finally {
       setLoading(false);
     }

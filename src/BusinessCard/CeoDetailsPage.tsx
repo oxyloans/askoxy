@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Col, Form, Input, Row, Select, message } from "antd";
+import { Col, Form, Input, Row, Select } from "antd";
 import BusinessCardLayout from "./BusinessCardLayout";
 import {
   PageHeader,
@@ -18,6 +18,12 @@ import {
   getLoggedInUserId,
   buildCeoDetailsSavePayload,
 } from "./ceoBusinessCardApi";
+import {
+  extractApiErrorMessage,
+  showToastError,
+  showToastSuccess,
+  showToastWarning,
+} from "./businessCardAuthUtils";
 
 const { TextArea } = Input;
 
@@ -73,12 +79,12 @@ const CeoDetailsPage: React.FC = () => {
 
     const userId = getLoggedInUserId();
     if (!userId) {
-      message.warning("Please login again to save user details.");
+      showToastWarning("Please login again to save user details.");
       return;
     }
 
     if (!form.eventType?.trim()) {
-      message.warning("Please select an event type.");
+      showToastWarning("Please select an event type.");
       return;
     }
 
@@ -86,10 +92,10 @@ const CeoDetailsPage: React.FC = () => {
     try {
       await saveCeoDetails(buildCeoDetailsSavePayload(form));
       setForm(emptyForm());
-      message.success("User details saved successfully.");
+      showToastSuccess("User details saved successfully.");
     } catch (error) {
       console.error(error);
-      message.error("Failed to save user details.");
+      showToastError(extractApiErrorMessage(error, "Failed to save user details."));
     } finally {
       setSubmitting(false);
     }

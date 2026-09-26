@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
-  AlertTriangle,
   CalendarDays,
-  CheckCircle2,
   Inbox,
   Loader2,
   Pencil,
   RefreshCw,
   Save,
-  X,
 } from "lucide-react";
 import BusinessCardLayout from "./BusinessCardLayout";
 import {
@@ -21,8 +19,13 @@ import {
   getLoggedInUserId,
   saveUserEventDetails,
 } from "./ceoBusinessCardApi";
+import {
+  extractApiErrorMessage,
+  showToastError,
+  showToastSuccess,
+  showToastWarning,
+} from "./businessCardAuthUtils";
 
-type Notice = { type: "success" | "warning" | "error"; text: string } | null;
 type FieldErrors = Partial<
   Record<
     "eventType" | "eventName" | "emailSubjectName" | "content" | "location",
@@ -72,30 +75,6 @@ const recordToForm = (
   active: record.active !== false,
 });
 
-const extractApiMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as unknown;
-    if (typeof data === "string" && data.trim()) return data.trim();
-    if (data && typeof data === "object") {
-      const body = data as Record<string, unknown>;
-      for (const key of [
-        "message",
-        "errorMessage",
-        "error",
-        "details",
-        "responseMessage",
-      ]) {
-        const value = body[key];
-        if (typeof value === "string" && value.trim()) return value.trim();
-        if (Array.isArray(value) && value.length)
-          return value.map(String).join(", ");
-      }
-    }
-    return error.response?.statusText || error.message;
-  }
-  return error instanceof Error ? error.message : String(error);
-};
-
 const displayValue = (value?: string | null) => value?.trim() || "Not provided";
 const formatDisplayDate = (value?: string | null) => {
   if (!value?.trim()) return "Not provided";
@@ -141,6 +120,7 @@ const FieldBlock: React.FC<{
 );
 
 const UserEventDetailsListPage: React.FC = () => {
+  const navigate = useNavigate();
   const loggedInUserId = getLoggedInUserId();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -149,20 +129,10 @@ const UserEventDetailsListPage: React.FC = () => {
   const [eventForm, setEventForm] =
     useState<UserEventDetailsSaveRequest>(emptyEventForm());
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [notice, setNotice] = useState<Notice>(null);
-
-  useEffect(() => {
-    if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(null), 5000);
-    return () => window.clearTimeout(timer);
-  }, [notice]);
 
   const loadEvents = useCallback(async () => {
     if (!loggedInUserId) {
-      setNotice({
-        type: "warning",
-        text: "Please sign in again to load events.",
-      });
+      showToastWarning("Please sign in again to load events.");
       return;
     }
     setLoading(true);
@@ -175,7 +145,7 @@ const UserEventDetailsListPage: React.FC = () => {
     } catch (error) {
       console.error(error);
       setEvents([]);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      showToastError(extractApiErrorMessage(error, "Failed to fetch event list."));
     } finally {
       setLoading(false);
     }
@@ -195,10 +165,7 @@ const UserEventDetailsListPage: React.FC = () => {
 
   const openEdit = (record: UserEventDetailsResponse) => {
     if (!record.id) {
-      setNotice({
-        type: "warning",
-        text: "This event cannot be updated because its ID is missing.",
-      });
+      showToastWarning("This event cannot be updated because its ID is missing.");
       return;
     }
     setEventForm(recordToForm(record));
@@ -229,21 +196,17 @@ const UserEventDetailsListPage: React.FC = () => {
   const handleUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!loggedInUserId || !eventForm.id?.trim()) {
-      setNotice({
-        type: "warning",
-        text: loggedInUserId
+      showToastWarning(
+        loggedInUserId
           ? "Event ID is required for this update."
-          : "Please sign in again to update events.",
-      });
+          : "Please sign in again to update events."
+      );
       return;
     }
     const errors = validate();
     setFieldErrors(errors);
     if (Object.keys(errors).length) {
-      setNotice({
-        type: "warning",
-        text: "Please correct the highlighted fields.",
-      });
+      showToastWarning("Please correct the highlighted fields.");
       return;
     }
 
@@ -260,6 +223,30 @@ const UserEventDetailsListPage: React.FC = () => {
     };
     try {
       const saved = await saveUserEventDetails(payload);
+      const responseStr = typeof saved === "string" ? saved : JSON.stringify(saved);
+      const possibleMsg = (saved && (saved.errorMessage || saved.message || saved.content)) || "";
+      const isPersonalDetailsRequired =
+        /personal\s*details\s*first/i.test(responseStr) ||
+        /personal\s*details\s*first/i.test(possibleMsg);
+
+      if (isPersonalDetailsRequired) {
+        Swal.fire({
+          icon: "warning",
+          title: "Personal Details Required",
+          text: "Please fill personal details first.",
+          confirmButtonText: "Fill Personal Details",
+          confirmButtonColor: "#0891b2",
+        }).then(() => {
+          navigate("/business-card/my-profile");
+        });
+        return;
+      }
+
+      if (saved && saved.errorMessage) {
+        showToastError(saved.errorMessage);
+        return;
+      }
+
       setEvents((current) =>
         current.map((item) =>
           item.id === payload.id
@@ -275,7 +262,7 @@ const UserEventDetailsListPage: React.FC = () => {
       setEditing(false);
       setEventForm(emptyEventForm());
       setFieldErrors({});
-      setNotice({ type: "success", text: "Event updated successfully." });
+      showToastSuccess("Event updated successfully.");
       try {
         const refreshed = await fetchUserEventDetailsByUserId(loggedInUserId);
         setEvents(Array.isArray(refreshed) ? refreshed : []);
@@ -284,7 +271,22 @@ const UserEventDetailsListPage: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      const msg = extractApiErrorMessage(error, "Failed to update event.");
+
+      if (/personal\s*details\s*first/i.test(msg)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Personal Details Required",
+          text: msg || "Please fill personal details first.",
+          confirmButtonText: "Fill Personal Details",
+          confirmButtonColor: "#0891b2",
+        }).then(() => {
+          navigate("/business-card/my-profile");
+        });
+        return;
+      }
+
+      showToastError(msg);
     } finally {
       setSaving(false);
     }
@@ -312,27 +314,6 @@ const UserEventDetailsListPage: React.FC = () => {
             Refresh
           </button>
         </header>
-
-        {notice && (
-          <div
-            className={`mb-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm ${notice.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : notice.type === "warning" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-red-200 bg-red-50 text-red-800"}`}
-            role="status"
-          >
-            {notice.type === "success" ? (
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            ) : (
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            )}
-            <span className="flex-1">{notice.text}</span>
-            <button
-              type="button"
-              onClick={() => setNotice(null)}
-              aria-label="Dismiss message"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
 
         {editing && (
           <form

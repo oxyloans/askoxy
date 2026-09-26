@@ -1,9 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import axios from "axios";
+import React, { useCallback, useEffect, useState } from "react";
+import { Button, Upload } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
-  CheckCircle2,
   FileText,
   Loader2,
   Pencil,
@@ -11,47 +9,25 @@ import {
   Save,
   UploadCloud,
   UserRound,
-  X,
 } from "lucide-react";
 import BusinessCardLayout from "./BusinessCardLayout";
 import {
   PersonalDetailsProfileResponse,
-  PersonalDetailsWithDocumentResponse,
   UpdatePersonalDetailsRequest,
   fetchPersonalDetailsByUserId,
   getLoggedInUserId,
   savePersonalDetailsWithDocument,
   updatePersonalDetails,
 } from "./ceoBusinessCardApi";
+import {
+  extractApiErrorMessage,
+  showToastError,
+  showToastSuccess,
+  showToastWarning,
+} from "./businessCardAuthUtils";
 
 type Section = "profile" | "documents";
-type Notice = { type: "success" | "warning" | "error"; text: string } | null;
 type FieldErrors = Partial<Record<keyof UpdatePersonalDetailsRequest, string>>;
-
-const extractApiMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as unknown;
-    if (typeof data === "string" && data.trim()) return data.trim();
-    if (data && typeof data === "object") {
-      const body = data as Record<string, unknown>;
-      for (const key of ["message", "errorMessage", "error", "details", "responseMessage"]) {
-        const value = body[key];
-        if (typeof value === "string" && value.trim()) return value.trim();
-        if (Array.isArray(value) && value.length) return value.map(String).join(", ");
-      }
-      const validationErrors = body.errors;
-      if (validationErrors && typeof validationErrors === "object") {
-        const messages = Object.values(validationErrors as Record<string, unknown>)
-          .flatMap((value) => Array.isArray(value) ? value : [value])
-          .filter((value): value is string => typeof value === "string" && Boolean(value.trim()));
-        if (messages.length) return messages.join(", ");
-      }
-    }
-    return error.response?.statusText || error.message;
-  }
-  if (error instanceof Error) return error.message;
-  return String(error);
-};
 
 const validateProfile = (values: UpdatePersonalDetailsRequest): FieldErrors => {
   const errors: FieldErrors = {};
@@ -143,14 +119,12 @@ const secondaryButtonClass =
 const PersonalDetailsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const loggedInUserId = getLoggedInUserId();
   const initialSection: Section = location.pathname.includes("personal-details-document")
     ? "documents"
     : "profile";
 
   const [section, setSection] = useState<Section>(initialSection);
-  const [notice, setNotice] = useState<Notice>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -159,22 +133,14 @@ const PersonalDetailsPage: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [lastUpload, setLastUpload] = useState<PersonalDetailsWithDocumentResponse | null>(null);
 
   useEffect(() => {
     setSection(location.pathname.includes("personal-details-document") ? "documents" : "profile");
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(null), 5000);
-    return () => window.clearTimeout(timer);
-  }, [notice]);
-
   const loadProfile = useCallback(async () => {
     if (!loggedInUserId) {
-      setNotice({ type: "warning", text: "Please sign in again to view your profile." });
+      showToastWarning("Please sign in again to view your profile.");
       return;
     }
     setLoading(true);
@@ -190,7 +156,7 @@ const PersonalDetailsPage: React.FC = () => {
       const next = profileToForm(loggedInUserId, null);
       setProfile(next);
       setDraft(next);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      showToastError(extractApiErrorMessage(error, "Failed to load profile."));
     } finally {
       setLoading(false);
     }
@@ -213,13 +179,13 @@ const PersonalDetailsPage: React.FC = () => {
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!loggedInUserId) {
-      setNotice({ type: "warning", text: "Please sign in again to update your profile." });
+      showToastWarning("Please sign in again to update your profile.");
       return;
     }
     const validationErrors = validateProfile(draft);
     if (Object.keys(validationErrors).length) {
       setFieldErrors(validationErrors);
-      setNotice({ type: "warning", text: "Please correct the highlighted fields." });
+      showToastWarning("Please correct the highlighted fields.");
       return;
     }
 
@@ -235,10 +201,10 @@ const PersonalDetailsPage: React.FC = () => {
       setDraft(next);
       setEditing(false);
       setFieldErrors({});
-      setNotice({ type: "success", text: "Profile updated successfully." });
+      showToastSuccess("Profile updated successfully.");
     } catch (error) {
       console.error(error);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      showToastError(extractApiErrorMessage(error, "Failed to update profile."));
     } finally {
       setSaving(false);
     }
@@ -248,33 +214,34 @@ const PersonalDetailsPage: React.FC = () => {
     if (!file) return;
     const validType = file.type.startsWith("image/") || file.type === "application/pdf";
     if (!validType) {
-      setNotice({ type: "warning", text: "Choose a PNG, JPG, WEBP, or PDF file." });
+      showToastWarning("Choose a PNG, JPG, WEBP, or PDF file.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setNotice({ type: "warning", text: "The selected file must be 10 MB or smaller." });
+      showToastWarning("The selected file must be 10 MB or smaller.");
       return;
     }
     setDocumentFile(file);
-    setLastUpload(null);
   };
 
   const handleUpload = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!loggedInUserId || !documentFile) {
-      setNotice({ type: "warning", text: loggedInUserId ? "Please select a file." : "Please sign in again to upload." });
+      showToastWarning(loggedInUserId ? "Please select a file." : "Please sign in again to upload.");
       return;
     }
     setUploading(true);
     try {
       const response = await savePersonalDetailsWithDocument({ file: documentFile, userId: loggedInUserId });
-      setLastUpload(response);
+      if (response.errorMessage?.trim()) {
+        showToastError(response.errorMessage);
+        return;
+      }
       setDocumentFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setNotice({ type: "success", text: response.message || "Document uploaded successfully." });
+      showToastSuccess(response.message?.trim() || "Document uploaded successfully.");
     } catch (error) {
       console.error(error);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      showToastError(extractApiErrorMessage(error, "Failed to upload document."));
     } finally {
       setUploading(false);
     }
@@ -294,14 +261,6 @@ const PersonalDetailsPage: React.FC = () => {
           <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Personal details</h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Manage your profile and supporting documents in one place.</p>
         </header>
-
-        {notice && (
-          <div className={`mb-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm ${notice.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : notice.type === "warning" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-red-200 bg-red-50 text-red-800"}`} role="status">
-            {notice.type === "success" ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />}
-            <span className="flex-1">{notice.text}</span>
-            <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss message"><X className="h-4 w-4" /></button>
-          </div>
-        )}
 
         <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:mb-5 sm:w-fit sm:min-w-[320px]">
           {(["profile", "documents"] as Section[]).map((item) => (
@@ -380,20 +339,12 @@ const PersonalDetailsPage: React.FC = () => {
               <h2 className="text-base font-semibold text-slate-900">Upload personal document</h2>
               <p className="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">Upload one business-card image or PDF. You can replace it with another file before submitting.</p>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="sr-only" onChange={(event) => chooseFile(event.target.files?.[0])} />
-            <div
-              onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
-              onDragOver={(event) => event.preventDefault()}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(event) => { event.preventDefault(); setDragging(false); chooseFile(event.dataTransfer.files?.[0]); }}
-              className={`rounded-xl border-2 border-dashed p-6 text-center transition sm:p-10 ${dragging ? "border-cyan-500 bg-cyan-50" : "border-slate-300 bg-slate-50/60 hover:border-cyan-400 hover:bg-cyan-50/40"}`}
-            >
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-6 text-center sm:p-10">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><UploadCloud className="h-6 w-6" /></div>
-              <p className="mt-3 break-all text-sm font-semibold text-slate-700">{documentFile?.name || "Drag and drop your file here"}</p>
+              <p className="mt-3 break-all text-sm font-semibold text-slate-700">{documentFile?.name || "Select a file to upload"}</p>
               <p className="mt-1 text-xs text-slate-400">PNG, JPG, WEBP, or PDF</p>
-              <button type="button" onClick={() => fileInputRef.current?.click()} className={`${secondaryButtonClass} mt-4`}>{documentFile ? "Choose another file" : "Browse files"}</button>
+              <Upload accept="image/*,.pdf" maxCount={1} fileList={documentFile ? [{ uid: "personal-document", name: documentFile.name, status: "done" }] : []} beforeUpload={(file) => { chooseFile(file); return false; }} onRemove={() => { setDocumentFile(null); return true; }} className="mt-4 [&_.ant-upload-list]:text-left"><Button type="default">Select file</Button></Upload>
             </div>
-            {lastUpload?.documentPath && <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800"><CheckCircle2 className="h-4 w-4 shrink-0" />Uploaded successfully{lastUpload.documentName ? `: ${lastUpload.documentName}` : ""}</div>}
             <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
               <button type="submit" disabled={!loggedInUserId || !documentFile || uploading} className={`${primaryButtonClass} w-full sm:min-w-[180px] sm:w-auto`}>{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}{uploading ? "Uploading..." : "Upload document"}</button>
             </div>

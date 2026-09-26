@@ -1,15 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Upload } from "antd";
+import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   AlertTriangle,
-  CheckCircle2,
   FileImage,
   FileText,
   Loader2,
   RefreshCw,
   UploadCloud,
-  X,
 } from "lucide-react";
 import BusinessCardLayout from "./BusinessCardLayout";
 import {
@@ -17,34 +16,14 @@ import {
   fetchUserEventDetailsByUserId,
   formatEventTypeLabel,
   getLoggedInUserId,
-  isBusinessEventType,
   processBusinessCardUpload,
 } from "./ceoBusinessCardApi";
-
-type Notice = { type: "success" | "warning" | "error"; text: string } | null;
-
-const extractApiMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as unknown;
-    if (typeof data === "string" && data.trim()) return data.trim();
-    if (data && typeof data === "object") {
-      const body = data as Record<string, unknown>;
-      for (const key of ["message", "errorMessage", "error", "details", "responseMessage"]) {
-        const value = body[key];
-        if (typeof value === "string" && value.trim()) return value.trim();
-        if (Array.isArray(value) && value.length) return value.map(String).join(", ");
-      }
-      if (body.errors && typeof body.errors === "object") {
-        const messages = Object.values(body.errors as Record<string, unknown>)
-          .flatMap((value) => Array.isArray(value) ? value : [value])
-          .filter((value): value is string => typeof value === "string" && Boolean(value.trim()));
-        if (messages.length) return messages.join(", ");
-      }
-    }
-    return error.response?.statusText || error.message;
-  }
-  return error instanceof Error ? error.message : String(error);
-};
+import {
+  extractApiErrorMessage,
+  showToastError,
+  showToastSuccess,
+  showToastWarning,
+} from "./businessCardAuthUtils";
 
 interface FilePickerProps {
   id: string;
@@ -69,8 +48,6 @@ const FilePicker: React.FC<FilePickerProps> = ({
   required = true,
   error,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState(false);
   const Icon = imageOnly ? FileImage : FileText;
 
   return (
@@ -81,20 +58,20 @@ const FilePicker: React.FC<FilePickerProps> = ({
         </label>
         <span className="text-[10px] text-slate-400">Maximum 10 MB</span>
       </div>
-      <input ref={inputRef} id={id} type="file" accept={accept} className="sr-only" onChange={(event) => onFile(event.target.files?.[0] || null)} />
-      <div
-        onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
-        onDragOver={(event) => event.preventDefault()}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => { event.preventDefault(); setDragging(false); onFile(event.dataTransfer.files?.[0] || null); }}
-        className={`rounded-xl border-2 border-dashed p-5 text-center transition sm:p-7 ${error ? "border-red-300 bg-red-50/40" : dragging ? "border-cyan-500 bg-cyan-50" : "border-slate-300 bg-slate-50/60 hover:border-cyan-400 hover:bg-cyan-50/40"}`}
-      >
+      <div className={`rounded-xl border p-5 text-center transition sm:p-7 ${error ? "border-red-300 bg-red-50/40" : "border-slate-200 bg-slate-50/60"}`}>
         <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><Icon className="h-5 w-5" /></div>
         <p className="mt-2 break-all text-sm font-semibold text-slate-700">{file?.name || description}</p>
         <p className="mt-1 text-xs text-slate-400">{imageOnly ? "JPG, PNG, or WEBP" : "PNG, JPG, WEBP, or PDF"}</p>
-        <button type="button" onClick={() => inputRef.current?.click()} className="mt-3 inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10">
-          {file ? "Choose another" : "Browse files"}
-        </button>
+        <Upload
+          accept={accept}
+          maxCount={1}
+          fileList={file ? [{ uid: id, name: file.name, status: "done" }] : []}
+          beforeUpload={(nextFile) => { onFile(nextFile); return false; }}
+          onRemove={() => { onFile(null); return true; }}
+          className="mt-3 [&_.ant-upload-list]:text-left"
+        >
+          <Button type="default">Select file</Button>
+        </Upload>
       </div>
       {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
@@ -102,35 +79,30 @@ const FilePicker: React.FC<FilePickerProps> = ({
 };
 
 const ProcessBusinessCardPage: React.FC = () => {
+  const navigate = useNavigate();
   const loggedInUserId = getLoggedInUserId();
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [activeEvents, setActiveEvents] = useState<UserEventDetailsResponse[]>([]);
   const [cardFile, setCardFile] = useState<File | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [mobileNumber, setMobileNumber] = useState("");
+  const [processingMode, setProcessingMode] = useState<"mobile" | "business-card">("mobile");
   const [uploading, setUploading] = useState(false);
-  const [notice, setNotice] = useState<Notice>(null);
   const [errors, setErrors] = useState<{ card?: string; photo?: string; mobile?: string }>({});
 
   const hasMultipleActive = activeEvents.length > 1;
   const selectedEvent = activeEvents.length === 1 ? activeEvents[0] : null;
   const eventType = selectedEvent?.eventType || "";
-  const isBusinessEvent = isBusinessEventType(eventType);
+  const isMobileMode = processingMode === "mobile";
 
   const activeEventNames = useMemo(() => activeEvents.map((item) =>
     `${item.eventName || "Event"} (${formatEventTypeLabel(item.eventType || undefined)})`
   ), [activeEvents]);
 
-  useEffect(() => {
-    if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(null), 5000);
-    return () => window.clearTimeout(timer);
-  }, [notice]);
-
   const loadEvents = useCallback(async () => {
     if (!loggedInUserId) {
       setActiveEvents([]);
-      setNotice({ type: "warning", text: "Please sign in again to load events." });
+      showToastWarning("Please sign in again to load events.");
       return;
     }
     setLoadingEvents(true);
@@ -140,7 +112,7 @@ const ProcessBusinessCardPage: React.FC = () => {
     } catch (error) {
       console.error(error);
       setActiveEvents([]);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      showToastError(extractApiErrorMessage(error, "Failed to load events."));
     } finally {
       setLoadingEvents(false);
     }
@@ -149,9 +121,9 @@ const ProcessBusinessCardPage: React.FC = () => {
   useEffect(() => { loadEvents(); }, [loadEvents]);
   useEffect(() => {
     setErrors({});
-    if (isBusinessEvent) setMobileNumber("");
-    else setCardFile(null);
-  }, [isBusinessEvent]);
+    if (isMobileMode) setCardFile(null);
+    else setMobileNumber("");
+  }, [isMobileMode]);
 
   const validateFile = (file: File | null, imageOnly: boolean, required = true): string | undefined => {
     if (!file) return required ? "This file is required." : undefined;
@@ -164,20 +136,20 @@ const ProcessBusinessCardPage: React.FC = () => {
   const handleUpload = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!loggedInUserId) {
-      setNotice({ type: "warning", text: "Please sign in again to process a card." });
+      showToastWarning("Please sign in again to process a card.");
       return;
     }
     if (hasMultipleActive) {
-      setNotice({ type: "warning", text: "Keep only one active event before processing." });
+      showToastWarning("Keep only one active event before processing.");
       return;
     }
     if (!selectedEvent || !eventType) {
-      setNotice({ type: "warning", text: "Activate one event before processing." });
+      showToastWarning("Activate one event before processing.");
       return;
     }
 
     const nextErrors: typeof errors = { photo: validateFile(photoFile, true, false) };
-    if (isBusinessEvent) nextErrors.card = validateFile(cardFile, false);
+    if (!isMobileMode) nextErrors.card = validateFile(cardFile, false);
     else {
       const normalizedPhone = mobileNumber.replace(/[\s()-]/g, "");
       if (!mobileNumber.trim()) nextErrors.mobile = "Mobile number is required.";
@@ -186,7 +158,7 @@ const ProcessBusinessCardPage: React.FC = () => {
     const presentErrors = Object.fromEntries(Object.entries(nextErrors).filter(([, value]) => Boolean(value)));
     setErrors(presentErrors);
     if (Object.keys(presentErrors).length) {
-      setNotice({ type: "warning", text: "Please correct the highlighted fields." });
+      showToastWarning("Please correct the highlighted fields.");
       return;
     }
 
@@ -194,18 +166,29 @@ const ProcessBusinessCardPage: React.FC = () => {
     try {
       const result = await processBusinessCardUpload({
         userId: loggedInUserId,
-        file: isBusinessEvent ? cardFile || undefined : undefined,
+        file: !isMobileMode ? cardFile || undefined : undefined,
         photo: photoFile || undefined,
-        mobileNumber: !isBusinessEvent ? mobileNumber.trim() : undefined,
+        mobileNumber: isMobileMode ? mobileNumber.trim() : undefined,
       });
-      setNotice({ type: "success", text: result });
+      showToastSuccess(result || "Upload processed successfully.");
       setCardFile(null);
       setPhotoFile(null);
       setMobileNumber("");
       setErrors({});
     } catch (error) {
       console.error(error);
-      setNotice({ type: "error", text: extractApiMessage(error) });
+      const message = extractApiErrorMessage(error, "Failed to process business card.");
+      if (/personal\s*details\s*first/i.test(message)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Personal Details Required",
+          text: "Please fill personal details first.",
+          confirmButtonText: "Fill Personal Details",
+          confirmButtonColor: "#0891b2",
+        }).then(() => navigate("/business-card/my-profile"));
+        return;
+      }
+      showToastError(message);
     } finally {
       setUploading(false);
     }
@@ -217,20 +200,12 @@ const ProcessBusinessCardPage: React.FC = () => {
         <header className="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Process Card</h1>
-            <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Upload a business card for your currently active event. A profile photo is optional.</p>
+            <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Choose mobile with selfie or business card with selfie for your currently active event.</p>
           </div>
           <button type="button" onClick={loadEvents} disabled={!loggedInUserId || loadingEvents} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
             <RefreshCw className={`h-4 w-4 ${loadingEvents ? "animate-spin" : ""}`} />Refresh events
           </button>
         </header>
-
-        {notice && (
-          <div className={`mb-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm ${notice.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : notice.type === "warning" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-red-200 bg-red-50 text-red-800"}`} role="status">
-            {notice.type === "success" ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />}
-            <span className="flex-1">{notice.text}</span>
-            <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss message"><X className="h-4 w-4" /></button>
-          </div>
-        )}
 
         <form onSubmit={handleUpload} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5">
@@ -252,11 +227,26 @@ const ProcessBusinessCardPage: React.FC = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Active event</span><input value={`${selectedEvent?.eventName || "Event"} (${formatEventTypeLabel(selectedEvent?.eventType || undefined)})`} readOnly className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-slate-700 outline-none" /></label>
                   <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event type</span><input value={formatEventTypeLabel(eventType)} readOnly className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-slate-700 outline-none" /></label>
-                  {!isBusinessEvent && <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Mobile number <span className="text-red-500">*</span></span><input value={mobileNumber} onChange={(event) => { setMobileNumber(event.target.value); setErrors((current) => ({ ...current, mobile: undefined })); }} placeholder="e.g. +91 86865 45986" inputMode="tel" aria-invalid={Boolean(errors.mobile)} className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm outline-none transition focus:ring-4 ${errors.mobile ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 focus:border-cyan-600 focus:ring-cyan-500/10"}`} />{errors.mobile && <p className="mt-1.5 text-xs text-red-600">{errors.mobile}</p>}</label>}
                 </div>
 
-                <div className={`mt-5 grid grid-cols-1 gap-5 ${isBusinessEvent ? "lg:grid-cols-2" : "sm:max-w-xl"}`}>
-                  {isBusinessEvent && <FilePicker id="card-file" label="Business card file" description="Drop the card file here" accept="image/*,.pdf" file={cardFile} onFile={(file) => { setCardFile(file); setErrors((current) => ({ ...current, card: undefined })); }} error={errors.card} />}
+                <fieldset className="mt-5">
+                  <legend className="mb-2 text-xs font-semibold text-slate-700">Choose how you want to process the card</legend>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3.5 transition focus-within:ring-4 focus-within:ring-cyan-500/10 ${isMobileMode ? "border-cyan-600 bg-cyan-50 shadow-sm" : "border-slate-200 bg-slate-50/60 hover:border-cyan-300 hover:bg-cyan-50/40"}`}>
+                      <input type="radio" name="processing-mode" value="mobile" checked={isMobileMode} onChange={() => setProcessingMode("mobile")} className="h-4 w-4 shrink-0 accent-cyan-600" />
+                      <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold ${isMobileMode ? "text-cyan-900" : "text-slate-800"}`}>Mobile with selfie</span><span className="mt-0.5 block text-xs text-slate-600">Add a mobile number. Profile photo is optional.</span></span>
+                    </label>
+                    <label className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3.5 transition focus-within:ring-4 focus-within:ring-cyan-500/10 ${!isMobileMode ? "border-cyan-600 bg-cyan-50 shadow-sm" : "border-slate-200 bg-slate-50/60 hover:border-cyan-300 hover:bg-cyan-50/40"}`}>
+                      <input type="radio" name="processing-mode" value="business-card" checked={!isMobileMode} onChange={() => setProcessingMode("business-card")} className="h-4 w-4 shrink-0 accent-cyan-600" />
+                      <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold ${!isMobileMode ? "text-cyan-900" : "text-slate-800"}`}>Business card with selfie</span><span className="mt-0.5 block text-xs text-slate-600">Upload a business card. Profile photo is optional.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                {isMobileMode && <label className="mt-5 block sm:max-w-xl"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Mobile number <span className="text-red-500">*</span></span><input value={mobileNumber} onChange={(event) => { setMobileNumber(event.target.value); setErrors((current) => ({ ...current, mobile: undefined })); }} placeholder="e.g. +91 86865 45986" inputMode="tel" aria-invalid={Boolean(errors.mobile)} className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm outline-none transition focus:ring-4 ${errors.mobile ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 focus:border-cyan-600 focus:ring-cyan-500/10"}`} />{errors.mobile && <p className="mt-1.5 text-xs text-red-600">{errors.mobile}</p>}</label>}
+
+                <div className={`mt-5 grid grid-cols-1 gap-5 ${isMobileMode ? "sm:max-w-xl" : "lg:grid-cols-2"}`}>
+                  {!isMobileMode && <FilePicker id="card-file" label="Business card file" description="Drop the card file here" accept="image/*,.pdf" file={cardFile} onFile={(file) => { setCardFile(file); setErrors((current) => ({ ...current, card: undefined })); }} error={errors.card} />}
                   <FilePicker id="photo-file" label="Profile photo" description="Drop the profile photo here" accept="image/*" imageOnly required={false} file={photoFile} onFile={(file) => { setPhotoFile(file); setErrors((current) => ({ ...current, photo: undefined })); }} error={errors.photo} />
                 </div>
 

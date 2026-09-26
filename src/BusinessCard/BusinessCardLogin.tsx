@@ -15,6 +15,7 @@ import {
 } from "../utils/cookieUtils";
 import { AuthShell, PrimaryButton } from "./businessCardUi";
 import {
+  extractApiErrorMessage,
   showAuthError,
   showAuthSuccess,
   showAuthWarning,
@@ -111,42 +112,16 @@ const BusinessCardLogin: React.FC = () => {
           showAuthError("Invalid user type. Please contact support.");
         }
       } else {
-        showAuthError(response.data.errorMessage || "Invalid credentials provided.");
+        showAuthError(
+          response.data.errorMessage ||
+          response.data.status ||
+          "Invalid credentials provided."
+        );
       }
     } catch (err) {
-      const axiosError = err as AxiosError<LoginErrorResponse>;
-      let errorMessage = "An unexpected error occurred. Please try again.";
-
-      if (axiosError.response) {
-        switch (axiosError.response.status) {
-          case 400:
-            errorMessage = "Invalid email or password format";
-            break;
-          case 401:
-            errorMessage = "Incorrect email or password";
-            break;
-          case 403:
-            errorMessage = "Account is locked or disabled";
-            break;
-          case 429:
-            errorMessage = "Too many login attempts. Please try again later";
-            break;
-          case 500:
-            errorMessage = "Server error. Please try again later";
-            break;
-          default:
-            errorMessage =
-              axiosError.response.data?.message ||
-              axiosError.response.data?.error ||
-              "Failed to login. Please try again.";
-        }
-      } else if (axiosError.code === "ECONNABORTED") {
-        errorMessage = "Request timed out. Please check your connection.";
-      } else if (!axiosError.response) {
-        errorMessage = "Unable to connect to the server. Please try again.";
-      }
-
-      showAuthError(errorMessage);
+      showAuthError(
+        extractApiErrorMessage(err, "Failed to login. Please try again.")
+      );
     } finally {
       setLoading(false);
     }
