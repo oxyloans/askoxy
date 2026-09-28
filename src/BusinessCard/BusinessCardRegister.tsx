@@ -143,7 +143,7 @@ const BusinessCardRegister: React.FC = () => {
   return (
     <AuthShell
       mode="register"
-      formTitle={step === 0 ? "Register" : "Verify & complete"}
+      formTitle={step === 0 ? "Create your account" : "Verify & set up"}
       authPrompt={
         <>
           Already have an account?{" "}
@@ -151,7 +151,7 @@ const BusinessCardRegister: React.FC = () => {
             to="/business-card/login"
             className="ml-1 inline-flex items-center text-xs font-semibold !text-sky-600 transition-colors hover:!text-sky-800 sm:text-sm"
           >
-            Sign In
+            Sign in
           </Link>
         </>
       }
@@ -162,8 +162,8 @@ const BusinessCardRegister: React.FC = () => {
         responsive
         className="!mb-4 sm:!mb-5 [&_.ant-steps-item-title]:!text-xs [&_.ant-steps-item-title]:!font-medium"
         items={[
-          { title: "Email" },
-          { title: "Verify" },
+          { title: "Enter Email" },
+          { title: "Verify & Complete" },
         ]}
       />
 
@@ -178,7 +178,7 @@ const BusinessCardRegister: React.FC = () => {
         >
           <Form.Item
             name="email"
-            label="Email"
+            label="Email address"
             rules={[
               { required: true, message: "Please enter your email." },
               { type: "email", message: "Enter a valid email address." },
@@ -211,13 +211,13 @@ const BusinessCardRegister: React.FC = () => {
           </Form.Item>
           <Form.Item
             name="emailOtp"
-            label="Verification code"
+            label="Verification code (OTP)"
             rules={[{ required: true, message: "Please enter the OTP from your email." }]}
           >
             <Input
               className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm"
               prefix={<SafetyOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
-              placeholder="Enter OTP from email"
+              placeholder="Enter the code sent to your email"
               maxLength={8}
               allowClear
             />
@@ -230,7 +230,7 @@ const BusinessCardRegister: React.FC = () => {
             <Input
               className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm"
               prefix={<UserOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
-              placeholder="Your full name"
+              placeholder="Enter your full name"
               allowClear
             />
           </Form.Item>
@@ -245,7 +245,7 @@ const BusinessCardRegister: React.FC = () => {
                 message: "Use 8+ chars with upper, lower, number, and symbol.",
               },
             ]}
-            extra="Use 8+ characters with upper, lower, number, and symbol."
+            extra="Use 8+ characters: uppercase, lowercase, number, and a special symbol."
           >
             <Input.Password
               className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm"
@@ -262,7 +262,7 @@ const BusinessCardRegister: React.FC = () => {
               icon={<ArrowLeftOutlined />}
               onClick={() => setStep(0)}
             >
-              Change email
+              Use a different email
             </OutlineSuccessButton>
             <SuccessButton htmlType="submit" loading={loading} block size="large" className="!h-10 !rounded-lg !border-sky-600 !bg-sky-600 !text-sm !font-semibold !text-white shadow-sm transition-colors hover:!border-sky-700 hover:!bg-sky-700">
               Complete registration
@@ -276,7 +276,7 @@ const BusinessCardRegister: React.FC = () => {
           className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 transition-colors hover:!text-sky-700 sm:text-sm"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Login
+          Back to Sign in
         </Link>
       </div>
     </AuthShell>

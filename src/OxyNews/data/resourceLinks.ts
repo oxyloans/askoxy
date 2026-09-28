@@ -17,18 +17,17 @@ export interface ResourceCategory {
 
 export const RESOURCE_CATEGORIES: ResourceCategory[] = [
   {
-    id: "finance",
-    label: "Finance",
+    id: "finance-banking",
+    label: "Finance & Banking",
     links: [
-      // Add finance links here, same shape as the AI entries below:
-      // { id: "example", name: "Example", url: "https://example.com/", description: "One-line note" },
+      { id: "rbi-news", name: "RBI News", url: "/rbi-news", description: "RBI press releases & circulars" },
     ],
   },
   {
-    id: "banking",
-    label: "Banking",
+    id: "insurance",
+    label: "Insurance",
     links: [
-      { id: "rbi-news", name: "RBI News", url: "/rbi-news", description: "RBI press releases & circulars" },
+      { id: "irdai-news", name: "IRDAI News", url: "/irdai-news", description: "IRDAI press releases & circulars" },
     ],
   },
   {

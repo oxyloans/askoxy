@@ -1,175 +1,151 @@
 import React from "react";
-import Slider from "react-slick";
 
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+/* ─────────────────────────────────────────────────────────────────────────────
+   OXY Group Companies — infinite CSS marquee logo strip
+   • Slow, continuous right-to-left scroll on ALL screen sizes
+   • Track duplicated for a seamless, gap-free loop
+   • Edge-fade mask for a polished look
+   • Pauses on hover / focus for accessibility
+   • Fully responsive logo sizes (h-10 mobile → h-16 desktop)
+───────────────────────────────────────────────────────────────────────────── */
+
+const logos = [
+  {
+    src: "https://i.ibb.co/s4CW2mg/l1.png",
+    name: "OXYGLOBAL.TECH",
+    href: "https://www.oxyglobal.tech/",
+  },
+  {
+    src: "https://i.ibb.co/B5xsVChY/l2.png",
+    name: "OXYLOANS",
+    href: "https://oxyloans.com/",
+  },
+  {
+    src: "https://i.ibb.co/k2snG0YW/l3.png",
+    name: "OXYBRICKS.WORLD",
+    href: "https://oxybricks.world/",
+  },
+  {
+    src: "https://i.ibb.co/PGYYDvL9/l4.png",
+    name: "OXYGOLD.AI",
+    href: "https://www.oxygold.ai/",
+  },
+  {
+    src: "https://i.ibb.co/B2NcQ7Nj/l5.png",
+    name: "OXYCHAIN",
+    href: "http://bmv.money:2750/",
+  },
+  {
+    src: "https://i.ibb.co/Swx6RWXM/oxyfinservlogo-Cpr9-A3-NT.png",
+    name: "OXYFINSERV",
+    href: "https://www.oxyfinserv.com/",
+  },
+  {
+    src: "https://i.ibb.co/5JzN8yL/logo-tvrk.png",
+    name: "TVRK",
+    href: "https://tvradhakrishna.com/",
+  },
+];
+
+/* Inject keyframe animation once — avoids a separate CSS file */
+const MarqueeStyles: React.FC = () => (
+  <style>{`
+    @keyframes oxy-marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .oxy-marquee-track {
+      display: flex;
+      width: max-content;
+      animation: oxy-marquee 90s linear infinite;
+      will-change: transform;
+    }
+
+    /* Pause on hover or keyboard focus */
+    .oxy-marquee-outer:hover .oxy-marquee-track,
+    .oxy-marquee-outer:focus-within .oxy-marquee-track {
+      animation-play-state: paused;
+    }
+  `}</style>
+);
 
 const OXYGroupCompanies: React.FC = () => {
-  const bottomLogos = [
-    {
-      logo: "https://i.ibb.co/s4CW2mg/l1.png",
-      name: "OXYGLOBAL.TECH",
-      link: "https://www.oxyglobal.tech/",
-      desktopClass: "h-[42px] md:h-[50px] lg:h-[58px]",
-      mobileClass: "h-[70px]",
-    },
-    {
-      logo: "https://i.ibb.co/B5xsVChY/l2.png",
-      name: "OXYLOANS",
-      link: "https://oxyloans.com/",
-      desktopClass: "h-[46px] md:h-[54px] lg:h-[64px]",
-      mobileClass: "h-[74px]",
-    },
-    {
-      logo: "https://i.ibb.co/k2snG0YW/l3.png",
-      name: "OXYBRICKS.WORLD",
-      link: "https://oxybricks.world/",
-      desktopClass: "h-[38px] md:h-[46px] lg:h-[54px]",
-      mobileClass: "h-[66px]",
-    },
-    {
-      logo: "https://i.ibb.co/PGYYDvL9/l4.png",
-      name: "OXYGOLD.AI",
-      link: "https://www.oxygold.ai/",
-      desktopClass: "h-[34px] md:h-[40px] lg:h-[48px]",
-      mobileClass: "h-[62px]",
-    },
-    {
-      logo: "https://i.ibb.co/B2NcQ7Nj/l5.png",
-      name: "OXYCHAIN",
-      link: "http://bmv.money:2750/",
-      desktopClass: "h-[36px] md:h-[44px] lg:h-[52px]",
-      mobileClass: "h-[64px]",
-    },
-    {
-      logo: "https://i.ibb.co/Swx6RWXM/oxyfinservlogo-Cpr9-A3-NT.png",
-      name: "OXYFINSERV",
-      link: "https://www.oxyfinserv.com/",
-      desktopClass: "h-[40px] md:h-[48px] lg:h-[56px]",
-      mobileClass: "h-[68px]",
-    },
-  ];
-
-  const mobileLogoSettings = {
-    dots: false,
-    infinite: true,
-    speed: 700,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2300,
-    arrows: false,
-    pauseOnHover: false,
-    pauseOnFocus: false,
-    swipeToSlide: true,
-    centerMode: true,
-    centerPadding: "12px",
-  };
+  /* Duplicate the list so the second copy fills the viewport gap —
+     we only translate by 50 % (one full copy width), making the
+     loop completely seamless with no jump. */
+  const doubled = [...logos, ...logos];
 
   return (
-    <section className="w-full bg-white py-5 sm:py-6 md:py-7">
-      <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
-        {/* Desktop / Tablet */}
-        <div className="hidden sm:block">
-          <div
-            className="
-              grid
-              grid-cols-2
-              items-center
-              gap-x-6
-              gap-y-5
-              md:grid-cols-3
-              md:gap-x-8
-              md:gap-y-6
-              lg:grid-cols-6
-              lg:gap-x-7
-              xl:gap-x-10
-            "
-          >
-            {bottomLogos.map((item) => (
-              <a
-                key={item.name}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Visit ${item.name}`}
-                title={item.name}
-                className="
-                  group
-                  flex
-                  min-h-[100px]
-                  w-full
-                  items-center
-                  justify-center
-                  rounded-2xl
-                  transition-all
-                  duration-300
-                  hover:-translate-y-1
-                  focus-visible:outline-none
-                  focus-visible:ring-2
-                  focus-visible:ring-[#5543C8]
-                  focus-visible:ring-offset-2
-                "
-              >
-                <img
-                  src={item.logo}
-                  alt={`${item.name} logo`}
-                  loading="lazy"
-                  draggable={false}
-                  className={`
-                    ${item.desktopClass}
-                    w-auto
-                    max-w-[92%]
-                    object-contain
-                    transition-transform
-                    duration-300
-                    group-hover:scale-105
-                  `}
-                />
-              </a>
-            ))}
-          </div>
-        </div>
+    <section className="w-full overflow-hidden bg-white py-5 sm:py-6 md:py-8">
+      <MarqueeStyles />
 
-        {/* Mobile */}
-        <div className="block sm:hidden">
-          <Slider {...mobileLogoSettings}>
-            {bottomLogos.map((item) => (
-              <div key={item.name} className="px-2">
-                <div className="flex justify-center">
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Visit ${item.name}`}
-                    title={item.name}
-                    className="
-                      flex
-                      min-h-[108px]
-                      w-full
-                      items-center
-                      justify-center
-                      focus-visible:outline-none
-                    "
-                  >
-                    <img
-                      src={item.logo}
-                      alt={`${item.name} logo`}
-                      loading="lazy"
-                      draggable={false}
-                      className={`
-                        ${item.mobileClass}
-                        mx-auto
-                        w-auto
-                        max-w-[90%]
-                        object-contain
-                      `}
-                    />
-                  </a>
-                </div>
-              </div>
-            ))}
-          </Slider>
+      {/* Outer wrapper — soft fade mask on both edges */}
+      <div
+        className="oxy-marquee-outer relative w-full"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+        }}
+      >
+        {/* Scrolling logo track */}
+        <div className="oxy-marquee-track">
+          {doubled.map((item, index) => (
+            <a
+              key={`${item.name}-${index}`}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit ${item.name}`}
+              title={item.name}
+              className="
+                mx-6
+                flex
+                shrink-0
+                items-center
+                justify-center
+                rounded-2xl
+                px-3
+                py-3
+                transition-all
+                duration-300
+                hover:-translate-y-1
+                hover:opacity-80
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#5543C8]
+                focus-visible:ring-offset-2
+                sm:mx-8
+                sm:px-4
+                md:mx-10
+                md:px-5
+              "
+            >
+             <img
+  src={item.src}
+  alt={`${item.name} logo`}
+  loading="lazy"
+  draggable={false}
+  className="
+    h-16
+    w-auto
+    max-w-[140px]
+    object-contain
+    transition-transform
+    duration-300
+    hover:scale-105
+    sm:h-16
+    sm:max-w-[160px]
+    md:h-20
+    md:max-w-[190px]
+    lg:h-24
+    lg:max-w-[220px]
+  "
+/>
+            </a>
+          ))}
         </div>
       </div>
     </section>

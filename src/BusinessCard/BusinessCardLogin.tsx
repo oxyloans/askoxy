@@ -130,7 +130,7 @@ const BusinessCardLogin: React.FC = () => {
   return (
     <AuthShell
       mode="login"
-      formTitle="Login"
+      formTitle="Sign in to your account"
       authPrompt={
         <>
           Need an account?{" "}
@@ -138,7 +138,7 @@ const BusinessCardLogin: React.FC = () => {
             to="/business-card/register"
             className="ml-1 inline-flex items-center text-xs font-semibold !text-sky-600 transition-colors hover:!text-sky-800 sm:text-sm"
           >
-            Sign Up
+            Create an account
           </Link>
         </>
       }
@@ -147,7 +147,7 @@ const BusinessCardLogin: React.FC = () => {
         <Result
           status="403"
           title="Access denied"
-          subTitle={`Your account type (${userType}) does not have access to Business Card. This portal is only available for BUSINESSCARD accounts.`}
+          subTitle={`Your account type (${userType}) is not authorised to access the Business Card portal. Only Business Card accounts are permitted.`}
           extra={
             <PrimaryButton
               block
@@ -159,7 +159,7 @@ const BusinessCardLogin: React.FC = () => {
                 form.resetFields();
               }}
             >
-              Try another account
+              Use a different account
             </PrimaryButton>
           }
         />
@@ -175,7 +175,7 @@ const BusinessCardLogin: React.FC = () => {
         >
           <Form.Item
             name="email"
-            label="Email"
+            label="Email address"
             rules={[
               { required: true, message: "Please enter your email." },
               { type: "email", message: "Enter a valid email address." },
@@ -184,7 +184,7 @@ const BusinessCardLogin: React.FC = () => {
             <Input
               className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm transition-shadow focus-within:!shadow-[0_0_0_3px_rgba(8,145,178,0.12)]"
               prefix={<MailOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
-              placeholder="name@company.com"
+              placeholder="you@company.com"
               autoComplete="email"
               allowClear
             />
@@ -203,7 +203,7 @@ const BusinessCardLogin: React.FC = () => {
           </Form.Item>
           <Form.Item className="!mb-0 !mt-2">
             <PrimaryButton htmlType="submit" loading={loading} block size="large" className="!h-10 !rounded-lg !border-sky-600 !bg-sky-600 !text-sm !font-semibold !text-white shadow-sm transition-colors hover:!border-sky-700 hover:!bg-sky-700 focus:!border-sky-700 focus:!bg-sky-700">
-              Login
+              Sign in
             </PrimaryButton>
           </Form.Item>
         </Form>
@@ -214,7 +214,7 @@ const BusinessCardLogin: React.FC = () => {
           className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 transition-colors hover:!text-sky-700 sm:text-sm"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Choice
+          Back to Home
         </Link>
       </div>
     </AuthShell>

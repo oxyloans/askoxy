@@ -27,7 +27,7 @@ export default function ResourcePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-1">
+    <div className="w-full max-w-7xl mx-auto px-4">
       <Link
         to="/oxynews"
         className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"

@@ -62,6 +62,8 @@ import K2kFintechData from "./AskoxyAdmin/K2kFintechData";
 import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
 import OxyLoansIntegration from "./components/OxyLoansIntegration";
 import EventDetails from "./AskoxyAdmin/EventDetails";
+import OxyLoansOverviewPage from "./components/OxyLoansOverview";
+import IRDAINewsPage from "./OxyNews/pages/IRDAINewsPage";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -829,7 +831,7 @@ const LoadingSpinner = React.memo(() => {
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
             style={{
               fontSize: 14,
@@ -840,7 +842,7 @@ const LoadingSpinner = React.memo(() => {
           >
             Loading, please wait…
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -953,6 +955,7 @@ const App: React.FC = () => {
       "blog/:id/:type",
       "/credera/jobs",
       "/jpl",
+      "/oxyloans-partner",
       "/fpl",
       "/oxygold",
       "/viewjobdetails/default/ALL",
@@ -971,6 +974,7 @@ const App: React.FC = () => {
       // Login pages
       currentPath === "/admin" ||
       currentPath === "/partnerlogin" ||
+      currentPath === "/oxyloans-partner" ||
       currentPath === "/userlogin" ||
       currentPath === "/employee-login" ||
       currentPath === "/employee-register" ||
@@ -1112,6 +1116,7 @@ const App: React.FC = () => {
                 />
                 <Route path="/radhai-news" element={<RadhaiNewsPage />} />
                 <Route path="/rbi-news" element={<RBINewsPage />} />
+                <Route path="/irdai-news" element={<IRDAINewsPage />} />
               </Route>
               {/* OXY BFSAI Engine — full layout with fixed header */}
               <Route element={<FinvibeLayout />}>
@@ -1310,6 +1315,7 @@ const App: React.FC = () => {
               <Route path="/whatsapplogin" element={<WhatsappLogin />} />
               <Route path="/whatsappregister" element={<WhatsappRegister />} />
 
+ <Route path="/oxyloans-partner" element={<OxyLoansOverviewPage />} />
               {/* ===================================================== */}
               {/* ✅ OTHER PUBLIC ROUTES */}
               {/* ===================================================== */}

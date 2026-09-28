@@ -12,6 +12,8 @@ function formatDate(dateStr: string | null) {
   });
 }
 
+const ANTHROPIC_IMG = "https://i.ibb.co/qFrMxbgw/Chat-GPT-Image-Sep-28-2026-05-24-08-PM.png";
+
 export default function ExternalNewsList({ sourceName }: { sourceName: string }) {
   const PAGE_SIZE = 15;
   const [articles, setArticles] = useState<ExternalNewsArticle[]>([]);
@@ -121,47 +123,66 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
           {refreshing ? "Refreshing…" : "Refresh news"}
         </button>
       </div>
-      <div className="hidden sm:grid grid-cols-[4rem_8rem_12rem_minmax(0,1fr)] gap-4 py-3 text-xs uppercase tracking-widest text-ink font-semibold border-b border-ink/10">
-        <span className="text-left" aria-hidden="true"></span>
-        <span className="text-left">Date</span>
-        <span className="text-left">Category</span>
-        <span className="text-left">Title</span>
-      </div>
-      <ul className="divide-y divide-ink/10">
-        {articles.map((article) => (
-          <li key={article.id}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+        {articles.map((article, i) => {
+          const palette = [
+            { border: "hover:border-blue-300",   bg: "bg-blue-50",   letter: "text-blue-200",   hover: "group-hover:text-blue-700",   badge: "bg-blue-100 text-blue-700",   icon: "group-hover:text-blue-500" },
+            { border: "hover:border-emerald-300", bg: "bg-emerald-50", letter: "text-emerald-200", hover: "group-hover:text-emerald-700", badge: "bg-emerald-100 text-emerald-700", icon: "group-hover:text-emerald-500" },
+            { border: "hover:border-violet-300",  bg: "bg-violet-50",  letter: "text-violet-200",  hover: "group-hover:text-violet-700",  badge: "bg-violet-100 text-violet-700",  icon: "group-hover:text-violet-500" },
+            { border: "hover:border-rose-300",    bg: "bg-rose-50",    letter: "text-rose-200",    hover: "group-hover:text-rose-700",    badge: "bg-rose-100 text-rose-700",    icon: "group-hover:text-rose-500" },
+            { border: "hover:border-amber-300",   bg: "bg-amber-50",   letter: "text-amber-200",   hover: "group-hover:text-amber-700",   badge: "bg-amber-100 text-amber-700",   icon: "group-hover:text-amber-500" },
+            { border: "hover:border-teal-300",    bg: "bg-teal-50",    letter: "text-teal-200",    hover: "group-hover:text-teal-700",    badge: "bg-teal-100 text-teal-700",    icon: "group-hover:text-teal-500" },
+          ];
+          const c = palette[i % palette.length];
+          return (
             <Link
+              key={article.id}
               to={`/news/${sourceName.toLowerCase()}/${article.id}`}
-              className="focus-ring group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-4"
+              className={`group flex flex-col rounded-xl border border-slate-200 bg-white shadow-card hover:shadow-lift ${c.border} transition-all overflow-hidden focus-ring`}
             >
-              <span className="shrink-0 w-16 h-12 rounded-lg overflow-hidden bg-ink/5 border border-ink/10">
-                {article.imageUrl ? (
-                  <img
-                    src={article.imageUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                ) : null}
-              </span>
-              <time className="shrink-0 sm:w-28 text-xs font-mono text-ink-dark font-semibold">
-                {formatDate(article.publishedDate)}
-              </time>
-              {article.category && (
-                <span className="shrink-0 sm:w-40 text-xs font-mono uppercase tracking-wide text-plum font-semibold">
-                  {article.category}
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src={article.imageUrl || ANTHROPIC_IMG}
+                  alt={article.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = ANTHROPIC_IMG; }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <span className={`absolute top-2 left-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow ${c.badge}`}>
+                  {article.category || sourceName}
                 </span>
-              )}
-              <span className="font-body text-ink text-sm sm:text-base font-semibold group-hover:text-royal transition-colors">
-                {article.title}
-              </span>
+                <span className="absolute bottom-2 right-2 text-[10px] font-medium text-white/80">
+                  {formatDate(article.publishedDate)}
+                </span>
+              </div>
+              <div className="flex flex-col flex-1 p-3 gap-2">
+                <p className={`text-sm font-semibold leading-snug text-slate-800 ${c.hover} transition-colors line-clamp-3 flex-1`}>
+                  {article.title}
+                </p>
+                {article.content && (
+                  <p className="text-[11px] leading-relaxed text-slate-500 line-clamp-2">
+                    {article.content.replace(/#+\s*/g, "").slice(0, 120)}
+                  </p>
+                )}
+                <div className="flex items-center justify-end pt-2 border-t border-slate-100">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`w-3.5 h-3.5 text-slate-300 ${c.icon} transition-colors`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </div>
+              </div>
             </Link>
-          </li>
-        ))}
-      </ul>
+          );
+        })}
+      </div>
 
       {hasMore && (
         <div className="flex justify-center mt-6">

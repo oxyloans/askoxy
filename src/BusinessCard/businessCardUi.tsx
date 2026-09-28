@@ -370,14 +370,6 @@ export const AuthShell: React.FC<AuthShellProps> = ({
     <BusinessCardThemeProvider>
       <div className="flex min-h-screen items-center justify-center bg-slate-100 px-3 py-5 sm:px-5 sm:py-7">
         <div className="w-full max-w-[400px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 sm:max-w-[430px] md:h-[520px] md:max-w-[780px]">
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-5 py-4 text-white md:hidden sm:px-6 sm:py-5">
-            <img src={askOxyLogo} alt="AskOxy" className="mb-2 h-7 w-auto brightness-0 invert" />
-            <span className="inline-block rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest">
-              {content.badge}
-            </span>
-            <h2 className="mt-2 text-base font-semibold leading-snug sm:text-lg">{content.headline}</h2>
-          </div>
-
           <div className="flex flex-col md:h-full md:min-h-0 md:flex-row">
             <aside className="relative hidden w-1/2 shrink-0 overflow-hidden bg-slate-900 px-6 py-6 text-white md:flex md:h-full md:flex-col lg:px-7 lg:py-7">
               <img
@@ -410,6 +402,14 @@ export const AuthShell: React.FC<AuthShellProps> = ({
             </aside>
 
             <section className="flex flex-1 flex-col justify-center px-5 py-5 sm:px-6 sm:py-6 md:h-full md:w-1/2 md:overflow-y-auto md:px-7 lg:px-8">
+              {/* Mobile-only clean header */}
+              <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3 md:hidden">
+                <img src={askOxyLogo} alt="AskOxy" className="h-7 w-auto" />
+                <span className="rounded-full bg-cyan-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-700">
+                  {content.badge}
+                </span>
+              </div>
+
               <div className="mb-3 sm:mb-4">
                 <h1 className="text-lg font-semibold text-slate-900 sm:text-xl">Welcome to AskOxy</h1>
                 <p className="bc-auth-form-prompt mt-1 text-xs text-slate-500 sm:text-sm">

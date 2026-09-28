@@ -104,14 +104,14 @@ const CeoDetailsPage: React.FC = () => {
   return (
     <BusinessCardLayout>
       <PageHeader
-        title="User Details"
-        subtitle="Enter your details below and save."
+        title="Add User Details"
+        subtitle="Complete the form below to save your profile details for the active event."
       />
 
       <form onSubmit={handleSubmit}>
         <PageCard
-          title="Basic information"
-          description={CEO_DETAILS_PAGE_LABELS.sectionDescription}
+          title="Basic Information"
+          description="Enter the core identity details for this event profile."
         >
           <Form layout="vertical" className={BC_FORM}>
             <Row gutter={[12, 0]}>
@@ -120,7 +120,7 @@ const CeoDetailsPage: React.FC = () => {
                   <Input
                     value={form.ceoName || ""}
                     onChange={(e) => updateField("ceoName", e.target.value)}
-                    placeholder="Full name"
+                    placeholder="Enter your full name"
                     className={BC_INPUT}
                   />
                 </Form.Item>

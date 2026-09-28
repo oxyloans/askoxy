@@ -81,35 +81,67 @@ function highlightSpecialWords(parts: Array<string | JSX.Element>) {
 }
 
 function linkifyContent(text: string) {
-  const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
+  // Match markdown [text](url) first, then bare https:// or www. URLs
+  // Strip trailing punctuation that isn't part of the URL
+  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  const urlRegex = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/g;
+
   const parts: Array<string | JSX.Element> = [];
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
 
-  while ((match = urlRegex.exec(text)) !== null) {
-    const url = match[0];
-    const index = match.index;
-    if (index > lastIndex) {
-      parts.push(text.slice(lastIndex, index));
-    }
-    const href = url.startsWith("www.") ? `https://${url}` : url;
-    parts.push(
-      <a
-        key={`${index}-${url}`}
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="text-royal underline decoration-2 decoration-royal/50 transition-colors hover:text-plum"
-      >
-        {formatLinkText(href)}
-      </a>
-    );
-    lastIndex = index + url.length;
+  // First pass: extract markdown links
+  const segments: Array<{ start: number; end: number; el: JSX.Element }> = [];
+  let m: RegExpExecArray | null;
+
+  mdLinkRegex.lastIndex = 0;
+  while ((m = mdLinkRegex.exec(text)) !== null) {
+    const linkText = m[1];
+    const href = m[2].replace(/[).,;!?]+$/, "");
+    segments.push({
+      start: m.index,
+      end: m.index + m[0].length,
+      el: (
+        <a key={`md-${m.index}`} href={href} target="_blank" rel="noreferrer"
+          className="text-royal underline decoration-2 decoration-royal/50 transition-colors hover:text-plum">
+          {linkText}
+        </a>
+      ),
+    });
   }
 
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
+  // Second pass: bare URLs in the gaps between markdown links
+  const allSegments: Array<{ start: number; end: number; el: JSX.Element }> = [...segments];
+  const coveredRanges = segments.map(s => [s.start, s.end]);
+
+  urlRegex.lastIndex = 0;
+  while ((m = urlRegex.exec(text)) !== null) {
+    const start = m.index;
+    const rawUrl = m[1];
+    const end = start + rawUrl.length;
+    // Skip if inside a markdown link
+    const inside = coveredRanges.some(([s, e]) => start >= s && end <= e);
+    if (inside) continue;
+    const href = (rawUrl.startsWith("www.") ? `https://${rawUrl}` : rawUrl).replace(/[).,;!?]+$/, "");
+    allSegments.push({
+      start,
+      end: start + rawUrl.replace(/[).,;!?]+$/, "").length,
+      el: (
+        <a key={`url-${start}`} href={href} target="_blank" rel="noreferrer"
+          className="text-royal underline decoration-2 decoration-royal/50 transition-colors hover:text-plum">
+          {formatLinkText(href)}
+        </a>
+      ),
+    });
   }
+
+  allSegments.sort((a, b) => a.start - b.start);
+
+  for (const seg of allSegments) {
+    if (seg.start > lastIndex) parts.push(text.slice(lastIndex, seg.start));
+    parts.push(seg.el);
+    lastIndex = seg.end;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
 
   return highlightSpecialWords(parts);
 }
@@ -121,27 +153,52 @@ function renderArticleContent(text: string) {
     .filter(Boolean)
     .map((paragraph, index) => {
       if (paragraph.startsWith("## ")) {
+        const headingText = paragraph
+          .replace(/^##\s*/, "")
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+          .replace(/\[\d+\]/g, "")
+          .replace(/\[([^\]]{0,60})\]/g, "$1")
+          .trim();
         return (
           <h2
             key={index}
             className="text-xl sm:text-2xl font-semibold text-plum-dark mt-8 mb-4 border-l-4 border-plum pl-4"
           >
-            {paragraph.replace(/^##\s*/, "")}
+            {headingText}
           </h2>
         );
       }
 
       const sanitized = paragraph
         .replace(/\bdisclos(?:e|ed|ure|ing)?\b/gi, "")
+        .replace(/\[\d+\]/g, "")                   // [1] [2] citation brackets → remove
         .replace(/\s{2,}/g, " ")
         .trim();
 
       return (
-        <p key={index} className="text-sm sm:text-base text-ink-soft leading-relaxed">
+        <p key={index} className="text-[15px] leading-[1.85] text-slate-800 font-['Georgia',serif] mb-4 break-words">
           {linkifyContent(sanitized)}
         </p>
       );
     });
+}
+
+function ArticleBodyStyles() {
+  return (
+    <style>{`
+      .newspaper-body p { margin-bottom: 1.1em; }
+      .newspaper-body h2 { margin-top: 2em; margin-bottom: 0.75em; }
+      .newspaper-body a {
+        color: #7c3aed;
+        font-weight: 600;
+        text-decoration: underline;
+        text-decoration-color: #c4b5fd;
+        text-underline-offset: 2px;
+        word-break: break-all;
+      }
+      .newspaper-body a:hover { color: #6d28d9; }
+    `}</style>
+  );
 }
 
 export default function ExternalArticlePage() {
@@ -287,12 +344,12 @@ export default function ExternalArticlePage() {
         <div className="mt-6 border-b border-ink/10 pb-6">
           <div className="grid gap-6 lg:gap-10 lg:grid-cols-[3fr_1fr] items-start">
             <div>
-              <div className="flex flex-wrap gap-2 items-center text-xs uppercase tracking-widest text-ink-faint">
-                <span>{article.sourceName}</span>
-                <span>•</span>
-                <span>{article.category || "News"}</span>
-                <span>•</span>
-                <span>{formatDate(article.publishedDate)}</span>
+              <div className="flex flex-wrap gap-2 items-center text-xs uppercase tracking-widest">
+                <span className="font-bold text-violet-600">{article.sourceName}</span>
+                <span className="text-slate-300">•</span>
+                <span className="font-semibold text-emerald-600">{article.category || "News"}</span>
+                <span className="text-slate-300">•</span>
+                <span className="font-medium text-amber-600">{formatDate(article.publishedDate)}</span>
               </div>
 
               <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-bold text-plum-dark mt-4 leading-tight">
@@ -331,13 +388,14 @@ export default function ExternalArticlePage() {
         </div>
       </div>
 
+      <ArticleBodyStyles />
       <div className="mt-10 max-w-6xl mx-auto">
         <main className="space-y-10">
-          <section className="space-y-8 text-ink-soft">
+          <section className="space-y-1 text-ink-soft">
             {contentLoading ? (
               <p className="text-sm font-mono text-ink-faint">Fetching full article…</p>
             ) : content ? (
-              renderArticleContent(content)
+              <div className="newspaper-body">{renderArticleContent(content)}</div>
             ) : (
               <div className="text-sm text-ink-faint">
                 <p>Couldn't load the full text for this article.</p>

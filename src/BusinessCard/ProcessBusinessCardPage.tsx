@@ -9,6 +9,7 @@ import {
   Loader2,
   RefreshCw,
   UploadCloud,
+  ChevronDown,
 } from "lucide-react";
 import BusinessCardLayout from "./BusinessCardLayout";
 import {
@@ -86,7 +87,7 @@ const ProcessBusinessCardPage: React.FC = () => {
   const [cardFile, setCardFile] = useState<File | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [mobileNumber, setMobileNumber] = useState("");
-  const [processingMode, setProcessingMode] = useState<"mobile" | "business-card">("mobile");
+  const [processingMode, setProcessingMode] = useState<"" | "mobile" | "business-card">("");
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<{ card?: string; photo?: string; mobile?: string }>({});
 
@@ -94,6 +95,7 @@ const ProcessBusinessCardPage: React.FC = () => {
   const selectedEvent = activeEvents.length === 1 ? activeEvents[0] : null;
   const eventType = selectedEvent?.eventType || "";
   const isMobileMode = processingMode === "mobile";
+  const modeSelected = processingMode !== "";
 
   const activeEventNames = useMemo(() => activeEvents.map((item) =>
     `${item.eventName || "Event"} (${formatEventTypeLabel(item.eventType || undefined)})`
@@ -121,9 +123,10 @@ const ProcessBusinessCardPage: React.FC = () => {
   useEffect(() => { loadEvents(); }, [loadEvents]);
   useEffect(() => {
     setErrors({});
-    if (isMobileMode) setCardFile(null);
-    else setMobileNumber("");
-  }, [isMobileMode]);
+    setCardFile(null);
+    setPhotoFile(null);
+    setMobileNumber("");
+  }, [processingMode]);
 
   const validateFile = (file: File | null, imageOnly: boolean, required = true): string | undefined => {
     if (!file) return required ? "This file is required." : undefined;
@@ -145,6 +148,11 @@ const ProcessBusinessCardPage: React.FC = () => {
     }
     if (!selectedEvent || !eventType) {
       showToastWarning("Activate one event before processing.");
+      return;
+    }
+
+    if (!processingMode) {
+      showToastWarning("Please select a processing method.");
       return;
     }
 
@@ -199,8 +207,8 @@ const ProcessBusinessCardPage: React.FC = () => {
       <div className="mx-auto w-full max-w-7xl">
         <header className="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Process Card</h1>
-            <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Choose mobile with selfie or business card with selfie for your currently active event.</p>
+            <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Process a Business Card</h1>
+            <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Submit a mobile number or upload a business card to process it for your active event.</p>
           </div>
           <button type="button" onClick={loadEvents} disabled={!loggedInUserId || loadingEvents} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
             <RefreshCw className={`h-4 w-4 ${loadingEvents ? "animate-spin" : ""}`} />Refresh events
@@ -210,6 +218,7 @@ const ProcessBusinessCardPage: React.FC = () => {
         <form onSubmit={handleUpload} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5">
             <h2 className="text-sm font-semibold text-slate-800">Card processing details</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Select a method and fill in the required information below.</p>
           </div>
           <div className="p-4 sm:p-5">
             {loadingEvents ? (
@@ -229,30 +238,95 @@ const ProcessBusinessCardPage: React.FC = () => {
                   <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event type</span><input value={formatEventTypeLabel(eventType)} readOnly className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-slate-700 outline-none" /></label>
                 </div>
 
-                <fieldset className="mt-5">
-                  <legend className="mb-2 text-xs font-semibold text-slate-700">Choose how you want to process the card</legend>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3.5 transition focus-within:ring-4 focus-within:ring-cyan-500/10 ${isMobileMode ? "border-cyan-600 bg-cyan-50 shadow-sm" : "border-slate-200 bg-slate-50/60 hover:border-cyan-300 hover:bg-cyan-50/40"}`}>
-                      <input type="radio" name="processing-mode" value="mobile" checked={isMobileMode} onChange={() => setProcessingMode("mobile")} className="h-4 w-4 shrink-0 accent-cyan-600" />
-                      <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold ${isMobileMode ? "text-cyan-900" : "text-slate-800"}`}>Mobile with selfie</span><span className="mt-0.5 block text-xs text-slate-600">Add a mobile number. Profile photo is optional.</span></span>
-                    </label>
-                    <label className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3.5 transition focus-within:ring-4 focus-within:ring-cyan-500/10 ${!isMobileMode ? "border-cyan-600 bg-cyan-50 shadow-sm" : "border-slate-200 bg-slate-50/60 hover:border-cyan-300 hover:bg-cyan-50/40"}`}>
-                      <input type="radio" name="processing-mode" value="business-card" checked={!isMobileMode} onChange={() => setProcessingMode("business-card")} className="h-4 w-4 shrink-0 accent-cyan-600" />
-                      <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold ${!isMobileMode ? "text-cyan-900" : "text-slate-800"}`}>Business card with selfie</span><span className="mt-0.5 block text-xs text-slate-600">Upload a business card. Profile photo is optional.</span></span>
-                    </label>
+                {/* ── Processing mode dropdown ── */}
+                <div className="mt-6">
+                  <label htmlFor="processing-mode-select" className="mb-1.5 block text-sm font-bold text-slate-800">
+                    Choose how you want to process the card
+                    <span className="ml-1 text-red-500">*</span>
+                  </label>
+
+                  <div className="relative sm:max-w-md">
+                    <select
+                      id="processing-mode-select"
+                      value={processingMode}
+                      onChange={(e) => setProcessingMode(e.target.value as "" | "mobile" | "business-card")}
+                      className={`h-12 w-full appearance-none rounded-xl border-2 bg-white pl-4 pr-10 text-sm font-medium outline-none transition-all duration-200 focus:ring-4 ${
+                        processingMode
+                          ? "border-cyan-500 text-slate-800 focus:border-cyan-600 focus:ring-cyan-500/15"
+                          : "border-slate-300 text-slate-400 hover:border-slate-400 focus:border-cyan-500 focus:ring-cyan-500/15"
+                      }`}
+                    >
+                      <option value="">— Select processing method —</option>
+                      <option value="mobile">Mobile with Selfie</option>
+                      <option value="business-card">Business Card with Selfie</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   </div>
-                </fieldset>
 
-                {isMobileMode && <label className="mt-5 block sm:max-w-xl"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Mobile number <span className="text-red-500">*</span></span><input value={mobileNumber} onChange={(event) => { setMobileNumber(event.target.value); setErrors((current) => ({ ...current, mobile: undefined })); }} placeholder="e.g. +91 86865 45986" inputMode="tel" aria-invalid={Boolean(errors.mobile)} className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm outline-none transition focus:ring-4 ${errors.mobile ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : "border-slate-300 focus:border-cyan-600 focus:ring-cyan-500/10"}`} />{errors.mobile && <p className="mt-1.5 text-xs text-red-600">{errors.mobile}</p>}</label>}
 
-                <div className={`mt-5 grid grid-cols-1 gap-5 ${isMobileMode ? "sm:max-w-xl" : "lg:grid-cols-2"}`}>
-                  {!isMobileMode && <FilePicker id="card-file" label="Business card file" description="Drop the card file here" accept="image/*,.pdf" file={cardFile} onFile={(file) => { setCardFile(file); setErrors((current) => ({ ...current, card: undefined })); }} error={errors.card} />}
-                  <FilePicker id="photo-file" label="Profile photo" description="Drop the profile photo here" accept="image/*" imageOnly required={false} file={photoFile} onFile={(file) => { setPhotoFile(file); setErrors((current) => ({ ...current, photo: undefined })); }} error={errors.photo} />
                 </div>
+
+                {/* ── Fields revealed only after selection ── */}
+                {modeSelected && (
+                  <div className="mt-6 space-y-5 rounded-xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
+
+                    {/* Mobile number — only for mobile mode */}
+                    {isMobileMode && (
+                      <label className="block sm:max-w-xl">
+                        <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                          Mobile number <span className="text-red-500">*</span>
+                        </span>
+                        <input
+                          value={mobileNumber}
+                          onChange={(event) => {
+                            setMobileNumber(event.target.value);
+                            setErrors((current) => ({ ...current, mobile: undefined }));
+                          }}
+                          placeholder="e.g. +91 86865 45986"
+                          inputMode="tel"
+                          aria-invalid={Boolean(errors.mobile)}
+                          className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm outline-none transition focus:ring-4 ${
+                            errors.mobile
+                              ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                              : "border-slate-300 focus:border-cyan-600 focus:ring-cyan-500/10"
+                          }`}
+                        />
+                        {errors.mobile && <p className="mt-1.5 text-xs text-red-600">{errors.mobile}</p>}
+                      </label>
+                    )}
+
+                    {/* File pickers */}
+                    <div className={`grid grid-cols-1 gap-5 ${isMobileMode ? "" : "lg:grid-cols-2"}`}>
+                      {!isMobileMode && (
+                        <FilePicker
+                          id="card-file"
+                          label="Business card file"
+                          description="Drop the card file here"
+                          accept="image/*,.pdf"
+                          file={cardFile}
+                          onFile={(file) => { setCardFile(file); setErrors((current) => ({ ...current, card: undefined })); }}
+                          error={errors.card}
+                        />
+                      )}
+                      <FilePicker
+                        id="photo-file"
+                        label="Profile photo"
+                        description="Drop the profile photo here"
+                        accept="image/*"
+                        imageOnly
+                        required={false}
+                        file={photoFile}
+                        onFile={(file) => { setPhotoFile(file); setErrors((current) => ({ ...current, photo: undefined })); }}
+                        error={errors.photo}
+                      />
+                    </div>
+
+                  </div>
+                )}
 
                 <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
                   <button type="submit" disabled={!loggedInUserId || uploading} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-500/20 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto sm:min-w-[180px]">
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}{uploading ? "Processing..." : "Process card"}
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}{uploading ? "Processing, please wait..." : "Submit & Process Card"}
                   </button>
                 </div>
               </>

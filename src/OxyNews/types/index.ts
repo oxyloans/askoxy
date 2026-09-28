@@ -168,6 +168,24 @@ export interface RbiCampaignResponse {
   notifications: RbiCampaignPressRelease[];
 }
 
+export interface IrdaiPressRelease {
+  id: string;
+  date: number[];
+  name: string;
+  fileUrl: string;
+  enumIs: string;
+  pipeline: string;
+  type: string;
+}
+
+export interface IrdaiCampaignResponse {
+  status: string;
+  type: string;
+  date: string;
+  count: number;
+  notifications: IrdaiPressRelease[];
+}
+
 export interface ExternalNewsArticle {
   id: number;
   url: string;

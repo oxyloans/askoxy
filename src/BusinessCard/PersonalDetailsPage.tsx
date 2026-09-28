@@ -29,36 +29,75 @@ import {
 type Section = "profile" | "documents";
 type FieldErrors = Partial<Record<keyof UpdatePersonalDetailsRequest, string>>;
 
+const COUNTRY_CODES = [
+  { code: "+91", flag: "🇮🇳", label: "🇮🇳 +91" },
+  { code: "+1", flag: "🇺🇸", label: "🇺🇸 +1" },
+  { code: "+44", flag: "🇬🇧", label: "🇬🇧 +44" },
+  { code: "+61", flag: "🇦🇺", label: "🇦🇺 +61" },
+  { code: "+971", flag: "🇦🇪", label: "🇦🇪 +971" },
+  { code: "+966", flag: "🇸🇦", label: "🇸🇦 +966" },
+  { code: "+65", flag: "🇸🇬", label: "🇸🇬 +65" },
+  { code: "+60", flag: "🇲🇾", label: "🇲🇾 +60" },
+  { code: "+49", flag: "🇩🇪", label: "🇩🇪 +49" },
+  { code: "+33", flag: "🇫🇷", label: "🇫🇷 +33" },
+  { code: "+81", flag: "🇯🇵", label: "🇯🇵 +81" },
+  { code: "+86", flag: "🇨🇳", label: "🇨🇳 +86" },
+  { code: "+7", flag: "🇷🇺", label: "🇷🇺 +7" },
+  { code: "+55", flag: "🇧🇷", label: "🇧🇷 +55" },
+  { code: "+27", flag: "🇿🇦", label: "🇿🇦 +27" },
+  { code: "+234", flag: "🇳🇬", label: "🇳🇬 +234" },
+  { code: "+20", flag: "🇪🇬", label: "🇪🇬 +20" },
+  { code: "+92", flag: "🇵🇰", label: "🇵🇰 +92" },
+  { code: "+880", flag: "🇧🇩", label: "🇧🇩 +880" },
+  { code: "+94", flag: "🇱🇰", label: "🇱🇰 +94" },
+  { code: "+977", flag: "🇳🇵", label: "🇳🇵 +977" },
+  { code: "+64", flag: "🇳🇿", label: "🇳🇿 +64" },
+];
+
 const validateProfile = (values: UpdatePersonalDetailsRequest): FieldErrors => {
   const errors: FieldErrors = {};
+
+  // Required fields
   const name = values.userName?.trim() || "";
-  if (!name) errors.userName = "Name is required.";
+  if (!name) errors.userName = "Full name is required.";
   else if (name.length < 2) errors.userName = "Name must contain at least 2 characters.";
   else if (name.length > 100) errors.userName = "Name cannot exceed 100 characters.";
 
-  if ((values.companyName?.trim().length || 0) > 120) errors.companyName = "Company cannot exceed 120 characters.";
-  if ((values.designation?.trim().length || 0) > 100) errors.designation = "Designation cannot exceed 100 characters.";
-  if ((values.location?.trim().length || 0) > 150) errors.location = "Location cannot exceed 150 characters.";
+  if (!values.companyName?.trim()) errors.companyName = "Company name is required.";
+  else if (values.companyName.trim().length > 120) errors.companyName = "Company name cannot exceed 120 characters.";
 
-  const emails = values.email?.split(",").map((value) => value.trim()).filter(Boolean) || [];
+  if (!values.designation?.trim()) errors.designation = "Designation is required.";
+  else if (values.designation.trim().length > 100) errors.designation = "Designation cannot exceed 100 characters.";
+
+  if (!values.location?.trim()) errors.location = "Location is required.";
+  else if (values.location.trim().length > 150) errors.location = "Location cannot exceed 150 characters.";
+
+  if (!values.mobileNumber?.trim()) {
+    errors.mobileNumber = "Mobile number is required.";
+  } else {
+    const phones = values.mobileNumber.split(",").map((v) => v.trim()).filter(Boolean);
+    const phonePattern = /^\+?[0-9()\-\s]{7,20}$/;
+    if (phones.some((p) => !phonePattern.test(p)))
+      errors.mobileNumber = "Enter a valid mobile number.";
+  }
+
+  // Optional — only validate format if provided
+  const emails = values.email?.split(",").map((v) => v.trim()).filter(Boolean) || [];
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (emails.some((email) => !emailPattern.test(email))) errors.email = "Enter valid email addresses separated by commas.";
-
-  const phones = values.mobileNumber?.split(",").map((value) => value.trim()).filter(Boolean) || [];
-  const phonePattern = /^\+?[0-9()\-\s]{7,20}$/;
-  if (phones.some((phone) => !phonePattern.test(phone))) errors.mobileNumber = "Enter valid mobile numbers separated by commas.";
+  if (emails.length > 0 && emails.some((e) => !emailPattern.test(e)))
+    errors.email = "Enter a valid email address.";
 
   const linkedin = values.linkedin?.trim();
   if (linkedin) {
     try {
       const url = new URL(linkedin);
-      if (!/^https?:$/.test(url.protocol) || !url.hostname.toLowerCase().includes("linkedin.com")) {
-        errors.linkedin = "Enter a valid LinkedIn URL.";
-      }
+      if (!/^https?:$/.test(url.protocol) || !url.hostname.toLowerCase().includes("linkedin.com"))
+        errors.linkedin = "Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/yourname).";
     } catch {
       errors.linkedin = "Enter a complete LinkedIn URL, including https://.";
     }
   }
+
   return errors;
 };
 
@@ -133,6 +172,7 @@ const PersonalDetailsPage: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [countryCode, setCountryCode] = useState("+91");
 
   useEffect(() => {
     setSection(location.pathname.includes("personal-details-document") ? "documents" : "profile");
@@ -149,13 +189,20 @@ const PersonalDetailsPage: React.FC = () => {
       const next = profileToForm(loggedInUserId, data);
       setProfile(next);
       setDraft(next);
-      setEditing(false);
       setFieldErrors({});
+
+      // If the response has no data at all, auto-open edit mode
+      // so the user can immediately enter their details.
+      const isEmpty = !next.userName?.trim() && !next.mobileNumber?.trim() &&
+        !next.email?.trim() && !next.companyName?.trim() &&
+        !next.designation?.trim() && !next.location?.trim();
+      setEditing(isEmpty);
     } catch (error) {
       console.error(error);
       const next = profileToForm(loggedInUserId, null);
       setProfile(next);
       setDraft(next);
+      setEditing(true); // also open edit mode if load fails (nothing to display)
       showToastError(extractApiErrorMessage(error, "Failed to load profile."));
     } finally {
       setLoading(false);
@@ -258,15 +305,15 @@ const PersonalDetailsPage: React.FC = () => {
     <BusinessCardLayout>
       <div className="mx-auto w-full max-w-7xl">
         <header className="mb-4 border-b border-slate-200 pb-4 sm:mb-5">
-          <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Personal details</h1>
-          <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Manage your profile and supporting documents in one place.</p>
+          <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">My Profile</h1>
+          <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Keep your profile up to date — add your contact details, company info, and supporting documents all in one place.</p>
         </header>
 
         <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:mb-5 sm:w-fit sm:min-w-[320px]">
           {(["profile", "documents"] as Section[]).map((item) => (
             <button key={item} type="button" onClick={() => changeSection(item)} className={`flex h-9 items-center justify-center gap-2 rounded-md px-4 text-xs font-semibold transition sm:text-sm ${section === item ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}>
               {item === "profile" ? <UserRound className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-              {item === "profile" ? "Profile" : "Upload Profile Card"}
+              {item === "profile" ? "My Profile" : "Upload Document"}
             </button>
           ))}
         </div>
@@ -290,27 +337,96 @@ const PersonalDetailsPage: React.FC = () => {
               <form onSubmit={handleSave} className="p-4 sm:p-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {([
-                    ["userName", "Name", "Full name", "text"], ["companyName", "Company", "Company name", "text"],
-                    ["designation", "Designation", "Your designation", "text"], ["location", "Location", "City, country", "text"],
-                    ["mobileNumber", "Mobile", "Mobile number", "tel"], ["email", "Email", "Email address", "email"],
-                    ["linkedin", "LinkedIn", "LinkedIn profile URL", "url"],
-                  ] as [keyof UpdatePersonalDetailsRequest, string, string, string][]).map(([key, label, placeholder, type]) => (
-                    <label key={key} className={key === "linkedin" ? "sm:col-span-2" : ""}>
-                      <span className="mb-1.5 block text-xs font-semibold text-slate-700">{label}{key === "userName" && <span className="text-red-500"> *</span>}</span>
+                    ["userName", "Full Name", "Enter your full name", "text", true],
+                    ["companyName", "Company Name", "Enter company name", "text", true],
+                    ["designation", "Designation", "e.g. Chief Executive Officer", "text", true],
+                    ["location", "Location", "City, State, Country", "text", true],
+                  ] as [keyof UpdatePersonalDetailsRequest, string, string, string, boolean][]).map(([key, label, placeholder, type, required]) => (
+                    <label key={key}>
+                      <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                        {label}{required && <span className="text-red-500"> *</span>}
+                        {!required && <span className="ml-1 text-[10px] font-normal text-slate-400">(optional)</span>}
+                      </span>
                       <input
-                        type={key === "email" ? "text" : type}
-                        inputMode={key === "email" ? "email" : key === "mobileNumber" ? "tel" : undefined}
+                        type={type}
                         value={(draft[key] as string) || ""}
                         onChange={(event) => updateField(key, event.target.value)}
                         placeholder={placeholder}
                         className={`${inputClass} ${fieldErrors[key] ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
-                        required={key === "userName"}
+                        required={required}
                         aria-invalid={Boolean(fieldErrors[key])}
                         aria-describedby={fieldErrors[key] ? `${String(key)}-error` : undefined}
                       />
                       {fieldErrors[key] && <p id={`${String(key)}-error`} className="mt-1.5 text-xs text-red-600">{fieldErrors[key]}</p>}
                     </label>
                   ))}
+
+                  {/* Mobile Number with Country Code (Col 1) */}
+                  <label>
+                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                      Mobile Number <span className="text-red-500">*</span>
+                    </span>
+                    <div className="flex gap-2">
+                      <select
+                        value={countryCode}
+                        onChange={(e) => {
+                          setCountryCode(e.target.value);
+                          const bare = draft.mobileNumber?.replace(/^\+\d{1,4}\s?/, "") || "";
+                          updateField("mobileNumber", `${e.target.value} ${bare}`.trim());
+                        }}
+                        className="h-11 w-28 shrink-0 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-800 outline-none transition hover:border-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-500/10 sm:w-32"
+                      >
+                        {COUNTRY_CODES.map((c) => (
+                          <option key={c.code} value={c.code}>{c.label}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="tel"
+                        inputMode="tel"
+                        value={draft.mobileNumber?.replace(/^\+\d{1,4}\s?/, "") || ""}
+                        onChange={(e) => updateField("mobileNumber", `${countryCode} ${e.target.value}`.trim())}
+                        placeholder="Enter mobile number"
+                        className={`${inputClass} ${fieldErrors.mobileNumber ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                        aria-invalid={Boolean(fieldErrors.mobileNumber)}
+                      />
+                    </div>
+                    {fieldErrors.mobileNumber && <p className="mt-1.5 text-xs text-red-600">{fieldErrors.mobileNumber}</p>}
+                  </label>
+
+                  {/* Email Address (Col 2 - side-by-side with Mobile Number) */}
+                  <label>
+                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                      Email Address <span className="ml-1 text-[10px] font-normal text-slate-400">(optional)</span>
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="email"
+                      value={draft.email || ""}
+                      onChange={(event) => updateField("email", event.target.value)}
+                      placeholder="you@company.com (optional)"
+                      className={`${inputClass} ${fieldErrors.email ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                      aria-invalid={Boolean(fieldErrors.email)}
+                      aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                    />
+                    {fieldErrors.email && <p id="email-error" className="mt-1.5 text-xs text-red-600">{fieldErrors.email}</p>}
+                  </label>
+
+                  {/* LinkedIn URL (Full Width) */}
+                  <label className="sm:col-span-2">
+                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                      LinkedIn URL <span className="ml-1 text-[10px] font-normal text-slate-400">(optional)</span>
+                    </span>
+                    <input
+                      type="url"
+                      value={draft.linkedin || ""}
+                      onChange={(event) => updateField("linkedin", event.target.value)}
+                      placeholder="https://linkedin.com/in/yourname (optional)"
+                      className={`${inputClass} ${fieldErrors.linkedin ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                      aria-invalid={Boolean(fieldErrors.linkedin)}
+                      aria-describedby={fieldErrors.linkedin ? "linkedin-error" : undefined}
+                    />
+                    {fieldErrors.linkedin && <p id="linkedin-error" className="mt-1.5 text-xs text-red-600">{fieldErrors.linkedin}</p>}
+                  </label>
                 </div>
                 <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                   <button type="button" onClick={() => { setDraft(profile); setFieldErrors({}); setEditing(false); }} disabled={saving} className={secondaryButtonClass}>Cancel</button>

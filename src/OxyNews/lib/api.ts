@@ -10,9 +10,11 @@ import type {
   PaperclipDetail,
   RbiPressRelease,
   RbiCampaignResponse,
+  IrdaiCampaignResponse,
 } from "../types";
 const BASE_URL1 = `${BASE_URL}/ai-automation`;
 const LOCAL_BASE = "http://localhost:9041/api/ai-automation";
+const CAMPAIGN_BASE = "http://65.0.147.157:9229/api";
 
 const getAccessToken = (): string | null =>
   getCustomerAccessToken() || localStorage.getItem("accessToken");
@@ -154,16 +156,20 @@ export const api = {
   },
 
   getRbiFeedItems: (): Promise<NewsFeedItem[]> =>
-    fetch(`${BASE_URL}/ai-automation/paperclip/rbi`, {
+    fetch(`${BASE_URL1}/paperclip/rbi`, {
       headers: getRequestHeaders(),
     }).then(res => res.json()).then(body => body?.data ?? []),
 
   getRbiCampaignPressReleases: (): Promise<RbiCampaignResponse> =>
-    fetch(`${BASE_URL}/marketing-service/campgin/press-releases?type=PRESS_RELEASE`)
+    fetch(`${BASE_URL}/marketing-service/campgin/press-releases-new?organizationName=RBI&type=PRESS_RELEASE`)
       .then(res => res.json()),
 
   getRbiDailyPressReleases: (): Promise<RbiCampaignResponse> =>
     fetch(`${BASE_URL}/marketing-service/campgin/daily-press-release`)
+      .then(res => res.json()),
+
+  getIrdaiPressReleases: (): Promise<IrdaiCampaignResponse> =>
+    fetch(`${BASE_URL}/marketing-service/campgin/press-releases-new?organizationName=IRDAI&type=PRESS_RELEASE`)
       .then(res => res.json()),
 
   search: (query: string, page = 0, size = 12) => {
@@ -174,7 +180,7 @@ export const api = {
   getPaperclip: (id: string) => request<PaperclipDetail>(`/paperclip/${id}`),
 
   chat: (id: string, message: string, webSearch = false, conversationId?: string) =>
-    fetch(`${BASE_URL}/ai-automation/paperclip/${id}/chat`, {
+    fetch(`${BASE_URL1}/paperclip/${id}/chat`, {
       method: "POST",
       headers: getRequestHeaders(),
       body: JSON.stringify({ message, webSearch, conversationId }),

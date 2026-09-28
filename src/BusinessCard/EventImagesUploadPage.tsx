@@ -115,7 +115,6 @@ const EventImagesUploadPage: React.FC = () => {
       setCreateForm(emptyCreateForm());
       setCreateErrors({});
       showToastSuccess("Event created successfully.");
-      setTab("upload");
     } catch (error) {
       console.error(error);
       const msg = extractApiErrorMessage(error, "Failed to create event.");
@@ -227,18 +226,18 @@ const EventImagesUploadPage: React.FC = () => {
     <BusinessCardLayout>
       <div className="mx-auto w-full max-w-7xl">
         <header className="mb-4 border-b border-slate-200 pb-4 sm:mb-5">
-          <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Event Details</h1>
-          <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Create an event, then upload and organize its images from one workspace.</p>
+          <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Events & Image Upload</h1>
+          <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">Create a new event and upload its associated images — manage everything from a single workspace.</p>
         </header>
 
         <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:mb-5 sm:w-fit sm:min-w-[340px]" role="tablist" aria-label="Event actions">
           <button type="button" role="tab" aria-selected={tab === "create"} onClick={() => setTab("create")} className={`flex h-10 items-center justify-center gap-2 rounded-md px-4 text-xs font-semibold transition sm:text-sm ${tab === "create" ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}><CalendarPlus className="h-4 w-4" />Create Event</button>
-          <button type="button" role="tab" aria-selected={tab === "upload"} onClick={() => setTab("upload")} className={`flex h-10 items-center justify-center gap-2 rounded-md px-4 text-xs font-semibold transition sm:text-sm ${tab === "upload" ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}><ImagePlus className="h-4 w-4" />Image Upload</button>
+          <button type="button" role="tab" aria-selected={tab === "upload"} onClick={() => setTab("upload")} className={`flex h-10 items-center justify-center gap-2 rounded-md px-4 text-xs font-semibold transition sm:text-sm ${tab === "upload" ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}><ImagePlus className="h-4 w-4" />Upload Image</button>
         </div>
 
         {tab === "create" ? (
           <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5"><h2 className="text-sm font-semibold text-slate-800">Create a new event</h2><p className="mt-1 text-xs text-slate-500">Add the event details below. An image is not required at this step.</p></div>
+            <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5"><h2 className="text-sm font-semibold text-slate-800">Create a new event</h2><p className="mt-1 text-xs text-slate-500">Fill in the details below to create a new event. You can upload images in the next tab.</p></div>
             <div className="p-4 sm:p-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event type <span className="text-red-500">*</span></span><select value={createForm.eventType || ""} onChange={(event) => updateCreateField("eventType", event.target.value)} aria-invalid={Boolean(createErrors.eventType)} className={`${inputClass} ${createErrors.eventType ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}><option value="">Select event type</option>{CEO_EVENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>{createErrors.eventType && <p className="mt-1.5 text-xs text-red-600">{createErrors.eventType}</p>}</label>
@@ -256,7 +255,7 @@ const EventImagesUploadPage: React.FC = () => {
           </form>
         ) : (
           <form onSubmit={handleUpload} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5"><h2 className="text-sm font-semibold text-slate-800">Upload event image</h2><p className="mt-1 text-xs text-slate-500">Select the event type, then upload one image.</p></div>
+            <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5"><h2 className="text-sm font-semibold text-slate-800">Upload event image</h2><p className="mt-1 text-xs text-slate-500">Select the event type and upload an image to associate with the event.</p></div>
             <div className="p-4 sm:p-5">
               <label className="block sm:max-w-md"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Event type <span className="text-red-500">*</span></span><select value={uploadEventType} onChange={(event) => { setUploadEventType(event.target.value); setUploadEventTypeError(""); }} aria-invalid={Boolean(uploadEventTypeError)} className={`${inputClass} ${uploadEventTypeError ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}><option value="">Select event type</option>{CEO_EVENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>{uploadEventTypeError && <p className="mt-1.5 text-xs text-red-600">{uploadEventTypeError}</p>}</label>
               <div className="mt-5"><div className="mb-1.5 flex items-center justify-between"><span className="text-xs font-semibold text-slate-700">Image <span className="text-red-500">*</span></span><span className="text-[10px] text-slate-400">Maximum 10 MB</span></div><div className={`rounded-xl border p-6 text-center sm:p-9 ${imageError ? "border-red-300 bg-red-50/40" : "border-slate-200 bg-slate-50/60"}`}><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><UploadCloud className="h-6 w-6" /></div><p className="mt-3 break-all text-sm font-semibold text-slate-700">{imageFile?.name || "Select an image to upload"}</p><p className="mt-1 text-xs text-slate-400">JPG, PNG, or WEBP</p><Upload accept="image/*" maxCount={1} fileList={imageFile ? [{ uid: "event-image", name: imageFile.name, status: "done" }] : []} beforeUpload={(file) => { chooseImage(file); return false; }} onRemove={() => { chooseImage(null); return true; }} className="mt-4 [&_.ant-upload-list]:text-left"><Button type="default">Select image</Button></Upload></div>{imageError && <p className="mt-1.5 text-xs text-red-600">{imageError}</p>}</div>

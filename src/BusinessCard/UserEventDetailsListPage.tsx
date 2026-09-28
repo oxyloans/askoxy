@@ -129,6 +129,7 @@ const UserEventDetailsListPage: React.FC = () => {
   const [eventForm, setEventForm] =
     useState<UserEventDetailsSaveRequest>(emptyEventForm());
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [originalRecord, setOriginalRecord] = useState<UserEventDetailsResponse | null>(null);
 
   const loadEvents = useCallback(async () => {
     if (!loggedInUserId) {
@@ -168,10 +169,17 @@ const UserEventDetailsListPage: React.FC = () => {
       showToastWarning("This event cannot be updated because its ID is missing.");
       return;
     }
+    setOriginalRecord(record);
     setEventForm(recordToForm(record));
     setFieldErrors({});
     setEditing(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // A field is locked (read-only) when the original API response had a non-empty value.
+  const isLocked = (key: keyof UserEventDetailsResponse): boolean => {
+    const val = originalRecord?.[key];
+    return typeof val === "string" ? val.trim().length > 0 : Boolean(val);
   };
 
   const validate = (): FieldErrors => {
@@ -298,10 +306,10 @@ const UserEventDetailsListPage: React.FC = () => {
         <header className="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Event List
+              My Events
             </h1>
             <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">
-              Review and update all event details associated with your account.
+              View, edit, and manage all events linked to your account. Set one event as active at a time.
             </p>
           </div>
           <button
@@ -311,7 +319,7 @@ const UserEventDetailsListPage: React.FC = () => {
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            Refresh Events
           </button>
         </header>
 
@@ -328,134 +336,180 @@ const UserEventDetailsListPage: React.FC = () => {
             </div>
             <div className="p-4 sm:p-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                {/* Event Type */}
                 <label>
-                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                     Event type <span className="text-red-500">*</span>
+                    {isLocked("eventType") && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">🔒 Locked</span>
+                    )}
                   </span>
-                  <select
-                    value={eventForm.eventType || ""}
-                    onChange={(event) =>
-                      updateField("eventType", event.target.value)
-                    }
-                    className={`${inputClass} ${fieldErrors.eventType ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
-                  >
-                    <option value="">Select event type</option>
-                    {CEO_EVENT_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  {isLocked("eventType") ? (
+                    <input
+                      readOnly
+                      value={formatEventTypeLabel(eventForm.eventType || "")}
+                      className="h-11 w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3.5 text-sm font-medium text-slate-600 outline-none"
+                    />
+                  ) : (
+                    <select
+                      value={eventForm.eventType || ""}
+                      onChange={(event) => updateField("eventType", event.target.value)}
+                      className={`${inputClass} ${fieldErrors.eventType ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                    >
+                      <option value="">Select event type</option>
+                      {CEO_EVENT_TYPE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  )}
                   {fieldErrors.eventType && (
-                    <p className="mt-1.5 text-xs text-red-600">
-                      {fieldErrors.eventType}
-                    </p>
+                    <p className="mt-1.5 text-xs text-red-600">{fieldErrors.eventType}</p>
                   )}
                 </label>
+
+                {/* Event Name */}
                 <label>
-                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                     Event name <span className="text-red-500">*</span>
+                    {isLocked("eventName") && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">🔒 Locked</span>
+                    )}
                   </span>
                   <input
                     value={eventForm.eventName || ""}
-                    onChange={(event) =>
-                      updateField("eventName", event.target.value)
-                    }
-                    placeholder="Event name"
-                    className={`${inputClass} ${fieldErrors.eventName ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                    onChange={(event) => updateField("eventName", event.target.value)}
+                    readOnly={isLocked("eventName")}
+                    placeholder={isLocked("eventName") ? undefined : "Enter event name"}
+                    className={`${inputClass} ${
+                      isLocked("eventName")
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-600"
+                        : fieldErrors.eventName
+                        ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                        : ""
+                    }`}
                   />
                   {fieldErrors.eventName && (
-                    <p className="mt-1.5 text-xs text-red-600">
-                      {fieldErrors.eventName}
-                    </p>
+                    <p className="mt-1.5 text-xs text-red-600">{fieldErrors.eventName}</p>
                   )}
                 </label>
+
+                {/* Event Date */}
                 <label>
-                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                     Event date
+                    {isLocked("eventDate") && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">🔒 Locked</span>
+                    )}
                   </span>
                   <input
-                    type="date"
-                    value={eventForm.eventDate || ""}
-                    onChange={(event) =>
-                      updateField("eventDate", event.target.value)
-                    }
-                    className={inputClass}
+                    type={isLocked("eventDate") ? "text" : "date"}
+                    value={isLocked("eventDate") ? formatDisplayDate(eventForm.eventDate) : eventForm.eventDate || ""}
+                    onChange={(event) => !isLocked("eventDate") && updateField("eventDate", event.target.value)}
+                    readOnly={isLocked("eventDate")}
+                    className={`${inputClass} ${
+                      isLocked("eventDate") ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-600" : ""
+                    }`}
                   />
                 </label>
+
+                {/* Location */}
                 <label>
-                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-                    Location
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    Location <span className="text-red-500">*</span>
+                    {isLocked("location") && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">🔒 Locked</span>
+                    )}
                   </span>
                   <input
                     value={eventForm.location || ""}
-                    onChange={(event) =>
-                      updateField("location", event.target.value)
-                    }
-                    placeholder="Location"
-                    className={`${inputClass} ${fieldErrors.location ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                    onChange={(event) => updateField("location", event.target.value)}
+                    readOnly={isLocked("location")}
+                    placeholder={isLocked("location") ? undefined : "Enter location"}
+                    className={`${inputClass} ${
+                      isLocked("location")
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-600"
+                        : fieldErrors.location
+                        ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                        : ""
+                    }`}
                   />
                   {fieldErrors.location && (
-                    <p className="mt-1.5 text-xs text-red-600">
-                      {fieldErrors.location}
-                    </p>
+                    <p className="mt-1.5 text-xs text-red-600">{fieldErrors.location}</p>
                   )}
                 </label>
+
+                {/* Email Subject */}
                 <label>
-                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                     Email subject
+                    {isLocked("emailSubjectName") && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">🔒 Locked</span>
+                    )}
                   </span>
                   <input
                     value={eventForm.emailSubjectName || ""}
-                    onChange={(event) =>
-                      updateField("emailSubjectName", event.target.value)
-                    }
-                    placeholder="Email subject"
-                    className={`${inputClass} ${fieldErrors.emailSubjectName ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                    onChange={(event) => updateField("emailSubjectName", event.target.value)}
+                    readOnly={isLocked("emailSubjectName")}
+                    placeholder={isLocked("emailSubjectName") ? undefined : "Enter email subject"}
+                    className={`${inputClass} ${
+                      isLocked("emailSubjectName")
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-600"
+                        : fieldErrors.emailSubjectName
+                        ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                        : ""
+                    }`}
                   />
                   {fieldErrors.emailSubjectName && (
-                    <p className="mt-1.5 text-xs text-red-600">
-                      {fieldErrors.emailSubjectName}
-                    </p>
+                    <p className="mt-1.5 text-xs text-red-600">{fieldErrors.emailSubjectName}</p>
                   )}
                 </label>
+
+                {/* Status — always editable */}
                 <label>
                   <span className="mb-1.5 block text-xs font-semibold text-slate-700">
                     Status <span className="text-red-500">*</span>
                   </span>
                   <select
                     value={eventForm.active === false ? "inactive" : "active"}
-                    onChange={(event) =>
-                      updateField("active", event.target.value === "active")
-                    }
+                    onChange={(event) => updateField("active", event.target.value === "active")}
                     className={inputClass}
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </label>
+
+                {/* Content */}
                 <label className="sm:col-span-2">
-                  <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                     Content
+                    {isLocked("content") && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">🔒 Locked</span>
+                    )}
                   </span>
                   <textarea
                     rows={4}
                     value={eventForm.content || ""}
-                    onChange={(event) =>
-                      updateField("content", event.target.value)
-                    }
-                    placeholder="Event content"
-                    className={`w-full resize-y rounded-lg border border-slate-300 px-3.5 py-3 text-sm outline-none transition focus:border-cyan-600 focus:ring-4 focus:ring-cyan-500/10 ${fieldErrors.content ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+                    onChange={(event) => !isLocked("content") && updateField("content", event.target.value)}
+                    readOnly={isLocked("content")}
+                    placeholder={isLocked("content") ? undefined : "Enter event content or notes"}
+                    className={`w-full resize-y rounded-lg border px-3.5 py-3 text-sm outline-none transition ${
+                      isLocked("content")
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-600"
+                        : `border-slate-300 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-500/10 ${
+                            fieldErrors.content ? "border-red-400 focus:border-red-500 focus:ring-red-500/10" : ""
+                          }`
+                    }`}
                   />
                   <div className="mt-1 flex justify-between">
-                    <span className="text-xs text-red-600">
-                      {fieldErrors.content}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {eventForm.content?.length || 0}/2000
-                    </span>
+                    <span className="text-xs text-red-600">{fieldErrors.content}</span>
+                    {!isLocked("content") && (
+                      <span className="text-[10px] text-slate-400">{eventForm.content?.length || 0}/2000</span>
+                    )}
                   </div>
                 </label>
+
               </div>
               <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                 <button

@@ -208,8 +208,8 @@ const CeoDetailsListPage: React.FC = () => {
   return (
     <BusinessCardLayout>
       <PageHeader
-        title="User Details List"
-        subtitle="View all saved user profiles, update details, and manage active status for each record."
+        title="User Profiles"
+        subtitle="View and manage all saved user profiles. Update details or change active status for each record."
         actions={
           <OutlineSuccessButton onClick={loadCeoList} loading={loading} disabled={!loggedInUserId}>
             Refresh
@@ -221,14 +221,14 @@ const CeoDetailsListPage: React.FC = () => {
         <StatChip label="Total profiles" value={rows.length} />
         <StatChip label="Active profiles" value={rows.filter((r) => r.active === true).length} />
         <StatChip
-          label="Current active"
+          label="Currently active event"
           value={activeRecord ? formatEventTypeLabel(activeRecord.eventType) : "None"}
         />
       </StatRow>
 
       <PageCard
-        title="User records"
-        description="Only one event can be active. Set Active in Edit to switch; others become inactive automatically."
+        title="All User Records"
+        description="Only one event can be active at a time. Toggle the active status in Edit to switch; others will be deactivated automatically."
       >
         {loading ? (
           <LoadingState message="Loading user profiles..." />

@@ -161,11 +161,10 @@ const CeoUploadDetailsPage: React.FC = () => {
         <header className="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Upload Details
+              Processed Upload Records
             </h1>
             <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">
-              Review processed business-card and event upload records by event
-              type.
+              Browse all processed business card and event image uploads, organised by event type.
             </p>
           </div>
           <button
