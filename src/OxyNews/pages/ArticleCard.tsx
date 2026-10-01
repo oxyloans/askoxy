@@ -145,7 +145,6 @@ export default function ArticleCard({
   small?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   const isNewspaperImg = !!item.imageUrl && (
     item.imageUrl.toLowerCase().includes("whatsapp image") ||
     item.imageUrl.toLowerCase().includes("/paperclips/")
@@ -170,27 +169,17 @@ export default function ArticleCard({
         style={{ overflow: "visible" }}
       >
         <div
-          className="relative rounded-t-xl overflow-hidden"
-          style={{ background: getCardGradient(item.category), minHeight: featured ? 140 : 110 }}
+          className="relative rounded-t-xl"
+          style={{ background: getCardGradient(item.category), overflow: "hidden", minHeight: featured ? 140 : 110 }}
         >
           {useRealImage && (
-            <>
-              {!imgLoaded && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-100 animate-pulse">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-plum/30 border-t-plum" />
-                </div>
-              )}
-              <img
-                src={item.imageUrl!}
-                alt={displayTitle(item)}
-                loading="lazy"
-                decoding="async"
-                onLoad={() => setImgLoaded(true)}
-                onError={() => setImgError(true)}
-                className={`h-full w-full object-cover group-hover:scale-105 transition-all duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-                style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
-              />
-            </>
+            <img
+              src={item.imageUrl!}
+              alt={displayTitle(item)}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ maxHeight: featured ? 220 : 180, minHeight: featured ? 140 : 110, display: "block" }}
+              onError={() => setImgError(true)}
+            />
           )}
           {showOverlay && (
             <div

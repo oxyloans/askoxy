@@ -109,7 +109,7 @@ export default function ResourceNavBar() {
       // inside it, so a onMouseLeave on the row alone fired too early).
       onPointerLeave={(e) => { if (e.pointerType === "touch") return; setOpenId(null); }}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto py-1.5 justify-start [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             to="/oxynews"

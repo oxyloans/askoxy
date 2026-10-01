@@ -326,7 +326,7 @@ export default function OxyNewsHomePage() {
     <>
       <NewsBackground3D />
 
-      <div className="relative z-10 flex flex-col">
+      <div className="relative z-10 flex flex-col w-full max-w-7xl mx-auto">
         <div className="pt-3 shrink-0">
           <PlatformAdsBanner />
         </div>

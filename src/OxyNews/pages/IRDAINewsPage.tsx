@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../lib/api";
-import type { IrdaiPressRelease } from "../types";
+import type { IrdaiPressRelease, NewsFeedItem } from "../types";
+import ArticleCard from "../components/ArticleCard";
 
 const IRDAI_IMG = "https://i.ibb.co/Y4nNP4hS/Chat-GPT-Image-Sep-25-2026-11-20-45-AM.png";
 
@@ -53,6 +54,8 @@ function SmartImage({ src, alt, className }: { src: string; alt: string; classNa
           alt={alt}
           loading="lazy"
           decoding="async"
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
           className={`${className || ""} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
@@ -181,6 +184,7 @@ function PDFModal({ url, title, onClose }: { url: string; title: string; onClose
 /* ── Page ──────────────────────────────────────────────────────────────── */
 export default function IRDAINewsPage() {
   const [items, setItems] = useState<IrdaiPressRelease[]>([]);
+  const [feedItems, setFeedItems] = useState<NewsFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
@@ -197,19 +201,27 @@ export default function IRDAINewsPage() {
   function fetchData(isRefresh = false) {
     isRefresh ? setRefreshing(true) : setLoading(true);
     setError(false);
-    api.getIrdaiPressReleases()
-      .then((res) => {
-        const notifications = res?.notifications ?? (res as any)?.data?.notifications ?? [];
+    Promise.allSettled([
+      api.getIrdaiPressReleases(),
+      api.getRbiFeedItems(),
+    ]).then(([irdaiRes, feedRes]) => {
+      if (irdaiRes.status === "fulfilled") {
+        const notifications = (irdaiRes.value as any)?.notifications ?? (irdaiRes.value as any)?.data?.notifications ?? [];
         setItems(notifications);
-      })
-      .catch(() => setError(true))
-      .finally(() => { setLoading(false); setRefreshing(false); });
+      }
+      if (feedRes.status === "fulfilled") {
+        const all = feedRes.value as NewsFeedItem[];
+        setFeedItems(all.filter(i => (i.category || "").toLowerCase().includes("insur") || (i.domain || "").toLowerCase().includes("insur")));
+      }
+      if (irdaiRes.status === "rejected") setError(true);
+    }).finally(() => { setLoading(false); setRefreshing(false); });
   }
 
   useEffect(() => { fetchData(); }, []);
 
   const q = search.toLowerCase();
   const filtered = items.filter(item => (item.name || "").toLowerCase().includes(q));
+  const filteredFeed = feedItems.filter(item => (item.articleName || "").toLowerCase().includes(q));
 
   if (loading) return (
     <div className="pb-12">
@@ -285,10 +297,22 @@ export default function IRDAINewsPage() {
         />
       </div>
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && filteredFeed.length === 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
           {search ? <>No results for "<span className="font-semibold">{search}</span>"</> : "No IRDAI articles yet."}
         </div>
+      )}
+
+      {/* AI Analysed Articles */}
+      {filteredFeed.length > 0 && (
+        <>
+          <h2 className="font-display font-semibold text-plum text-lg uppercase tracking-wide mb-3">AI Analysed Articles</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+            {filteredFeed.map((item) => (
+              <ArticleCard key={item.paperclipId} item={item} />
+            ))}
+          </div>
+        </>
       )}
 
       {filtered.length > 0 && (

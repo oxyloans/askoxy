@@ -553,27 +553,40 @@ export default function ArticlePage() {
               );
             })()}
 
-            {/* SPONSOR STRIP — below PDF */}
+            {/* SPONSOR STRIP - below PDF */}
             <a
               href="https://tvradhakrishna.com/"
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center justify-between gap-3 w-full mb-4 px-4 py-3 rounded-xl border-l-4 border-amber-400 bg-amber-50 hover:bg-amber-100 shadow-sm transition"
+              className="group relative flex flex-col w-full mb-4 rounded-2xl overflow-hidden transition-all hover:shadow-lg"
+              style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ede9fe 100%)", border: "1px solid #bae6fd", boxShadow: "0 2px 12px rgba(14,165,233,0.1)" }}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="shrink-0 w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center font-black text-[10px] tracking-tight"><span className="text-red-600">TV</span><span className="text-blue-600">RK</span></div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Sponsored by</p>
-                  <p className="text-sm font-extrabold text-amber-800 leading-tight">
-                    Radhakrishna Thatavarti
-                    <span className="ml-1.5 text-xs font-normal text-amber-500">CEO, OxyGroup</span>
+              {/* TOP BAR - Sponsored by - full width */}
+              <div className="w-full flex items-center justify-center py-1" style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1, #a855f7)" }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white">Sponsored by</span>
+              </div>
+
+              {/* MAIN ROW */}
+              <div className="flex items-center justify-between gap-4 px-5 py-3">
+                {/* Left - TVRK badge */}
+                <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-white" style={{ border: "2px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+                  <span className="font-black text-[11px] tracking-tight leading-none"><span style={{ color: "#dc2626" }}>TV</span><span style={{ color: "#2563eb" }}>RK</span></span>
+                </div>
+
+                {/* Center */}
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-[2px]">
+                  <p className="text-base sm:text-[17px] font-black tracking-tight leading-snug" style={{ color: "#0f172a" }}>
+                    Every Journey.{" "}
+                    <span style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>One Partner.</span>
                   </p>
+                  <span className="text-[9px] font-semibold tracking-[0.18em] uppercase" style={{ color: "#64748b" }}>FinTech &middot; BFSI &middot; Artificial Intelligence</span>
+                </div>
+
+                {/* Right - logo */}
+                <div className="shrink-0 rounded-xl overflow-hidden bg-white" style={{ border: "1px solid #e0f2fe", padding: "6px 10px", boxShadow: "0 2px 8px rgba(14,165,233,0.1)" }}>
+                  <img src="https://i.ibb.co/Rw9zb11/tvrklogo.png" alt="TVRADHAKRISHNA.COM" className="h-8 w-auto object-contain" />
                 </div>
               </div>
-              <a href="https://tvradhakrishna.com/" target="_blank" rel="noreferrer"
-                className="shrink-0 text-xs font-bold text-amber-700 underline underline-offset-2 hover:text-amber-900 transition">
-                <img src="https://i.ibb.co/Rw9zb11/tvrklogo.png" alt="tvrklogo" className="h-12 w-auto object-contain rounded-lg border-2 border-amber-300 bg-white px-3 py-2 shadow-md" />
-              </a>
             </a>
             {(resolvedImageUrl || item.blogImageUrl) && (
               <img

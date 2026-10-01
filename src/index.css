@@ -91,7 +91,7 @@ code {
  }
 
  .animate-ticker {
-   animation: ticker-scroll 90s linear infinite;
+   animation: ticker-scroll 180s linear infinite;
    will-change: transform;
  }
 

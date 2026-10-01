@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Header from "./Header";
 
@@ -130,12 +130,65 @@ const steps = [
 
 const OxyLoansOverviewPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isLoading, setIsLoading] = useState(false);
 
   const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
 
   const earningSectionRef = useRef<HTMLElement | null>(null);
+
+  /* ==========================================================================
+     RESET LOADING STATE ON MOUNT / BROWSER BACK / CACHE RESTORE
+     ========================================================================== */
+
+  useEffect(() => {
+    const resetLoadingState = () => {
+      setIsLoading(false);
+      setSelectedJourney(null);
+    };
+
+    // Ensure clean state on mount and route return
+    resetLoadingState();
+
+    // Handle browser bfcache restore (when user hits "Back" button from login)
+    const handlePageShow = () => {
+      resetLoadingState();
+    };
+
+    const handlePopState = () => {
+      resetLoadingState();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        resetLoadingState();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      resetLoadingState();
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [location.pathname]);
+
+  /* Safety auto-dismiss timeout so loading never hangs indefinitely */
+  useEffect(() => {
+    if (!isLoading) return;
+
+    const timer = window.setTimeout(() => {
+      setIsLoading(false);
+      setSelectedJourney(null);
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [isLoading]);
 
   /* ==========================================================================
      ALWAYS OPEN PAGE FROM TOP
@@ -207,6 +260,8 @@ const OxyLoansOverviewPage: React.FC = () => {
   useEffect(() => {
     if (!selectedJourney) return;
 
+    let isMounted = true;
+
     const openPartnerJourney = () => {
       try {
         setIsLoading(true);
@@ -224,16 +279,25 @@ const OxyLoansOverviewPage: React.FC = () => {
           return;
         }
 
-        window.location.href = LOGIN_URL;
+        // Unauthenticated users navigate to login via SPA routing
+        navigate(LOGIN_URL);
       } catch (error) {
         console.error("Partner navigation error:", error);
-
-        setIsLoading(false);
-        setSelectedJourney(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+          setSelectedJourney(null);
+        }
       }
     };
 
     openPartnerJourney();
+
+    return () => {
+      isMounted = false;
+      setIsLoading(false);
+      setSelectedJourney(null);
+    };
   }, [selectedJourney, navigate]);
 
   /* ==========================================================================
@@ -266,8 +330,17 @@ const OxyLoansOverviewPage: React.FC = () => {
           ==================================================================== */}
 
       {isLoading && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-[320px] rounded-2xl border border-white/10 bg-white px-6 py-7 text-center shadow-2xl">
+        <div
+          onClick={() => {
+            setIsLoading(false);
+            setSelectedJourney(null);
+          }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[320px] rounded-2xl border border-white/10 bg-white px-6 py-7 text-center shadow-2xl cursor-default"
+          >
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
               <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
             </div>

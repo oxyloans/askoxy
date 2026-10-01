@@ -11,8 +11,6 @@ const primaryLinks = [
   { to: "/oxynews", label: "Home", icon: null, end: true },
   { to: "/explore", label: "Explore", icon: null, end: false },
   { to: "/radhai-news", label: "RadhAI News", icon: "radhai", end: false },
-  { to: "/rbi-news", label: "RBI News", icon: null, end: false },
-  { to: "/irdai-news", label: "IRDAI News", icon: null, end: false },
 ];
 
 export default function OxyLayout() {
@@ -264,7 +262,7 @@ export default function OxyLayout() {
         </div>
 
         {/* ── Page content — offset by header height ── */}
-        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6 mt-[160px] sm:mt-[145px] lg:mt-[130px]">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 mt-[160px] sm:mt-[145px] lg:mt-[130px]">
           {articleMatch?.params.id && chatOpen ? (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr,380px]">
               <div className="lg:col-start-1">
@@ -305,7 +303,7 @@ export default function OxyLayout() {
         )}
 
         <footer className="mt-10 bg-plum text-paper">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
 
             {/* Top section */}
             <div className="grid grid-cols-1 gap-8 py-10 sm:grid-cols-2 lg:grid-cols-4">

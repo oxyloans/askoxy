@@ -31,13 +31,16 @@ export default function NewsTicker({ className }: { className?: string }) {
 
   return (
     <div className={className ? className + " bg-royal/95 border-b border-gold/20 overflow-hidden" : "bg-royal/95 border-b border-gold/20 overflow-hidden"}>
-      <div className="flex items-stretch">
-        <span className="shrink-0 flex items-center gap-1.5 bg-gold text-plum text-xs font-mono font-bold uppercase tracking-wide px-3 py-1.5 z-10">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 flex items-stretch">
+        <span className="shrink-0 flex items-center gap-1.5 bg-gold text-plum text-xs font-mono font-bold uppercase tracking-wide px-3 py-1.5 z-10 shadow-sm">
           <span className="text-base leading-none">🤖</span>
           RadhAI News
         </span>
         <div className="flex-1 overflow-hidden">
-          <div className="flex w-max animate-ticker py-1.5">
+          <div
+            className="flex w-max animate-ticker py-1.5"
+            style={{ animationDuration: "180s" }}
+          >
             {strip.map((item, i) => (
               <button
                 key={`${item.paperclipId}-${i}`}

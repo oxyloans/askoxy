@@ -180,7 +180,10 @@ export default function RBINewsPage() {
       api.getRbiDailyPressReleases(),
     ]).then(([feedRes, rbiRes, campaignRes, dailyRes]) => {
       if (feedRes.status === "fulfilled") {
-        setFeedItems(feedRes.value as FeedItem[]);
+        setFeedItems((feedRes.value as FeedItem[]).filter(i =>
+          !(i.category || "").toLowerCase().includes("insur") &&
+          !(i.domain || "").toLowerCase().includes("insur")
+        ));
       }
       if (rbiRes.status === "fulfilled") setRbiItems(rbiRes.value.content);
       if (campaignRes.status === "fulfilled") {
