@@ -11,6 +11,8 @@ const primaryLinks = [
   { to: "/oxynews", label: "Home", icon: null, end: true },
   { to: "/explore", label: "Explore", icon: null, end: false },
   { to: "/radhai-news", label: "RadhAI News", icon: "radhai", end: false },
+  { to: "/rbi-news", label: "RBI News", icon: null, end: false },
+  { to: "/irdai-news", label: "IRDAI News", icon: null, end: false },
 ];
 
 export default function OxyLayout() {
@@ -229,18 +231,40 @@ export default function OxyLayout() {
                   </button>
                 </form>
               </div>
+
+              {/* ── Mobile primary nav bar (lg and below) ── */}
+              <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto pt-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-t border-paper/15 mt-2">
+                {primaryLinks.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    end={link.end}
+                    className={({ isActive }) =>
+                      `focus-ring inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold transition-colors ${
+                        isActive
+                          ? "bg-gold text-plum shadow-sm"
+                          : "bg-white/10 text-paper/90 hover:bg-white/20 hover:text-paper"
+                      }`
+                    }
+                  >
+                    {link.icon === "radhai" && (
+                      <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0" fill="currentColor">
+                        <path d="M12 2a1 1 0 0 1 .95.68l2.05 6.32 6.32 2.05a1 1 0 0 1 0 1.9l-6.32 2.05-2.05 6.32a1 1 0 0 1-1.9 0L8.95 14.95 2.68 12.9a1 1 0 0 1 0-1.9l6.27-2.05L11 2.68A1 1 0 0 1 12 2z"/>
+                      </svg>
+                    )}
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           </header>
-
-
-          
 
           <NewsTicker />
           <ResourceNavBar />
         </div>
 
         {/* ── Page content — offset by header height ── */}
-        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6 mt-[130px]">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6 mt-[160px] sm:mt-[145px] lg:mt-[130px]">
           {articleMatch?.params.id && chatOpen ? (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr,380px]">
               <div className="lg:col-start-1">

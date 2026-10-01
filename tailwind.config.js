@@ -27,6 +27,9 @@ module.exports = {
         body: ["Inter", "system-ui", "sans-serif"],
         display: ["Georgia", "Times New Roman", "serif"],
       },
+      maxWidth: {
+        "8xl": "90rem",
+      },
        keyframes: {
         fly: {
           '0%': { transform: 'translateX(-20%)' },

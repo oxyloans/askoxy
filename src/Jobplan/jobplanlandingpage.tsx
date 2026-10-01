@@ -1,9 +1,144 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DayPlan from "../assets/img/90dayplanflow.png";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/img/oxy1.png";
 import Logo2 from "../assets/img/oxybrick.png";
 import Logo from "../assets/img/askoxylogonew.png"
+import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
+
+
+type ToastType = "success" | "error" | "info";
+interface ToastState {
+  visible: boolean;
+  type: ToastType;
+  title: string;
+  message: string;
+}
+
+const Toast = ({
+  toast,
+  onClose,
+}: {
+  toast: ToastState;
+  onClose: () => void;
+}) => {
+  const colors: Record<ToastType, { bg: string; border: string; icon: string; bar: string }> = {
+    success: {
+      bg: "#f0fdf4",
+      border: "#86efac",
+      icon: "#16a34a",
+      bar: "#22c55e",
+    },
+    error: {
+      bg: "#fff1f2",
+      border: "#fca5a5",
+      icon: "#dc2626",
+      bar: "#ef4444",
+    },
+    info: {
+      bg: "#eff6ff",
+      border: "#93c5fd",
+      icon: "#2563eb",
+      bar: "#3b82f6",
+    },
+  };
+
+  const c = colors[toast.type];
+
+  const icons: Record<ToastType, React.ReactNode> = {
+    success: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill={c.icon} opacity="0.12" />
+        <path d="M7 12.5l3.5 3.5 6.5-7" stroke={c.icon} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    error: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill={c.icon} opacity="0.12" />
+        <path d="M8 8l8 8M16 8l-8 8" stroke={c.icon} strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    ),
+    info: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill={c.icon} opacity="0.12" />
+        <path d="M12 8v4m0 4h.01" stroke={c.icon} strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    ),
+  };
+
+  if (!toast.visible) return null;
+
+  return (
+    <div
+      role="alert"
+      aria-live="assertive"
+      style={{
+        position: "fixed",
+        top: 20,
+        right: 20,
+        zIndex: 99999,
+        minWidth: 300,
+        maxWidth: 380,
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        borderRadius: 18,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
+        overflow: "hidden",
+        animation: "toastSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
+      }}
+    >
+      {/* progress bar */}
+      <div
+        style={{
+          height: 4,
+          background: c.bar,
+          animation: "toastProgress 4s linear forwards",
+          transformOrigin: "left",
+        }}
+      />
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px 16px" }}>
+        <span style={{ flexShrink: 0, marginTop: 1 }}>{icons[toast.type]}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#0f172a", lineHeight: 1.4 }}>
+            {toast.title}
+          </p>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
+            {toast.message}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close notification"
+          style={{
+            flexShrink: 0,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 2,
+            color: "#94a3b8",
+            lineHeight: 1,
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" style={{ width: 16, height: 16 }} aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+      <style>{`
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateX(60px) scale(0.92); }
+          to   { opacity: 1; transform: translateX(0)   scale(1);    }
+        }
+        @keyframes toastProgress {
+          from { transform: scaleX(1); }
+          to   { transform: scaleX(0); }
+        }
+      `}</style>
+    </div>
+  );
+};
 type CTAConfig = {
   primaryLabel?: string;
   primaryHref?: string;
@@ -522,36 +657,88 @@ export default function JobTraining90DaysPage({
   },
   headerImageUrl = "https://i.ibb.co/rKDmJkGr/90-dayl.png",
 }: Props) {
+  const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
+  const [joining, setJoining] = useState(false);
+  const [toast, setToast] = useState<ToastState>({
+    visible: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
-  // ✅ NEW: Join Program URL routing (logged-in vs not logged-in)
-  const JOIN_PUBLIC_URL = "/services/4326/90-day-job-plan";
-  const JOIN_LOGGEDIN_URL = "/main/services/4326/90-day-job-plan";
+  const showToast = useCallback(
+    (type: ToastType, title: string, message: string) => {
+      setToast({ visible: true, type, title, message });
+      setTimeout(() => setToast((t) => ({ ...t, visible: false })), 4200);
+    },
+    []
+  );
 
-  const isLoggedIn = useMemo(() => {
-    try {
-      const ls = window.localStorage;
-      const keysToCheck = [
-        "token",
-        "accessToken",
-        "jwt",
-        "authToken",
-        "user",
-        "userId",
-        "userid",
-        "customerId",
-      ];
-      return keysToCheck.some((k) => {
-        const v = ls.getItem(k);
-        return v !== null && String(v).trim() !== "" && String(v) !== "null";
-      });
-    } catch {
-      return false;
-    }
-  }, []);
+  const INTEREST_API =
+    `${BASE_URL}/marketing-service/campgin/job-program/interest`;
 
   const joinProgramHref = "/ninetydayplan";
+
+  const handleJoinProgram = useCallback(async () => {
+    const userId =
+      localStorage.getItem("userId") ||
+      localStorage.getItem("userid") ||
+      localStorage.getItem("customerId");
+
+    if (!userId || userId === "null" || userId.trim() === "") {
+      sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+      sessionStorage.setItem("autoJoinJobProgram", "true");
+      navigate("/whatsapplogin");
+      return;
+    }
+
+    setJoining(true);
+    try {
+      const res = await customerApi.post(
+        `${INTEREST_API}?userId=${userId}`
+      );
+
+      // axios: response body is in res.data (no .json() needed)
+      const data = res.data;
+
+      if (data.interested || data.message) {
+        showToast(
+          data.interested ? "success" : "info",
+          data.interested ? "You're in! 🎉" : "Program Update",
+          data.message || "Interest registered successfully."
+        );
+        setTimeout(() => {
+          navigate(joinProgramHref);
+        }, 1000);
+      } else {
+        showToast("error", "Something went wrong", "Please try again later.");
+      }
+    } catch (err: any) {
+      // axios error: server responded with non-2xx
+      const msg =
+        err?.response?.data?.message ||
+        "Could not connect. Please check your connection and try again.";
+      showToast("error", "Network Error", msg);
+    } finally {
+      setJoining(false);
+    }
+  }, [navigate, showToast, INTEREST_API, joinProgramHref]);
+
+  // Auto-hit INTEREST_API if the user was redirected back after logging in
+  useEffect(() => {
+    const autoJoin = sessionStorage.getItem("autoJoinJobProgram");
+    const userId =
+      localStorage.getItem("userId") ||
+      localStorage.getItem("userid") ||
+      localStorage.getItem("customerId");
+
+    if (autoJoin === "true" && userId && userId !== "null" && userId.trim() !== "") {
+      sessionStorage.removeItem("autoJoinJobProgram");
+      handleJoinProgram();
+    }
+  }, [handleJoinProgram]);
 
   const whatYouGet = useMemo(
     () => [
@@ -667,18 +854,18 @@ export default function JobTraining90DaysPage({
   );
 
   const PrimaryBtn = ({
-    href,
     label,
     big = false,
   }: {
-    href?: string;
     label?: string;
     big?: boolean;
   }) => (
-    <a
-      href={href || joinProgramHref}
+    <button
+      type="button"
+      onClick={handleJoinProgram}
+      disabled={joining}
       className={[
-        "inline-flex items-center justify-center gap-2 rounded-2xl font-semibold text-white shadow-lg transition hover:opacity-95",
+        "inline-flex items-center justify-center gap-2 rounded-2xl font-semibold text-white shadow-lg transition hover:opacity-95 disabled:opacity-70 disabled:cursor-not-allowed",
         big ? "px-7 py-4 text-base" : "px-5 py-2.5 text-sm",
       ].join(" ")}
       style={{
@@ -686,9 +873,20 @@ export default function JobTraining90DaysPage({
         boxShadow: "0 14px 30px rgba(23,59,99,0.24)",
       }}
     >
-      {label || "Join"}
-      <ArrowRight className={big ? "h-5 w-5" : "h-4 w-4"} />
-    </a>
+      {joining ? (
+        <>
+          <svg className={big ? "h-5 w-5 animate-spin" : "h-4 w-4 animate-spin"} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="10" strokeLinecap="round" />
+          </svg>
+          Registering…
+        </>
+      ) : (
+        <>
+          {label || "Join"}
+          <ArrowRight className={big ? "h-5 w-5" : "h-4 w-4"} />
+        </>
+      )}
+    </button>
   );
 
   const SecondaryBtn = ({
@@ -716,9 +914,10 @@ export default function JobTraining90DaysPage({
       <ArrowRight className={big ? "h-5 w-5" : "h-4 w-4"} />
     </a>
   );
-  const navigate = useNavigate();
 
   return (
+    <>
+    <Toast toast={toast} onClose={() => setToast((t) => ({ ...t, visible: false }))} />
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Top glow */}
       <div
@@ -770,7 +969,7 @@ export default function JobTraining90DaysPage({
     <div className="flex items-center gap-2">
       {/* Desktop CTA */}
       <div className="hidden md:flex items-center gap-2">
-        <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} />
+        <PrimaryBtn label={cta.primaryLabel} />
       </div>
 
       {/* Mobile menu button */}
@@ -831,7 +1030,7 @@ export default function JobTraining90DaysPage({
         </a>
 
         <div className="pt-2 flex gap-2">
-          <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} />
+          <PrimaryBtn label={cta.primaryLabel} />
         </div>
       </div>
     </div>
@@ -871,7 +1070,7 @@ export default function JobTraining90DaysPage({
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* ✅ Join button now routes based on login */}
-              <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} big />
+              <PrimaryBtn label={cta.primaryLabel} big />
             </div>
           </div>
 
@@ -1531,17 +1730,19 @@ export default function JobTraining90DaysPage({
             </div>
 
             {/* ✅ Join button */}
-            <a
-              href={joinProgramHref}
+            <button
+              type="button"
+              onClick={handleJoinProgram}
+              disabled={joining}
               className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5
                    text-sm sm:text-base font-semibold transition
-                   hover:shadow-xl active:scale-[0.99]
+                   hover:shadow-xl active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed
                    focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               style={{ color: C3 }}
             >
-              {cta.primaryLabel}
-              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-            </a>
+              {joining ? "Registering…" : cta.primaryLabel}
+              {!joining && <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
+            </button>
           </div>
         </div>
       </section>
@@ -1571,17 +1772,19 @@ export default function JobTraining90DaysPage({
               </p>
             </div>
 
-            <a
-              href={joinProgramHref}
+            <button
+              type="button"
+              onClick={handleJoinProgram}
+              disabled={joining}
               className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
                    text-sm font-semibold text-white transition
-                   active:scale-[0.99]
+                   active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed
                    focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               style={{ background: grad }}
             >
-              {cta.primaryLabel}
-              <ArrowRight className="h-4 w-4" />
-            </a>
+              {joining ? "…" : cta.primaryLabel}
+              {!joining && <ArrowRight className="h-4 w-4" />}
+            </button>
           </div>
         </div>
       </div>
@@ -1744,5 +1947,6 @@ export default function JobTraining90DaysPage({
         <div className="h-24 md:hidden" />
       </footer>
     </div>
+    </>
   );
 }

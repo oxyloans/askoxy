@@ -1420,12 +1420,21 @@ export default function NinetyDayPlanPage() {
                 <Pill text="Day 52–90: Build + Deploy" />
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="self-start sm:self-auto inline-flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-              >
-                Log Out
-              </button>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  onClick={() => navigate("/main/job-program")}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 shadow-sm"
+                >
+                  Track Job Program
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                >
+                  Log Out
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 grid gap-8 lg:grid-cols-12 lg:items-start">
@@ -1440,12 +1449,16 @@ export default function NinetyDayPlanPage() {
                   — and a complete shipped project.
                 </p>
 
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <div className="mt-6 flex flex-wrap gap-3">
                   <PrimaryBtn
                     label="Start Day-1 (Customer ID Creation)"
                     onClick={() => {
                       selectPhaseAndScroll("usecases", 1);
                     }}
+                  />
+                  <SecondaryBtn
+                    label="Track Job Program"
+                    onClick={() => navigate("/main/job-program")}
                   />
                   <SecondaryBtn
                     label="Jump to Build Phase (Day-52)"

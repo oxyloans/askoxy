@@ -64,6 +64,7 @@ import OxyLoansIntegration from "./components/OxyLoansIntegration";
 import EventDetails from "./AskoxyAdmin/EventDetails";
 import OxyLoansOverviewPage from "./components/OxyLoansOverview";
 import IRDAINewsPage from "./OxyNews/pages/IRDAINewsPage";
+import JobProgramDashboard from "./components/JobProgramDashboard";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -613,6 +614,7 @@ const OfferImagesUpdate = lazy(() => import("./PartnerWeb/OfferImagesUpdate"));
 const JobsAdminPage = lazy(() => import("./AskoxyAdmin/Alljobdetails"));
 const AddReference = lazy(() => import("./PartnerWeb/AddReference"));
 const UserAppliedJob = lazy(() => import("./AskoxyAdmin/UserAppliedJobs"));
+const InterestedCandidates = lazy(() => import("./AskoxyAdmin/InterestedCandidates"));
 const StockTable = lazy(() => import("./PartnerWeb/StockDetails"));
 const MarketReport = lazy(() => import("./PartnerWeb/Marketreport"));
 const FreeAiBookLandingPage = lazy(() => import("./FREEAIBOOK/LandingPage"));
@@ -2134,6 +2136,7 @@ const App: React.FC = () => {
                   path="viewjobdetails/:id/:company"
                   element={<JobViewPage />}
                 />
+                 <Route path="job-program" element={<JobProgramDashboard />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="writetous" element={<WriteToUs />} />
                 <Route path="writetous/:id" element={<WriteToUs />} />
@@ -2427,6 +2430,10 @@ const App: React.FC = () => {
                 <Route path="fd-bucket-data" element={<FDBucketData />} />
                 <Route path="alljobdetails" element={<JobsAdminPage />} />
                 <Route path="userAppliedJobs" element={<UserAppliedJob />} />
+                <Route
+                  path="interested-candidates"
+                  element={<InterestedCandidates />}
+                />
                 <Route path="assistants" element={<AssistantDashboard />} />
                 <Route
                   path="conversation/:assistantId"

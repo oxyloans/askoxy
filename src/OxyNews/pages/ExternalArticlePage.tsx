@@ -201,6 +201,8 @@ function ArticleBodyStyles() {
   );
 }
 
+const ANTHROPIC_FALLBACK_IMG = "https://i.ibb.co/qFrMxbgw/Chat-GPT-Image-Sep-28-2026-05-24-08-PM.png";
+
 export default function ExternalArticlePage() {
   const { sourceName, id } = useParams<{ sourceName: string; id: string }>();
   const [article, setArticle] = useState<ExternalNewsArticle | null>(null);
@@ -211,6 +213,8 @@ export default function ExternalArticlePage() {
   const [error, setError] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [sourceArticles, setSourceArticles] = useState<ExternalNewsArticle[]>([]);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [linkedinPreviewOpen, setLinkedinPreviewOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -257,6 +261,52 @@ export default function ExternalArticlePage() {
       .catch(() => setSourceArticles([]));
   }, [sourceName]);
 
+  const canonicalUrl = `https://www.askoxy.ai/news/${sourceName?.toLowerCase()}/${id}`;
+  const shareImage = heroImage || ANTHROPIC_FALLBACK_IMG;
+
+  function buildShareContent(platform: "whatsapp" | "linkedin" | "facebook" | "twitter" | "telegram" | "email") {
+    const url = canonicalUrl;
+    const title = article?.title ?? "OxyNews";
+    const rawSummary = article?.content?.replace(/#+\s*/g, "").slice(0, 220) ?? "";
+    const trimmed = rawSummary.length > 220 ? rawSummary.slice(0, 220).trim() + "..." : rawSummary;
+    const hashtagLine = `#${sourceName} #OxyNews`;
+    if (platform === "twitter") {
+      return `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}\n\n${trimmed.slice(0, 140)}\n\nRead More: ${url}\n\n${hashtagLine}`)}`;
+    }
+    if (platform === "whatsapp") {
+      return `https://wa.me/?text=${encodeURIComponent(`*${title}*\n\n${trimmed}\n\nRead More: ${url}\n\n${hashtagLine}`)}`;
+    }
+    if (platform === "linkedin") {
+      return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    }
+    if (platform === "facebook") {
+      return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    }
+    if (platform === "telegram") {
+      return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${title}\n\n${trimmed}\n\n${hashtagLine}`)}`;
+    }
+    if (platform === "email") {
+      return `mailto:?subject=${encodeURIComponent(`[OxyNews] ${title}`)}&body=${encodeURIComponent(`${title}\n\n${trimmed}\n\n🔗 Read More: ${url}\n\n${hashtagLine}`)}`;
+    }
+    return url;
+  }
+
+  function getLinkedInPostContent() {
+    const title = article?.title ?? "OxyNews";
+    const summary = article?.content?.replace(/#+\s*/g, "").slice(0, 300) ?? "";
+    return `${title}\n\n${summary}\n\n🔗 Read More: ${canonicalUrl}\n\n#${sourceName} #OxyNews`;
+  }
+
+  function handleNativeShare() {
+    const title = article?.title ?? "";
+    const text = article?.content?.replace(/#+\s*/g, "").slice(0, 220) ?? "";
+    if (navigator.share) {
+      navigator.share({ title, text, url: canonicalUrl }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(canonicalUrl);
+    }
+  }
+
   function goToExternalArticle(nextId?: number | null) {
     if (!sourceName || !nextId) return;
     navigate(`/news/${sourceName.toLowerCase()}/${nextId}`);
@@ -301,7 +351,14 @@ export default function ExternalArticlePage() {
             ← Back
           </button>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-green-500 text-white text-xs font-semibold px-4 py-2 hover:bg-green-400 transition"
+            >
+              ↗ Share
+            </button>
             {(() => {
               const idx = sourceArticles.findIndex((a) => String(a.id) === String(id));
               const prev = idx > 0 ? sourceArticles[idx - 1] : null;
@@ -344,6 +401,31 @@ export default function ExternalArticlePage() {
         <div className="mt-6 border-b border-ink/10 pb-6">
           <div className="grid gap-6 lg:gap-10 lg:grid-cols-[3fr_1fr] items-start">
             <div>
+              <a
+                href="https://tvradhakrishna.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl border-l-4 border-amber-400 bg-amber-50 hover:bg-amber-100 shadow-sm transition mb-4"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="shrink-0 w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center font-black text-[10px] tracking-tight">
+                    <span className="text-red-600">TV</span><span className="text-blue-600">RK</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Sponsored by</p>
+                    <p className="text-sm font-extrabold text-amber-800 leading-tight">
+                      Radhakrishna Thatavarti
+                      <span className="ml-1.5 text-xs font-normal text-amber-500">CEO, OxyGroup</span>
+                    </p>
+                  </div>
+                </div>
+                <img
+                  src="https://i.ibb.co/Rw9zb11/tvrklogo.png"
+                  alt="tvrklogo"
+                  className="h-12 w-auto object-contain rounded-lg border-2 border-amber-300 bg-white px-3 py-2 shadow-md shrink-0"
+                />
+              </a>
+
               <div className="flex flex-wrap gap-2 items-center text-xs uppercase tracking-widest">
                 <span className="font-bold text-violet-600">{article.sourceName}</span>
                 <span className="text-slate-300">•</span>
@@ -460,6 +542,122 @@ export default function ExternalArticlePage() {
         >
           ↑
         </button>
+      )}
+
+      {/* SHARE MODAL */}
+      {shareOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4 sm:pb-0"
+          onClick={() => setShareOpen(false)}>
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-bold text-slate-900">Share this article</p>
+              <button onClick={() => setShareOpen(false)} className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition text-sm font-bold">✕</button>
+            </div>
+            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 p-3 flex gap-3">
+              <img src={shareImage} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 line-clamp-2 leading-4">{article?.title}</p>
+                <p className="mt-1 text-[11px] text-slate-500 line-clamp-2 leading-4">{article?.content?.replace(/#+\s*/g, "").slice(0, 100)}...</p>
+                <p className="mt-1 text-[10px] text-violet-500 font-semibold truncate">{canonicalUrl}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { id: "whatsapp",  label: "WhatsApp",    bg: "#25D366", icon: "💬" },
+                { id: "linkedin",  label: "LinkedIn",    bg: "#0A66C2", icon: "in" },
+                { id: "facebook",  label: "Facebook",    bg: "#1877F2", icon: "f" },
+                { id: "twitter",   label: "X / Twitter", bg: "#000000", icon: "𝕏" },
+                { id: "telegram",  label: "Telegram",    bg: "#229ED9", icon: "✈" },
+                { id: "email",     label: "Email",       bg: "#6B7280", icon: "✉" },
+              ] as const).map(({ id: pid, label, bg, icon }) => {
+                if (pid === "linkedin") {
+                  return (
+                    <button key={pid} type="button"
+                      onClick={() => { setShareOpen(false); setLinkedinPreviewOpen(true); }}
+                      className="flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-white text-xs font-semibold transition hover:opacity-90 active:scale-95"
+                      style={{ backgroundColor: bg }}>
+                      <span className="text-lg leading-none">{icon}</span>
+                      <span className="text-[10px] font-bold">{label}</span>
+                    </button>
+                  );
+                }
+                return (
+                  <a key={pid}
+                    href={buildShareContent(pid)}
+                    target={pid === "email" ? "_self" : "_blank"}
+                    rel="noreferrer"
+                    onClick={() => setShareOpen(false)}
+                    className="flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-white text-xs font-semibold transition hover:opacity-90 active:scale-95"
+                    style={{ backgroundColor: bg }}>
+                    <span className="text-lg leading-none">{icon}</span>
+                    <span className="text-[10px] font-bold">{label}</span>
+                  </a>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => { handleNativeShare(); setShareOpen(false); }}
+              className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+              ⋯ More / Device Share
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* LINKEDIN PREVIEW */}
+      {linkedinPreviewOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+          onClick={() => setLinkedinPreviewOpen(false)}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <div>
+                <p className="text-base font-bold text-slate-900">LinkedIn Preview</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Check your post before opening LinkedIn</p>
+              </div>
+              <button type="button" onClick={() => setLinkedinPreviewOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 text-sm font-bold">✕</button>
+            </div>
+            <div className="p-5">
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div className="px-4 py-3 flex items-center gap-3 border-b border-slate-100">
+                  <div className="w-9 h-9 rounded-full bg-[#0A66C2] text-white flex items-center justify-center font-bold text-sm shrink-0">in</div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Your LinkedIn Post</p>
+                    <p className="text-[11px] text-slate-400">Preview</p>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm leading-6 text-slate-800 whitespace-pre-line">{getLinkedInPostContent()}</p>
+                </div>
+                <img src={shareImage} alt="Article preview" className="w-full aspect-[1.91/1] object-cover" />
+                <div className="border-t border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-slate-400">{sourceName}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900 line-clamp-2">{article?.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 line-clamp-3">{article?.content?.replace(/#+\s*/g, "").slice(0, 200)}</p>
+                  <p className="mt-2 text-[11px] text-violet-600 font-semibold truncate">{canonicalUrl}</p>
+                </div>
+              </div>
+              <div className="mt-4 rounded-xl bg-blue-50 border border-blue-200 p-3">
+                <p className="text-xs leading-5 text-blue-800">
+                  <strong>Tip:</strong> Copy the content below, then open LinkedIn and paste it into the composer.
+                </p>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button type="button"
+                  onClick={() => navigator.clipboard.writeText(getLinkedInPostContent())}
+                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+                  📋 Copy Content
+                </button>
+                <button type="button"
+                  onClick={() => { window.open(buildShareContent("linkedin"), "_blank", "noopener,noreferrer"); setLinkedinPreviewOpen(false); }}
+                  className="rounded-xl bg-[#0A66C2] py-3 text-sm font-bold text-white hover:bg-[#004182] transition">
+                  Open LinkedIn →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

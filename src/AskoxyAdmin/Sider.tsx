@@ -54,6 +54,7 @@ import {
   LinkedinOutlined,
   IdcardOutlined,
   TeamOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdWork } from "react-icons/md";
@@ -484,6 +485,12 @@ const Sidebar: React.FC = () => {
             roles: ["HELPDESKSUPERADMIN"],
           },
           {
+            title: "Interested Candidates",
+            icon: <FaUsers className="text-cyan-400" />,
+            link: "/admin/interested-candidates",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
             title: "All Service & Blogs Details",
             icon: <RiListUnordered className="text-purple-400" />,
             link: "/admin/allcampaignsdetails",
@@ -492,13 +499,13 @@ const Sidebar: React.FC = () => {
         ],
       },
       {
-        title: "Events",
-        icon: <FaTachometerAlt className="text-blue-400" />,
+        title: "Business Card Events",
+        icon: <IdcardOutlined  className="text-blue-400" />,
         roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         items: [
           {
-            title: "Events",
-            icon: <FaTachometerAlt className="text-blue-400" />,
+            title: "Event Details",
+            icon: <CalendarOutlined  className="text-blue-400" />,
             link: "/admin/event-details",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
@@ -736,7 +743,7 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      <div>
+      <div className="min-h-screen bg-white">
         {isMobileOpen && isMobile && (
           <div
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] transition-opacity duration-300"
@@ -1071,7 +1078,7 @@ const Sidebar: React.FC = () => {
         <div className="h-16 w-full" />
 
         <div
-          className={`transition-all duration-300 ease-in-out ${
+          className={`bg-white transition-all duration-300 ease-in-out ${
             isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"
           }`}
           style={{
@@ -1079,7 +1086,7 @@ const Sidebar: React.FC = () => {
             paddingBottom: "2rem",
           }}
         >
-          <main className="p-3 sm:p-4 lg:p-6">
+          <main className="bg-white p-3 sm:p-4 lg:p-6">
             <Outlet />
           </main>
         </div>

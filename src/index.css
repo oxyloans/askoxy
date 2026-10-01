@@ -32,6 +32,12 @@ code {
  @tailwind components;
  @tailwind utilities;
 
+@layer utilities {
+  .max-w-8xl {
+    max-width: 90rem;
+  }
+}
+
  html {
    scroll-behavior: smooth;
    box-sizing: border-box;

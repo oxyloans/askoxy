@@ -1,4 +1,5 @@
 import React from "react";
+
 import Header from "./Header";
 import ServicesSlider from "./ServicesSlider";
 import FreeGPTs from "./FreeGPTs";
@@ -9,93 +10,67 @@ import PdfPages from "./Presentation";
 import UnicornGrid from "./SuperOurApp";
 import AwardPage from "./Award";
 import FreeAiBook from "./FreeAiBook";
-import ScrollToTop from "./ScrollToTop";
 import BMVCoinPromo from "./BMVCoinPromo";
 import Whiteboardtheme from "./whiteboardtheme";
 import RadhAISection from "./radhAIsection";
-
-
+import PartnerSection from "./PartnerSection";
 
 const CurrentLandingPage: React.FC = () => {
-  const heroRef = React.useRef<HTMLDivElement | null>(null);
-  const [showFireworks, setShowFireworks] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!heroRef.current) return;
-
-    const io = new IntersectionObserver(
-      ([entry]) => setShowFireworks(entry.isIntersecting),
-      {
-        threshold: 0.35,
-        rootMargin: "0px 0px -10% 0px",
-      }
-    );
-
-    io.observe(heroRef.current);
-
-    return () => io.disconnect();
-  }, []);
-
   return (
-    <>
-      {/* <ScrollToTop /> */}
+    <div className="relative z-[1] overflow-x-hidden bg-white">
+      <Header />
 
-      <div className="relative z-[1] overflow-visible">
-        <Header />
+      <main className="overflow-visible pt-[60px]">
+        <section className="relative z-[1]">
+          <Whiteboardtheme />
+        </section>
 
-        <div className="pt-[60px] overflow-visible">
-          {/*<section className="relative z-[1] overflow-visible">
-            <RadhAiCeo />
-          </section>*/}
-          <section className="relative z-1">
-            <Whiteboardtheme/>
-          </section>
+        <section className="relative z-[1]">
+          <OXYGroupCompanies />
+        </section>
 
-          <section className="relative z-1">
-            <OXYGroupCompanies />
-          </section>
+        <section className="relative z-[1]">
+          <UnicornGrid />
+        </section>
 
-          <section ref={heroRef} className="relative z-1 ">
-            <UnicornGrid />
-          </section>
+        <section className="relative z-[1]">
+          <FreeAiBook />
+        </section>
 
-          <section>
-            <FreeAiBook />
-          </section>
+        <section className="relative z-[1]">
+          <ServicesSlider />
+        </section>
 
-          <section>
-            <ServicesSlider />
-          </section>
-          <section>
-            <RadhAISection />
-          </section>
+        <section className="relative z-[1]">
+          <RadhAISection />
+        </section>
 
-          <section>
-            <BMVCoinPromo />
-          </section>
+        <section className="relative z-[1]">
+          <BMVCoinPromo />
+        </section>
 
-          <section>
-            <FreeGPTs />
-          </section>
+        <section className="relative z-[1]">
+          <FreeGPTs />
+        </section>
 
-          <section>
-            <AwardPage />
-          </section>
+        <section className="relative z-[1]">
+          <AwardPage />
+        </section>
+        <section className="relative z-[1]">
+          <PartnerSection />
+        </section>
 
-          <section>
-            <OurPeople />
-          </section>
+        <section className="relative z-[1]">
+          <OurPeople />
+        </section>
 
-          <section>
-            <PdfPages />
-          </section>
+        <section className="relative z-[1]">
+          <PdfPages />
+        </section>
 
-          <section>
-            <Footer />
-          </section>
-        </div>
-      </div>
-    </>
+        <Footer />
+      </main>
+    </div>
   );
 };
 

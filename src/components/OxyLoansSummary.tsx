@@ -251,11 +251,9 @@ const showToast = (
 };
 
 const formatMoney = (value?: number | null) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  `₹${Number(value || 0).toLocaleString("en-IN", {
     maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+  })}`;
 
 const formatCount = (value?: number | null) =>
   new Intl.NumberFormat("en-IN").format(Number(value || 0));
@@ -465,7 +463,7 @@ const DashboardPanel: React.FC<{
       <div className="mt-3 grid grid-cols-1 gap-3 lg:mt-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
           <div className="mb-1">
-            <Text strong className="!text-[14px] !text-slate-800 sm:!text-[15px]">
+            <Text strong className="!text-[15px] !text-slate-800 sm:!text-[16px]">
               {pieTitle}
             </Text>
           </div>
@@ -477,7 +475,7 @@ const DashboardPanel: React.FC<{
 
         <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
           <div className="mb-1">
-            <Text strong className="!text-[14px] !text-slate-800 sm:!text-[15px]">
+            <Text strong className="!text-[15px] !text-slate-800 sm:!text-[16px]">
               {barTitle}
             </Text>
           </div>
@@ -781,12 +779,12 @@ const OxyLoansSummary: React.FC = () => {
           <div className="mb-4 sm:mb-5">
             <Title
               level={2}
-              className="!m-0 !text-[22px] !font-bold !leading-tight !text-slate-900 sm:!text-[28px]"
+              className="!m-0 !text-[24px] !font-bold !leading-tight !text-slate-900 sm:!text-[30px]"
             >
               OxyLoans Summary
             </Title>
 
-            <Text className="mt-1 block !text-[12px] !leading-5 !text-slate-500 sm:!text-sm">
+            <Text className="mt-1 block !text-[13px] !leading-5 !text-slate-500 sm:!text-[15px]">
               Track your Borrower, Lender, and Partner activity in one place.
             </Text>
           </div>
@@ -829,11 +827,11 @@ const OxyLoansSummary: React.FC = () => {
                         </div>
 
                         <div className="min-w-0">
-                          <div className="text-[16px] font-bold leading-5 text-slate-900 sm:text-[18px]">
+                          <div className="text-[17px] font-bold leading-snug text-slate-900 sm:text-[20px]">
                             {section.title}
                           </div>
 
-                          <div className="mt-0.5 text-[11px] leading-4 text-slate-500 sm:text-xs">
+                          <div className="mt-0.5 text-[12px] leading-4 text-slate-500 sm:text-[13px]">
                             {section.subtitle}
                           </div>
                         </div>

@@ -2,7 +2,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Card, Empty, Input, Spin, Table, Tag, Tooltip } from "antd";
 import {
     AppstoreOutlined,
-    BankOutlined,
+    FileTextOutlined,
+    GlobalOutlined,
+    LinkedinOutlined,
+    MailOutlined,
+    PhoneOutlined,
     ReloadOutlined,
     SearchOutlined,
     ShopOutlined,
@@ -19,6 +23,7 @@ interface Company {
     websiteUrl?: string;
     logoUrl?: string;
     gstNumber?: string;
+    gstDocumentUrl?: string;
     status?: boolean;
     linkedinUrl?: string;
 }
@@ -53,6 +58,7 @@ interface ProductOrService {
     bookingRequired?: boolean | null;
     cancellationPolicy?: string | null;
     refundPolicy?: string | null;
+    gstDocumentUrl?: string | null;
 }
 
 interface CompanyListing {
@@ -80,6 +86,12 @@ const LIST_ENDPOINT = `${BASE_URL}/marketing-service/campgin/company-product-ser
 const formatPrice = (value?: number) =>
     typeof value === "number" ? `₹${value.toLocaleString("en-IN")}` : "—";
 
+const isValidImageUrl = (url?: string | null): boolean => {
+    if (!url) return false;
+    const clean = url.trim();
+    return clean !== "" && clean !== "null" && clean !== "undefined";
+};
+
 const ListingTable: React.FC<{
     items: ProductOrService[];
     type: "Product" | "Service";
@@ -91,9 +103,21 @@ const ListingTable: React.FC<{
             key: "name",
             width: 190,
             render: (name: string, item: ProductOrService) => (
-                <Tooltip title={item.description || name}>
-                    <span className="font-medium text-slate-800">{name || "Unnamed item"}</span>
-                </Tooltip>
+                <div className="flex items-center gap-2.5">
+                    {isValidImageUrl(item.imageUrl) && (
+                        <img
+                            src={item.imageUrl}
+                            alt=""
+                            className="h-8 w-8 shrink-0 rounded-md border border-slate-200 object-cover"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
+                        />
+                    )}
+                    <Tooltip title={item.description || name}>
+                        <span className="font-medium text-slate-800">{name || "Unnamed item"}</span>
+                    </Tooltip>
+                </div>
             ),
         },
         {
@@ -279,7 +303,11 @@ const CompanyProductServiceList: React.FC = () => {
                                 onChange={(event) => setSearch(event.target.value)}
                                 className="sm:max-w-md"
                             />
-                            <span className="text-sm text-slate-500">{totalElements} total companies</span>
+                            <span className="text-sm text-slate-500">
+                                {normalizedSearch
+                                    ? `Showing ${visibleCompanies.length} of ${companies.length} companies`
+                                    : `${totalElements} total companies`}
+                            </span>
                         </div>
                     </Card>
 
@@ -304,19 +332,88 @@ const CompanyProductServiceList: React.FC = () => {
                                     <div className="border-b border-slate-100 p-4 md:p-5">
                                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                             <div className="flex min-w-0 gap-3">
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600">
-                                                    {entry.company?.logoUrl ? (
-                                                        <img src={entry.company.logoUrl} alt="" className="h-11 w-11 rounded-md object-cover" />
-                                                    ) : <BankOutlined className="text-xl" />}
-                                                </div>
+                                                {isValidImageUrl(entry.company?.logoUrl) && (
+                                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-100 bg-sky-50">
+                                                        <img
+                                                            src={entry.company.logoUrl}
+                                                            alt={entry.company?.companyName || ""}
+                                                            className="h-11 w-11 rounded-md object-cover"
+                                                            onError={(e) => {
+                                                                const parent = e.currentTarget.parentElement;
+                                                                if (parent) parent.style.display = "none";
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
                                                 <div className="min-w-0">
                                                     <h2 className="truncate text-lg font-semibold text-slate-900">{entry.company?.companyName || "Unnamed company"}</h2>
-                                                    <p className="text-sm text-slate-600">{entry.company?.companyDescription || "No company description"}</p>
-                                                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                                                        <span><UserOutlined className="mr-1" />{entry.name}</span>
-                                                        <span>{entry.email}</span>
-                                                        <span>{entry.mobileNumber}</span>
+                                                    <Tooltip title={entry.company?.companyDescription || undefined} placement="topLeft">
+                                                        <p className="line-clamp-2 text-sm text-slate-600">
+                                                            {entry.company?.companyDescription || "No company description"}
+                                                        </p>
+                                                    </Tooltip>
+                                                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
+                                                        <span><UserOutlined className="mr-1 text-slate-400" />{entry.name}</span>
+                                                        {entry.email && (
+                                                            <a
+                                                                href={`mailto:${entry.email}`}
+                                                                className="inline-flex items-center text-slate-600 transition hover:text-sky-600 hover:underline"
+                                                                title="Send email"
+                                                            >
+                                                                <MailOutlined className="mr-1 text-slate-400" />
+                                                                {entry.email}
+                                                            </a>
+                                                        )}
+                                                        {entry.mobileNumber && (
+                                                            <a
+                                                                href={`tel:${entry.mobileNumber}`}
+                                                                className="inline-flex items-center text-slate-600 transition hover:text-sky-600 hover:underline"
+                                                                title="Call phone"
+                                                            >
+                                                                <PhoneOutlined className="mr-1 text-slate-400" />
+                                                                {entry.mobileNumber}
+                                                            </a>
+                                                        )}
                                                         {entry.company?.locations && <span>{entry.company.locations}</span>}
+                                                        {entry.company?.gstNumber && (
+                                                            <span>GST: <strong className="text-slate-700">{entry.company.gstNumber}</strong></span>
+                                                        )}
+                                                        {isValidImageUrl(entry.company?.gstDocumentUrl) && (
+                                                            <a
+                                                                href={entry.company?.gstDocumentUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-800"
+                                                                title="View GST document"
+                                                            >
+                                                                <FileTextOutlined className="text-slate-500" />
+                                                                <span>GST Document</span>
+                                                            </a>
+                                                        )}
+                                                        {isValidImageUrl(entry.company?.websiteUrl) && (
+                                                            <a
+                                                                href={entry.company?.websiteUrl?.startsWith("http") ? entry.company.websiteUrl : `https://${entry.company?.websiteUrl}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
+                                                                title="Visit website"
+                                                            >
+                                                                <GlobalOutlined className="text-slate-500" />
+                                                                <span>Website</span>
+                                                            </a>
+                                                        )}
+                                                        {isValidImageUrl(entry.company?.linkedinUrl) && (
+                                                            <a
+                                                                href={entry.company?.linkedinUrl?.startsWith("http") ? entry.company.linkedinUrl : `https://${entry.company?.linkedinUrl}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50/70 px-2 py-0.5 text-xs font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100/70"
+                                                                title="View LinkedIn profile"
+                                                            >
+                                                                <LinkedinOutlined className="text-blue-600" />
+                                                                <span>LinkedIn</span>
+                                                            </a>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

@@ -302,9 +302,6 @@ const TaskBasedOnUserId: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<TaskItem[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState("");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [actionModal, setActionModal] = useState<ActionModal | null>(null);
@@ -408,7 +405,6 @@ const TaskBasedOnUserId: React.FC = () => {
         );
 
       setTasks(updateStatus);
-      setSearchResults(updateStatus);
       closeAction();
     } catch (err: any) {
       setActionModal((previous) =>
@@ -556,55 +552,6 @@ const TaskBasedOnUserId: React.FC = () => {
     fetchTasks(statusFilter);
   }, [statusFilter]);
 
-  useEffect(() => {
-    const query = searchText.trim();
-
-    // Empty search = show the normal user task list again.
-    if (!query) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      setSearchError("");
-      return;
-    }
-
-    const controller = new AbortController();
-    const debounceTimer = window.setTimeout(async () => {
-      try {
-        setSearchLoading(true);
-        setSearchError("");
-
-        const response = await employeeApi.get(
-          `${BASE_URL}/ai-service/agent/messages`,
-          {
-            params: { search: query },
-            signal: controller.signal,
-          }
-        );
-
-        const taskData = Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray(response?.data?.data)
-            ? response.data.data
-            : [];
-
-        setSearchResults(sortTasksByCreatedDate(taskData));
-      } catch (err: any) {
-        // Axios uses ERR_CANCELED when a newer search replaces the current request.
-        if (err?.code === "ERR_CANCELED" || err?.name === "CanceledError") return;
-
-        console.error("Failed to search tasks:", err);
-        setSearchResults([]);
-        setSearchError("Unable to search tasks. Please try again.");
-      } finally {
-        if (!controller.signal.aborted) setSearchLoading(false);
-      }
-    }, 400);
-
-    return () => {
-      window.clearTimeout(debounceTimer);
-      controller.abort();
-    };
-  }, [searchText]);
 
   useEffect(() => {
     const closeFilter = () => setShowFilterMenu(false);
@@ -649,13 +596,38 @@ const TaskBasedOnUserId: React.FC = () => {
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {
-    const sourceTasks = searchText.trim() ? searchResults : tasks;
+    const query = searchText.trim().toLowerCase();
 
-    return sourceTasks.filter((task) => {
+    return tasks.filter((task) => {
       const status = normalizeStatus(task.status);
-      return statusFilter === "ALL" || status === statusFilter;
+      const matchesStatus = statusFilter === "ALL" || status === statusFilter;
+      if (!matchesStatus) return false;
+
+      if (!query) return true;
+
+      const taskName = (task.taskName || "").toLowerCase();
+      const taskAssignBy = (task.taskAssignBy || "").toLowerCase();
+      const taskId = String(task.id || "").toLowerCase();
+      const taskAssignTo = Array.isArray(task.taskAssignTo)
+        ? task.taskAssignTo.filter(Boolean).join(" ").toLowerCase()
+        : "";
+      const statusText = (task.status || "").toLowerCase();
+      const createdDate = (task.tastCreatedDate || "").toLowerCase();
+      const assignedDate = (task.taskAssignedDate || "").toLowerCase();
+      const completeDate = (task.taskCompleteDate || "").toLowerCase();
+
+      return (
+        taskName.includes(query) ||
+        taskAssignBy.includes(query) ||
+        taskId.includes(query) ||
+        taskAssignTo.includes(query) ||
+        statusText.includes(query) ||
+        createdDate.includes(query) ||
+        assignedDate.includes(query) ||
+        completeDate.includes(query)
+      );
     });
-  }, [tasks, searchResults, searchText, statusFilter]);
+  }, [tasks, searchText, statusFilter]);
 
   const totalPages = Math.max(
     1,
@@ -694,7 +666,6 @@ const TaskBasedOnUserId: React.FC = () => {
     setSearchParams(nextParams);
     setShowFilterMenu(false);
     setSearchText("");
-    setSearchResults([]);
   };
 
   return (
@@ -725,13 +696,9 @@ const TaskBasedOnUserId: React.FC = () => {
                 type="search"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search by task, name, keyword..."
+                placeholder="Search by task, keywords..."
                 aria-label="Search tasks"
-                aria-busy={searchLoading}
               />
-              {searchLoading && (
-                <span className="task-search__spinner" aria-label="Searching" />
-              )}
             </div>
 
             <div className="filter-wrap">
@@ -917,7 +884,7 @@ const TaskBasedOnUserId: React.FC = () => {
         </section>
 
         <section className="task-content">
-          {loading && !searchText.trim() ? (
+          {loading ? (
             <div className="task-grid">
               {[1, 2, 3, 4].map((item) => (
                 <div className="task-card task-card--loading" key={item}>
@@ -930,15 +897,6 @@ const TaskBasedOnUserId: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : searchText.trim() && searchError ? (
-            <div className="state-card">
-              <div className="state-card__icon state-card__icon--error">!</div>
-              <h3>Couldn&apos;t search tasks</h3>
-              <p>{searchError}</p>
-              <button type="button" onClick={() => setSearchText((value) => value + " ")}>
-                Try Again
-              </button>
-            </div>
           ) : error ? (
             <div className="state-card">
               <div className="state-card__icon state-card__icon--error">!</div>
@@ -947,12 +905,6 @@ const TaskBasedOnUserId: React.FC = () => {
               <button type="button" onClick={() => fetchTasks(statusFilter)}>
                 Try Again
               </button>
-            </div>
-          ) : searchText.trim() && searchLoading ? (
-            <div className="state-card state-card--searching">
-              <span className="task-search__large-spinner" aria-hidden="true" />
-              <h3>Searching tasks...</h3>
-              <p>Looking for tasks matching “{searchText.trim()}”.</p>
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="state-card">
@@ -1126,9 +1078,7 @@ const TaskBasedOnUserId: React.FC = () => {
           )}
 
           {!loading &&
-            !searchLoading &&
             !error &&
-            !searchError &&
             filteredTasks.length > 0 && (
               <nav className="task-pagination" aria-label="Task pagination">
                 <div className="task-pagination__summary">

@@ -311,7 +311,7 @@ const EventDetails: React.FC = () => {
         </div>
 
         <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
-          <button
+          {/* <button
             type="button"
             onClick={loadEvents}
             disabled={loading || saving}
@@ -319,7 +319,7 @@ const EventDetails: React.FC = () => {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
-          </button>
+          </button> */}
 
           <button
             type="button"
@@ -364,7 +364,7 @@ const EventDetails: React.FC = () => {
       )}
 
       {/* Event table */}
-      <section className="overflow-hidden rounded-md  bg-white ">
+     
        
 
         <div className="w-full p-3 sm:p-4">
@@ -373,10 +373,7 @@ const EventDetails: React.FC = () => {
             columns={columns}
             dataSource={events}
             bordered
-            loading={{
-              spinning: loading,
-              indicator: <Loader2 className="h-5 w-5 animate-spin text-cyan-600" />,
-            }}
+            loading={loading}
             scroll={{ x: true }}
             tableLayout="auto"
             pagination={{
@@ -418,7 +415,7 @@ const EventDetails: React.FC = () => {
             className="event-details-table"
           />
         </div>
-      </section>
+      
 
       {/* Add / Update modal */}
       <Modal

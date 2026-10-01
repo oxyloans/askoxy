@@ -58,7 +58,7 @@ const MarqueeStyles: React.FC = () => (
     .oxy-marquee-track {
       display: flex;
       width: max-content;
-      animation: oxy-marquee 90s linear infinite;
+      animation: oxy-marquee 100s linear infinite;
       will-change: transform;
     }
 
