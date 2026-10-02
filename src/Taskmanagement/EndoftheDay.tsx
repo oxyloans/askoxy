@@ -342,6 +342,7 @@ const TaskUpdate: React.FC = () => {
       form.setFieldsValue({ endOftheDay: eodDraft });
     }
   }, [fetchAllPendingTasks, form]);
+const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
   // Check if task can be updated based on date and time
   const canUpdateTask = (task: Task): boolean => {
     const currentTime = dayjs();
@@ -351,15 +352,18 @@ const TaskUpdate: React.FC = () => {
     const isBeforeNinePM =
       currentTime.hour() < 21 ||
       (currentTime.hour() === 21 && currentTime.minute() === 0);
-
+    
+    if (task.userId === BYSAI_USER_ID) {
+      return true; // Always allow updates for BYSAI_USER_ID
+    }
     return isSameDay && isBeforeNinePM;
   };
-
   const selectTask = (task: Task) => {
     setSelectedTask(task);
     resetUploadState();
     const canUpdate = canUpdateTask(task);
-    setIsFormVisible(canUpdate);
+        setIsFormVisible(canUpdate);
+
     // Prefer saved draft over task's existing value
     const savedDraft = sessionStorage.getItem("eod_draft");
     form.setFieldsValue({

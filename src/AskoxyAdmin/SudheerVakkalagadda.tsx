@@ -5,55 +5,72 @@ import {
   Button,
   Spin,
   Pagination,
+  Space,
   Typography,
+  Modal,
   Input,
+  Tooltip,
+  Tag,
   Empty,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   ReloadOutlined,
   SearchOutlined,
+  EditOutlined,
+  PlusOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
   TeamOutlined,
-  MailOutlined,
+  CommentOutlined,
   PhoneOutlined,
   UserOutlined,
-  BankOutlined,
-  IdcardOutlined,
-  EnvironmentOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
 import BASE_URL from "../Config";
 
 const { Text, Title } = Typography;
-const { Search } = Input;
+const { TextArea, Search } = Input;
 
-interface SudheerDataItem {
+interface SudheerVakkalagaddaItem {
   id: string;
   name: string;
-  title: string;
-  company: string;
-  phoneNumber: string | null;
-  mailId: string | null;
-  address: string | null;
+  mobileNumber: string;
+  comments: string | null;
 }
 
-const DEFAULT_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_COMMENT_LENGTH = 1000;
+const COMMENT_TRUNCATE_LENGTH = 60;
+
 const PRIMARY_COLOR = "#008cba";
+const SUCCESS_COLOR = "#1ab394";
+const PENDING_COLOR = "#f5a623";
 
 const SudheerVakkalagadda: React.FC = () => {
-  const [records, setRecords] = useState<SudheerDataItem[]>([]);
+  const [records, setRecords] = useState<SudheerVakkalagaddaItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
   const [size] = useState(DEFAULT_PAGE_SIZE);
   const [total, setTotal] = useState(0);
 
+  const [activeTab, setActiveTab] = useState<"all" | "updated" | "pending">(
+    "all",
+  );
   const [searchText, setSearchText] = useState("");
 
-  const hasValue = (value: string | number | null | undefined) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] =
+    useState<SudheerVakkalagaddaItem | null>(null);
+  const [commentValue, setCommentValue] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const isValidComment = (value: string | null | undefined) => {
     if (value === null || value === undefined) return false;
     const text = String(value).trim();
-    return text !== "" && text !== "-" && text.toLowerCase() !== "null";
+    return text !== "" && text.toLowerCase() !== "null";
   };
 
   const fetchRecords = useCallback(async () => {
@@ -61,7 +78,7 @@ const SudheerVakkalagadda: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/ai-service/entity-records/sudheer-data`,
+        `${BASE_URL}/ai-service/agent/sudheerVakkalagadda`,
         {
           params: { page, size },
         },
@@ -92,8 +109,120 @@ const SudheerVakkalagadda: React.FC = () => {
     fetchRecords();
   }, [fetchRecords]);
 
+  const validateComment = (value: string) => {
+    const cleanValue = value.trim();
+
+    if (!cleanValue) return "Please enter a comment.";
+    if (cleanValue.length < 3)
+      return "Comment must contain at least 3 characters.";
+    if (cleanValue.length > MAX_COMMENT_LENGTH) {
+      return `Comment must not exceed ${MAX_COMMENT_LENGTH} characters.`;
+    }
+
+    return "";
+  };
+
+  const openCommentModal = (record: SudheerVakkalagaddaItem) => {
+    setSelectedRecord(record);
+    setCommentValue(
+      isValidComment(record.comments) ? record.comments || "" : "",
+    );
+    setCommentError("");
+    setModalOpen(true);
+  };
+
+  const closeCommentModal = () => {
+    if (saving) return;
+    setModalOpen(false);
+    setSelectedRecord(null);
+    setCommentValue("");
+    setCommentError("");
+  };
+
+  const updateComments = async () => {
+    if (!selectedRecord) return;
+
+    const cleanComment = commentValue.trim();
+    const validationError = validateComment(cleanComment);
+
+    if (validationError) {
+      setCommentError(validationError);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: validationError,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await axios.patch(`${BASE_URL}/ai-service/agent/commentsUpdationVakkalagadd`, null, {
+        params: {
+          id: selectedRecord.id,
+          comments: cleanComment,
+        },
+      });
+
+      setRecords((prev) =>
+        prev.map((item) =>
+          item.id === selectedRecord.id
+            ? { ...item, comments: cleanComment }
+            : item,
+        ),
+      );
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Comment updated successfully.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      closeCommentModal();
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Unable to update comment. Please try again.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 576);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 576);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const filteredRecords = useMemo(() => {
     let data = [...records];
+
+    if (activeTab === "updated") {
+      data = data.filter((item) => isValidComment(item.comments));
+    }
+
+    if (activeTab === "pending") {
+      data = data.filter((item) => !isValidComment(item.comments));
+    }
 
     if (searchText.trim()) {
       const search = searchText.toLowerCase().trim();
@@ -101,23 +230,31 @@ const SudheerVakkalagadda: React.FC = () => {
       data = data.filter(
         (item) =>
           item.name?.toLowerCase().includes(search) ||
-          item.title?.toLowerCase().includes(search) ||
-          item.company?.toLowerCase().includes(search) ||
-          item.phoneNumber?.toLowerCase().includes(search) ||
-          item.mailId?.toLowerCase().includes(search) ||
-          item.address?.toLowerCase().includes(search),
+          item.mobileNumber?.toLowerCase().includes(search),
       );
     }
 
     return data;
-  }, [records, searchText]);
+  }, [records, activeTab, searchText]);
 
-  const columns: ColumnsType<SudheerDataItem> = [
+  const updatedCount = records.filter((item) =>
+    isValidComment(item.comments),
+  ).length;
+  const pendingCount = records.filter(
+    (item) => !isValidComment(item.comments),
+  ).length;
+
+  const handleTabChange = (tab: "all" | "updated" | "pending") => {
+    setActiveTab(tab);
+    setSearchText("");
+  };
+
+  const columns: ColumnsType<SudheerVakkalagaddaItem> = [
     {
       title: <div style={{ textAlign: "center" }}>S.No</div>,
       key: "serialNumber",
+     
       align: "center",
-      width: 70,
       render: (_value, _record, index) => (
         <Text strong style={{ color: "#6b7280" }}>
           {page * size + index + 1}
@@ -134,10 +271,9 @@ const SudheerVakkalagadda: React.FC = () => {
       dataIndex: "name",
       key: "name",
       align: "center",
-      width: 180,
       render: (value: string) => (
         <Text strong style={{ color: "#1f2937" }}>
-          {hasValue(value) ? value : "-"}
+          {value || "-"}
         </Text>
       ),
     },
@@ -148,12 +284,11 @@ const SudheerVakkalagadda: React.FC = () => {
           Mobile Number
         </div>
       ),
-      dataIndex: "phoneNumber",
-      key: "phoneNumber",
+      dataIndex: "mobileNumber",
+      key: "mobileNumber",
       align: "center",
-      width: 150,
-      render: (value: string | null) =>
-        hasValue(value) ? (
+      render: (value: string) =>
+        value ? (
           <a
             href={`tel:${value}`}
             style={{
@@ -171,66 +306,105 @@ const SudheerVakkalagadda: React.FC = () => {
     {
       title: (
         <div style={{ textAlign: "center" }}>
-          <MailOutlined style={{ marginRight: 6 }} />
-          Email
+          <CommentOutlined style={{ marginRight: 6 }} />
+          Comments
         </div>
       ),
-      dataIndex: "mailId",
-      key: "mailId",
+      dataIndex: "comments",
+      key: "comments",
       align: "center",
-      width: 220,
-      render: (value: string | null) =>
-        hasValue(value) ? (
-          <a
-            href={`mailto:${value}`}
-            style={{ color: PRIMARY_COLOR, textDecoration: "none" }}
-          >
-            {value}
-          </a>
+      render: (value: string | null) => {
+        if (!isValidComment(value)) {
+          return (
+            <Tag
+              color="default"
+              style={{
+                borderStyle: "dashed",
+                color: "#9ca3af",
+                fontSize: 12,
+              }}
+            >
+              No comments added
+            </Tag>
+          );
+        }
+
+        const displayText = value || "";
+        const isTruncated = displayText.length > COMMENT_TRUNCATE_LENGTH;
+
+        return isTruncated ? (
+          <Tooltip title={displayText} placement="topLeft" overlayStyle={{ maxWidth: 400 }}>
+            <Text
+              style={{
+                cursor: "pointer",
+                maxWidth: 250,
+                display: "inline-block",
+              }}
+              ellipsis
+            >
+              {displayText}
+            </Text>
+          </Tooltip>
         ) : (
-          <Text type="secondary">-</Text>
-        ),
+          <Text>{displayText}</Text>
+        );
+      },
     },
     {
-      title: (
-        <div style={{ textAlign: "center" }}>
-          <EnvironmentOutlined style={{ marginRight: 6 }} />
-          Address
-        </div>
-      ),
-      dataIndex: "address",
-      key: "address",
+      title: <div style={{ textAlign: "center" }}>Action</div>,
+      key: "action",
       align: "center",
-      width: 220,
-      render: (value: string | null) => (
-        <Text>{hasValue(value) ? value : "-"}</Text>
+     
+      render: (_value, record: SudheerVakkalagaddaItem) => {
+        const hasComment = isValidComment(record.comments);
+
+        return (
+          <Button
+            type="primary"
+            icon={hasComment ? <EditOutlined /> : <PlusOutlined />}
+            onClick={() => openCommentModal(record)}
+            style={{
+              background: hasComment ? SUCCESS_COLOR : PRIMARY_COLOR,
+              borderColor: hasComment ? SUCCESS_COLOR : PRIMARY_COLOR,
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+            size="middle"
+          >
+            {hasComment ? "Edit" : "Add Comment"}
+          </Button>
+        );
+      },
+    },
+  ];
+
+  // Stat card data
+  const statCards = [
+    {
+      label: "Total Data",
+      count: records.length,
+      color: PRIMARY_COLOR,
+      bgColor: "#e6f7ff",
+      icon: <TeamOutlined style={{ fontSize: 22, color: PRIMARY_COLOR }} />,
+    },
+    {
+      label: "Comments Updated",
+      count: updatedCount,
+      color: SUCCESS_COLOR,
+      bgColor: "#e8faf5",
+      icon: (
+        <CheckCircleOutlined style={{ fontSize: 22, color: SUCCESS_COLOR }} />
       ),
     },
     {
-      title: (
-        <div style={{ textAlign: "center" }}>
-          <IdcardOutlined style={{ marginRight: 6 }} />
-          Title
-        </div>
+      label: "Comments Pending",
+      count: pendingCount,
+      color: PENDING_COLOR,
+      bgColor: "#fef9e7",
+      icon: (
+        <ClockCircleOutlined style={{ fontSize: 22, color: PENDING_COLOR }} />
       ),
-      dataIndex: "title",
-      key: "title",
-      align: "center",
-      width: 220,
-      render: (value: string) => <Text>{hasValue(value) ? value : "-"}</Text>,
-    },
-    {
-      title: (
-        <div style={{ textAlign: "center" }}>
-          <BankOutlined style={{ marginRight: 6 }} />
-          Company
-        </div>
-      ),
-      dataIndex: "company",
-      key: "company",
-      align: "center",
-      width: 200,
-      render: (value: string) => <Text>{hasValue(value) ? value : "-"}</Text>,
     },
   ];
 
@@ -261,7 +435,7 @@ const SudheerVakkalagadda: React.FC = () => {
             Sudheer Vakkalagadda Data
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            View Sudheer Vakkalagadda entity records
+            Manage data records and comments
           </Text>
         </div>
         <Button
@@ -279,7 +453,7 @@ const SudheerVakkalagadda: React.FC = () => {
         </Button>
       </div>
 
-      {/* Stat Card */}
+      {/* Stat Cards */}
       <div
         style={{
           display: "grid",
@@ -288,70 +462,122 @@ const SudheerVakkalagadda: React.FC = () => {
           marginBottom: 18,
         }}
       >
-        <div
-          style={{
-            background: "#ffffff",
-            borderRadius: 12,
-            padding: "16px 20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-            borderLeft: `4px solid ${PRIMARY_COLOR}`,
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
+        {statCards.map((stat) => (
           <div
+            key={stat.label}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              background: "#e6f7ff",
+              background: "#ffffff",
+              borderRadius: 12,
+              padding: "16px 20px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              borderLeft: `4px solid ${stat.color}`,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
+              gap: 14,
             }}
           >
-            <TeamOutlined style={{ fontSize: 22, color: PRIMARY_COLOR }} />
-          </div>
-          <div>
             <div
               style={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: PRIMARY_COLOR,
-                lineHeight: 1.2,
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                background: stat.bgColor,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              {total.toLocaleString()}
+              {stat.icon}
             </div>
-            <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
-              Total Records
+            <div>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: stat.color,
+                  lineHeight: 1.2,
+                }}
+              >
+                {stat.count}
+              </div>
+              <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
+                {stat.label}
+              </div>
             </div>
           </div>
-        </div>
+        ))}
       </div>
 
-      <div>
-        {/* Search */}
+     
+      <div
+       
+      >
+        {/* Tabs & Search */}
         <div
           style={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-between",
             gap: 12,
             flexWrap: "wrap",
             marginBottom: 16,
             alignItems: "center",
           }}
         >
+          <Space wrap>
+            {(
+              [
+                {
+                  key: "all" as const,
+                  label: "All",
+                  count: records.length,
+                  color: PRIMARY_COLOR,
+                },
+                {
+                  key: "updated" as const,
+                  label: "Updated",
+                  count: updatedCount,
+                  color: SUCCESS_COLOR,
+                },
+                {
+                  key: "pending" as const,
+                  label: "Pending",
+                  count: pendingCount,
+                  color: PENDING_COLOR,
+                },
+              ] as const
+            ).map((tab) => (
+              <Button
+                key={tab.key}
+                type={activeTab === tab.key ? "primary" : "default"}
+                onClick={() => handleTabChange(tab.key)}
+                style={
+                  activeTab === tab.key
+                    ? {
+                        background: tab.color,
+                        borderColor: tab.color,
+                        borderRadius: 8,
+                        fontWeight: 600,
+                      }
+                    : {
+                        borderRadius: 8,
+                        fontWeight: 500,
+                      }
+                }
+              >
+                {tab.label} ({tab.count})
+              </Button>
+            ))}
+          </Space>
+
           <Search
             allowClear
-            placeholder="Search by name, title, company, email, phone or address"
+            placeholder="Search by name or mobile number"
             prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{
-              maxWidth: 360,
+              maxWidth: 300,
               width: "100%",
               borderRadius: 8,
             }}
@@ -382,7 +608,7 @@ const SudheerVakkalagadda: React.FC = () => {
               pagination={false}
               bordered
               size="middle"
-              scroll={{ x: 1200 }}
+              scroll={{ x: true }}
               locale={{
                 emptyText: (
                   <Empty
@@ -391,7 +617,11 @@ const SudheerVakkalagadda: React.FC = () => {
                       <span style={{ color: "#9ca3af" }}>
                         {searchText
                           ? `No results found for "${searchText}"`
-                          : "No records found"}
+                          : activeTab === "updated"
+                            ? "No updated comments yet"
+                            : activeTab === "pending"
+                              ? "All comments are up to date!"
+                              : "No records found"}
                       </span>
                     }
                   />
@@ -410,22 +640,162 @@ const SudheerVakkalagadda: React.FC = () => {
                 gap: 10,
               }}
             >
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                Showing <strong>{filteredRecords.length}</strong> of{" "}
-                <strong>{records.length}</strong> records on this page
+              <Text
+                type="secondary"
+                style={{ fontSize: 13 }}
+              >
+                Showing{" "}
+                <strong>{filteredRecords.length}</strong> of{" "}
+                <strong>{records.length}</strong> records
+                {activeTab !== "all" && (
+                  <> (filtered by {activeTab})</>
+                )}
               </Text>
               <Pagination
                 current={page + 1}
                 pageSize={size}
                 total={total}
                 showSizeChanger={false}
-                showTotal={(totalRecords) => `Total ${totalRecords.toLocaleString()} records`}
+                showTotal={(totalRecords) => `Total ${totalRecords} records`}
                 onChange={(pageNumber) => setPage(pageNumber - 1)}
               />
             </div>
           </>
         )}
       </div>
+
+      {/* Comment Modal */}
+      <Modal
+        title={
+          <div style={{ paddingBottom: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: isValidComment(selectedRecord?.comments)
+                    ? "#e8faf5"
+                    : "#e6f7ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {isValidComment(selectedRecord?.comments) ? (
+                  <EditOutlined style={{ color: SUCCESS_COLOR, fontSize: 16 }} />
+                ) : (
+                  <PlusOutlined style={{ color: PRIMARY_COLOR, fontSize: 16 }} />
+                )}
+              </div>
+              <Text strong style={{ fontSize: 16 }}>
+                {isValidComment(selectedRecord?.comments)
+                  ? "Edit Comment"
+                  : "Add Comment"}
+              </Text>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                paddingLeft: isMobile ? 8 : 40,
+              }}
+            >
+              <UserOutlined
+                style={{ fontSize: 12, color: "#9ca3af" }}
+              />
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                {selectedRecord?.name || "-"}
+              </Text>
+              {selectedRecord?.mobileNumber && (
+                <>
+                  <span style={{ color: "#d1d5db" }}>|</span>
+                  <PhoneOutlined
+                    style={{ fontSize: 12, color: "#9ca3af" }}
+                  />
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    {selectedRecord.mobileNumber}
+                  </Text>
+                </>
+              )}
+            </div>
+          </div>
+        }
+        open={modalOpen}
+        onCancel={closeCommentModal}
+        centered
+        width={isMobile ? "95%" : 520}
+        destroyOnClose
+        footer={[
+          <Button
+            key="cancel"
+            onClick={closeCommentModal}
+            disabled={saving}
+            style={{ borderRadius: 8 }}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="update"
+            type="primary"
+            loading={saving}
+            onClick={updateComments}
+            disabled={!commentValue.trim()}
+            style={{
+              background:
+                !commentValue.trim() ? undefined : SUCCESS_COLOR,
+              borderColor:
+                !commentValue.trim() ? undefined : SUCCESS_COLOR,
+              fontWeight: 600,
+              borderRadius: 8,
+            }}
+          >
+            {isValidComment(selectedRecord?.comments)
+              ? "Update Comment"
+              : "Save Comment"}
+          </Button>,
+        ]}
+      >
+        <div style={{ marginBottom: 8 }}>
+          <Text
+            type="secondary"
+            style={{ fontSize: 13 }}
+          >
+            Enter your comment below ({MAX_COMMENT_LENGTH} characters max)
+          </Text>
+        </div>
+
+        <TextArea
+          value={commentValue}
+          onChange={(e) => {
+            setCommentValue(e.target.value);
+            if (commentError) {
+              setCommentError(validateComment(e.target.value));
+            }
+          }}
+          placeholder="Enter comment, e.g. line busy, not reachable, interested..."
+          autoSize={{ minRows: 4, maxRows: 6 }}
+         
+          status={commentError ? "error" : ""}
+          style={{ borderRadius: 8 }}
+        />
+
+        {commentError && (
+          <div style={{ marginTop: 6 }}>
+            <Text type="danger" style={{ fontSize: 13 }}>
+              {commentError}
+            </Text>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

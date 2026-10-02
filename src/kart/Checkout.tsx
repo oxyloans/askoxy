@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { customerApi } from "../utils/axiosInstance";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Button, Divider, message, Modal, notification } from "antd";
+import { Button, message, Modal, notification } from "antd";
 import { load, Cashfree } from "@cashfreepayments/cashfree-js";
 import Footer from "../components/Footer";
 import {
@@ -13,14 +13,17 @@ import {
   ShoppingBag,
   Clock,
   Loader2,
-  Info,
-  ChevronRight,
+  CheckCircle2,
+  Sun,
+  Moon,
+  Sunset,
+  Check,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { CartContext } from "../until/CartContext";
-import BASE_URL from "../Config";
+import BASE_URL, { resolveAskoxyUrl } from "../Config";
 import {
   calculateDeliveryFee,
   calculateDistanceDeliveryFee,
@@ -33,6 +36,7 @@ import {
   type ComboPricingResult,
 } from "./agentComboDisplay";
 import AgentComboPricingSummary from "./AgentComboPricingSummary";
+import checkoutBannerImg from "../assets/img/checkout_summary_banner.jpg";
 
 interface CartItem {
   itemId: string;
@@ -41,6 +45,9 @@ interface CartItem {
   cartQuantity: string;
   quantity: number;
   status: string;
+  image?: string;
+  itemImage?: string;
+  itemDescription?: string;
   catergoryName?: string;
   categoryName?: string;
   weight?: string | number;
@@ -234,10 +241,8 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
   const [coupenDetails, setCoupenDetails] = useState<number | null>(null);
-  const [pricesLoading, setPricesLoading] = useState(true);
   const [coupenLoading, setCoupenLoading] = useState(false);
   const [walletAmount, setWalletAmount] = useState<number>(0);
-  const [walletTotal, setWalletTotal] = useState<number>(0);
   const [coupenApplied, setCoupenApplied] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
     "ONLINE",
@@ -285,7 +290,6 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [minOrderForWallet, setMinOrderForWallet] = useState(500);
   const [minOrderAmount, setMinOrderAmount] = useState(499);
   const [couponsLoading, setCouponsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [exchangePolicyAccepted, setExchangePolicyAccepted] = useState(false);
   const customerId = localStorage.getItem("userId");
   const userData = localStorage.getItem("profileData");
@@ -1620,11 +1624,11 @@ useEffect(() => {
             sessionStorage.setItem("address", JSON.stringify(selectedAddress));
 
             const paymentData = {
-              mid: "1152305",
+              mid: process.env.REACT_APP_GETEPAY_MID || "1152305",
               amount: grandTotalAmount,
               merchantTransactionId: response.data.paymentId,
               transactionDate: new Date(),
-              terminalId: "getepay.merchant128638@icici",
+              terminalId: process.env.REACT_APP_GETEPAY_TERMINAL_ID || "getepay.merchant128638@icici",
               udf1: withoutCountryCode || "",
               udf2: `${profileData.firstName || ""} ${profileData.lastName || ""}`,
               udf3: profileData.email || "",
@@ -1642,7 +1646,7 @@ useEffect(() => {
               txnType: "single",
               productType: "IPG",
               txnNote: "Rice Order In Live",
-              vpa: "getepay.merchant128638@icici",
+              vpa: process.env.REACT_APP_GETEPAY_VPA || "getepay.merchant128638@icici",
             };
 
             getepayPortal(paymentData);
@@ -1689,43 +1693,99 @@ useEffect(() => {
 
   const renderPaymentMethods = () => {
     return (
-      <div className="flex gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {/* Online Payment */}
         <div
-          className={`p-3 border rounded-md ${selectedPayment === "ONLINE"
-              ? "border-purple-500 bg-purple-50"
-              : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
-            } flex items-center cursor-pointer transition-colors w-full`}
+          className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
+            selectedPayment === "ONLINE"
+              ? "border-purple-600 bg-gradient-to-br from-purple-50/90 via-indigo-50/40 to-white ring-2 ring-purple-600/20 shadow-xs"
+              : "border-gray-200 hover:border-purple-300 bg-white hover:bg-purple-50/20 shadow-2xs"
+          }`}
           onClick={() => setSelectedPayment("ONLINE")}
         >
-          <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
+          <div className="flex items-start gap-3">
             <div
-              className={`w-2 h-2 rounded-full ${selectedPayment === "ONLINE" ? "bg-purple-500" : ""
-                } m-0.5`}
-            ></div>
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                selectedPayment === "ONLINE"
+                  ? "bg-purple-600 text-white shadow-xs"
+                  : "bg-purple-100 text-purple-700"
+              }`}
+            >
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-sm font-bold text-gray-900">
+                  Online Payment
+                </span>
+                <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded border border-emerald-200">
+                  Fast & Secure
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                UPI, Cards, Net Banking
+              </p>
+            </div>
           </div>
-          <label className="ml-2 flex-grow cursor-pointer">
-            Online Payment
-          </label>
+
+          <div
+            className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 border-2 transition-all shrink-0 ${
+              selectedPayment === "ONLINE"
+                ? "border-purple-600 bg-purple-600 text-white"
+                : "border-gray-300 bg-white"
+            }`}
+          >
+            {selectedPayment === "ONLINE" && (
+              <div className="w-2 h-2 rounded-full bg-white" />
+            )}
+          </div>
         </div>
 
         {/* Cash on Delivery */}
         <div
-          className={`p-3 border rounded-md ${selectedPayment === "COD"
-              ? "border-purple-500 bg-purple-50"
-              : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
-            } flex items-center cursor-pointer transition-colors w-full`}
+          className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
+            selectedPayment === "COD"
+              ? "border-purple-600 bg-gradient-to-br from-purple-50/90 via-amber-50/30 to-white ring-2 ring-purple-600/20 shadow-xs"
+              : "border-gray-200 hover:border-purple-300 bg-white hover:bg-amber-50/20 shadow-2xs"
+          }`}
           onClick={() => setSelectedPayment("COD")}
         >
-          <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
+          <div className="flex items-start gap-3">
             <div
-              className={`w-2 h-2 rounded-full ${selectedPayment === "COD" ? "bg-purple-500" : ""
-                } m-0.5`}
-            ></div>
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                selectedPayment === "COD"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-sm font-bold text-gray-900">
+                  Cash on Delivery
+                </span>
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded border border-amber-200">
+                  COD
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Pay with cash at your doorstep
+              </p>
+            </div>
           </div>
-          <label className="ml-2 flex-grow cursor-pointer">
-            Cash on Delivery (COD)
-          </label>
+
+          <div
+            className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 border-2 transition-all shrink-0 ${
+              selectedPayment === "COD"
+                ? "border-purple-600 bg-purple-600 text-white"
+                : "border-gray-300 bg-white"
+            }`}
+          >
+            {selectedPayment === "COD" && (
+              <div className="w-2 h-2 rounded-full bg-white" />
+            )}
+          </div>
         </div>
       </div>
     );
@@ -1738,8 +1798,11 @@ useEffect(() => {
     const newCipher = ciphertext.toUpperCase();
 
     try {
+      const generateInvoiceUrl =
+        process.env.REACT_APP_GETEPAY_GENERATE_INVOICE_URL || "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice";
+
       const response = await axios.post(
-        "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
+        generateInvoiceUrl,
         { mid: data.mid, terminalId: data.terminalId, req: newCipher },
         { headers: { "Content-Type": "application/json" } },
       );
@@ -1764,10 +1827,10 @@ useEffect(() => {
       paymentStatus === null
     ) {
       const Config = {
-        "Getepay Mid": 1152305,
-        "Getepay Terminal Id": "getepay.merchant128638@icici",
-        "Getepay Key": "kNnyys8WnsuOXgBlB9/onBZQ0jiYNhh4Wmj2HsrV/wY=",
-        "Getepay IV": "L8Q+DeKb+IL65ghKXP1spg==",
+        "Getepay Mid": process.env.REACT_APP_GETEPAY_MID || "1152305",
+        "Getepay Terminal Id": process.env.REACT_APP_GETEPAY_TERMINAL_ID || "getepay.merchant128638@icici",
+        "Getepay Key": process.env.REACT_APP_GETEPAY_KEY || "kNnyys8WnsuOXgBlB9/onBZQ0jiYNhh4Wmj2HsrV/wY=",
+        "Getepay IV": process.env.REACT_APP_GETEPAY_IV || "L8Q+DeKb+IL65ghKXP1spg==",
       };
 
       const JsonData = {
@@ -1786,9 +1849,12 @@ useEffect(() => {
       );
       const newCipher = ciphertext.toUpperCase();
 
+      const invoiceStatusUrl =
+        process.env.REACT_APP_GETEPAY_INVOICE_STATUS_URL || "https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus";
+
       axios
         .post(
-          "https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus",
+          invoiceStatusUrl,
           { mid: Config["Getepay Mid"], terminalId: Config["Getepay Terminal Id"], req: newCipher },
           { headers: { "Content-Type": "application/json" } },
         )
@@ -1866,52 +1932,83 @@ useEffect(() => {
         destroyOnClose
         maskClosable
         width="90%"
-        style={{ maxWidth: 650 }}
+        style={{ maxWidth: 660 }}
         bodyStyle={{
-          maxHeight: "75vh",
+          maxHeight: "78vh",
           overflowY: "auto",
-          background: "#fafafa",
-          padding: 20,
+          background: "linear-gradient(180deg, #fbfaff 0%, #f7f5ff 100%)",
+          padding: "20px 22px",
+          borderRadius: 20,
         }}
-        title={
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold text-purple-700 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-purple-500" />
-              Choose Delivery Time
-            </div>
-          </div>
-        }
+        title={null}
         footer={[
-          <Button
-            key="info"
-            type="default"
-            icon={<Truck className="w-4 h-4" />}
-            onClick={() => {
-              setShowTimeSlotModal(false);
-              setTimeout(() => setIsDeliveryTimelineModalVisible(true), 200);
-            }}
-          >
-            Delivery Info
-          </Button>,
-          <Button key="close" onClick={() => setShowTimeSlotModal(false)}>
-            Close
-          </Button>,
+          <div key="footer" className="flex items-center justify-between w-full pt-2">
+            <Button
+              key="info"
+              type="default"
+              icon={<Truck className="w-4 h-4 text-purple-600" />}
+              onClick={() => {
+                setShowTimeSlotModal(false);
+                setTimeout(() => setIsDeliveryTimelineModalVisible(true), 200);
+              }}
+              className="border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-400 font-medium rounded-xl text-xs flex items-center h-9 px-3.5"
+            >
+              Delivery Timeline Info
+            </Button>
+            <Button
+              key="close"
+              type="primary"
+              onClick={() => setShowTimeSlotModal(false)}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-sm h-9 px-6 shadow-md shadow-purple-500/25 border-none"
+            >
+              Done
+            </Button>
+          </div>
         ]}
         className="responsive-modal"
       >
+        {/* Premium Gradient Header Banner */}
+        <div className="bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 rounded-2xl p-4 sm:p-5 text-white shadow-lg relative overflow-hidden mb-4">
+          <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute right-12 -top-6 w-20 h-20 bg-indigo-400/20 rounded-full blur-lg pointer-events-none" />
+          
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-inner shrink-0">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">
+                  Choose Delivery Time
+                </h3>
+                <span className="text-[10px] sm:text-[11px] font-semibold bg-emerald-400/25 border border-emerald-300/40 text-emerald-100 px-2 py-0.5 rounded-full">
+                  Express ⚡
+                </span>
+              </div>
+              <p className="text-purple-100 text-xs sm:text-sm mt-0.5 font-normal">
+                Select your preferred delivery date & convenient time slot
+              </p>
+            </div>
+          </div>
+        </div>
+
         {timeSlots.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-10">
-            <Clock className="w-14 h-14 text-gray-300 mb-4" />
-            <h3 className="text-gray-600 text-lg mb-2">
-              No available delivery slots
-            </h3>
-            <p className="text-gray-500 text-sm">Please check back later</p>
+          <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-white/80 rounded-2xl border-2 border-dashed border-purple-200 my-2 shadow-sm">
+            <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-3 shadow-inner">
+              <Clock className="w-7 h-7" />
+            </div>
+            <h4 className="text-gray-900 font-bold text-base mb-1">
+              No Delivery Slots Available Right Now
+            </h4>
+            <p className="text-gray-500 text-xs max-w-sm">
+              Delivery slots are currently being scheduled for your location. Please check back later or proceed with standard delivery.
+            </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3 py-1">
             {timeSlots.map((slot: TimeSlot, index: number) => {
               const formattedDay =
-                (slot as any).formattedDay || slot.dayOfWeek.toLowerCase();
+                (slot as any).formattedDay || slot.dayOfWeek;
               const availableSlots = [
                 slot.timeSlot1,
                 slot.timeSlot2,
@@ -1919,52 +2016,196 @@ useEffect(() => {
                 slot.timeSlot4,
               ].filter(Boolean);
 
+              const isDateSelected = selectedDate === slot.date;
+              const hasSingleSlot = availableSlots.length === 1;
+
+              // If day has only 1 slot: render sleek unified horizontal card without empty space
+              if (hasSingleSlot) {
+                const singleSlotTime = availableSlots[0]!;
+                const isSelected =
+                  selectedTimeSlot === singleSlotTime && selectedDate === slot.date;
+
+                return (
+                  <div
+                    key={slot.id || index}
+                    onClick={() =>
+                      handleSelectTimeSlot(
+                        slot.date,
+                        singleSlotTime,
+                        slot.dayOfWeek,
+                      )
+                    }
+                    className={`cursor-pointer rounded-2xl p-3 sm:p-3.5 border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      isSelected
+                        ? "border-purple-500 bg-gradient-to-r from-purple-50 via-indigo-50/60 to-purple-50 shadow-md ring-2 ring-purple-400/20"
+                        : "border-purple-100 bg-white hover:border-purple-300 hover:bg-purple-50/30 shadow-xs hover:shadow-sm"
+                    }`}
+                  >
+                    {/* Day & Date Info */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center font-bold text-xs uppercase shadow-xs shrink-0 transition-all ${
+                          isSelected
+                            ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
+                            : "bg-purple-100 text-purple-700"
+                        }`}
+                      >
+                        {formattedDay.slice(0, 3)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-gray-900 capitalize">
+                            {formattedDay}
+                          </h4>
+                          {index === 0 && (
+                            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded-full">
+                              Earliest
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-purple-700 font-medium">
+                          {slot.date}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Integrated Slot Button */}
+                    <div
+                      className={`flex items-center justify-between sm:justify-end gap-3 px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-semibold transition-all ${
+                        isSelected
+                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-600 text-white shadow-sm"
+                          : "bg-purple-50/60 border-purple-200/80 text-purple-900 hover:bg-purple-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Clock
+                          className={`w-4 h-4 ${
+                            isSelected ? "text-white" : "text-purple-600"
+                          }`}
+                        />
+                        <span>{singleSlotTime}</span>
+                      </div>
+                      {isSelected ? (
+                        <div className="w-5 h-5 rounded-full bg-white text-purple-700 flex items-center justify-center shadow-xs ml-1">
+                          <CheckCircle2 className="w-4 h-4 fill-emerald-500 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded-full border-2 border-purple-300 ml-1" />
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // If day has multiple slots: render compact header + responsive slots grid
               return (
                 <div
                   key={slot.id || index}
-                  className="bg-white rounded-lg p-4 shadow-sm"
+                  className={`rounded-2xl p-3.5 sm:p-4 border-2 transition-all ${
+                    isDateSelected
+                      ? "border-purple-400 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/50 shadow-md ring-2 ring-purple-400/20"
+                      : "border-purple-100 bg-white hover:border-purple-300 shadow-xs hover:shadow-sm"
+                  }`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h4 className="text-base font-semibold text-purple-700">
-                        {formattedDay}
-                      </h4>
-                      <p className="text-gray-500 text-sm">{slot.date}</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                        {formattedDay.slice(0, 3)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm sm:text-base font-bold text-gray-900 capitalize">
+                            {formattedDay}
+                          </h4>
+                          {index === 0 && (
+                            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded-full">
+                              Earliest
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-purple-700 font-medium">
+                          {slot.date}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-400">
-                      {availableSlots.length} slots
-                    </div>
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
+                      {availableSlots.length} Slots Available
+                    </span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {availableSlots.map((slotTime, i) => (
-                      <Button
-                        key={i}
-                        block
-                        type={
-                          selectedTimeSlot === slotTime &&
-                            selectedDate === slot.date
-                            ? "primary"
-                            : "default"
-                        }
-                        className={`rounded-md ${selectedTimeSlot === slotTime
-                            ? "bg-green-600 border-none text-white"
-                            : "bg-white hover:bg-purple-50 border-gray-200"
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {availableSlots.map((slotTime, i) => {
+                      const isSelected =
+                        selectedTimeSlot === slotTime &&
+                        selectedDate === slot.date;
+
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() =>
+                            handleSelectTimeSlot(
+                              slot.date,
+                              slotTime!,
+                              slot.dayOfWeek,
+                            )
+                          }
+                          className={`relative flex items-center justify-between p-2.5 sm:p-3 rounded-xl border-2 text-left transition-all ${
+                            isSelected
+                              ? "bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 border-purple-600 text-white shadow-md shadow-purple-500/25 scale-[1.01]"
+                              : "bg-purple-50/40 border-purple-100 hover:border-purple-300 hover:bg-purple-50 text-gray-800 hover:text-purple-900 shadow-xs"
                           }`}
-                        onClick={() =>
-                          handleSelectTimeSlot(
-                            slot.date,
-                            slotTime!,
-                            slot.dayOfWeek,
-                          )
-                        }
-                      >
-                        {slotTime}
-                      </Button>
-                    ))}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                                isSelected
+                                  ? "bg-white/20 text-white"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="text-xs sm:text-sm font-semibold tracking-tight">
+                              {slotTime}
+                            </span>
+                          </div>
+                          {isSelected ? (
+                            <div className="w-5 h-5 rounded-full bg-white text-purple-700 flex items-center justify-center shadow-xs">
+                              <CheckCircle2 className="w-4 h-4 fill-emerald-500 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Selected Slot Highlight Bar */}
+        {selectedTimeSlot && selectedDate && (
+          <div className="mt-4 p-3.5 bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 text-white rounded-xl shadow-md flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-emerald-100 font-bold">
+                  Selected Slot
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-white">
+                  {selectedDate} • {selectedTimeSlot}
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold bg-white text-emerald-800 px-2.5 py-1 rounded-lg shadow-sm">
+              Ready ✓
+            </span>
           </div>
         )}
       </Modal>
@@ -1980,69 +2221,90 @@ useEffect(() => {
         destroyOnClose
         maskClosable
         width="90%"
-        style={{ maxWidth: 600 }}
+        style={{ maxWidth: 620 }}
         bodyStyle={{
           maxHeight: "75vh",
           overflowY: "auto",
-          background: "#fafafa",
-          padding: 20,
+          background: "#ffffff",
+          padding: "20px 24px",
+          borderRadius: 16,
         }}
         title={
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold text-purple-700 flex items-center">
-              <Tag className="w-5 h-5 mr-2 text-purple-500" />
-              Available Coupons
+          <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+              <Tag className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                Available Coupons & Offers
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Apply exclusive discount codes to your order
+              </p>
             </div>
           </div>
         }
         footer={[
-          <Button key="close" onClick={() => setShowCouponsModal(false)}>
+          <Button
+            key="close"
+            type="primary"
+            onClick={() => setShowCouponsModal(false)}
+            className="bg-purple-600 hover:bg-purple-700 text-sm font-medium rounded-lg px-5"
+          >
             Close
           </Button>,
         ]}
         className="responsive-modal"
       >
         {couponsLoading ? (
-          <div className="text-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-            <p className="text-gray-500 mt-2">Loading coupons...</p>
+          <div className="text-center py-10">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
+            <p className="text-gray-500 text-xs mt-2">Loading available coupons...</p>
           </div>
         ) : availableCoupons.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-2">
-            <Tag className="w-12 h-12 text-gray-300 mb-3" />
-            <h3 className="text-gray-600 font-medium mb-1">
-              No available coupons
-            </h3>
-            <p className="text-sm text-gray-500">Check back later for offers</p>
+          <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-gray-50/70 rounded-xl border border-dashed border-gray-200 my-2">
+            <div className="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-400 mb-3 shadow-inner">
+              <Tag className="w-7 h-7" />
+            </div>
+            <h4 className="text-gray-800 font-semibold text-base mb-1">
+              No Coupons Available Right Now
+            </h4>
+            <p className="text-gray-500 text-xs max-w-sm">
+              You can still manually enter any coupon code you have in the coupon box on the checkout page.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-2">
             {availableCoupons.map((coupon: Coupon) => (
               <div
                 key={coupon.couponCode}
-                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-purple-300 transition-all"
+                className="bg-gradient-to-br from-white to-purple-50/30 border border-purple-200/80 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-purple-400 transition-all flex flex-col justify-between"
               >
-                <h4 className="font-semibold text-purple-700 text-sm mb-1">
-                  {coupon.couponCode}
-                </h4>
-                <p className="text-sm text-gray-600 mb-1">
-                  Save ₹{Number(coupon.couponValue || 0).toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500 mb-2">
-                  Min. Order ₹{Number(coupon.minOrder || 0).toFixed(2)}
-                </p>
-                {coupon.couponDesc && (
-                  <p className="text-xs text-gray-400 mb-3">
-                    {coupon.couponDesc}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-sm tracking-wider text-purple-700 bg-purple-100/70 px-2.5 py-1 rounded-md border border-purple-200">
+                      {coupon.couponCode}
+                    </span>
+                    <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                      Save ₹{Number(coupon.couponValue || 0).toFixed(0)}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-gray-700 mb-1">
+                    Min. Order: ₹{Number(coupon.minOrder || 0).toFixed(2)}
                   </p>
-                )}
+                  {coupon.couponDesc && (
+                    <p className="text-[11px] text-gray-500 mb-3 line-clamp-2">
+                      {coupon.couponDesc}
+                    </p>
+                  )}
+                </div>
                 <Button
                   type="primary"
                   block
-                  size="small"
+                  size="middle"
                   loading={coupenLoading}
                   onClick={() => handleSelectCoupon(coupon)}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-semibold mt-2"
                 >
                   Apply Coupon
                 </Button>
@@ -2062,443 +2324,807 @@ useEffect(() => {
     );
   }
 
+  // Build flattened quick slots for the inline slots carousel
+  const inlineQuickSlots: Array<{
+    date: string;
+    time: string;
+    dayOfWeek: string;
+    dayLabel: string;
+    iconType: "sun" | "sunset" | "moon";
+  }> = [];
+
+  timeSlots.forEach((slot, dayIndex) => {
+    const dayLabel =
+      (slot as any).formattedDay ||
+      (dayIndex === 0 ? "Today" : dayIndex === 1 ? "Tomorrow" : slot.dayOfWeek);
+    const slotsList = [
+      slot.timeSlot1,
+      slot.timeSlot2,
+      slot.timeSlot3,
+      slot.timeSlot4,
+    ].filter(Boolean);
+
+    slotsList.forEach((slotTime, slotIndex) => {
+      if (inlineQuickSlots.length < 4) {
+        const lower = slotTime.toLowerCase();
+        const startPart = lower.split("-")[0] || lower;
+        let iconType: "sun" | "sunset" | "moon" = "sun";
+
+        if (startPart.includes("am") && !startPart.includes("12")) {
+          iconType = "sun";
+        } else if (
+          startPart.includes("12 pm") ||
+          startPart.includes("1 pm") ||
+          startPart.includes("2 pm") ||
+          startPart.includes("3 pm") ||
+          startPart.includes("4 pm")
+        ) {
+          iconType = "sunset";
+        } else if (startPart.includes("pm")) {
+          iconType = "moon";
+        } else {
+          // If timespan covers full day (e.g. 10:00 AM - 07:00 PM), differentiate by day/slot index
+          const iconSeq: Array<"sun" | "sunset" | "moon"> = ["sun", "sun", "sunset", "moon"];
+          iconType = iconSeq[(dayIndex + slotIndex) % iconSeq.length] || "sun";
+        }
+
+        inlineQuickSlots.push({
+          date: slot.date,
+          time: slotTime,
+          dayOfWeek: slot.dayOfWeek,
+          dayLabel:
+            dayIndex === 0
+              ? "Today"
+              : dayIndex === 1
+              ? "Tomorrow"
+              : slot.dayOfWeek,
+          iconType,
+        });
+      }
+    });
+  });
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex-1 p-4 lg:p-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <main className="flex-1">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center mb-6">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="text-gray-600 hover:text-gray-800 mr-3"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex items-center">
-                  <ShoppingBag className="w-6 h-6 text-green-500 mr-2" />
-                  <h2 className="text-xl font-bold text-purple-600">
+    <div className="flex flex-col min-h-screen bg-slate-50/70">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 lg:px-6 pt-1 sm:pt-2.5 pb-6">
+        <main className="min-w-0">
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5 bg-white p-3.5 sm:p-4 rounded-2xl border border-purple-100 shadow-xs">
+            <div className="flex items-center gap-3.5">
+              <button
+                onClick={() => navigate(-1)}
+                className="w-10 h-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 flex items-center justify-center transition-all shadow-2xs hover:scale-105 active:scale-95 shrink-0 border border-purple-200/60"
+                title="Go Back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
                     Checkout Details
                   </h2>
                 </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Review items, pick your delivery slot, and complete payment
+                </p>
               </div>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-7 space-y-4">
-                  <div className="bg-white border rounded-lg p-4 mb-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="font-medium flex items-center">
-                        <Clock className="w-5 h-5 mr-2 text-purple-500" />
-                        Delivery Time
-                      </h3>
-                      <button
-                        onClick={openTimeSlotModal}
-                        className="text-sm text-purple-600 hover:text-purple-800"
-                      >
-                        {selectedTimeSlot ? "Change Time" : "Select Time"}
-                      </button>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Segregated Section Cards */}
+            <div className="lg:col-span-7 space-y-5">
+              
+              {/* Card 1: Delivery Time Slot */}
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100/90 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                      <Clock className="w-5 h-5 stroke-[2.5]" />
                     </div>
-                    {selectedTimeSlot ? (
-                      <div className="p-3 bg-green-50 rounded-md border border-green-200">
-                        <p className="text-green-800 font-medium">
-                          {selectedDate}
-                        </p>
-                        <p className="text-green-700">{selectedTimeSlot}</p>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-yellow-50 rounded-md border border-yellow-200">
-                        <p className="text-yellow-700">
-                          Please select a delivery time slot
-                        </p>
-                      </div>
-                    )}
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight">
+                        Delivery Time Slot
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Choose a convenient time for delivery
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={openTimeSlotModal}
+                    className="text-xs sm:text-sm font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 hover:underline transition-colors shrink-0"
+                  >
+                    <span>View All Slots</span>
+                    <span className="text-sm">→</span>
+                  </button>
+                </div>
 
-                  <div className="bg-white border rounded-lg p-4">
-                    <div className="flex items-center mb-3">
-                      <ShoppingBag className="w-5 h-5 mr-2 text-purple-500" />
-                      <h3 className="font-medium">
-                        Order Items ({cartData.length})
-                      </h3>
-                    </div>
-                    <div className="space-y-3 max-h-[32rem] overflow-y-auto">
-                      {cartData.length === 0 ? (
-                        <p className="text-gray-600 text-center">
-                          Your cart is empty
-                        </p>
-                      ) : (
-                        cartData.map((item) => (
-                          <div
-                            key={item.itemId}
-                            className="p-2 border-b last:border-b-0"
-                          >
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">{item.itemName}</p>
-                                <p className="text-gray-600 text-sm">
-                                  Qty: {item.cartQuantity}
-                                </p>
-                              </div>
-                              {isFreeItem(item) ? (
-                                <p className="text-green-600 font-semibold">
-                                  FREE
-                                </p>
+                {/* Inline Quick Slot Options */}
+                {inlineQuickSlots.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+                    {inlineQuickSlots.map((slotObj, idx) => {
+                      const isSelected =
+                        selectedDate === slotObj.date &&
+                        selectedTimeSlot === slotObj.time;
+
+                      return (
+                        <div
+                          key={`${slotObj.date}-${slotObj.time}-${idx}`}
+                          onClick={() =>
+                            handleSelectTimeSlot(
+                              slotObj.date,
+                              slotObj.time,
+                              slotObj.dayOfWeek,
+                            )
+                          }
+                          className={`cursor-pointer rounded-2xl p-3 border-2 transition-all flex items-center justify-between gap-2 ${
+                            isSelected
+                              ? "border-purple-500 bg-purple-50/50 shadow-2xs ring-1 ring-purple-400/20"
+                              : "border-gray-200 hover:border-purple-300 bg-white shadow-2xs hover:bg-purple-50/20"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="shrink-0">
+                              {slotObj.iconType === "sunset" ? (
+                                <Sunset className="w-4 h-4 text-orange-500" />
+                              ) : slotObj.iconType === "moon" ? (
+                                <Moon className="w-4 h-4 text-indigo-500" />
                               ) : (
-                                <p className="font-medium">₹{item.itemPrice}</p>
+                                <Sun className="w-4 h-4 text-amber-500" />
                               )}
                             </div>
+                            <div className="min-w-0">
+                              <div
+                                className={`text-xs font-bold leading-tight truncate ${
+                                  isSelected
+                                    ? "text-gray-900"
+                                    : "text-gray-900"
+                                }`}
+                              >
+                                {slotObj.dayLabel}
+                              </div>
+                              <div
+                                className={`text-[11px] leading-tight mt-0.5 truncate ${
+                                  isSelected
+                                    ? "text-purple-700 font-bold"
+                                    : "text-gray-500 font-medium"
+                                }`}
+                              >
+                                {slotObj.time}
+                              </div>
+                            </div>
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="bg-white border rounded-lg p-4">
-                    <div className="flex items-center mb-3">
-                      <CreditCard className="w-5 h-5 mr-2 text-purple-500" />
-                      <h3 className="font-medium">Payment Method</h3>
+                          <div
+                            className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                              isSelected
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 bg-white"
+                            }`}
+                          >
+                            {isSelected && (
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : selectedTimeSlot ? (
+                  <div
+                    onClick={openTimeSlotModal}
+                    className="cursor-pointer flex items-center justify-between p-3.5 rounded-2xl bg-purple-50/70 border-2 border-purple-600 transition-all shadow-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+                        <Check className="w-4 h-4 stroke-[3]" />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 capitalize">
+                          {selectedDate}
+                        </span>
+                        <span className="text-xs text-gray-300">•</span>
+                        <span className="text-xs sm:text-sm font-bold text-purple-700 bg-purple-100/80 px-2.5 py-0.5 rounded-md border border-purple-200">
+                          {selectedTimeSlot}
+                        </span>
+                        <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                          Confirmed ✓
+                        </span>
+                      </div>
                     </div>
-                    {renderPaymentMethods()}
+                    <span className="text-xs text-purple-700 font-bold hover:underline">
+                      Change →
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    onClick={openTimeSlotModal}
+                    className="cursor-pointer flex items-center justify-between p-3.5 rounded-2xl bg-amber-50/70 hover:bg-amber-50 border border-amber-200 transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span className="text-xs sm:text-sm font-semibold text-amber-900">
+                        Please select a delivery time slot to continue
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openTimeSlotModal}
+                      className="text-xs font-bold text-amber-800 bg-amber-200/60 hover:bg-amber-200 px-3 py-1 rounded-lg border border-amber-300"
+                    >
+                      Choose Slot →
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Card 2: Order Items */}
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100/90 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                    <ShoppingBag className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight">
+                      Order Items ({cartData.length})
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Check your items and make sure everything is correct
+                    </p>
                   </div>
                 </div>
 
-                <div className="lg:col-span-5">
-                  <div className="bg-white border rounded-lg p-4 sticky top-4">
-                    {(comboPricing.active || comboPricing.incomplete) && (
-                      <AgentComboPricingSummary
-                        pricing={comboPricing}
-                        compact
-                      />
-                    )}
-                    <h3 className="font-medium mb-4">Order Summary</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-600">Subtotal</span>
-                        <span>₹{Number(grandTotal || 0).toFixed(2)}</span>
-                      </div>
-                      {comboPricing.active && comboPricing.savings > 0 && (
-                        <div className="flex justify-between py-2 text-emerald-700">
-                          <span>Combo offer savings</span>
-                          <span>
-                            -₹{Number(comboPricing.savings || 0).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                      {goldMakingCharges > 0 && (
-                        <div className="flex justify-between py-2">
-                          <span className="text-gray-600">
-                            Gold Making Charges
-                          </span>
-                          <span>
-                            ₹{Number(goldMakingCharges || 0).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
+                {/* Table Header Row */}
+                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-700 bg-gray-100/90 px-3.5 py-2.5 rounded-xl border border-gray-200 uppercase tracking-wider">
+                  <div className="col-span-6 sm:col-span-5 text-gray-800">Item</div>
+                  <div className="col-span-2 text-center text-gray-800">Price</div>
+                  <div className="col-span-2 text-center text-gray-800">Quantity</div>
+                  <div className="col-span-2 sm:col-span-3 text-right text-gray-800">Total</div>
+                </div>
 
-                      {(Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) > 0 || silverGst > 0) && (
-                        <div className="flex justify-between py-2">
-                          <span className="text-gray-600">GST</span>
-                          <span>
-                            ₹
-                            {(
-                              Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) +
-                              silverGst
-                            ).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
+                {/* Items List */}
+                <div className="divide-y divide-gray-100 max-h-[28rem] overflow-y-auto pr-1">
+                  {cartData.length === 0 ? (
+                    <p className="text-gray-500 text-xs text-center py-6">Your cart is empty</p>
+                  ) : (
+                    cartData.map((item) => {
+                      const itemImgUrl = item.image || item.itemImage;
+                      const itemTotal = (
+                        parseFloat(item.itemPrice || "0") *
+                        parseInt(item.cartQuantity || "1")
+                      ).toFixed(0);
 
-                      {silverDiscount > 0 && (
-                        <div className="flex justify-between py-2 text-emerald-700 font-medium">
-                          <span>Discount</span>
-                          <span>-₹{silverDiscount.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {cartData.length > 0 && deliveryFee !== null && !isDeliveryFeeLoading && !isPreciousMetalDistanceFeeLoading && (
-                        <div className="flex justify-between py-2">
-                          <span className="text-gray-600">Delivery Fee</span>
-                          <span>₹{(deliveryFee ?? 0).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {cartData.length > 0 && (isPreciousMetalDistanceFeeLoading || isDeliveryFeeLoading) && (
-                        <div className="flex items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Calculating delivery charges…
-                        </div>
-                      )}
-                      {cartData.length > 0 && !isPreciousMetalDistanceFeeLoading && !isDeliveryFeeLoading && deliveryFee === null && isPreciousMetalOnlyCart(cartData) && (
-                        <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                          {deliveryFeeMessage || "Delivery fee will be calculated and collected at the time of delivery."}
-                        </div>
-                      )}
-                      {cartData.length > 0 &&
-                        handlingFee !== null &&
-                        handlingFee > 0 && (
-                          <div className="flex justify-between py-2">
-                            <span className="text-gray-600">Handling Fee</span>
-                            <span>₹{(handlingFee ?? 0).toFixed(2)}</span>
-                          </div>
-                        )}
-                      {cartData.length > 0 && smallCartFee > 0 && (
-                        <div className="flex justify-between py-2">
-                          <span className="text-gray-600">Small Cart Fee</span>
-                          <span>₹{Number(smallCartFee || 0).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {cartData.length > 0 && serviceFee > 0 && (
-                        <div className="flex justify-between py-2">
-                          <span className="text-gray-600">Service Fee</span>
-                          <span>₹{Number(serviceFee || 0).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {coupenApplied && coupenDetails && (
-                        <div className="flex justify-between py-2 text-green-600">
-                          <span>Coupon Discount</span>
-                          <span>-₹{Number(coupenDetails || 0).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {totalAmount < 500 && (
-                        <div className="mt-3 px-3 py-2 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md text-sm">
-                          Use minimum ₹500 to skip handling fee and use wallet
-                          balance.
-                        </div>
-                      )}
-                      {useWallet && usedWalletAmount > 0 && (
-                        <div className="flex justify-between py-2 text-green-600">
-                          <span>Wallet Amount</span>
-                          <span>
-                            -₹{Number(usedWalletAmount || 0).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="border-t pt-2 mt-2">
-                        <div className="flex justify-between font-medium text-lg">
-                          <strong className="text-lg">Total</strong>
-                          <strong>
-                            ₹{Number(grandTotalAmount || 0).toFixed(2)}
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-                    <Divider style={{ margin: "8px 0" }} />
-                    <div>
-                      <div className="flex justify-between items-center border-b pb-2 mb-3">
-                        <div className="text-lg font-semibold text-purple-700 flex items-center">
-                          <Tag className="w-5 h-5 mr-2 text-purple-500" />
-                          Available Coupons
-                        </div>
-                        <span
-                          onClick={handleOpenCouponsModal}
-                          className="text-sm text-purple-600 cursor-pointer hover:underline"
+                      return (
+                        <div
+                          key={item.itemId}
+                          className="py-3.5 first:pt-1 grid grid-cols-12 gap-2 items-center"
                         >
-                          View All Coupons
-                        </span>
-                      </div>
-
-                      {/* Coupons Content */}
-                      <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
-                        {couponsLoading ? (
-                          <div className="text-center p-8">
-                            <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-                            <p className="text-gray-500 mt-2">
-                              Loading coupons...
-                            </p>
-                          </div>
-                        ) : availableCoupons.length === 0 ? (
-                          <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
-                            <Tag className="w-16 h-16 text-purple-200 mb-4" />
-                            <p className="text-lg font-medium mb-2">
-                              No available coupons
-                            </p>
-                            <p className="text-sm text-gray-400">
-                              Check back later for offers
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="flex overflow-x-auto gap-3">
-                            {availableCoupons.map((coupon: Coupon) => (
+                          {/* Item Thumbnail & Details */}
+                          <div className="col-span-6 sm:col-span-5 flex items-center gap-3 min-w-0">
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white border border-gray-100 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                              {itemImgUrl ? (
+                                <img
+                                  src={resolveAskoxyUrl(itemImgUrl)}
+                                  alt={item.itemName}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                    const fallback = (e.target as HTMLElement).nextElementSibling;
+                                    if (fallback) {
+                                      (fallback as HTMLElement).classList.remove("hidden");
+                                      (fallback as HTMLElement).classList.add("flex");
+                                    }
+                                  }}
+                                />
+                              ) : null}
                               <div
-                                key={coupon.couponCode}
-                                className="p-3 bg-white border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all flex-none w-36"
+                                className={`w-full h-full rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-sm sm:text-base ${
+                                  itemImgUrl ? "hidden" : "flex"
+                                }`}
                               >
-                                {/* Coupon Code */}
-                                <div className="font-semibold text-green-600 text-sm mb-2 truncate">
-                                  {coupon.couponCode}
-                                </div>
-
-                                {/* Min and Max Amount */}
-                                <div className="space-y-1 mb-2">
-                                  <div className="text-xs text-gray-600">
-                                    Min: ₹
-                                    <span className="font-semibold text-gray-800">
-                                      {coupon.minOrder !== undefined
-                                        ? Number(coupon.minOrder).toFixed(0)
-                                        : "0"}
-                                    </span>
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    Save: ₹
-                                    <span className="font-semibold text-gray-800">
-                                      {coupon.couponValue !== undefined
-                                        ? Number(coupon.couponValue).toFixed(0)
-                                        : "0"}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <Button
-                                  type="primary"
-                                  size="small"
-                                  className="w-full bg-purple-500 hover:bg-purple-600 border-none text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-0.5 min-h-[28px] sm:min-h-[28px] h-auto flex items-center justify-center"
-                                  onClick={() => handleSelectCoupon(coupon)}
-                                  loading={coupenLoading}
-                                >
-                                  Apply
-                                </Button>
+                                {item.itemName ? item.itemName.charAt(0).toUpperCase() : "🛒"}
                               </div>
-                            ))}
+                            </div>
+
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-xs sm:text-sm text-gray-900 leading-snug truncate">
+                                {item.itemName}
+                              </h4>
+                              {(item.weight || item.units) && (
+                                <div className="text-xs font-bold text-gray-700 mt-0.5">
+                                  {item.weight} {item.units}
+                                </div>
+                              )}
+                              {(item.catergoryName || item.categoryName || item.itemDescription) && (
+                                <div className="text-[11px] text-gray-400 truncate mt-0.5">
+                                  {item.catergoryName || item.categoryName || item.itemDescription}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="w-full mt-2 px-2 sm:px-0">
-                      <div className="text-lg font-semibold text-purple-700 flex items-center mb-2">
-                        <Tag className="w-5 h-5 mr-2 text-purple-500" />
-                        Apply Coupon
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                        <input
-                          type="text"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value)}
-                          placeholder="Enter coupon code"
-                          className="w-full p-2 border rounded-md sm:rounded-r-none focus:outline-none focus:ring-1 focus:ring-purple-500"
-                          disabled={coupenApplied}
-                        />
-                        {coupenApplied ? (
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={deleteCoupen}
-                            className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-md sm:rounded-l-none hover:bg-red-600 transition-colors"
-                          >
-                            Remove
-                          </motion.button>
-                        ) : (
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={handleApplyCoupon}
-                            disabled={!couponCode.trim() || couponCode.trim().length < 3 || coupenLoading}
-                            className="w-full sm:w-auto px-4 py-2 bg-purple-500 text-white rounded-md sm:rounded-l-none hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {coupenLoading ? (
-                              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                          {/* Price */}
+                          <div className="col-span-2 text-center text-xs sm:text-sm font-bold text-gray-800">
+                            ₹{item.itemPrice}
+                          </div>
+
+                          {/* Quantity (non-editable clean badge) */}
+                          <div className="col-span-2 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-bold text-xs sm:text-sm flex items-center justify-center shadow-2xs">
+                              {item.cartQuantity}
+                            </div>
+                          </div>
+
+                          {/* Total */}
+                          <div className="col-span-2 sm:col-span-3 text-right text-xs sm:text-sm font-bold text-gray-900">
+                            {isFreeItem(item) ? (
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                FREE
+                              </span>
                             ) : (
-                              "Apply"
+                              `₹${itemTotal}`
                             )}
-                          </motion.button>
-                        )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Card 3: Payment Method */}
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 border border-purple-200">
+                    <CreditCard className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight">
+                      Payment Method
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Choose how you want to pay
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                  {/* Option 1: Online Payment */}
+                  <div
+                    onClick={() => setSelectedPayment("ONLINE")}
+                    className={`cursor-pointer rounded-2xl p-3.5 sm:p-4 border-2 transition-all flex items-center justify-between gap-3 ${
+                      selectedPayment === "ONLINE"
+                        ? "border-purple-400 bg-purple-50/50 shadow-2xs ring-1 ring-purple-400/20"
+                        : "border-gray-200 hover:border-purple-300 bg-white shadow-2xs hover:bg-purple-50/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <CreditCard className="w-5 h-5" />
                       </div>
-                      {/* <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleOpenCouponsModal}
-                        className="w-full mt-2 px-4 py-2 bg-green-200 text-gray-700 rounded-md hover:bg-green-300 transition-colors"
-                      >
-                        View Available Coupons
-                      </motion.button> */}
-                    </div>
-                    <Divider style={{ margin: "12px 0" }} />
-
-                    {isRiceOnlyCart(cartData) && (
-                      <div className="flex items-start space-x-2 mt-2">
-                        <input
-                          type="checkbox"
-                          id="exchangePolicy"
-                          checked={exchangePolicyAccepted}
-                          onChange={(e) =>
-                            setExchangePolicyAccepted(e.target.checked)
-                          }
-                          className="mt-3 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                        />
-                        <label
-                          htmlFor="exchangePolicy"
-                          className="text-sm text-gray-700"
-                        >
-                          You can request an exchange within 10 Days from your
-                          order being delivered.
-                        </label>
-                      </div>
-                    )}
-
-                    {walletApplicable &&
-                      totalAmount >= minOrderForWallet &&
-                      walletAmount > 0 && (
-                        <p className="text-sm text-green-600 mt-1">
-                          Wallet applicable! You can use ₹
-                          {Number(walletAmount || 0).toFixed(2)}.
-                        </p>
-                      )}
-
-                    <div className="flex items-center space-x-2 mt-3">
-                      <input
-                        type="checkbox"
-                        id="useWallet"
-                        checked={useWallet}
-                        onChange={handleCheckboxToggle}
-                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                      />
-                      <label
-                        htmlFor="useWallet"
-                        className="text-sm text-gray-700"
-                      >
-                        Use Wallet Balance (₹
-                        {Number(walletAmount || 0).toFixed(2)})
-                      </label>
-                    </div>
-
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handlePayment}
-                      disabled={
-                        loading ||
-                        isDeliveryFeeLoading ||
-                        isPreciousMetalDistanceFeeLoading ||
-                        !selectedAddress ||
-                        !selectedTimeSlot ||
-                        cartData.length === 0 ||
-                        (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) ||
-                        !canPlaceOrder // ← Only use this for minimum order logic!
-                      }
-                      className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
-                    >
-                      {loading ? (
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      ) : (
-                        <>
-                          {selectedPayment === "ONLINE"
-                            ? "Proceed to Payment"
-                            : "Place Order"}
-                          <span className="ml-2">
-                            ₹{Number(grandTotalAmount || 0).toFixed(2)}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-gray-900 leading-tight">
+                            Online Payment
                           </span>
-                        </>
+                          <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                            Fast
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          UPI, Cards, Net Banking
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
+                        selectedPayment === "ONLINE"
+                          ? "border-purple-600 bg-purple-600 text-white"
+                          : "border-gray-300 bg-white"
+                      }`}
+                    >
+                      {selectedPayment === "ONLINE" && (
+                        <Check className="w-3 h-3 stroke-[3]" />
                       )}
-                    </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Cash on Delivery */}
+                  <div
+                    onClick={() => setSelectedPayment("COD")}
+                    className={`cursor-pointer rounded-2xl p-3.5 sm:p-4 border-2 transition-all flex items-center justify-between gap-3 ${
+                      selectedPayment === "COD"
+                        ? "border-purple-400 bg-purple-50/50 shadow-2xs ring-1 ring-purple-400/20"
+                        : "border-gray-200 hover:border-purple-300 bg-white shadow-2xs hover:bg-purple-50/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center shrink-0 border border-gray-200">
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-gray-900 leading-tight">
+                            Cash on Delivery
+                          </span>
+                          <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-200">
+                            COD
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          Pay at delivery doorstep
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
+                        selectedPayment === "COD"
+                          ? "border-purple-600 bg-purple-600 text-white"
+                          : "border-gray-300 bg-white"
+                      }`}
+                    >
+                      {selectedPayment === "COD" && (
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <Footer />
-            {renderTimeSlotModal()}
-            {renderDeliveryTimelineModal()}
-            {renderCouponsModal()}
-          </main>
-        </div>
+
+            {/* Right Column: Order Summary Card */}
+            <div className="lg:col-span-5">
+              <div className="bg-white border border-gray-200/90 rounded-3xl shadow-sm overflow-hidden sticky top-6">
+                {/* Top Banner Image */}
+                <div
+                  className="relative overflow-hidden min-h-[150px] sm:min-h-[165px] bg-cover bg-right sm:bg-center p-5 sm:p-6 flex flex-col justify-start"
+                  style={{
+                    backgroundImage: `url(${checkoutBannerImg})`,
+                  }}
+                >
+                  {/* Subtle soft gradient overlay so text is crystal clear */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-emerald-900/40 to-transparent z-0" />
+
+                  <div className="relative z-10 pt-1 space-y-1">
+                    <h3 className="font-extrabold text-2xl sm:text-3xl text-white tracking-tight drop-shadow-md leading-tight">
+                      Order Summary
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-200 drop-shadow-sm">
+                      <span className="text-sm">✨</span> Fresh & Pure
+                    </div>
+                    <p className="text-xs sm:text-sm text-emerald-100/90 font-medium drop-shadow-sm pt-0.5">
+                      {cartData.length} {cartData.length === 1 ? "item" : "items"} in your cart
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 space-y-4">
+                  {(comboPricing.active || comboPricing.incomplete) && (
+                    <AgentComboPricingSummary
+                      pricing={comboPricing}
+                      compact
+                    />
+                  )}
+
+                  <div className="space-y-3 text-sm sm:text-base">
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-700 font-semibold text-sm sm:text-base">Subtotal</span>
+                      <span className="font-extrabold text-gray-900 text-base sm:text-lg">
+                        ₹{Number(grandTotal || 0).toFixed(2)}
+                      </span>
+                    </div>
+
+                    {comboPricing.active && comboPricing.savings > 0 && (
+                      <div className="flex justify-between items-center py-1.5 px-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold">
+                        <span>Combo offer savings</span>
+                        <span>-₹{Number(comboPricing.savings || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {goldMakingCharges > 0 && (
+                      <div className="flex justify-between py-1 text-xs sm:text-sm">
+                        <span className="text-gray-600">
+                          Gold Making Charges
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          ₹{Number(goldMakingCharges || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {(Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) > 0 || silverGst > 0) && (
+                      <div className="flex justify-between py-1 text-xs sm:text-sm">
+                        <span className="text-gray-600">GST</span>
+                        <span className="font-medium text-gray-900">
+                          ₹
+                          {(
+                            Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) +
+                            silverGst
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {silverDiscount > 0 && (
+                      <div className="flex justify-between items-center py-1 text-sm sm:text-base text-emerald-700 font-semibold">
+                        <span>Discount</span>
+                        <span className="font-extrabold text-emerald-700">-₹{silverDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {cartData.length > 0 && deliveryFee !== null && !isDeliveryFeeLoading && !isPreciousMetalDistanceFeeLoading && (
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-gray-700 font-semibold text-sm sm:text-base">Delivery Fee</span>
+                        <span className="font-extrabold text-gray-900 text-base sm:text-lg">
+                          ₹{(deliveryFee ?? 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {cartData.length > 0 && (isPreciousMetalDistanceFeeLoading || isDeliveryFeeLoading) && (
+                      <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Calculating delivery charges…
+                      </div>
+                    )}
+
+                    {cartData.length > 0 && !isPreciousMetalDistanceFeeLoading && !isDeliveryFeeLoading && deliveryFee === null && isPreciousMetalOnlyCart(cartData) && (
+                      <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                        {deliveryFeeMessage || "Delivery fee will be calculated and collected at the time of delivery."}
+                      </div>
+                    )}
+
+                    {cartData.length > 0 &&
+                      handlingFee !== null &&
+                      handlingFee > 0 && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Handling Fee</span>
+                          <span className="font-medium text-gray-900">₹{(handlingFee ?? 0).toFixed(2)}</span>
+                        </div>
+                      )}
+
+                    {cartData.length > 0 && smallCartFee > 0 && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-600">Small Cart Fee</span>
+                        <span className="font-medium text-gray-900">₹{Number(smallCartFee || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {cartData.length > 0 && serviceFee > 0 && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-600">Service Fee</span>
+                        <span className="font-medium text-gray-900">₹{Number(serviceFee || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {coupenApplied && coupenDetails && (
+                      <div className="flex justify-between items-center py-1.5 px-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold">
+                        <span>Coupon Discount</span>
+                        <span>-₹{Number(coupenDetails || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {totalAmount < 500 && (
+                      <div className="mt-2.5 px-3 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-medium">
+                        Use minimum ₹500 to skip handling fee and use wallet balance.
+                      </div>
+                    )}
+
+                    {useWallet && usedWalletAmount > 0 && (
+                      <div className="flex justify-between items-center py-1.5 px-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold">
+                        <span>Wallet Deduction</span>
+                        <span>-₹{Number(usedWalletAmount || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    {/* Total Payable Box */}
+                    <div className="bg-gradient-to-r from-purple-50 via-indigo-50/60 to-purple-100/70 border border-purple-200 rounded-xl p-3.5 flex justify-between items-center shadow-2xs mt-3">
+                      <div>
+                        <span className="text-sm sm:text-base font-bold text-gray-900 block leading-tight">
+                          Total Payable
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-medium">
+                          Inclusive of all taxes
+                        </span>
+                      </div>
+                      <span className="text-xl sm:text-2xl font-black text-purple-700">
+                        ₹{Number(grandTotalAmount || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Coupon Box */}
+                  <div className="border border-dashed border-purple-300 rounded-xl p-3.5 bg-purple-50/30 space-y-2.5">
+                    <div className="flex justify-between items-center">
+                      <div className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5 text-purple-600" />
+                        Apply Coupon
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleOpenCouponsModal}
+                        className="text-xs font-bold text-purple-700 bg-purple-100/80 hover:bg-purple-200 px-2.5 py-1 rounded-lg border border-purple-200 hover:underline transition-all"
+                      >
+                        View All Coupons {availableCoupons.length > 0 ? `(${availableCoupons.length})` : ""}
+                      </button>
+                    </div>
+
+                    {/* Coupon input field */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="ENTER COUPON CODE"
+                        className="w-full px-3 py-2 text-xs sm:text-sm border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-500 uppercase font-semibold placeholder:normal-case placeholder:font-normal bg-white transition-all"
+                        disabled={coupenApplied}
+                      />
+                      {coupenApplied ? (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={deleteCoupen}
+                          className="px-4 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shrink-0 shadow-xs"
+                        >
+                          Remove
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleApplyCoupon}
+                          disabled={!couponCode.trim() || couponCode.trim().length < 3 || coupenLoading}
+                          className="px-4 py-2 text-xs font-bold bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors shrink-0 flex items-center justify-center min-w-[76px] shadow-xs"
+                        >
+                          {coupenLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Apply"
+                          )}
+                        </motion.button>
+                      )}
+                    </div>
+
+                    {/* Applied Coupon Banner */}
+                    {coupenApplied && (
+                      <div className="flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <span className="font-bold text-emerald-800">✓ {couponCode}</span>
+                          <span>applied! Saved ₹{Number(coupenDetails || 0).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Compact Available Offers Carousel */}
+                    {!coupenApplied && availableCoupons.length > 0 && (
+                      <div className="pt-1">
+                        <div className="text-[11px] font-semibold text-gray-500 mb-1.5">
+                          Available Offers
+                        </div>
+                        <div className="flex overflow-x-auto gap-2 pb-1">
+                          {availableCoupons.map((coupon: Coupon) => (
+                            <div
+                              key={coupon.couponCode}
+                              className="p-2.5 bg-white border border-purple-200 rounded-xl hover:border-purple-400 hover:shadow-2xs transition-all flex-none w-44 flex flex-col justify-between"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-xs text-purple-700">
+                                    {coupon.couponCode}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-200">
+                                    Save ₹{Number(coupon.couponValue || 0).toFixed(0)}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-gray-500 mt-1">
+                                  Min. Order ₹{Number(coupon.minOrder || 0).toFixed(0)}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectCoupon(coupon)}
+                                disabled={coupenLoading}
+                                className="mt-2 text-xs font-bold text-purple-600 hover:text-purple-800 text-right hover:underline"
+                              >
+                                Apply Offer →
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {isRiceOnlyCart(cartData) && (
+                    <div className="flex items-start space-x-2 p-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                      <input
+                        type="checkbox"
+                        id="exchangePolicy"
+                        checked={exchangePolicyAccepted}
+                        onChange={(e) =>
+                          setExchangePolicyAccepted(e.target.checked)
+                        }
+                        className="mt-0.5 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <label
+                        htmlFor="exchangePolicy"
+                        className="text-xs text-gray-700 leading-tight cursor-pointer"
+                      >
+                        You can request an exchange within 10 Days from your order being delivered.
+                      </label>
+                    </div>
+                  )}
+
+                  {walletApplicable &&
+                    totalAmount >= minOrderForWallet &&
+                    walletAmount > 0 && (
+                      <p className="text-xs text-emerald-700 font-semibold mt-1">
+                        ✓ Wallet applicable! You can use ₹
+                        {Number(walletAmount || 0).toFixed(2)}.
+                      </p>
+                    )}
+
+                  <div className="flex items-center space-x-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <input
+                      type="checkbox"
+                      id="useWallet"
+                      checked={useWallet}
+                      onChange={handleCheckboxToggle}
+                      className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="useWallet"
+                      className="text-xs sm:text-sm font-bold text-gray-800 cursor-pointer select-none"
+                    >
+                      Use Wallet Balance (₹{Number(walletAmount || 0).toFixed(2)})
+                    </label>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={handlePayment}
+                    disabled={
+                      loading ||
+                      isDeliveryFeeLoading ||
+                      isPreciousMetalDistanceFeeLoading ||
+                      !selectedAddress ||
+                      !selectedTimeSlot ||
+                      cartData.length === 0 ||
+                      (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) ||
+                      !canPlaceOrder
+                    }
+                    className="w-full mt-5 py-3.5 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed flex items-center justify-center shadow-md shadow-purple-500/25 transition-all text-sm sm:text-base"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    ) : (
+                      <div className="flex items-center justify-between w-full px-4">
+                        <span>
+                          {selectedPayment === "ONLINE"
+                            ? "Proceed to Payment"
+                            : "Place Order"}
+                        </span>
+                        <span className="bg-white/20 px-2.5 py-0.5 rounded-lg text-xs sm:text-sm font-black">
+                          ₹{Number(grandTotalAmount || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
+      <Footer />
+      {renderTimeSlotModal()}
+      {renderDeliveryTimelineModal()}
+      {renderCouponsModal()}
       {isEligibleToday && (
         <Modal
           open={isModalVisible}

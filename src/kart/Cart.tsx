@@ -21,6 +21,9 @@ import {
   Home,
   Briefcase,
   Building,
+  ShoppingBag,
+  ShoppingCart,
+  Leaf,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
@@ -46,6 +49,7 @@ import {
 } from "./agentComboDisplay";
 import AgentComboPricingSummary from "./AgentComboPricingSummary";
 import { getActiveCombos } from "../ChatScreen/agentApi";
+import cart_banner from "../assets/img/cart_banner.png"
 
 interface Address {
   id?: string;
@@ -2224,10 +2228,32 @@ const CartPage: React.FC = () => {
   `}
       </style>
       <div className="flex flex-col min-h-screen overflow-x-hidden">
-        <div className="flex-1 p-4 lg:p-6">
+        <div className="flex-1 pt-2 sm:pt-3 px-3 sm:px-5 pb-6">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             <main className="flex-1 min-w-0">
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+              {/* Top Banner Header with Image Background */}
+              {cartData && cartData.length > 0 && (
+                <div className="mb-4 relative rounded-2xl overflow-hidden border border-emerald-200/80 shadow-2xs min-h-[82px] sm:min-h-[92px] flex items-center bg-[#def4e4]">
+                  {/* Background Image */}
+                  <img
+                    src={cart_banner}
+                    alt="Cart Banner"
+                    className="absolute inset-0 w-full h-full object-cover object-left sm:object-center pointer-events-none"
+                  />
+
+                  {/* Overlay Content positioned clearly to the right of the cart logo */}
+                  <div className="relative z-10 pl-[5.5rem] sm:pl-24 md:pl-28 pr-2 sm:pr-4 py-2 sm:py-3 max-w-[82%] sm:max-w-[55%]">
+                    <h2 className="text-sm sm:text-lg md:text-xl font-black text-gray-900 tracking-tight leading-tight">
+                      My Cart <span className="text-emerald-950 font-bold">({cartData.length})</span>
+                    </h2>
+                    <p className="text-[10px] sm:text-xs text-gray-700 mt-0.5 font-medium leading-snug">
+                      Review your items, update quantity or remove items
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-3.5 sm:p-5 space-y-2.5 sm:space-y-3.5">
                 {isLoading ? (
                   <div className="flex justify-center items-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -2245,214 +2271,372 @@ const CartPage: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  cartData.map((item) => (
-                    <div
-                      key={item.itemId}
-                      className="relative rounded-xl bg-white p-2 sm:p-3 shadow-sm ring-1 ring-gray-100 mb-2 sm:mb-3"
-                    >
-                      {/* gradient */}
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-purple-50/80 to-transparent" />
-
-                      <div className="relative z-10">
-                        {/* ROW 1 */}
-                        <div className="flex items-start gap-2 sm:gap-3 min-w-0 pr-1">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(`/main/itemsdisplay/${item.itemId}`, {
-                                state: { item },
-                              })
-                            }
-                            className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100"
-                            aria-label={`View ${item.itemName}`}
-                          >
-                            <img
-                              src={resolveAskoxyUrl(item.image)}
-                              alt={item.itemName}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-
-                          <div className="min-w-0 flex-1">
-                            {item.quantity < 6 && item.quantity > 0 && (
-                              <p className="text-[10px] sm:text-xs text-red-500 leading-none mb-0.5">
-                                Only {item.quantity} left
-                              </p>
-                            )}
-                            <h3 className="text-sm sm:text-base font-semibold text-purple-700 leading-snug break-words line-clamp-3">
-                              {item.itemName}
-                            </h3>
-                            {comboPricing.active &&
-                              isComboItemInCart(
-                                item.itemId,
-                                comboPricing.display,
-                              ) && (
-                                <Tag color="purple" className="text-[10px] mt-1">
-                                  Combo offer item
-                                </Tag>
-                              )}
-                            <p className="text-[11px] sm:text-xs text-gray-500 leading-tight">
-                              {item.weight} {item.units}
-                            </p>
-                          </div>
-
-                          {item.status !== "ADD" && (
-                            <div className="hidden sm:block">
-                              <Tag
-                                color={
-                                  item.status === "FREE" ? "green" : "blue"
-                                }
-                                className="text-[11px]"
-                              >
-                                {item.status === "FREE" ? "FREE" : "COMBO"}
-                              </Tag>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* ROW 2: price + qty (desktop Save is HERE, mobile Save is not) */}
-                        <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-base sm:text-lg font-bold text-purple-900">
-                              ₹{item.itemPrice}
-                            </span>
-                            {item.priceMrp && Number(item.priceMrp) > 0 && (
-                              <span className="text-[11px] sm:text-xs line-through text-gray-400">
-                                ₹{item.priceMrp}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex-1" />
-
-                          {item.quantity !== 0 ? (
-                            item.status === "ADD" ? (
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center h-9 border border-purple-500 rounded-lg">
-                                  <motion.button
-                                    whileTap={{ scale: 0.92 }}
-                                    className="w-9 h-9 flex items-center justify-center text-purple-600"
-                                    onClick={() => handleDecrease(item)}
-                                    disabled={loadingItems[item.itemId]}
-                                    aria-label="Decrease quantity"
-                                  >
-                                    <Minus size={16} />
-                                  </motion.button>
-
-                                  <div className="px-2 min-w-[28px] text-center">
-                                    {loadingItems[item.itemId] ? (
-                                      <Loader2 className="animate-spin text-purple-600 w-4 h-4" />
-                                    ) : (
-                                      <span className="text-sm font-medium text-purple-700">
-                                        {regularCartItems[item.itemId] || 0}
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <motion.button
-                                    whileTap={{ scale: 0.92 }}
-                                    className={`w-9 h-9 flex items-center justify-center text-purple-600 ${(regularCartItems[item.itemId] || 0) >=
-                                        item.quantity
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                      }`}
-                                    onClick={() => {
-                                      if (
-                                        (regularCartItems[item.itemId] || 0) <
-                                        item.quantity
-                                      )
-                                        handleIncrease(item);
-                                    }}
-                                    disabled={
-                                      (regularCartItems[item.itemId] || 0) >=
-                                      item.quantity ||
-                                      loadingItems[item.itemId]
-                                    }
-                                    aria-label="Increase quantity"
-                                  >
-                                    <Plus size={16} />
-                                  </motion.button>
-                                </div>
-
-                                <p className="text-sm sm:text-base font-bold text-purple-700 mt-4">
-                                  ₹
-                                  {Number(
-                                    Number(item.itemPrice) *
-                                    (regularCartItems[item.itemId] || 0)
-                                  ).toFixed(2)}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Tag
-                                  color={
-                                    item.status === "FREE" ? "green" : "blue"
-                                  }
-                                  className="text-[11px] sm:hidden"
-                                >
-                                  {item.status === "FREE" ? "FREE" : "COMBO"}
-                                </Tag>
-
-                                <div className="flex items-center h-9 border border-gray-300 rounded-lg opacity-60">
-                                  <button
-                                    className="w-9 h-9 text-gray-400 cursor-not-allowed"
-                                    disabled
-                                  >
-                                    <Minus size={16} />
-                                  </button>
-                                  <div className="px-2 min-w-[28px] text-center">
-                                    <span className="text-sm font-medium text-gray-600">
-                                      {item.cartQuantity}
-                                    </span>
-                                  </div>
-                                  <button
-                                    className="w-9 h-9 text-gray-400 cursor-not-allowed"
-                                    disabled
-                                  >
-                                    <Plus size={16} />
-                                  </button>
-                                </div>
-
-                                <p className="text-sm sm:text-base font-bold text-purple-700">
-                                  ₹
-                                  {Number(
-                                    Number(item.itemPrice) * item.cartQuantity
-                                  ).toFixed(2)}
-                                </p>
-                              </div>
-                            )
-                          ) : (
-                            <div className="text-xs font-semibold text-red-500">
-                              OUT OF STOCK
-                            </div>
-                          )}
-                        </div>
-
-                        {/* ROW 3: MOBILE-ONLY Save + Delete (single row) */}
-                        <div className="flex justify-between items-center mt-1 block sm:hidden">
-                          {typeof item.saveAmount === "number" &&
-                            item.saveAmount > 0 ? (
-                            <p className="text-[12px] text-green-600 font-medium truncate">
-                              Save ₹{Number(item.saveAmount || 0).toFixed(2)} (
-                              {item.savePercentage ?? 0}% OFF)
-                            </p>
-                          ) : (
-                            <span />
-                          )}
-
-                          <motion.button
-                            whileTap={{ scale: 0.95 }}
-                            className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:text-red-500 hover:bg-red-50 shrink-0"
-                            onClick={async () => {
-                              await removeCartItem(item);
-                            }}
-                            aria-label="Remove item"
-                          >
-                            <Trash2 size={17} />
-                          </motion.button>
-                        </div>
-                      </div>
+                  <>
+                    {/* Unified Desktop Table Header Row */}
+                    <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-bold text-gray-600 bg-gray-50/90 px-4 py-2.5 rounded-xl border border-gray-100 uppercase tracking-wider">
+                      <div className="col-span-6 text-gray-700">Item</div>
+                      <div className="col-span-2 text-center text-gray-700">Price</div>
+                      <div className="col-span-2 text-center text-gray-700">Quantity</div>
+                      <div className="col-span-2 text-right text-gray-700">Total</div>
                     </div>
-                  ))
+
+                    {/* Items List */}
+                    <div className="space-y-2.5 sm:space-y-0 sm:divide-y sm:divide-gray-100">
+                      {cartData.map((item) => {
+                        const itemQty =
+                          item.status === "ADD"
+                            ? regularCartItems[item.itemId] || item.cartQuantity || 1
+                            : item.cartQuantity || 1;
+                        const itemTotal = (
+                          parseFloat(item.itemPrice || "0") * itemQty
+                        ).toFixed(2);
+
+                        return (
+                          <React.Fragment key={item.itemId}>
+                            {/* MOBILE VIEW (Card Layout) */}
+                            <div className="block sm:hidden p-3.5 bg-white rounded-2xl border border-gray-200/90 shadow-2xs space-y-3">
+                              {/* Row 1: Image & Name */}
+                              <div className="flex items-start gap-3 min-w-0">
+                                <div
+                                  onClick={() =>
+                                    navigate(`/main/itemsdisplay/${item.itemId}`, {
+                                      state: { item },
+                                    })
+                                  }
+                                  className="w-16 h-16 rounded-xl bg-white border border-gray-200/80 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden cursor-pointer"
+                                >
+                                  {item.image ? (
+                                    <img
+                                      src={resolveAskoxyUrl(item.image)}
+                                      alt={item.itemName}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        (e.target as HTMLElement).style.display = "none";
+                                        const fallback = (e.target as HTMLElement).nextElementSibling;
+                                        if (fallback) {
+                                          (fallback as HTMLElement).classList.remove("hidden");
+                                          (fallback as HTMLElement).classList.add("flex");
+                                        }
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div
+                                    className={`w-full h-full rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-base ${
+                                      item.image ? "hidden" : "flex"
+                                    }`}
+                                  >
+                                    {item.itemName ? item.itemName.charAt(0).toUpperCase() : "🛒"}
+                                  </div>
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  {item.quantity < 6 && item.quantity > 0 && (
+                                    <p className="text-[10px] text-red-500 font-bold leading-none mb-0.5">
+                                      Only {item.quantity} left
+                                    </p>
+                                  )}
+                                  <h4
+                                    onClick={() =>
+                                      navigate(`/main/itemsdisplay/${item.itemId}`, {
+                                        state: { item },
+                                      })
+                                    }
+                                    className="font-semibold text-sm text-purple-900 leading-snug break-words hover:text-purple-700 cursor-pointer"
+                                  >
+                                    {item.itemName}
+                                  </h4>
+                                  {(item.weight || item.units) && (
+                                    <div className="text-sm font-semibold text-purple-700 mt-0.5">
+                                      {item.weight} {item.units}
+                                    </div>
+                                  )}
+                                  {comboPricing.active &&
+                                    isComboItemInCart(
+                                      item.itemId,
+                                      comboPricing.display,
+                                    ) && (
+                                      <Tag color="purple" className="text-[10px] mt-0.5 font-medium">
+                                        Combo offer item
+                                      </Tag>
+                                    )}
+                                </div>
+                              </div>
+
+                              {/* Row 2: Price, Stepper & Total */}
+                              <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
+                                {/* Price */}
+                                <div className="flex items-baseline gap-1.5 shrink-0">
+                                  <span className="text-base font-bold text-purple-900">
+                                    ₹{item.itemPrice}
+                                  </span>
+                                  {item.priceMrp && Number(item.priceMrp) > 0 && (
+                                    <span className="text-xs line-through text-gray-400">
+                                      ₹{item.priceMrp}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Stepper */}
+                                <div className="flex items-center justify-center">
+                                  {item.quantity === 0 ? (
+                                    <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg">
+                                      OUT OF STOCK
+                                    </span>
+                                  ) : item.status === "ADD" ? (
+                                    <div className="flex items-center h-8 border border-purple-300 bg-purple-50/40 rounded-xl overflow-hidden shadow-2xs">
+                                      <button
+                                        onClick={() => handleDecrease(item)}
+                                        disabled={loadingItems[item.itemId]}
+                                        className="w-7 h-7 flex items-center justify-center text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+                                        aria-label="Decrease quantity"
+                                      >
+                                        <Minus className="w-3.5 h-3.5" />
+                                      </button>
+                                      <div className="px-1.5 min-w-[24px] text-center">
+                                        {loadingItems[item.itemId] ? (
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600 inline" />
+                                        ) : (
+                                          <span className="text-xs font-bold text-purple-900">
+                                            {regularCartItems[item.itemId] || 0}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          if (
+                                            (regularCartItems[item.itemId] || 0) <
+                                            item.quantity
+                                          ) {
+                                            handleIncrease(item);
+                                          }
+                                        }}
+                                        disabled={
+                                          (regularCartItems[item.itemId] || 0) >=
+                                            item.quantity ||
+                                          loadingItems[item.itemId]
+                                        }
+                                        className={`w-7 h-7 flex items-center justify-center text-purple-700 hover:bg-purple-100 ${
+                                          (regularCartItems[item.itemId] || 0) >=
+                                          item.quantity
+                                            ? "opacity-40 cursor-not-allowed"
+                                            : ""
+                                        }`}
+                                        aria-label="Increase quantity"
+                                      >
+                                        <Plus className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <Tag
+                                        color={item.status === "FREE" ? "green" : "blue"}
+                                        className="text-[11px] font-bold"
+                                      >
+                                        {item.status === "FREE" ? "FREE" : "COMBO"}
+                                      </Tag>
+                                      <div className="w-7 h-7 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center">
+                                        {item.cartQuantity}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Total */}
+                                <div className="text-right shrink-0">
+                                  <span className="text-base font-bold text-purple-950">
+                                    {isFreeItem(item) ? (
+                                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                        FREE
+                                      </span>
+                                    ) : (
+                                      `₹${itemTotal}`
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Row 3: Savings */}
+                              {typeof item.saveAmount === "number" && item.saveAmount > 0 && (
+                                <div className="text-sm font-bold text-emerald-600 pt-0.5">
+                                  Save ₹{Number(item.saveAmount).toFixed(2)} ({item.savePercentage ?? 0}% OFF)
+                                </div>
+                              )}
+                            </div>
+
+                            {/* DESKTOP VIEW (Table Row) */}
+                            <div className="hidden sm:grid py-4 first:pt-1 grid-cols-12 gap-2 sm:gap-3 items-center">
+                              {/* Col 1: Item Thumbnail & Details */}
+                              <div className="col-span-6 flex items-center gap-3 sm:gap-4 min-w-0">
+                                <div
+                                  onClick={() =>
+                                    navigate(`/main/itemsdisplay/${item.itemId}`, {
+                                      state: { item },
+                                    })
+                                  }
+                                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border border-purple-100 p-1.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden cursor-pointer hover:shadow-md hover:border-purple-300 transition-all"
+                                >
+                                  {item.image ? (
+                                    <img
+                                      src={resolveAskoxyUrl(item.image)}
+                                      alt={item.itemName}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        (e.target as HTMLElement).style.display = "none";
+                                        const fallback = (e.target as HTMLElement).nextElementSibling;
+                                        if (fallback) {
+                                          (fallback as HTMLElement).classList.remove("hidden");
+                                          (fallback as HTMLElement).classList.add("flex");
+                                        }
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div
+                                    className={`w-full h-full rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-lg sm:text-xl ${
+                                      item.image ? "hidden" : "flex"
+                                    }`}
+                                  >
+                                    {item.itemName ? item.itemName.charAt(0).toUpperCase() : "🛒"}
+                                  </div>
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  {item.quantity < 6 && item.quantity > 0 && (
+                                    <p className="text-[10px] sm:text-xs text-red-500 font-bold leading-none mb-1">
+                                      Only {item.quantity} left
+                                    </p>
+                                  )}
+                                  <h4
+                                    onClick={() =>
+                                      navigate(`/main/itemsdisplay/${item.itemId}`, {
+                                        state: { item },
+                                      })
+                                    }
+                                    className="font-normal text-sm sm:text-base text-gray-900 leading-snug break-words hover:text-purple-700 cursor-pointer transition-colors"
+                                    title={item.itemName}
+                                  >
+                                    {item.itemName}
+                                  </h4>
+                                  {(item.weight || item.units) && (
+                                    <div className="text-sm sm:text-base font-semibold text-purple-700 mt-1">
+                                      {item.weight} {item.units}
+                                    </div>
+                                  )}
+                                  {comboPricing.active &&
+                                    isComboItemInCart(
+                                      item.itemId,
+                                      comboPricing.display,
+                                    ) && (
+                                      <Tag color="purple" className="text-[10px] mt-1 font-semibold">
+                                        Combo offer item
+                                      </Tag>
+                                    )}
+                                  {typeof item.saveAmount === "number" && item.saveAmount > 0 && (
+                                    <div className="text-sm sm:text-base font-bold text-emerald-600 mt-1">
+                                      Save ₹{Number(item.saveAmount).toFixed(2)} ({item.savePercentage ?? 0}% OFF)
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Col 2: Price */}
+                              <div className="col-span-2 text-center">
+                                <span className="text-sm sm:text-base font-bold text-gray-900 block">
+                                  ₹{item.itemPrice}
+                                </span>
+                                {item.priceMrp && Number(item.priceMrp) > 0 && (
+                                  <span className="text-[11px] sm:text-xs line-through text-gray-400 block mt-0.5">
+                                    ₹{item.priceMrp}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Col 3: Quantity Controls */}
+                              <div className="col-span-2 flex items-center justify-center">
+                                {item.quantity === 0 ? (
+                                  <span className="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-center">
+                                    OUT OF STOCK
+                                  </span>
+                                ) : item.status === "ADD" ? (
+                                  <div className="flex items-center h-8 sm:h-9 border border-purple-200 bg-purple-50/60 rounded-xl overflow-hidden shadow-2xs">
+                                    <button
+                                      onClick={() => handleDecrease(item)}
+                                      disabled={loadingItems[item.itemId]}
+                                      className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+                                      aria-label="Decrease quantity"
+                                    >
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    <div className="px-1 sm:px-2 min-w-[24px] sm:min-w-[28px] text-center">
+                                      {loadingItems[item.itemId] ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600 inline" />
+                                      ) : (
+                                        <span className="text-xs sm:text-sm font-black text-purple-900">
+                                          {regularCartItems[item.itemId] || 0}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <button
+                                      onClick={() => {
+                                        if (
+                                          (regularCartItems[item.itemId] || 0) <
+                                          item.quantity
+                                        ) {
+                                          handleIncrease(item);
+                                        }
+                                      }}
+                                      disabled={
+                                        (regularCartItems[item.itemId] || 0) >=
+                                          item.quantity ||
+                                        loadingItems[item.itemId]
+                                      }
+                                      className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-purple-700 hover:bg-purple-100 transition-colors ${
+                                        (regularCartItems[item.itemId] || 0) >=
+                                        item.quantity
+                                          ? "opacity-40 cursor-not-allowed"
+                                          : ""
+                                      }`}
+                                      aria-label="Increase quantity"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5">
+                                    <Tag
+                                      color={
+                                        item.status === "FREE" ? "green" : "blue"
+                                      }
+                                      className="text-[11px] font-bold"
+                                    >
+                                      {item.status === "FREE" ? "FREE" : "COMBO"}
+                                    </Tag>
+                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 font-bold text-xs sm:text-sm flex items-center justify-center">
+                                      {item.cartQuantity}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Col 4: Total */}
+                              <div className="col-span-2 text-right">
+                                <span className="text-sm sm:text-base font-black text-purple-950 block">
+                                  {isFreeItem(item) ? (
+                                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                      FREE
+                                    </span>
+                                  ) : (
+                                    `₹${itemTotal}`
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             </main>
