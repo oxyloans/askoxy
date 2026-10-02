@@ -27,6 +27,7 @@ import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import customerApi from "../utils/axiosInstances";
+import { SilverOfferTooltip, isSilverProduct } from "../components/SilverOfferTooltip";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -57,6 +58,8 @@ interface Product {
   bmvCoins: number;
   quantity: number | null;
   barcodeValue: any;
+  categoryName?: string;
+  categoryType?: string;
 }
 
 interface Category {
@@ -325,6 +328,62 @@ const SearchMain: React.FC = () => {
     }
   };
 
+  const handleBuyNow = async (item: Product) => {
+    if (!token || !customerId) {
+      message.warning("Please login to proceed.");
+      setTimeout(() => navigate("/whatsapplogin"), 1500);
+      return;
+    }
+
+    try {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId]: true },
+      }));
+
+      await customerApi.post(
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+        { customerId, itemId: item.itemId, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (response.data?.customerCartResponseList) {
+        const cartItemsMap = response.data.customerCartResponseList.reduce(
+          (acc: Record<string, number>, cartItem: CartItem) => {
+            if (cartItem.status !== "FREE") {
+              acc[cartItem.itemId] =
+                (acc[cartItem.itemId] || 0) + (cartItem.cartQuantity || 0);
+            }
+            return acc;
+          },
+          {},
+        );
+        setCartItems(cartItemsMap);
+        setCartData(response.data.customerCartResponseList);
+        setCount(
+          (Object.values(cartItemsMap) as number[]).reduce(
+            (acc, quantity) => acc + quantity,
+            0,
+          ),
+        );
+      }
+
+      navigate("/main/checkout");
+    } catch (error) {
+      console.error("Error during Buy Now:", error);
+      message.error("Failed to process Buy Now. Please try again.");
+    } finally {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId]: false },
+      }));
+    }
+  };
+
   const handleQuantityChange = async (item: Product, increment: boolean) => {
     if (!token || !customerId) return;
     if (cartItems[item.itemId] === item.quantity && increment) {
@@ -404,9 +463,7 @@ const SearchMain: React.FC = () => {
   };
 
   const isItemUserAdded = (itemId: string): boolean => {
-    return cartData.some(
-      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD",
-    );
+    return (cartItems[itemId] || 0) > 0;
   };
 
   const hasNoResults =
@@ -430,7 +487,10 @@ const SearchMain: React.FC = () => {
           if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
 
           return true;
-        });
+        }).map((prod) => ({
+          ...prod,
+          categoryName: prod.categoryName || cat.categoryName,
+        }));
         const sortedCleanedItems = sortItemsByQuantityAndName(cleanedItems);
         // Filter and prioritize ASKOXY items first within each category
         // Prioritize ASKOXY items first within the sorted list
@@ -909,20 +969,34 @@ const SearchMain: React.FC = () => {
                                       </Title>
                                     )}
 
-                                    {showWeight && (
-                                      <Text
-                                        type="secondary"
-                                        style={{
-                                          fontSize: 13,
-                                          display: "block",
-                                          marginBottom: 10,
-                                          color: "#666",
-                                        }}
-                                      >
-                                        Weight: {product.weight}
-                                        {unitDisplay ? ` ${unitDisplay}` : ""}
-                                      </Text>
-                                    )}
+                                    {/* Weight & Silver Offer Tooltip */}
+                                    <div className="flex items-center justify-between gap-1 min-h-[1.5rem] mb-2">
+                                      {showWeight ? (
+                                        <Text
+                                          type="secondary"
+                                          style={{
+                                            fontSize: 13,
+                                            color: "#666",
+                                          }}
+                                        >
+                                          Weight: {product.weight}
+                                          {unitDisplay ? ` ${unitDisplay}` : ""}
+                                        </Text>
+                                      ) : (
+                                        <span />
+                                      )}
+                                      {isSilverProduct(product) && product.itemId && (
+                                        <SilverOfferTooltip
+                                          itemId={product.itemId}
+                                          weight={product.weight}
+                                          units={product.units}
+                                          itemName={product.itemName}
+                                          itemPrice={product.itemPrice}
+                                          categoryType={product.categoryType}
+                                          categoryName={product.categoryName}
+                                        />
+                                      )}
+                                    </div>
 
                                     {showCoins && (
                                       <Tag
@@ -978,87 +1052,112 @@ const SearchMain: React.FC = () => {
 
                                   <div onClick={(e) => e.stopPropagation()}>
                                     {isItemUserAdded(product.itemId) ? (
-                                      <Space.Compact style={{ width: "100%" }}>
-                                        <Button
-                                          icon={<MinusOutlined />}
-                                          onClick={() =>
-                                            handleQuantityChange(product, false)
-                                          }
-                                          loading={
-                                            loadingItems.items[product.itemId]
-                                          }
-                                          style={{
-                                            flex: 1,
-                                            height: 44,
-                                            backgroundColor: "#5c3391",
-                                            borderColor: "#5c3391",
-                                            color: "white",
-                                            fontWeight: 600,
-                                          }}
-                                        />
-                                        <Button
-                                          style={{
-                                            flex: 1,
-                                            height: 44,
-                                            backgroundColor: "white",
-                                            color: "#5c3391",
-                                            fontWeight: "bold",
-                                            fontSize: 16,
-                                            border: "1px solid #5c3391",
-                                          }}
+                                      <div className="grid grid-cols-2 gap-1.5 items-center">
+                                        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-0.5 sm:p-1 border border-purple-200">
+                                          <button
+                                            type="button"
+                                            className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white rounded shadow-2xs text-purple-700 font-bold text-xs cursor-pointer border-none"
+                                            onClick={() =>
+                                              handleQuantityChange(product, false)
+                                            }
+                                            disabled={
+                                              loadingItems.items[product.itemId]
+                                            }
+                                          >
+                                            {loadingItems.items[product.itemId] ? (
+                                              <Loader2 className="animate-spin" size={12} />
+                                            ) : (
+                                              "-"
+                                            )}
+                                          </button>
+
+                                          <span className="font-bold text-xs text-purple-800 px-1">
+                                            {cartItems[product.itemId] || 0}
+                                          </span>
+
+                                          <button
+                                            type="button"
+                                            className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white rounded shadow-2xs text-purple-700 font-bold text-xs cursor-pointer border-none ${
+                                              availableQty !== null &&
+                                              (cartItems[product.itemId] || 0) >= availableQty
+                                                ? "opacity-50 cursor-not-allowed"
+                                                : ""
+                                            }`}
+                                            onClick={() =>
+                                              handleQuantityChange(product, true)
+                                            }
+                                            disabled={
+                                              availableQty !== null &&
+                                              (cartItems[product.itemId] || 0) >= availableQty
+                                            }
+                                          >
+                                            {loadingItems.items[product.itemId] ? (
+                                              <Loader2 className="animate-spin" size={12} />
+                                            ) : (
+                                              "+"
+                                            )}
+                                          </button>
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          className="ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-xs font-bold shadow-2xs whitespace-nowrap leading-none"
+                                          onClick={() => handleBuyNow(product)}
+                                          disabled={isOutOfStock}
                                         >
-                                          {cartItems[product.itemId] || 0}
-                                        </Button>
-                                        <Button
-                                          icon={<PlusOutlined />}
-                                          onClick={() =>
-                                            handleQuantityChange(product, true)
-                                          }
+                                          <span>Buy Now</span>
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="grid grid-cols-2 gap-1.5">
+                                        <button
+                                          type="button"
+                                          className={`ab-06__btn ab-06__btn--cart w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none ${
+                                            isOutOfStock
+                                              ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-400"
+                                              : ""
+                                          }`}
+                                          onClick={() => {
+                                            if (isOutOfStock) return;
+                                            handleAddToCart(product);
+                                          }}
                                           disabled={
-                                            availableQty !== null &&
-                                            (cartItems[product.itemId] || 0) >=
-                                              availableQty
-                                          }
-                                          loading={
+                                            isOutOfStock ||
                                             loadingItems.items[product.itemId]
                                           }
-                                          style={{
-                                            flex: 1,
-                                            height: 44,
-                                            backgroundColor: "#5c3391",
-                                            borderColor: "#5c3391",
-                                            color: "white",
-                                            fontWeight: 600,
+                                        >
+                                          <span>
+                                            {loadingItems.items[product.itemId] ? (
+                                              <Loader2 className="animate-spin inline-block" size={12} />
+                                            ) : isOutOfStock ? (
+                                              "Sold Out"
+                                            ) : (
+                                              "Add to Cart"
+                                            )}
+                                          </span>
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          className={`ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none ${
+                                            isOutOfStock
+                                              ? "opacity-50 cursor-not-allowed border-gray-400 text-gray-400"
+                                              : ""
+                                          }`}
+                                          onClick={() => {
+                                            if (isOutOfStock) return;
+                                            handleBuyNow(product);
                                           }}
-                                        />
-                                      </Space.Compact>
-                                    ) : (
-                                      <Button
-                                        type="primary"
-                                        block
-                                        onClick={() => handleAddToCart(product)}
-                                        disabled={isOutOfStock}
-                                        style={{
-                                          height: 44,
-                                          background: isOutOfStock
-                                            ? "#d9d9d9"
-                                            : "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
-                                          border: "none",
-                                          fontWeight: 700,
-                                          fontSize: 15,
-                                          borderRadius: 8,
-                                          color: isOutOfStock
-                                            ? "#666"
-                                            : "white",
-                                          cursor: isOutOfStock
-                                            ? "not-allowed"
-                                            : "pointer",
-                                        }}
-                                      >
-                                        {isOutOfStock
-                                          ? "SOLD OUT"
-                                          : "🛒 Add to Cart"}
-                                      </Button>
+                                          disabled={
+                                            isOutOfStock ||
+                                            loadingItems.items[product.itemId]
+                                          }
+                                        >
+                                          <span>
+                                            {isOutOfStock ? "Sold Out" : "Buy Now"}
+                                          </span>
+                                        </button>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -1220,20 +1319,34 @@ const SearchMain: React.FC = () => {
                                         </Title>
                                       )}
 
-                                      {showWeight && (
-                                        <Text
-                                          type="secondary"
-                                          style={{
-                                            fontSize: 13,
-                                            display: "block",
-                                            marginBottom: 10,
-                                            color: "#666",
-                                          }}
-                                        >
-                                          Weight: {product.weight}
-                                          {unitDisplay ? ` ${unitDisplay}` : ""}
-                                        </Text>
-                                      )}
+                                      {/* Weight & Silver Offer Tooltip */}
+                                      <div className="flex items-center justify-between gap-1 min-h-[1.5rem] mb-2">
+                                        {showWeight ? (
+                                          <Text
+                                            type="secondary"
+                                            style={{
+                                              fontSize: 13,
+                                              color: "#666",
+                                            }}
+                                          >
+                                            Weight: {product.weight}
+                                            {unitDisplay ? ` ${unitDisplay}` : ""}
+                                          </Text>
+                                        ) : (
+                                          <span />
+                                        )}
+                                        {isSilverProduct(product) && product.itemId && (
+                                          <SilverOfferTooltip
+                                            itemId={product.itemId}
+                                            weight={product.weight}
+                                            units={product.units}
+                                            itemName={product.itemName}
+                                            itemPrice={product.itemPrice}
+                                            categoryType={product.categoryType}
+                                            categoryName={product.categoryName}
+                                          />
+                                        )}
+                                      </div>
 
                                       {showCoins && (
                                         <Tag
@@ -1292,97 +1405,120 @@ const SearchMain: React.FC = () => {
 
                                     <div onClick={(e) => e.stopPropagation()}>
                                       {isItemUserAdded(product.itemId) ? (
-                                        <Space.Compact
-                                          style={{ width: "100%" }}
-                                        >
-                                          <Button
-                                            icon={<MinusOutlined />}
-                                            onClick={() =>
-                                              handleQuantityChange(
-                                                product,
-                                                false,
-                                              )
-                                            }
-                                            loading={
-                                              loadingItems.items[product.itemId]
-                                            }
-                                            style={{
-                                              flex: 1,
-                                              height: 44,
-                                              backgroundColor: "#5c3391",
-                                              borderColor: "#5c3391",
-                                              color: "white",
-                                              fontWeight: 600,
-                                            }}
-                                          />
-                                          <Button
-                                            style={{
-                                              flex: 1,
-                                              height: 44,
-                                              backgroundColor: "white",
-                                              color: "#5c3391",
-                                              fontWeight: "bold",
-                                              fontSize: 16,
-                                              border: "1px solid #5c3391",
-                                            }}
+                                        <div className="grid grid-cols-2 gap-1.5 items-center">
+                                          <div className="flex items-center justify-between bg-purple-50 rounded-lg p-0.5 sm:p-1 border border-purple-200">
+                                            <button
+                                              type="button"
+                                              className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white rounded shadow-2xs text-purple-700 font-bold text-xs cursor-pointer border-none"
+                                              onClick={() =>
+                                                handleQuantityChange(
+                                                  product,
+                                                  false,
+                                                )
+                                              }
+                                              disabled={
+                                                loadingItems.items[product.itemId]
+                                              }
+                                            >
+                                              {loadingItems.items[product.itemId] ? (
+                                                <Loader2 className="animate-spin" size={12} />
+                                              ) : (
+                                                "-"
+                                              )}
+                                            </button>
+
+                                            <span className="font-bold text-xs text-purple-800 px-1">
+                                              {cartItems[product.itemId] || 0}
+                                            </span>
+
+                                            <button
+                                              type="button"
+                                              className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white rounded shadow-2xs text-purple-700 font-bold text-xs cursor-pointer border-none ${
+                                                availableQty !== null &&
+                                                (cartItems[product.itemId] ||
+                                                  0) >= availableQty
+                                                  ? "opacity-50 cursor-not-allowed"
+                                                  : ""
+                                              }`}
+                                              onClick={() =>
+                                                handleQuantityChange(
+                                                  product,
+                                                  true,
+                                                )
+                                              }
+                                              disabled={
+                                                availableQty !== null &&
+                                                (cartItems[product.itemId] ||
+                                                  0) >= availableQty
+                                              }
+                                            >
+                                              {loadingItems.items[product.itemId] ? (
+                                                <Loader2 className="animate-spin" size={12} />
+                                              ) : (
+                                                "+"
+                                              )}
+                                            </button>
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            className="ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-xs font-bold shadow-2xs whitespace-nowrap leading-none"
+                                            onClick={() => handleBuyNow(product)}
+                                            disabled={isOutOfStock}
                                           >
-                                            {cartItems[product.itemId] || 0}
-                                          </Button>
-                                          <Button
-                                            icon={<PlusOutlined />}
-                                            onClick={() =>
-                                              handleQuantityChange(
-                                                product,
-                                                true,
-                                              )
-                                            }
+                                            <span>Buy Now</span>
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                          <button
+                                            type="button"
+                                            className={`ab-06__btn ab-06__btn--cart w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none ${
+                                              isOutOfStock
+                                                ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-400"
+                                                : ""
+                                            }`}
+                                            onClick={() => {
+                                              if (isOutOfStock) return;
+                                              handleAddToCart(product);
+                                            }}
                                             disabled={
-                                              availableQty !== null &&
-                                              (cartItems[product.itemId] ||
-                                                0) >= availableQty
-                                            }
-                                            loading={
+                                              isOutOfStock ||
                                               loadingItems.items[product.itemId]
                                             }
-                                            style={{
-                                              flex: 1,
-                                              height: 44,
-                                              backgroundColor: "#5c3391",
-                                              borderColor: "#5c3391",
-                                              color: "white",
-                                              fontWeight: 600,
+                                          >
+                                            <span>
+                                              {loadingItems.items[product.itemId] ? (
+                                                <Loader2 className="animate-spin inline-block" size={12} />
+                                              ) : isOutOfStock ? (
+                                                "Sold Out"
+                                              ) : (
+                                                "Add to Cart"
+                                              )}
+                                            </span>
+                                          </button>
+
+                                          <button
+                                            type="button"
+                                            className={`ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none ${
+                                              isOutOfStock
+                                                ? "opacity-50 cursor-not-allowed border-gray-400 text-gray-400"
+                                                : ""
+                                            }`}
+                                            onClick={() => {
+                                              if (isOutOfStock) return;
+                                              handleBuyNow(product);
                                             }}
-                                          />
-                                        </Space.Compact>
-                                      ) : (
-                                        <Button
-                                          type="primary"
-                                          block
-                                          onClick={() =>
-                                            handleAddToCart(product)
-                                          }
-                                          disabled={isOutOfStock}
-                                          style={{
-                                            height: 44,
-                                            background: isOutOfStock
-                                              ? "#d9d9d9"
-                                              : "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
-                                            border: "none",
-                                            fontWeight: 700,
-                                            fontSize: 15,
-                                            borderRadius: 8,
-                                            color: isOutOfStock
-                                              ? "#666"
-                                              : "white",
-                                            cursor: isOutOfStock
-                                              ? "not-allowed"
-                                              : "pointer",
-                                          }}
-                                        >
-                                          {isOutOfStock
-                                            ? "SOLD OUT"
-                                            : "🛒 Add to Cart"}
-                                        </Button>
+                                            disabled={
+                                              isOutOfStock ||
+                                              loadingItems.items[product.itemId]
+                                            }
+                                          >
+                                            <span>
+                                              {isOutOfStock ? "Sold Out" : "Buy Now"}
+                                            </span>
+                                          </button>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
