@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
-import { Button, message, Modal, Input, Tag } from "antd";
+import { Button, message, Modal, Input, Tag, Tooltip } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
@@ -2763,22 +2763,12 @@ const CartPage: React.FC = () => {
                             <span>-₹{comboPricing.savings.toFixed(2)}</span>
                           </div>
                         )}
-                        <div className="flex justify-between text-gray-700 text-sm mt-1">
-                          <span>Charges</span>
-                          <span>
-                            ₹
-                            {chargesWithoutGoldGst.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                        {(totalGoldGst > 0 || silverGst > 0) && (
+                        {chargesWithoutGoldGst > 0 && (
                           <div className="flex justify-between text-gray-700 text-sm mt-1">
-                            <span>GST</span>
+                            <span>Making Charges</span>
                             <span>
                               ₹
-                              {(totalGoldGst + silverGst).toLocaleString("en-IN", {
+                              {chargesWithoutGoldGst.toLocaleString("en-IN", {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -2786,10 +2776,29 @@ const CartPage: React.FC = () => {
                           </div>
                         )}
 
+                        {totalGoldGst > 0 && (
+                          <div className="flex justify-between text-gray-700 text-sm mt-1">
+                            <span>{silverGst > 0 ? "Gold GST (3%)" : "GST (3%)"}</span>
+                            <span>₹{totalGoldGst.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {silverGst > 0 && (
+                          <div className="flex justify-between text-gray-700 text-sm mt-1">
+                            <span>Silver GST (3%)</span>
+                            <span>₹{silverGst.toFixed(2)}</span>
+                          </div>
+                        )}
+
                         {silverDiscount > 0 && (
-                          <div className="flex justify-between text-emerald-700 text-sm mt-1 font-medium">
-                            <span>Discount</span>
-                            <span>-₹{silverDiscount.toFixed(2)}</span>
+                          <div className="flex justify-between text-emerald-700 text-sm mt-1 font-medium items-center">
+                            <span className="flex items-center gap-1">
+                              Discount
+                              <Tooltip title="Silver Discount (100% GST Waived)">
+                                <Info className="w-3.5 h-3.5 text-emerald-600 cursor-pointer hover:text-emerald-800" />
+                              </Tooltip>
+                            </span>
+                            <span className="font-bold">-₹{silverDiscount.toFixed(2)}</span>
                           </div>
                         )}
 
@@ -3366,68 +3375,51 @@ const CartPage: React.FC = () => {
         onCancel={() => setShowSilverGstModal(false)}
         footer={null}
         centered
-        width={440}
+        width={420}
+        style={{ maxWidth: "calc(100vw - 32px)", margin: "0 auto" }}
         closeIcon={<X className="w-4 h-4 text-slate-500" />}
         className="silver-offer-modal"
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 24 }}
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden rounded-[32px] bg-gradient-to-b from-purple-50 via-white to-amber-50/40 ring-1 ring-purple-200/60"
+          className="relative overflow-hidden rounded-[28px] bg-gradient-to-b from-purple-50 via-white to-amber-50/40 ring-1 ring-purple-200/60"
         >
           <div className="silver-offer-shine" />
 
-          {/* Soft glow blobs */}
+          {/* Soft glow background blobs */}
           <motion.div
-            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.35, 0.55, 0.35] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-purple-200/50 blur-3xl"
+            className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-purple-200/50 blur-3xl pointer-events-none"
           />
           <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{
-              duration: 4.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.5,
-            }}
-            className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-amber-200/50 blur-3xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.25, 0.45, 0.25] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-amber-200/40 blur-3xl pointer-events-none"
           />
 
-          {/* Floating sparkles */}
+          {/* Floating animated sparkles */}
           <motion.div
-            animate={{
-              y: [0, -8, 0],
-              rotate: [0, 15, 0],
-              opacity: [0.6, 1, 0.6],
-            }}
+            animate={{ y: [0, -8, 0], rotate: [0, 15, 0], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-6 left-8 text-purple-400"
+            className="absolute top-6 left-7 text-purple-400 pointer-events-none"
           >
             <Sparkles className="w-5 h-5" />
           </motion.div>
           <motion.div
-            animate={{
-              y: [0, 10, 0],
-              rotate: [0, -15, 0],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 3.4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.6,
-            }}
-            className="absolute top-10 right-10 text-amber-400"
+            animate={{ y: [0, 10, 0], rotate: [0, -15, 0], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+            className="absolute top-8 right-8 text-amber-400 pointer-events-none"
           >
             <Sparkles className="w-4 h-4" />
           </motion.div>
 
-          <div className="relative pt-10 pb-8 px-7 text-center">
-            {/* Animated Celebration Icon */}
-            <div className="relative mx-auto mb-4 w-20 h-20 flex items-center justify-center">
+          <div className="relative pt-8 pb-6 px-6 text-center">
+            {/* Animated Glowing Celebration Icon */}
+            <div className="relative mx-auto mb-3.5 w-16 h-16 flex items-center justify-center">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
@@ -3435,130 +3427,106 @@ const CartPage: React.FC = () => {
               />
               <motion.div
                 animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
-                transition={{
-                  duration: 2.2,
-                  repeat: Infinity,
-                  ease: "easeOut",
-                }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
                 className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-300 to-amber-300"
               />
               <motion.div
-                initial={{ scale: 0, rotate: -30 }}
+                initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{
-                  delay: 0.15,
                   type: "spring",
                   stiffness: 260,
                   damping: 18,
                 }}
-                className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-purple-200"
+                className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-purple-200"
               >
-                <PartyPopper className="w-8 h-8 text-white" />
+                <PartyPopper className="w-7 h-7 text-white" />
               </motion.div>
             </div>
 
-            {/* Top Pill */}
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-100 via-pink-50 to-amber-100 border border-purple-200 text-purple-800 text-xs font-bold px-3 py-1 rounded-full mb-2 shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              100% GST Paid by Askoxy.ai
-            </motion.div>
-
-            {/* Heading */}
+            {/* Highlighted Main Heading */}
             <motion.h2
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-2xl font-extrabold bg-gradient-to-r from-purple-700 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent mb-2"
+              transition={{ delay: 0.15 }}
+              className="text-2xl font-black bg-gradient-to-r from-purple-700 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent mb-2 tracking-tight"
             >
-              Congratulations! 🎉
+              GST & Making Charges on Us 🎉
             </motion.h2>
 
-            {/* Sub-headline */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35 }}
-              className="text-sm font-semibold text-gray-700 mb-2"
+            {/* Sub-headline Statement Card (Emerald Green Theme) */}
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-emerald-50/90 border border-emerald-200/90 rounded-2xl py-2.5 px-3.5 mb-3.5 text-center shadow-xs"
             >
-              We are paying the GST amount on your behalf!
-            </motion.p>
+              <p className="text-sm font-black text-emerald-950 leading-snug">
+                ✨ Exclusive for <span className="text-emerald-700 underline decoration-emerald-400 decoration-2">Silver Purchases</span>
+              </p>
+              <p className="text-xs font-semibold text-emerald-800/90 mt-0.5">
+                Zero Making Charges + 100% GST Covered by Askoxy.ai!
+              </p>
+            </motion.div>
 
-            {/* Explanation paragraph */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-xs text-gray-500 mb-5 leading-relaxed px-2"
-            >
-              For your silver purchase, Askoxy.ai covers the complete government GST so you don't have to pay extra. The entire tax amount is waived as an instant discount!
-            </motion.p>
-
-            {/* GST Amount Card */}
+            {/* Dashed GST & Making Charges Card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.45 }}
-              className="bg-gradient-to-br from-purple-50 via-white to-amber-50/70 border-2 border-dashed border-purple-200 rounded-2xl p-4 mb-5 shadow-inner text-left"
+              transition={{ delay: 0.25 }}
+              className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-3.5 mb-3.5 text-left space-y-2 text-xs shadow-xs"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-500">Government GST (3%)</span>
-                <span className="text-xs font-bold text-gray-600 line-through">
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="font-medium">GST (3%)</span>
+                <span className="font-bold text-slate-900">
                   ₹{(silverDiscount || silverGst).toFixed(2)}
                 </span>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-purple-100">
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="font-medium">Making Charges</span>
+                <span className="font-bold text-emerald-700">₹0</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-700 pt-2 border-t border-slate-100">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs font-bold text-purple-900">Askoxy.ai GST Waiver:</span>
+                  <span className="font-bold text-slate-900">Askoxy.ai GST Waiver:</span>
                 </div>
-                <span className="text-lg font-black text-green-600">
+                <span className="text-sm font-black text-emerald-600">
                   -₹{(silverDiscount || silverGst).toFixed(2)}
                 </span>
               </div>
-              <div className="mt-2.5 flex items-center justify-between text-[11px] bg-green-50 border border-green-200/70 text-green-800 rounded-lg px-2.5 py-1.5 font-medium">
-                <span>Your Net Tax Contribution</span>
-                <span className="font-bold text-green-700">₹0.00 (Zero Extra Tax)</span>
+              <div className="mt-1 flex items-center justify-between text-[11px] bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl px-2.5 py-1.5 font-medium">
+                <span>Your Net Extra Charges</span>
+                <span className="font-bold text-emerald-700">₹0.00 (Zero Extra Tax)</span>
               </div>
             </motion.div>
 
-            {/* Badges / Highlights */}
+            {/* Badges */}
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex items-center justify-center gap-2 mb-6 flex-wrap"
+              transition={{ delay: 0.3 }}
+              className="flex items-center justify-center gap-2 mb-4 flex-wrap"
             >
-              <span className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 rounded-full px-3 py-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
-                <span className="text-[11px] font-semibold text-purple-700">
-                  100% Tax Covered
-                </span>
+              <span className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-full px-3 py-1 text-xs font-bold text-slate-800">
+                <Gem className="w-3.5 h-3.5 text-purple-600" />
+                Valid Only on Silver
               </span>
-              <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
-                <Gem className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[11px] font-semibold text-amber-700">
-                  Pure Silver Offer
-                </span>
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1 text-xs font-bold text-emerald-800">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                100% Tax Covered
               </span>
             </motion.div>
 
             {/* CTA Button */}
             <motion.button
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: "0 12px 24px -8px rgba(147, 51, 234, 0.4)",
-              }}
+              transition={{ delay: 0.4 }}
+              whileHover={{ scale: 1.02, boxShadow: "0 12px 24px -8px rgba(147, 51, 234, 0.4)" }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowSilverGstModal(false)}
-              className="relative overflow-hidden w-full py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 shadow-lg shadow-purple-200 transition-shadow cursor-pointer"
+              className="relative overflow-hidden w-full py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 shadow-lg shadow-purple-200 transition-all cursor-pointer"
             >
               <span className="absolute inset-0 -translate-x-full hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
               Awesome, Got It!

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { customerApi } from "../utils/axiosInstance";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Button, message, Modal, notification } from "antd";
+import { Button, message, Modal, notification, Tooltip } from "antd";
 import { load, Cashfree } from "@cashfreepayments/cashfree-js";
 import Footer from "../components/Footer";
 import {
@@ -18,6 +18,10 @@ import {
   Moon,
   Sunset,
   Check,
+  MapPin,
+  Plus,
+  X,
+  Info,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
@@ -55,6 +59,7 @@ interface CartItem {
 }
 
 interface Address {
+  id?: string;
   flatNo: string;
   landMark: string;
   address: string;
@@ -250,6 +255,75 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
     state?.selectedAddress || null,
   );
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isAddressSelectModalOpen, setIsAddressSelectModalOpen] =
+    useState<boolean>(false);
+  const [isAddressLoading, setIsAddressLoading] = useState<boolean>(false);
+
+  const getCoordinates = async (address: string) => {
+    try {
+      const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address,
+      )}&key=${API_KEY}`;
+      const response = await axios.get(url);
+      return response.data.results[0]?.geometry.location;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const fetchAddresses = async () => {
+    if (!customerId) return;
+    setIsAddressLoading(true);
+    try {
+      const response = await customerApi.get(
+        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`,
+      );
+      const fetchedAddresses: Address[] = [...(response.data || [])].reverse();
+      setAddresses(fetchedAddresses);
+
+      // If selectedAddress is not set yet, select the default first address
+      if (!selectedAddress && fetchedAddresses.length > 0) {
+        let defaultAddress = fetchedAddresses[0];
+        if (!defaultAddress.latitude || !defaultAddress.longitude) {
+          const fullAddress = `${defaultAddress.flatNo}, ${defaultAddress.landMark}, ${defaultAddress.address}, ${defaultAddress.pincode}`;
+          const coordinates = await getCoordinates(fullAddress);
+          if (coordinates) {
+            defaultAddress = {
+              ...defaultAddress,
+              latitude: coordinates.lat,
+              longitude: coordinates.lng,
+            };
+          }
+        }
+        setSelectedAddress(defaultAddress);
+      }
+    } catch (error) {
+      console.error("Error fetching addresses in checkout:", error);
+    } finally {
+      setIsAddressLoading(false);
+    }
+  };
+
+  const handleSelectAddress = async (address: Address) => {
+    let targetAddress = address;
+    if (!targetAddress.latitude || !targetAddress.longitude) {
+      const fullAddress = `${targetAddress.flatNo}, ${targetAddress.landMark}, ${targetAddress.address}, ${targetAddress.pincode}`;
+      const coordinates = await getCoordinates(fullAddress);
+      if (coordinates) {
+        targetAddress = {
+          ...targetAddress,
+          latitude: coordinates.lat,
+          longitude: coordinates.lng,
+        };
+      }
+    }
+    setSelectedAddress(targetAddress);
+    setIsAddressSelectModalOpen(false);
+    message.success("Delivery address updated successfully.");
+  };
+
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
   const [deliveryFeeMessage, setDeliveryFeeMessage] = useState("");
@@ -379,6 +453,7 @@ useEffect(() => {
   };
 
   useEffect(() => {
+    fetchAddresses();
     fetchCartData();
     getWalletAmount();
     
@@ -401,6 +476,18 @@ useEffect(() => {
     }
     setOrderCategory(orderCategoryParam || getPreciousMetalCategory(cartData));
   }, []);
+
+  useEffect(() => {
+    if (selectedAddress) {
+      fetchCartData();
+      if (selectedAddress.latitude && selectedAddress.longitude) {
+        (async () => {
+          const isEligible = await checkEligibility();
+          fetchTimeSlots(isEligible);
+        })();
+      }
+    }
+  }, [selectedAddress]);
 
   useEffect(() => {
     const trans = localStorage.getItem("merchantTransactionId");
@@ -2316,6 +2403,142 @@ useEffect(() => {
     );
   };
 
+  const renderAddressSelectModal = (): JSX.Element => {
+    return (
+      <Modal
+        open={isAddressSelectModalOpen}
+        onCancel={() => setIsAddressSelectModalOpen(false)}
+        footer={null}
+        centered
+        destroyOnClose
+        maskClosable
+        width="90%"
+        style={{ maxWidth: 580 }}
+        bodyStyle={{
+          padding: 0,
+          borderRadius: 20,
+          overflow: "hidden",
+          background: "#ffffff",
+        }}
+        title={null}
+        closable={false}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-700 via-purple-800 to-indigo-800 p-4 sm:p-5 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                Select Delivery Address
+              </h3>
+              <p className="text-xs text-purple-200 mt-0.5">
+                Choose where you want your order delivered
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAddressSelectModalOpen(false)}
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-4 sm:p-6 bg-slate-50/50 space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-900/70">
+              Saved Addresses ({addresses.length})
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddressSelectModalOpen(false);
+                navigate("/main/address");
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-3 py-1.5 rounded-full shadow-xs transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add New Address</span>
+            </button>
+          </div>
+
+          {addresses.length === 0 ? (
+            <div className="text-center py-10 px-4 border-2 border-dashed border-purple-200 rounded-2xl bg-white">
+              <MapPin className="w-10 h-10 text-purple-400 mx-auto mb-2" />
+              <h4 className="text-sm font-bold text-gray-800 mb-1">
+                No saved addresses found
+              </h4>
+              <p className="text-xs text-gray-500 mb-4">
+                Please add a delivery address to proceed with checkout.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddressSelectModalOpen(false);
+                  navigate("/main/address");
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer"
+              >
+                + Add Address Now
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+              {addresses.map((address, idx) => {
+                const isSelected =
+                  (selectedAddress?.id && selectedAddress.id === address.id) ||
+                  (selectedAddress?.flatNo === address.flatNo &&
+                    selectedAddress?.pincode === address.pincode &&
+                    selectedAddress?.address === address.address);
+
+                return (
+                  <div
+                    key={address.id || `addr-${idx}`}
+                    onClick={() => handleSelectAddress(address)}
+                    className={`cursor-pointer rounded-2xl p-4 transition-all flex items-start justify-between gap-3 ${
+                      isSelected
+                        ? "bg-purple-50/80 border-2 border-purple-600 shadow-xs ring-1 ring-purple-400/20"
+                        : "bg-white hover:bg-purple-50/30 border border-gray-200 hover:border-purple-300"
+                    }`}
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-200">
+                          {address.addressType || "Delivery"}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                          {address.flatNo}
+                          {address.landMark ? `, ${address.landMark}` : ""}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-snug break-words">
+                        {address.address}, {address.pincode}
+                      </p>
+                    </div>
+
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all mt-0.5 ${
+                        isSelected
+                          ? "border-purple-600 bg-purple-600 text-white"
+                          : "border-gray-300 bg-white"
+                      }`}
+                    >
+                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </Modal>
+    );
+  };
+
   if(cashfreeLoading){
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -2415,7 +2638,99 @@ useEffect(() => {
             {/* Left Column: Segregated Section Cards */}
             <div className="lg:col-span-7 space-y-5">
               
-              {/* Card 1: Delivery Time Slot */}
+              {/* Card 1: Delivery Address */}
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 border border-purple-200">
+                      <MapPin className="w-5 h-5 stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight">
+                        Delivery Address
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Your order will be delivered to this location
+                      </p>
+                    </div>
+                  </div>
+                  {addresses.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddressSelectModalOpen(true)}
+                      className="text-xs sm:text-sm font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 hover:underline transition-colors shrink-0 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-full border border-purple-200 cursor-pointer"
+                    >
+                      <span>Change Address</span>
+                      <span className="text-sm">→</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/main/address")}
+                      className="text-xs sm:text-sm font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 hover:underline transition-colors shrink-0 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-full border border-purple-200 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Address</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected Address Display */}
+                {selectedAddress ? (
+                  <div className="p-3.5 rounded-2xl bg-purple-50/40 border border-purple-200/80 flex items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-200">
+                          {selectedAddress.addressType || "Delivery"}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                          {selectedAddress.flatNo}
+                          {selectedAddress.landMark ? `, ${selectedAddress.landMark}` : ""}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-relaxed break-words">
+                        {selectedAddress.address}, {selectedAddress.pincode}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddressSelectModalOpen(true)}
+                      className="text-xs font-bold text-purple-700 hover:underline shrink-0 pt-0.5 cursor-pointer"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : isAddressLoading ? (
+                  <div className="flex items-center justify-center p-6 text-gray-500 gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                    <span className="text-xs font-medium">Loading address...</span>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-amber-900">
+                        No delivery address selected.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (addresses.length > 0) {
+                          setIsAddressSelectModalOpen(true);
+                        } else {
+                          navigate("/main/address");
+                        }
+                      }}
+                      className="text-xs font-bold text-amber-900 bg-amber-200 hover:bg-amber-300 px-3 py-1 rounded-lg border border-amber-300 transition-colors shrink-0 cursor-pointer"
+                    >
+                      {addresses.length > 0 ? "Select Address →" : "+ Add Address"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Card 2: Delivery Time Slot */}
               <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
@@ -2836,22 +3151,34 @@ useEffect(() => {
                       </div>
                     )}
 
-                    {(Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) > 0 || silverGst > 0) && (
+                    {Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) > 0 && (
                       <div className="flex justify-between py-1 text-xs sm:text-sm">
-                        <span className="text-gray-600">GST</span>
+                        <span className="text-gray-600">
+                          {silverGst > 0 ? "Gold GST (3%)" : "GST (3%)"}
+                        </span>
                         <span className="font-medium text-gray-900">
-                          ₹
-                          {(
-                            Math.max(0, (subGst || 0) - (goldMakingCharges || 0)) +
-                            silverGst
-                          ).toFixed(2)}
+                          ₹{Math.max(0, (subGst || 0) - (goldMakingCharges || 0)).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {silverGst > 0 && (
+                      <div className="flex justify-between py-1 text-xs sm:text-sm">
+                        <span className="text-gray-600">Silver GST (3%)</span>
+                        <span className="font-medium text-gray-900">
+                          ₹{silverGst.toFixed(2)}
                         </span>
                       </div>
                     )}
 
                     {silverDiscount > 0 && (
                       <div className="flex justify-between items-center py-1 text-sm sm:text-base text-emerald-700 font-semibold">
-                        <span>Discount</span>
+                        <span className="flex items-center gap-1">
+                          Discount
+                          <Tooltip title="Silver Discount (100% GST Waived)">
+                            <Info className="w-3.5 h-3.5 text-emerald-600 cursor-pointer hover:text-emerald-800" />
+                          </Tooltip>
+                        </span>
                         <span className="font-extrabold text-emerald-700">-₹{silverDiscount.toFixed(2)}</span>
                       </div>
                     )}
@@ -3122,6 +3449,7 @@ useEffect(() => {
         </main>
       </div>
       <Footer />
+      {renderAddressSelectModal()}
       {renderTimeSlotModal()}
       {renderDeliveryTimelineModal()}
       {renderCouponsModal()}

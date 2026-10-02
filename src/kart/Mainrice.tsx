@@ -44,6 +44,8 @@ interface Item {
   saveAmount?: number;
   savePercentage?: number;
   inStock?: boolean;
+  categoryType?: string;
+  categoryName?: string;
 }
 
 interface SubCategory {
@@ -896,6 +898,8 @@ const Ricebags: React.FC = () => {
               itemsResponseDtoList: category.itemsResponseDtoList.map(
                 (item) => ({
                   ...item,
+                  categoryType: group.categoryType?.toUpperCase() || "OTHERS",
+                  categoryName: category.categoryName,
                   weight: item.weight.toString(),
                 }),
               ),

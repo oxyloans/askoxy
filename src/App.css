@@ -1,5 +1,5 @@
 .App {
-  text-align: center;
+  text-align: inherit;
 }
 
 .App-logo {
@@ -36,3 +36,110 @@
     transform: rotate(360deg);
   }
 }
+
+/* ==========================================================================
+   ab-06 Hover & Touch Liquid Wave Buttons (Fully Mobile Responsive)
+   ========================================================================== */
+.ab-06__btn {
+  --liquid: #7c3aed;
+  --border-col: #7c3aed;
+  position: relative;
+  overflow: hidden;
+  font-weight: 700;
+  background: transparent;
+  border: 1.5px solid var(--border-col);
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-sizing: border-box;
+  min-width: 0;
+  transition: color 0.35s ease, border-color 0.35s ease, box-shadow 0.3s ease, transform 0.15s ease;
+}
+
+.ab-06__btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ab-06__btn span {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  white-space: nowrap;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.ab-06__btn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -25%;
+  width: 150%;
+  height: 200%;
+  background: var(--liquid);
+  border-radius: 45% 55% 0 0 / 25% 25% 0 0;
+  transform: translateY(100%);
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ab-06__btn:hover:not(:disabled)::before,
+.ab-06__btn:active:not(:disabled)::before {
+  transform: translateY(5%);
+  animation: ab-06-wave 2.5s ease-in-out infinite 0.65s;
+}
+
+.ab-06__btn:hover:not(:disabled),
+.ab-06__btn:active:not(:disabled) {
+  color: #ffffff !important;
+}
+
+.ab-06__btn:hover:not(:disabled) span,
+.ab-06__btn:active:not(:disabled) span {
+  color: #ffffff !important;
+}
+
+.ab-06__btn--cart {
+  --liquid: #7e22ce;
+  --border-col: #9333ea;
+  background: #faf5ff;
+  color: #7e22ce;
+}
+
+.ab-06__btn--buynow,
+.ab-06__btn--yellow,
+.ab-06__btn--amber {
+  --liquid: #f59e0b;
+  --border-col: #d97706;
+  background: #fffdf5;
+  color: #92400e;
+  border: 1.5px solid var(--border-col);
+}
+
+@keyframes ab-06-wave {
+  0%,
+  100% {
+    border-radius: 45% 55% 0 0 / 25% 25% 0 0;
+  }
+  50% {
+    border-radius: 55% 45% 0 0 / 20% 30% 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ab-06__btn::before {
+    transition: none;
+  }
+  .ab-06__btn:hover::before,
+  .ab-06__btn:active::before {
+    animation: none;
+  }
+}
+

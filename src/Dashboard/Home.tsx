@@ -56,6 +56,7 @@ import allitems from "../assets/img/all items.png";
 import grocerie from "../assets/img/Groceries.png";
 import rice from "../assets/img/rice.png";
 import customerApi from "../utils/axiosInstances";
+import SilverOfferTooltip, { isSilverProduct } from "../components/SilverOfferTooltip";
 
 // Define interfaces for Offer and UserEligibleOffer
 interface Offer {
@@ -147,6 +148,8 @@ interface DashboardItem {
   isCombo?: boolean;
   status?: string;
   bmvCoins?: number;
+  categoryName?: string;
+  categoryType?: string;
 }
 
 interface Item {
@@ -435,6 +438,8 @@ const Home: React.FC = () => {
       itemName: item.itemName,
       itemImage: item.itemImage,
       bmvCoins: item.bmvCoins,
+      categoryName: item.categoryName,
+      categoryType: item.categoryType,
     }));
 
     setProducts(productItems);
@@ -1005,6 +1010,65 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleBuyNow = async (item: DashboardItem) => {
+    if (!item.itemId) return;
+
+    const accessToken = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
+
+    if (!accessToken || !userId) {
+      message.warning("Please login to proceed with Buy Now.");
+      setTimeout(() => {
+        navigate("/whatapplogin");
+      }, 1500);
+      return;
+    }
+
+    if (!checkProfileCompletion()) {
+      Modal.error({
+        title: "Profile Incomplete",
+        content: "Please complete your profile to proceed.",
+        onOk: () => navigate("/main/profile"),
+      });
+      return;
+    }
+
+    try {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId as string]: true },
+      }));
+
+      // Add item to cart if not already present
+      if (!cartItems[item.itemId] || cartItems[item.itemId] === 0) {
+        const isCombo = item.status === "COMBO";
+        const requestBody: any = {
+          customerId: userId,
+          itemId: item.itemId,
+          quantity: 1,
+        };
+        if (isCombo) requestBody.status = "COMBO";
+
+        await customerApi.post(
+          `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+          requestBody,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        await fetchCartData(item.itemId);
+      }
+
+      navigate("/main/checkout");
+    } catch (error) {
+      console.error("Error in Buy Now:", error);
+      message.error("Failed to process Buy Now. Please try again.");
+    } finally {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId as string]: false },
+      }));
+    }
+  };
+
   const gridCols =
     comboAddOnModal.itemCount === 1
       ? "grid-cols-1"
@@ -1172,13 +1236,13 @@ const Home: React.FC = () => {
       >
         {item.itemMrp && item.itemPrice && item.itemMrp > item.itemPrice && (
           <div className="absolute left-0 top-0 z-10 w-auto">
-            <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white text-[10px] xs:text-xs sm:text-sm font-bold px-2 py-1 flex items-center">
+            <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white text-[10px] xs:text-xs sm:text-sm font-bold px-2 py-1 flex items-center shadow-xs">
               {calculateDiscount(item.itemMrp, item.itemPrice)}%
               <span className="ml-1 text-[8px] xs:text-[10px] sm:text-xs">
                 Off
               </span>
             </div>
-            <div className="absolute bottom-0 right-0 transform translate-y border-t-4 border-r-4 sm:border-t-8 sm:border-r-8 border-t-purple-600 border-r-transparent"></div>
+            <div className="absolute bottom-0 right-0 transform translate-y border-t-4 border-r-4 sm:border-t-8 sm:border-r-8 border-t-emerald-600 border-r-transparent"></div>
           </div>
         )}
         {isSoldOut && (
@@ -1234,23 +1298,30 @@ const Home: React.FC = () => {
                 : item.units}
             </p> */}
 
-            <p className="text-sm text-gray-500">
-              Weight: {item.weight}{" "}
-              {item.units === "pcs"
-                ? "Pc"
-                : item.units === "gms" && item.weight === "1"
-                  ? "Gm"
-                  : item.weight === "1" && item.units === "kg"
-                    ? "Kg"
-                    : item.units}
-            </p>
+            <div className="flex items-center justify-between gap-1 min-h-[1.5rem] mt-0.5">
+              <span className="text-xs text-gray-500 font-medium truncate">
+                {item.weight} {item.units === "pcs" ? "Pc" : item.units === "gms" && item.weight === "1" ? "Gm" : item.weight === "1" && item.units === "kg" ? "Kg" : item.units || "gms"}
+              </span>
+              {isSilverProduct(item) && item.itemId && (
+                <SilverOfferTooltip
+                  itemId={item.itemId}
+                  weight={item.weight}
+                  units={item.units}
+                  itemName={item.itemName || item.title}
+                  itemPrice={item.itemPrice}
+                  categoryType={item.categoryType}
+                  categoryName={item.categoryName}
+                />
+              )}
+            </div>
 
             {item.bmvCoins !== undefined && item.bmvCoins > 0 && (
-              <div className="text-xs bg-purple-100 text-yellow-800 rounded px-2 py-1 mt-1 inline-flex items-center justify-center gap-1 transform mx-auto">
-                Earn: <span className="font-bold">{item.bmvCoins}</span>{" "}
-                BMVCOINS
+              <div className="w-full flex items-center justify-between text-[11px] bg-purple-50 text-purple-800 border border-purple-100 rounded px-2 py-0.5 mt-1">
+                <span className="font-semibold truncate">
+                  Earn: <strong>{item.bmvCoins}</strong> BMVCOINS
+                </span>
                 <Info
-                  className="w-4 h-4 text-black-600 cursor-pointer hover:text-purple-800"
+                  className="w-3.5 h-3.5 text-purple-600 cursor-pointer hover:text-purple-800 shrink-0 ml-1"
                   // 👇 Updated onClick: set both modal item and visibility
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1261,33 +1332,127 @@ const Home: React.FC = () => {
               </div>
             )}
 
-            <div className="flex items-baseline space-x-2">
-              <span className="text-lg font-semibold text-gray-900">
+            <div className="flex items-baseline space-x-2 pt-0.5">
+              <span className="text-sm sm:text-base font-bold text-gray-900">
                 ₹{item.itemPrice ?? 0}
               </span>
               {item.itemMrp &&
                 item.itemPrice &&
                 item.itemMrp > item.itemPrice && (
-                  <span className="text-sm text-gray-500 line-through">
+                  <span className="text-xs sm:text-sm text-gray-400 line-through">
                     ₹{item.itemMrp}
                   </span>
                 )}
             </div>
 
             {item.itemId && cartItems[item.itemId] > 0 ? (
-              <motion.div
-                className="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
+                <div className="grid grid-cols-2 gap-1.5 items-center">
+                  <motion.div
+                    className="flex items-center justify-between bg-purple-50 rounded-lg p-0.5 sm:p-1 border border-purple-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white rounded shadow-2xs text-purple-700 font-bold text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuantityChange(item, false);
+                      }}
+                      disabled={
+                        isSoldOut ||
+                        (item.itemId && loadingItems.items[item.itemId]) ||
+                        localStorage.getItem("TypeLogin") === "Caller"
+                      }
+                    >
+                      {item.itemId &&
+                      loadingItems.items[item.itemId] &&
+                      loadingItems.status[item.itemId] === "remove" ? (
+                        <Loader2 className="animate-spin" size={12} />
+                      ) : (
+                        "-"
+                      )}
+                    </motion.button>
+
+                    <motion.span
+                      className="font-bold text-xs text-purple-800 px-1"
+                      key={item.itemId ? cartItems[item.itemId] : 0}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      {item.itemId ? cartItems[item.itemId] : 0}
+                    </motion.span>
+
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white rounded shadow-2xs text-purple-700 font-bold text-xs ${
+                        item.itemId &&
+                        item.quantity &&
+                        cartItems[item.itemId] >= item.quantity
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          item.itemId &&
+                          item.quantity &&
+                          cartItems[item.itemId] < item.quantity
+                        ) {
+                          handleQuantityChange(item, true);
+                        }
+                      }}
+                      disabled={
+                        item.itemId && item.quantity
+                          ? cartItems[item.itemId] >= item.quantity ||
+                            loadingItems.items[item.itemId] ||
+                            (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
+                          : true || localStorage.getItem("TypeLogin") === "Caller"
+                      }
+                    >
+                      {item.itemId &&
+                      loadingItems.items[item.itemId] &&
+                      loadingItems.status[item.itemId] === "add" ? (
+                        <Loader2 className="animate-spin" size={12} />
+                      ) : (
+                        "+"
+                      )}
+                    </motion.button>
+                  </motion.div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-xs font-bold shadow-2xs whitespace-nowrap"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBuyNow(item);
+                    }}
+                    disabled={isSoldOut || localStorage.getItem("TypeLogin") === "Caller"}
+                  >
+                    <span>Buy Now</span>
+                  </motion.button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-1.5 mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
                 <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
+                  whileHover={isSoldOut ? undefined : { scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`ab-06__btn ab-06__btn--cart w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none
+                    ${
+                      isSoldOut
+                        ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-400"
+                        : ""
+                    }
+                  `}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleQuantityChange(item, false);
+                    if (isSoldOut) return;
+                    handleAddToCart(item);
                   }}
                   disabled={
                     isSoldOut ||
@@ -1295,99 +1460,41 @@ const Home: React.FC = () => {
                     localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
-                  {item.itemId &&
-                  loadingItems.items[item.itemId] &&
-                  loadingItems.status[item.itemId] === "remove" ? (
-                    <Loader2 className="animate-spin" size={16} />
-                  ) : (
-                    "-"
-                  )}
+                  <span>
+                    {item.itemId && loadingItems.items[item.itemId] ? (
+                      <Loader2 className="animate-spin inline-block" size={12} />
+                    ) : isSoldOut ? (
+                      "Sold Out"
+                    ) : (
+                      "Add to Cart"
+                    )}
+                  </span>
                 </motion.button>
-
-                <motion.span
-                  className="font-medium text-purple-700"
-                  key={item.itemId ? cartItems[item.itemId] : 0}
-                  initial={{ scale: 1.2 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  {item.itemId ? cartItems[item.itemId] : 0}
-                  {item.itemId && freeItemsMap[item.itemId] && weight === 1 && (
-                    <span className="bg-green-100 text-green-600 text-xs ml-1 px-1 rounded">
-                      +1 Free
-                    </span>
-                  )}
-                </motion.span>
 
                 <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                    item.itemId &&
-                    item.quantity &&
-                    cartItems[item.itemId] >= item.quantity
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
+                  whileHover={isSoldOut ? undefined : { scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none
+                    ${
+                      isSoldOut
+                        ? "opacity-50 cursor-not-allowed border-gray-400 text-gray-400"
+                        : ""
+                    }
+                  `}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (
-                      item.itemId &&
-                      item.quantity &&
-                      cartItems[item.itemId] < item.quantity
-                    ) {
-                      handleQuantityChange(item, true);
-                    }
+                    if (isSoldOut) return;
+                    handleBuyNow(item);
                   }}
                   disabled={
-                    item.itemId && item.quantity
-                      ? cartItems[item.itemId] >= item.quantity ||
-                        loadingItems.items[item.itemId] ||
-                        (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
-                      : true || localStorage.getItem("TypeLogin") === "Caller"
+                    isSoldOut ||
+                    (item.itemId && loadingItems.items[item.itemId]) ||
+                    localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
-                  {item.itemId &&
-                  loadingItems.items[item.itemId] &&
-                  loadingItems.status[item.itemId] === "add" ? (
-                    <Loader2 className="animate-spin" size={16} />
-                  ) : (
-                    "+"
-                  )}
+                  <span>Buy Now</span>
                 </motion.button>
-              </motion.div>
-            ) : (
-              <motion.button
-                whileHover={isSoldOut ? undefined : { scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-2 mt-2 text-white rounded-lg transition-all duration-300 text-sm flex items-center justify-center
-    ${
-      isSoldOut
-        ? "bg-purple-500 cursor-not-allowed"
-        : "bg-gradient-to-r from-purple-600 to-purple-800 hover:shadow-md"
-    }
-  `}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (isSoldOut) return; // extra safety
-                  handleAddToCart(item);
-                }}
-                disabled={
-                  isSoldOut ||
-                  (item.itemId && loadingItems.items[item.itemId]) ||
-                  localStorage.getItem("TypeLogin") === "Caller"
-                }
-              >
-                {item.itemId && loadingItems.items[item.itemId] ? (
-                  <Loader2
-                    className="mr-2 animate-spin inline-block"
-                    size={16}
-                  />
-                ) : isSoldOut ? (
-                  "Sold Out"
-                ) : (
-                  "Add to Cart"
-                )}
-              </motion.button>
+              </div>
             )}
           </div>
         </div>
@@ -1493,6 +1600,9 @@ const Home: React.FC = () => {
         units: item.units,
         itemName: item.itemName,
         itemImage: item.itemImage,
+        bmvCoins: item.bmvCoins,
+        categoryName: item.categoryName,
+        categoryType: item.categoryType,
       }));
 
       console.log(`Products for category ${categoryName}:`, productItems);
@@ -2106,7 +2216,7 @@ const Home: React.FC = () => {
           )}
           {/* Product Items (Shown when a category is selected) */}
           {activeCategory && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4">
               <AnimatePresence>
                 {productsLoading ? (
                   Array.from({ length: 6 }).map((_, index) => (

@@ -6,7 +6,8 @@ import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import BASE_URL, { resolveAskoxyUrl } from "../Config";
-import { ShoppingBag, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ShoppingBag, ChevronLeft, ChevronRight, Info, Plus } from "lucide-react";
+import SilverOfferTooltip, { isSilverProduct } from "../components/SilverOfferTooltip";
 
 interface Item {
   itemName: string;
@@ -18,6 +19,8 @@ interface Item {
   itemMrp: number;
   units: string;
   bmvCoins?: number;
+  categoryType?: string;
+  categoryName?: string;
 }
 
 interface SubCategory {
@@ -697,6 +700,63 @@ const Categories: React.FC<CategoriesProps> = ({
     }
   };
 
+  const handleBuyNow = async (item: Item & { status?: string }) => {
+    const accessToken = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
+
+    if (!item?.itemId) {
+      message.error("Invalid item. Please try again.");
+      return;
+    }
+
+    if (item.quantity <= 0) {
+      message.warning("This item is currently out of stock");
+      return;
+    }
+
+    if (!accessToken || !userId) {
+      message.warning("Please login to proceed with Buy Now.");
+      setTimeout(() => {
+        navigate("/whatapplogin");
+      }, 1500);
+      return;
+    }
+
+    try {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId]: true },
+      }));
+
+      const isCombo = item.status === "COMBO";
+      const requestBody: any = {
+        customerId: userId,
+        itemId: item.itemId,
+        quantity: 1,
+      };
+      if (isCombo) {
+        requestBody.status = "COMBO";
+      }
+
+      await customerApi.post(
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+        requestBody
+      );
+
+      await fetchCartData(item.itemId);
+
+      navigate("/main/checkout");
+    } catch (error) {
+      console.error("Error during Buy Now:", error);
+      message.error("Failed to process Buy Now. Please try again.");
+    } finally {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId]: false },
+      }));
+    }
+  };
+
   const calculateDiscount = (mrp: number | string, price: number): number => {
     const mrpNum = typeof mrp === "string" ? parseFloat(mrp) : mrp;
     return Math.round(((mrpNum - price) / mrpNum) * 100);
@@ -1210,7 +1270,7 @@ const Categories: React.FC<CategoriesProps> = ({
         {loading ? (
           <SkeletonLoader />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:gap-4 px-2 sm:px-0">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 sm:gap-4 px-2 sm:px-0">
             {getCurrentCategoryItems().map((item) => {
               const qty = Number(item.quantity ?? 0);
 
@@ -1256,34 +1316,52 @@ const Categories: React.FC<CategoriesProps> = ({
                       </div>
                     )}
                     {discount > 0 && (
-                      <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-red-500 text-white text-xs font-bold px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
-                        {discount}% OFF
+                      <div className="absolute left-0 top-0 z-10 w-auto">
+                        <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white text-[10px] xs:text-xs sm:text-sm font-bold px-2 py-1 flex items-center shadow-xs">
+                          {discount}%
+                          <span className="ml-1 text-[8px] xs:text-[10px] sm:text-xs">
+                            Off
+                          </span>
+                        </div>
+                        <div className="absolute bottom-0 right-0 transform translate-y border-t-4 border-r-4 sm:border-t-8 sm:border-r-8 border-t-emerald-600 border-r-transparent"></div>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex flex-col flex-grow p-2 sm:p-4">
+                  <div className="flex flex-col flex-grow p-2.5 sm:p-3">
                     <div className="space-y-1">
-                      <h3 className="font-semibold text-xs sm:text-base text-gray-800 line-clamp-2">
+                      <h3 className="font-semibold text-xs sm:text-sm text-gray-800 line-clamp-2 min-h-[2.2rem]">
                         {item.itemName}
                       </h3>
-                      <p className="text-xs text-gray-500">
-                        {item.weight} {item.units}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center space-x-1 sm:space-x-2">
-                        <span className="text-sm sm:text-lg font-bold text-purple-600">
-                          ₹{item.itemPrice}
-                        </span>
-                        {item.itemMrp > item.itemPrice && (
-                          <span className="text-xs sm:text-sm text-gray-400 line-through">
-                            ₹{item.itemMrp}
-                          </span>
+                      <div className="flex items-center justify-between gap-1 min-h-[1.5rem]">
+                        <p className="text-xs text-gray-500 font-medium truncate">
+                          {item.weight} {item.units}
+                        </p>
+                        {isSilverProduct(item) && item.itemId && (
+                          <SilverOfferTooltip
+                            itemId={item.itemId}
+                            weight={item.weight}
+                            units={item.units}
+                            itemName={item.itemName}
+                            itemPrice={item.itemPrice}
+                            categoryType={item.categoryType}
+                            categoryName={item.categoryName}
+                          />
                         )}
                       </div>
                     </div>
+
+                    <div className="flex items-center space-x-1 sm:space-x-2 mt-1">
+                      <span className="text-sm sm:text-base font-bold text-purple-600">
+                        ₹{item.itemPrice}
+                      </span>
+                      {item.itemMrp > item.itemPrice && (
+                        <span className="text-xs text-gray-400 line-through">
+                          ₹{item.itemMrp}
+                        </span>
+                      )}
+                    </div>
+
                     {item.bmvCoins !== undefined && item.bmvCoins > 0 && (
                       <div
                         className="w-full flex items-center justify-between text-xs rounded px-2 py-1 mt-1"
@@ -1306,82 +1384,101 @@ const Categories: React.FC<CategoriesProps> = ({
 
                     <div className="flex-grow"></div>
 
-                    <div className="pt-2 sm:pt-3 mt-auto">
+                    <div className="pt-2 sm:pt-2.5 mt-auto">
                       {!isInCart ? (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            if (!item?.itemId) {
-                              message.error("Invalid item. Please refresh the page.");
-                              return;
-                            }
-                            handleAddToCart(item);
-                          }}
-                          disabled={isSoldOut || isLoading}
-                          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1 sm:space-x-2"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                          ) : isSoldOut ? (
-                            "Sold Out"
-                          ) : (
-                            <>
-                              <svg
-                                className="w-3 h-3 sm:w-4 sm:h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                />
-                              </svg>
-                              <span>Add to Cart</span>
-                            </>
-                          )}
-                        </motion.button>
-                      ) : (
-                        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                        <div className="grid grid-cols-2 gap-1.5">
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() =>
-                              handleQuantityChange(item, false, "decrease")
-                            }
-                            disabled={isLoading && loadingStatus === "decrease"}
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors disabled:opacity-50"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              if (!item?.itemId) {
+                                message.error("Invalid item. Please refresh the page.");
+                                return;
+                              }
+                              handleAddToCart(item);
+                            }}
+                            disabled={isSoldOut || isLoading}
+                            className={`ab-06__btn ab-06__btn--cart w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none ${
+                              isSoldOut ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-400" : ""
+                            }`}
                           >
-                            {isLoading && loadingStatus === "decrease" ? (
-                              <Loader2 className="w-2 h-2 sm:w-3 sm:h-3 animate-spin" />
-                            ) : (
-                              <span className="text-xs sm:text-sm font-bold">
-                                −
-                              </span>
-                            )}
+                            <span>
+                              {isLoading ? (
+                                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                              ) : isSoldOut ? (
+                                "Sold Out"
+                              ) : (
+                                "Add to Cart"
+                              )}
+                            </span>
                           </motion.button>
-                          <span className="px-2 sm:px-3 py-1 bg-white rounded-md font-semibold text-purple-600 min-w-[1.5rem] min-w-[2.5rem] sm:min-w-[2.5rem] text-center text-xs sm:text-sm">
-                            {cartItems[item.itemId] || 0}
-                          </span>
+
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() =>
-                              handleQuantityChange(item, true, "increase")
-                            }
-                            disabled={isLoading && loadingStatus === "increase"}
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors disabled:opacity-50"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              if (!item?.itemId) {
+                                message.error("Invalid item. Please refresh the page.");
+                                return;
+                              }
+                              handleBuyNow(item);
+                            }}
+                            disabled={isSoldOut || isLoading}
+                            className={`ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-[11px] sm:text-xs font-bold shadow-2xs whitespace-nowrap leading-none ${
+                              isSoldOut ? "opacity-50 cursor-not-allowed border-gray-400 text-gray-400" : ""
+                            }`}
                           >
-                            {isLoading && loadingStatus === "increase" ? (
-                              <Loader2 className="w-2 h-2 sm:w-3 sm:h-3 animate-spin" />
-                            ) : (
-                              <span className="text-xs sm:text-sm font-bold">
-                                +
-                              </span>
-                            )}
+                            <span>Buy Now</span>
+                          </motion.button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-1.5 items-center">
+                          <div className="flex items-center justify-between bg-purple-50 rounded-lg p-0.5 sm:p-1 border border-purple-200">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() =>
+                                handleQuantityChange(item, false, "decrease")
+                              }
+                              disabled={isLoading && loadingStatus === "decrease"}
+                              className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-white text-purple-700 shadow-2xs flex items-center justify-center hover:bg-purple-100 transition-colors disabled:opacity-50 shrink-0 font-bold text-xs"
+                            >
+                              {isLoading && loadingStatus === "decrease" ? (
+                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                              ) : (
+                                "−"
+                              )}
+                            </motion.button>
+                            <span className="px-1 font-bold text-purple-800 text-xs sm:text-sm">
+                              {cartItems[item.itemId] || 0}
+                            </span>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() =>
+                                handleQuantityChange(item, true, "increase")
+                              }
+                              disabled={isLoading && loadingStatus === "increase"}
+                              className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-white text-purple-700 shadow-2xs flex items-center justify-center hover:bg-purple-100 transition-colors disabled:opacity-50 shrink-0 font-bold text-xs"
+                            >
+                              {isLoading && loadingStatus === "increase" ? (
+                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                              ) : (
+                                "+"
+                              )}
+                            </motion.button>
+                          </div>
+
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleBuyNow(item)}
+                            disabled={isSoldOut || isLoading}
+                            className={`ab-06__btn ab-06__btn--buynow w-full py-1.5 sm:py-2 px-1 text-xs font-bold shadow-2xs whitespace-nowrap ${
+                              isSoldOut ? "opacity-50 cursor-not-allowed border-gray-400 text-gray-400" : ""
+                            }`}
+                          >
+                            <span>Buy Now</span>
                           </motion.button>
                         </div>
                       )}

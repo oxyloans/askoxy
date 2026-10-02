@@ -798,7 +798,7 @@ const SearchMain: React.FC = () => {
                               text={
                                 isOutOfStock ? "SOLD OUT" : `${discount}% Off`
                               }
-                              color={isOutOfStock ? "#d4a574" : "#8b3eea"}
+                              color={isOutOfStock ? "#d4a574" : "#10b981"}
                               style={{
                                 display:
                                   discount > 0 || isOutOfStock
@@ -1109,7 +1109,7 @@ const SearchMain: React.FC = () => {
                                 text={
                                   isOutOfStock ? "SOLD OUT" : `${discount}% Off`
                                 }
-                                color={isOutOfStock ? "#d4a574" : "#8b3eea"}
+                                color={isOutOfStock ? "#d4a574" : "#10b981"}
                                 style={{
                                   display:
                                     discount > 0 || isOutOfStock
