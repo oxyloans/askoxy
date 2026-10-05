@@ -9,7 +9,8 @@ import {
   FaMapMarkerAlt,
   FaEdit,
 } from "react-icons/fa";
-import { Loader2, AlertCircle, X, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, X, CheckCircle2, MapPinned, Navigation, MapPin, Map, Home, Briefcase, Building, Check } from "lucide-react";
+import { LocationMapPicker } from "./LocationMapPicker";
 import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import Footer from "../components/Footer";
@@ -76,6 +77,44 @@ const ProfilePage = () => {
     address: "",
     pincode: "",
   });
+
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<
+    { type: "success" | "error" | "info"; message: string } | null
+  >(null);
+  const [detectedCoordinates, setDetectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
+
+  const handleMapLocationConfirmed = (data: {
+    flatNo: string;
+    landmark: string;
+    address: string;
+    pincode: string;
+    lat?: number;
+    lng?: number;
+  }) => {
+    if (data.lat && data.lng) {
+      setDetectedCoordinates({ lat: data.lat, lng: data.lng });
+    }
+    setAddressFormData((prev) => ({
+      ...prev,
+      flatNo: data.flatNo || prev.flatNo,
+      landmark: data.landmark || prev.landmark,
+      address: data.address || prev.address,
+      pincode: data.pincode || prev.pincode,
+    }));
+    setAddressFormErrors((prev) => ({
+      ...prev,
+      flatNo: "",
+      landmark: "",
+      address: "",
+      pincode: "",
+    }));
+    setLocationStatus({
+      type: "success",
+      message: "Location selected from map.",
+    });
+  };
 
   const customerId = localStorage.getItem("userId") || "";
 
@@ -548,7 +587,7 @@ const ProfilePage = () => {
       setSuccessMessage("");
 
       const fullAddress = `${addressFormData.flatNo}, ${addressFormData.landmark}, ${addressFormData.address}, ${addressFormData.pincode}`;
-      const coordinates = await getCoordinates(fullAddress);
+      const coordinates = detectedCoordinates || (await getCoordinates(fullAddress));
 
       if (!coordinates) {
         setError("Unable to find location coordinates");
@@ -623,6 +662,126 @@ const ProfilePage = () => {
     }
   };
 
+  const parseLocationResult = (result: any) => {
+    const components: any[] = result?.address_components || [];
+    const get = (type: string) =>
+      components.find((component) => component.types?.includes(type))?.long_name || "";
+
+    const premise = get("premise");
+    const subpremise = get("subpremise");
+    const streetNumber = get("street_number");
+    const building = get("building");
+    const flatNoParts = [premise, subpremise, building, streetNumber].filter(Boolean);
+    const flatNo = flatNoParts.length > 0 ? Array.from(new Set(flatNoParts)).join(", ") : "";
+
+    const route = get("route");
+    const neighborhood = get("neighborhood");
+    const sublocality3 = get("sublocality_level_3");
+    const sublocality2 = get("sublocality_level_2");
+    const sublocality1 = get("sublocality_level_1");
+    const locality = get("locality");
+    const district = get("administrative_area_level_2");
+    const pincode = get("postal_code");
+
+    const landmark = route || neighborhood || sublocality3 || sublocality2 || sublocality1 || "";
+    const parts = [
+      route,
+      neighborhood,
+      sublocality3,
+      sublocality2,
+      sublocality1,
+      locality || district,
+    ].filter(Boolean);
+    const address = Array.from(new Set(parts)).join(", ") || (result?.formatted_address || "")
+      .replace(/,?\s*India$/i, "")
+      .replace(/,?\s*\d{6}(?:\s*,?\s*[^,]+)?$/i, "")
+      .trim();
+
+    return { flatNo, landmark, address, pincode };
+  };
+
+  const clearDetectedCoordinates = () => {
+    setDetectedCoordinates(null);
+    if (locationStatus?.type === "success") setLocationStatus(null);
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus({
+        type: "error",
+        message: "Current location is not supported by this browser. Please enter your address manually.",
+      });
+      return;
+    }
+
+    setIsFetchingLocation(true);
+    setLocationStatus(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setDetectedCoordinates({ lat, lng });
+
+        try {
+          const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
+          const response = await axios.get(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`
+          );
+          const result = response.data?.results?.[0];
+
+          if (response.data?.status === "OK" && result) {
+            const parsed = parseLocationResult(result);
+            setAddressFormData((prev) => ({
+              ...prev,
+              ...(parsed.flatNo ? { flatNo: parsed.flatNo } : {}),
+              landmark: parsed.landmark || prev.landmark,
+              address: parsed.address || prev.address,
+              pincode: parsed.pincode || prev.pincode,
+            }));
+            setAddressFormErrors((prev) => ({
+              ...prev,
+              flatNo: "",
+              landmark: "",
+              address: "",
+              pincode: "",
+            }));
+            setLocationStatus({
+              type: "success",
+              message: "Location detected successfully. Please review your address details below.",
+            });
+          } else {
+            setLocationStatus({
+              type: "error",
+              message: "Location detected, but address details could not be parsed. Please enter manually.",
+            });
+          }
+        } catch {
+          setLocationStatus({
+            type: "error",
+            message: "Address lookup failed. Please enter details manually.",
+          });
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (geoError) => {
+        const message =
+          geoError.code === geoError.PERMISSION_DENIED
+            ? "Location permission was blocked. Allow location access for this site in your browser settings, then try again."
+            : geoError.code === geoError.POSITION_UNAVAILABLE
+              ? "Your location is currently unavailable. Check device location services or enter the address manually."
+              : geoError.code === geoError.TIMEOUT
+                ? "Location detection timed out. Please try again or enter the address manually."
+                : "We couldn't detect your location. Please try again or enter the address manually.";
+        setDetectedCoordinates(null);
+        setLocationStatus({ type: "error", message });
+        setIsFetchingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+  };
+
   const handleDeleteAddress = async (addressId: string) => {
     try {
       setIsLoading(true);
@@ -641,6 +800,8 @@ const ProfilePage = () => {
   };
 
   const handleEditAddress = (address: Address) => {
+    setDetectedCoordinates(null);
+    setLocationStatus(null);
     setAddressFormData({
       flatNo: address.flatNo || "",
       landmark: address.landmark || "",
@@ -655,6 +816,9 @@ const ProfilePage = () => {
   };
 
   const resetAddressForm = () => {
+    setDetectedCoordinates(null);
+    setLocationStatus(null);
+    setIsFetchingLocation(false);
     setAddressFormData({
       flatNo: "",
       landmark: "",
@@ -1105,6 +1269,79 @@ const ProfilePage = () => {
                       {editingAddressId ? "Edit Address" : "Add New Address"}
                     </h3>
 
+                    {addressFormData.address && (
+                      <div className="mb-4 p-3 bg-purple-50/80 border border-purple-100 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-7 w-7 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+                            <Check className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
+                              YOUR LOCATION
+                            </span>
+                            <p className="text-xs font-semibold text-gray-800 truncate">
+                              {addressFormData.address}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsMapPickerOpen(true)}
+                          className="text-xs font-bold text-purple-700 hover:text-purple-800 hover:underline shrink-0 cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-500 font-medium mb-3">
+                      Use your current location or manually Select location on map to guide delivery partners.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        disabled={isFetchingLocation}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 text-purple-700 font-semibold text-xs sm:text-sm shadow-2xs transition-all disabled:opacity-60 cursor-pointer"
+                      >
+                        {isFetchingLocation ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-purple-600 shrink-0" />
+                        ) : (
+                          <MapPinned className="h-4 w-4 text-purple-600 shrink-0" />
+                        )}
+                        <span className="whitespace-nowrap">{isFetchingLocation ? "Detecting location…" : "Use your current location"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsMapPickerOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-purple-200 bg-white hover:bg-purple-50/80 text-purple-700 font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer"
+                      >
+                        <Map className="h-4 w-4 text-purple-600 shrink-0" />
+                        <span className="whitespace-nowrap">Select location on Map</span>
+                      </button>
+                    </div>
+                    {locationStatus && locationStatus.type !== "info" && (
+                      <p
+                        className={`mt-2 text-xs font-medium text-center ${
+                          locationStatus.type === "error"
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {locationStatus.message}
+                      </p>
+                    )}
+
+                    {/* Divider OR */}
+                    <div className="relative my-4 flex items-center justify-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                      <span className="absolute bg-white px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        OR
+                      </span>
+                    </div>
+
                     <form
                       className="space-y-6"
                       onSubmit={(e) => e.preventDefault()}
@@ -1112,7 +1349,7 @@ const ProfilePage = () => {
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Flat/House Number
+                            Flat / House / Door No <span className="text-red-500">*</span>
                           </label>
 
                           <input
@@ -1125,11 +1362,11 @@ const ProfilePage = () => {
                               })
                             }
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                            placeholder="Enter flat/house number"
+                            placeholder="e.g. Flat 402, House No 12-3, Door No 5"
                           />
 
                           {addressFormErrors.flatNo && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="mt-1 text-sm text-red-600 font-medium">
                               {addressFormErrors.flatNo}
                             </p>
                           )}
@@ -1143,12 +1380,13 @@ const ProfilePage = () => {
                           <input
                             type="text"
                             value={addressFormData.landmark}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setAddressFormData({
                                 ...addressFormData,
                                 landmark: e.target.value,
-                              })
-                            }
+                              });
+                              clearDetectedCoordinates();
+                            }}
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                             placeholder="Enter landmark"
                           />
@@ -1168,12 +1406,13 @@ const ProfilePage = () => {
 
                         <textarea
                           value={addressFormData.address}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setAddressFormData({
                               ...addressFormData,
                               address: e.target.value,
-                            })
-                          }
+                            });
+                            clearDetectedCoordinates();
+                          }}
                           rows={3}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
                           placeholder="Enter complete address"
@@ -1195,14 +1434,15 @@ const ProfilePage = () => {
                           <input
                             type="text"
                             value={addressFormData.pincode}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setAddressFormData({
                                 ...addressFormData,
                                 pincode: e.target.value
                                   .replace(/\D/g, "")
                                   .slice(0, 6),
-                              })
-                            }
+                              });
+                              clearDetectedCoordinates();
+                            }}
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                             placeholder="Enter 6-digit PIN code"
                             maxLength={6}
@@ -1216,27 +1456,39 @@ const ProfilePage = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-bold text-gray-700 mb-1.5">
                             Address Type
                           </label>
 
-                          <select
-                            value={addressFormData.addressType}
-                            onChange={(e) =>
-                              setAddressFormData({
-                                ...addressFormData,
-                                addressType: e.target.value as
-                                  | "Home"
-                                  | "Work"
-                                  | "Others",
-                              })
-                            }
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                          >
-                            <option value="Home">Home</option>
-                            <option value="Work">Work</option>
-                            <option value="Others">Others</option>
-                          </select>
+                          <div className="grid grid-cols-3 gap-2.5">
+                            {[
+                              { type: "Home", icon: Home },
+                              { type: "Work", icon: Briefcase },
+                              { type: "Others", icon: Building },
+                            ].map(({ type, icon: Icon }) => {
+                              const isSelected = addressFormData.addressType === type;
+                              return (
+                                <button
+                                  key={type}
+                                  type="button"
+                                  onClick={() =>
+                                    setAddressFormData((prev) => ({
+                                      ...prev,
+                                      addressType: type as "Home" | "Work" | "Others",
+                                    }))
+                                  }
+                                  className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
+                                    isSelected
+                                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-600 shadow-sm"
+                                      : "bg-white text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50/40"
+                                  }`}
+                                >
+                                  <Icon className="h-4 w-4 shrink-0" />
+                                  <span>{type}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
 
@@ -1297,6 +1549,12 @@ const ProfilePage = () => {
         </div>
 
         <Footer />
+        <LocationMapPicker
+          isOpen={isMapPickerOpen}
+          onClose={() => setIsMapPickerOpen(false)}
+          onConfirmLocation={handleMapLocationConfirmed}
+          initialCoords={detectedCoordinates}
+        />
       </div>
     </div>
   );

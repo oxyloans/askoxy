@@ -249,6 +249,12 @@ export default function ArticlePage() {
   const [nextOpen, setNextOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [linkedinPreviewOpen, setLinkedinPreviewOpen] = useState(false);
+  const [copiedToast, setCopiedToast] = useState("");
+
+  function showToast(msg: string) {
+    setCopiedToast(msg);
+    setTimeout(() => setCopiedToast(""), 2500);
+  }
 
   useEffect(() => {
     const fn = () => setShowBackToTop(window.scrollY > 400);
@@ -369,12 +375,13 @@ export default function ArticlePage() {
   function getLinkedInPostContent() {
     const title = item?.analysis?.articleName || item?.fileName || "OxyNews";
     const rawSummary = item?.analysis?.summary?.shortSummary ?? "";
-    const summary = rawSummary.length > 300
-      ? rawSummary.slice(0, 300).replace(/[^.!?]*$/, "").trim() + "..."
-      : rawSummary;
-    const tags = (item?.analysis?.classification?.tags ?? []).slice(0, 5).map(t => `#${t}`).join(" ");
-    const hashtagLine = [tags, "#OxyNews"].filter(Boolean).join(" ");
-    return `${title}\n\n${summary}\n\n\uD83D\uDD17 Read More: ${canonicalUrl}\n\n${hashtagLine}`;
+    // Two sentences max for the body
+    const sentences = rawSummary.match(/[^.!?]+[.!?]+/g) ?? [];
+    const body = sentences.slice(0, 2).join(" ").trim() || rawSummary.slice(0, 200).trim();
+    const articleTags = (item?.analysis?.classification?.tags ?? []).slice(0, 5).map(t => `#${t.replace(/\s+/g, "")}`).join(" ");
+    const platformTags = PLATFORMS.map(p => `#${p.name.replace(/[^a-zA-Z0-9]/g, "")}`).join(" ");
+    const hashtagLine = [articleTags, "#OxyNews", platformTags].filter(Boolean).join(" ");
+    return `${title}\n\n\n${body}\n\n\n\uD83D\uDD17 ${canonicalUrl}\n\n\n${hashtagLine}`;
   }
 
   async function getArticleImageFile(): Promise<File | null> {
@@ -530,64 +537,51 @@ export default function ArticlePage() {
             {a?.articleName || item.fileName || "Untitled article"}
           </h1>
           <div className="mt-1">
-{(() => {
-              const raw = item.s3FileUrl ?? "";
-              const name = item.fileName ?? "";
-              if (!name.toLowerCase().endsWith(".pdf")) return null;
-              const pdfUrl = raw.startsWith("http") ? raw : `https://radha-clone.s3.ap-south-1.amazonaws.com/${raw}`;
-              const pdfTitle = a?.articleName || name;
-              return (
-                <button
-                  type="button"
-                  onClick={() => setPdfPreview({ url: pdfUrl, title: pdfTitle })}
-                  className="inline-flex items-center gap-2 mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 transition"
-                >
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="9" y1="13" x2="15" y2="13" />
-                    <line x1="9" y1="17" x2="15" y2="17" />
-                  </svg>
-                  View Source PDF ↗
-                </button>
-              );
-            })()}
-
-            {/* SPONSOR STRIP - below PDF */}
-            <a
-              href="https://tvradhakrishna.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="group relative flex flex-col w-full mb-4 rounded-2xl overflow-hidden transition-all hover:shadow-lg"
-              style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ede9fe 100%)", border: "1px solid #bae6fd", boxShadow: "0 2px 12px rgba(14,165,233,0.1)" }}
-            >
-              {/* TOP BAR - Sponsored by - full width */}
-              <div className="w-full flex items-center justify-center py-1" style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1, #a855f7)" }}>
-                <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white">Sponsored by</span>
-              </div>
-
-              {/* MAIN ROW */}
-              <div className="flex items-center justify-between gap-4 px-5 py-3">
-                {/* Left - TVRK badge */}
-                <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-white" style={{ border: "2px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-                  <span className="font-black text-[11px] tracking-tight leading-none"><span style={{ color: "#dc2626" }}>TV</span><span style={{ color: "#2563eb" }}>RK</span></span>
+<div className="flex flex-col items-start gap-2 mb-3">
+              {(() => {
+                const raw = item.s3FileUrl ?? "";
+                const name = item.fileName ?? "";
+                if (!name.toLowerCase().endsWith(".pdf")) return null;
+                const pdfUrl = raw.startsWith("http") ? raw : `https://radha-clone.s3.ap-south-1.amazonaws.com/${raw}`;
+                const pdfTitle = a?.articleName || name;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setPdfPreview({ url: pdfUrl, title: pdfTitle })}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 transition"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="9" y1="13" x2="15" y2="13" />
+                      <line x1="9" y1="17" x2="15" y2="17" />
+                    </svg>
+                    View Source PDF ↗
+                  </button>
+                );
+              })()}
+              <a
+                href="https://tvradhakrishna.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="group inline-flex flex-col items-center rounded-xl overflow-hidden transition-all hover:shadow-lg"
+                style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ede9fe 100%)", border: "1px solid #bae6fd", boxShadow: "0 2px 12px rgba(14,165,233,0.1)" }}
+              >
+                <div className="w-full flex items-center justify-center py-0.5 px-4" style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1, #a855f7)" }}>
+                  <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-white">Sponsored by</span>
                 </div>
-
-                {/* Center */}
-                <div className="flex-1 flex flex-col items-center justify-center text-center gap-[2px]">
-                  <p className="text-base sm:text-[17px] font-black tracking-tight leading-snug" style={{ color: "#0f172a" }}>
+                <div className="flex flex-col items-center px-4 py-2 gap-1">
+                  <div className="rounded-lg overflow-hidden bg-white" style={{ border: "1px solid #e0f2fe", padding: "3px 8px" }}>
+                    <img src="https://i.ibb.co/Rw9zb11/tvrklogo.png" alt="TVRADHAKRISHNA.COM" className="h-6 w-auto object-contain" />
+                  </div>
+                  <p className="text-xs font-black tracking-tight leading-snug text-center whitespace-nowrap" style={{ color: "#0f172a" }}>
                     Every Journey.{" "}
                     <span style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>One Partner.</span>
                   </p>
-                  <span className="text-[9px] font-semibold tracking-[0.18em] uppercase" style={{ color: "#64748b" }}>FinTech &middot; BFSI &middot; Artificial Intelligence</span>
                 </div>
+              </a>
+            </div>
 
-                {/* Right - logo */}
-                <div className="shrink-0 rounded-xl overflow-hidden bg-white" style={{ border: "1px solid #e0f2fe", padding: "6px 10px", boxShadow: "0 2px 8px rgba(14,165,233,0.1)" }}>
-                  <img src="https://i.ibb.co/Rw9zb11/tvrklogo.png" alt="TVRADHAKRISHNA.COM" className="h-8 w-auto object-contain" />
-                </div>
-              </div>
-            </a>
             {(resolvedImageUrl || item.blogImageUrl) && (
               <img
                 src={resolvedImageUrl || item.blogImageUrl}
@@ -989,7 +983,7 @@ export default function ArticlePage() {
                 if (id === "whatsapp") {
                   return (
                     <button key={id} type="button"
-                      onClick={() => { shareToWhatsApp(); setShareOpen(false); }}
+                      onClick={() => { shareToWhatsApp(); setShareOpen(false); showToast("Opening WhatsApp…"); }}
                       className="flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-white text-xs font-semibold transition hover:opacity-90 active:scale-95"
                       style={{ backgroundColor: bg }}>
                       <span className="text-lg leading-none">{icon}</span>
@@ -1000,7 +994,7 @@ export default function ArticlePage() {
                 if (id === "linkedin") {
                   return (
                     <button key={id} type="button"
-                      onClick={() => { setShareOpen(false); setLinkedinPreviewOpen(true); }}
+                      onClick={() => { setShareOpen(false); setLinkedinPreviewOpen(true); showToast("Opening LinkedIn preview…"); }}
                       className="flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-white text-xs font-semibold transition hover:opacity-90 active:scale-95"
                       style={{ backgroundColor: bg }}>
                       <span className="text-lg leading-none">{icon}</span>
@@ -1013,7 +1007,7 @@ export default function ArticlePage() {
                     href={buildShareContent(id)}
                     target={id === "email" ? "_self" : "_blank"}
                     rel="noreferrer"
-                    onClick={() => setShareOpen(false)}
+                    onClick={() => { setShareOpen(false); showToast(`Opening ${label}…`); }}
                     className="flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-white text-xs font-semibold transition hover:opacity-90 active:scale-95"
                     style={{ backgroundColor: bg }}>
                     <span className="text-lg leading-none">{icon}</span>
@@ -1023,7 +1017,7 @@ export default function ArticlePage() {
               })}
             </div>
             <button
-              onClick={() => { handleNativeShare(); setShareOpen(false); }}
+              onClick={() => { handleNativeShare(); setShareOpen(false); showToast("Shared!"); }}
               className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
               ⋯ More / Device Share
             </button>
@@ -1093,7 +1087,7 @@ export default function ArticlePage() {
               {/* ACTION BUTTONS */}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button type="button"
-                  onClick={() => navigator.clipboard.writeText(getLinkedInPostContent())}
+                  onClick={() => { navigator.clipboard.writeText(getLinkedInPostContent()); showToast("✅ Content copied to clipboard!"); }}
                   className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
                   📋 Copy Content
                 </button>
@@ -1131,6 +1125,13 @@ export default function ArticlePage() {
 
       {pdfPreview && (
         <PdfModal url={pdfPreview.url} title={pdfPreview.title} onClose={() => setPdfPreview(null)} />
+      )}
+
+      {/* COPIED TOAST */}
+      {copiedToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl pointer-events-none" style={{ whiteSpace: "nowrap" }}>
+          {copiedToast}
+        </div>
       )}
 
 

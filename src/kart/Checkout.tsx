@@ -2639,7 +2639,7 @@ useEffect(() => {
             <div className="lg:col-span-7 space-y-5">
               
               {/* Card 1: Delivery Address */}
-              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
+              {/* <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 border border-purple-200">
@@ -2675,7 +2675,7 @@ useEffect(() => {
                   )}
                 </div>
 
-                {/* Selected Address Display */}
+               
                 {selectedAddress ? (
                   <div className="p-3.5 rounded-2xl bg-purple-50/40 border border-purple-200/80 flex items-start justify-between gap-3">
                     <div className="space-y-1 min-w-0">
@@ -2728,7 +2728,7 @@ useEffect(() => {
                     </button>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Card 2: Delivery Time Slot */}
               <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">

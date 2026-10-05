@@ -265,6 +265,9 @@ const PlanOfTheDay: React.FC = () => {
     const BYRADHA_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
     const BYRAMA_USER_ID = "27223f9d-296b-465a-b845-1001ef0d0fc0";
     const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
+    const BYMANI_USER_ID ="d1f0259d-3f23-4296-abcf-192a3ea10660"
+
+
     const checkSubmissionWindow = () => {
       if (storedUserId === BYRADHA_USER_ID) {
         setIsSubmissionWindowOpen(true);
@@ -274,6 +277,11 @@ const PlanOfTheDay: React.FC = () => {
         setIsSubmissionWindowOpen(true);
         return;
       }
+      if (storedUserId === BYMANI_USER_ID ){
+          setIsSubmissionWindowOpen(true);
+        return;
+      }
+
       if (storedUserId === BYSAI_USER_ID) {
         setIsSubmissionWindowOpen(true);
         return;

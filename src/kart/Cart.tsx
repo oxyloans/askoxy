@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   PartyPopper,
   MapPin,
+  MapPinned,
+  Map,
+  Navigation,
   Check,
   Home,
   Briefcase,
@@ -30,6 +33,7 @@ import { isWithinRadius } from "./LocationCheck";
 import { Button, message, Modal, Input, Tag, Tooltip } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
+import { LocationMapPicker } from "./LocationMapPicker";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL, { resolveAskoxyUrl } from "../Config";
 // import DeliveryFee from "./DeliveryFee";
@@ -207,6 +211,65 @@ const CartPage: React.FC = () => {
     pincode: "",
   });
 
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<
+    { type: "success" | "error" | "info"; message: string } | null
+  >(null);
+  const [detectedCoordinates, setDetectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
+  const [openedMapFromAddressModal, setOpenedMapFromAddressModal] = useState(false);
+
+  const handleOpenMapPicker = () => {
+    if (isAddressModalOpen) {
+      setOpenedMapFromAddressModal(true);
+      setIsAddressModalOpen(false);
+    }
+    setIsMapPickerOpen(true);
+  };
+
+  const handleMapLocationConfirmed = (data: {
+    flatNo: string;
+    landmark: string;
+    address: string;
+    pincode: string;
+    lat?: number;
+    lng?: number;
+  }) => {
+    if (data.lat && data.lng) {
+      setDetectedCoordinates({ lat: data.lat, lng: data.lng });
+    }
+    setAddressFormData((prev) => ({
+      ...prev,
+      flatNo: data.flatNo || prev.flatNo,
+      landMark: data.landmark || prev.landMark,
+      address: data.address || prev.address,
+      pincode: data.pincode || prev.pincode,
+    }));
+    setAddressFormErrors((prev) => ({
+      ...prev,
+      flatNo: "",
+      landmark: "",
+      address: "",
+      pincode: "",
+    }));
+    setLocationStatus({
+      type: "success",
+      message: "Location selected from map.",
+    });
+
+    setIsMapPickerOpen(false);
+    setIsAddressModalOpen(true);
+    setOpenedMapFromAddressModal(false);
+  };
+
+  const handleMapPickerClose = () => {
+    setIsMapPickerOpen(false);
+    if (openedMapFromAddressModal) {
+      setIsAddressModalOpen(true);
+      setOpenedMapFromAddressModal(false);
+    }
+  };
+
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
 
@@ -322,6 +385,37 @@ const CartPage: React.FC = () => {
     if (names.length === 1) return names[0];
     if (names.length === 2) return `${names[0]} and ${names[1]}`;
     return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+  };
+
+  const handleRemoveNonPreciousMetalItems = async (customItems?: CartItem[]) => {
+    const itemsToRemove = customItems || cartData.filter((item) => !isPreciousMetalItem(item));
+    if (itemsToRemove.length === 0) return true;
+
+    try {
+      await Promise.all(
+        itemsToRemove.map((item) =>
+          item.status === "FREE"
+            ? customerApi.delete(`${BASE_URL}/cart-service/cart/removeFreeContainer`, {
+                data: {
+                  id: item.cartId,
+                  customerId,
+                  itemId: item.itemId,
+                  status: "FREE",
+                },
+              })
+            : customerApi.delete(`${BASE_URL}/cart-service/cart/remove`, {
+                data: { id: item.cartId },
+              })
+        )
+      );
+      await fetchCartData();
+      message.success("General items removed. Cart now contains only Gold & Silver items.");
+      return true;
+    } catch (error) {
+      console.error("Failed to remove non-Gold/Silver items:", error);
+      message.error("Could not remove general items. Please try again.");
+      return false;
+    }
   };
 
   const refreshComboPricing = (
@@ -1011,6 +1105,126 @@ const CartPage: React.FC = () => {
     }
   };
 
+  const parseLocationResult = (result: any) => {
+    const components: any[] = result?.address_components || [];
+    const get = (type: string) =>
+      components.find((component) => component.types?.includes(type))?.long_name || "";
+
+    const premise = get("premise");
+    const subpremise = get("subpremise");
+    const streetNumber = get("street_number");
+    const building = get("building");
+    const flatNoParts = [premise, subpremise, building, streetNumber].filter(Boolean);
+    const flatNo = flatNoParts.length > 0 ? Array.from(new Set(flatNoParts)).join(", ") : "";
+
+    const route = get("route");
+    const neighborhood = get("neighborhood");
+    const sublocality3 = get("sublocality_level_3");
+    const sublocality2 = get("sublocality_level_2");
+    const sublocality1 = get("sublocality_level_1");
+    const locality = get("locality");
+    const district = get("administrative_area_level_2");
+    const pincode = get("postal_code");
+
+    const landMark = route || neighborhood || sublocality3 || sublocality2 || sublocality1 || "";
+    const parts = [
+      route,
+      neighborhood,
+      sublocality3,
+      sublocality2,
+      sublocality1,
+      locality || district,
+    ].filter(Boolean);
+    const address = Array.from(new Set(parts)).join(", ") || (result?.formatted_address || "")
+      .replace(/,?\s*India$/i, "")
+      .replace(/,?\s*\d{6}(?:\s*,?\s*[^,]+)?$/i, "")
+      .trim();
+
+    return { flatNo, landMark, address, pincode };
+  };
+
+  const clearDetectedCoordinates = () => {
+    setDetectedCoordinates(null);
+    if (locationStatus?.type === "success") setLocationStatus(null);
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus({
+        type: "error",
+        message: "Current location is not supported by this browser. Please enter your address manually.",
+      });
+      return;
+    }
+
+    setIsFetchingLocation(true);
+    setLocationStatus(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setDetectedCoordinates({ lat, lng });
+
+        try {
+          const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
+          const response = await axios.get(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`
+          );
+          const result = response.data?.results?.[0];
+
+          if (response.data?.status === "OK" && result) {
+            const parsed = parseLocationResult(result);
+            setAddressFormData((prev) => ({
+              ...prev,
+              ...(parsed.flatNo ? { flatNo: parsed.flatNo } : {}),
+              landMark: parsed.landMark || prev.landMark,
+              address: parsed.address || prev.address,
+              pincode: parsed.pincode || prev.pincode,
+            }));
+            setAddressFormErrors((prev) => ({
+              ...prev,
+              flatNo: "",
+              landmark: "",
+              address: "",
+              pincode: "",
+            }));
+            setLocationStatus({
+              type: "success",
+              message: "Location detected successfully. Please review your address details below.",
+            });
+          } else {
+            setLocationStatus({
+              type: "error",
+              message: "Location detected, but address details could not be parsed. Please enter manually.",
+            });
+          }
+        } catch {
+          setLocationStatus({
+            type: "error",
+            message: "Address lookup failed. Please enter details manually.",
+          });
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (geoError) => {
+        const errorMessage =
+          geoError.code === geoError.PERMISSION_DENIED
+            ? "Location permission was blocked. Allow location access for this site in your browser settings, then try again."
+            : geoError.code === geoError.POSITION_UNAVAILABLE
+              ? "Your location is currently unavailable. Check device location services or enter the address manually."
+              : geoError.code === geoError.TIMEOUT
+                ? "Location detection timed out. Please try again or enter the address manually."
+                : "We couldn't detect your location. Please try again or enter the address manually.";
+        setDetectedCoordinates(null);
+        setLocationStatus({ type: "error", message: errorMessage });
+        setIsFetchingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+  };
+
   const validateAddressForm = () => {
     const errors = {
       flatNo: "",
@@ -1047,7 +1261,7 @@ const CartPage: React.FC = () => {
       setSuccessMessage("");
 
       const fullAddress = `${addressFormData.flatNo}, ${addressFormData.landMark}, ${addressFormData.address}, ${addressFormData.pincode}`;
-      const coordinates = await getCoordinates(fullAddress);
+      const coordinates = detectedCoordinates || (await getCoordinates(fullAddress));
 
       if (!coordinates) {
         setError("Unable to find location. Please verify your address details.");
@@ -1343,6 +1557,9 @@ const CartPage: React.FC = () => {
   };
 
   const resetAddressForm = () => {
+    setDetectedCoordinates(null);
+    setLocationStatus(null);
+    setIsFetchingLocation(false);
     setAddressFormData({
       flatNo: "",
       landMark: "",
@@ -1381,12 +1598,80 @@ const CartPage: React.FC = () => {
     let skipNormalRadiusCheck = false;
 
     if (hasPreciousMetalItems(checkoutItems)) {
+      // Gold and Silver items must be ordered separately from general products.
+      if (!isPreciousMetalOnlyCart(checkoutItems)) {
+        const nonPreciousMetalItems = checkoutItems.filter((item) => !isPreciousMetalItem(item));
+        const removedNames = formatItemNames(nonPreciousMetalItems);
+
+        // Show confirmation modal with Cancel and Proceed buttons BEFORE removing items
+        const shouldProceed = await new Promise<boolean>((resolve) => {
+          Modal.confirm({
+            title: "Gold & Silver Order",
+            centered: true,
+            okText: "Proceed to Checkout",
+            cancelText: "Cancel",
+            okButtonProps: {
+              className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl",
+            },
+            cancelButtonProps: {
+              className: "border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50",
+            },
+            content: (
+              <div className="space-y-2 py-1">
+                <p className="text-sm font-semibold text-gray-800">
+                  Gold & Silver items must be ordered separately.
+                </p>
+                <p className="text-xs text-purple-700 font-medium bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                  Proceeding will remove general item(s) (<strong>{removedNames}</strong>) from your cart for this order.
+                </p>
+              </div>
+            ),
+            onOk: () => resolve(true),
+            onCancel: () => resolve(false),
+          });
+        });
+
+        if (!shouldProceed) {
+          return; // User clicked Cancel; stop checkout and keep all items in cart intact!
+        }
+
+        try {
+          await Promise.all(
+            nonPreciousMetalItems.map((item) =>
+              item.status === "FREE"
+                ? customerApi.delete(`${BASE_URL}/cart-service/cart/removeFreeContainer`, {
+                    data: {
+                      id: item.cartId,
+                      customerId,
+                      itemId: item.itemId,
+                      status: "FREE",
+                    },
+                  })
+                : customerApi.delete(`${BASE_URL}/cart-service/cart/remove`, {
+                    data: { id: item.cartId },
+                  })
+            )
+          );
+          checkoutItems = (await fetchCartData()) || [];
+          if (!isPreciousMetalOnlyCart(checkoutItems)) {
+            message.error("Could not prepare the Gold/Silver-only order. Please try again.");
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to remove non-Gold/Silver items:", error);
+          message.error("Could not prepare the Gold/Silver-only order. Please try again.");
+          return;
+        }
+      }
+
+      skipNormalRadiusCheck = true;
+
       const coordinates =
         selectedAddress.latitude !== undefined && selectedAddress.longitude !== undefined
           ? { lat: selectedAddress.latitude, lng: selectedAddress.longitude }
           : await getCoordinates(
-            `${selectedAddress.flatNo}, ${selectedAddress.landMark}, ${selectedAddress.address}, ${selectedAddress.pincode}`
-          );
+              `${selectedAddress.flatNo}, ${selectedAddress.landMark}, ${selectedAddress.address}, ${selectedAddress.pincode}`
+            );
 
       if (!coordinates) {
         message.error("Unable to find location coordinates. Please check the address.");
@@ -1398,52 +1683,6 @@ const CartPage: React.FC = () => {
         coordinates.lng,
       );
       preciousMetalDistanceFee = distanceResult.fee;
-
-      // Gold and Silver orders are allowed outside the normal grocery delivery radius.
-      if (isPreciousMetalOnlyCart(checkoutItems)) {
-        skipNormalRadiusCheck = true;
-      }
-
-      if (
-        !isPreciousMetalOnlyCart(checkoutItems) &&
-        distanceResult.distance > PRECIOUS_METAL_MIXED_CART_REMOVE_DISTANCE_KM
-      ) {
-        const nonPreciousMetalItems = checkoutItems.filter((item) => !isPreciousMetalItem(item));
-        try {
-          await Promise.all(
-            nonPreciousMetalItems.map((item) =>
-              item.status === "FREE"
-                ? customerApi.delete(`${BASE_URL}/cart-service/cart/removeFreeContainer`, {
-                  data: {
-                    id: item.cartId,
-                    customerId,
-                    itemId: item.itemId,
-                    status: "FREE",
-                  },
-                })
-                : customerApi.delete(`${BASE_URL}/cart-service/cart/remove`, {
-                  data: { id: item.cartId },
-                })
-            )
-          );
-          checkoutItems = (await fetchCartData()) || [];
-          if (!isPreciousMetalOnlyCart(checkoutItems)) {
-            message.error("Could not prepare the Gold/Silver-only order. Please try again.");
-            return;
-          }
-          message.info("Non-Gold/Silver items were removed because this address is over 100 km away.");
-        } catch (error) {
-          console.error("Failed to remove non-Gold/Silver items:", error);
-          message.error("Could not prepare the Gold/Silver-only order. Please try again.");
-          return;
-        }
-      } else if (
-        !isPreciousMetalOnlyCart(checkoutItems) &&
-        distanceResult.distance <= PRECIOUS_METAL_MIXED_CART_FEE_DISTANCE_KM
-      ) {
-        // Under 40 km, retain all cart items and continue with normal fees.
-        skipNormalRadiusCheck = true;
-      }
     }
 
     const effectiveDeliveryFee = isPreciousMetalOnlyCart(checkoutItems)
@@ -1498,6 +1737,9 @@ const CartPage: React.FC = () => {
   };
 
   const handleAddressModalClose = () => {
+    setDetectedCoordinates(null);
+    setLocationStatus(null);
+    setIsFetchingLocation(false);
     setIsAddressModalOpen(false);
     setEditingAddressId(null);
     setSuccessMessage("");
@@ -2272,6 +2514,32 @@ const CartPage: React.FC = () => {
                   </div>
                 ) : (
                   <>
+                    {/* Mixed Cart Notice Banner */}
+                    {hasPreciousMetalItems(cartData) && !isPreciousMetalOnlyCart(cartData) && (
+                      <div className="p-3 sm:p-3.5 mb-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                            ⚠️
+                          </div>
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-bold text-amber-900">
+                              Gold & Silver Separate Order
+                            </h4>
+                            <p className="text-xs text-amber-800/90 font-medium leading-snug">
+                              Gold & Silver items are ordered separately. General products will be removed at checkout.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveNonPreciousMetalItems()}
+                          className="w-full sm:w-auto shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer text-center"
+                        >
+                          Keep Gold/Silver Only
+                        </button>
+                      </div>
+                    )}
+
                     {/* Unified Desktop Table Header Row */}
                     <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-bold text-gray-600 bg-gray-50/90 px-4 py-2.5 rounded-xl border border-gray-100 uppercase tracking-wider">
                       <div className="col-span-6 text-gray-700">Item</div>
@@ -3006,13 +3274,86 @@ const CartPage: React.FC = () => {
 
                   {/* Form Body */}
                   <div className="p-5 sm:p-6 bg-gradient-to-b from-gray-50/40 to-white space-y-4">
+                    {addressFormData.address && (
+                      <div className="p-3 bg-purple-50/80 border border-purple-100 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-7 w-7 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+                            <Check className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
+                              YOUR LOCATION
+                            </span>
+                            <p className="text-xs font-semibold text-gray-800 truncate">
+                              {addressFormData.address}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleOpenMapPicker}
+                          className="text-xs font-bold text-purple-700 hover:text-purple-800 hover:underline shrink-0 cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-500 font-medium mb-1">
+                      Use your current location or manually Select location on map to guide delivery partners.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        disabled={isFetchingLocation}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 text-purple-700 font-semibold text-xs sm:text-sm shadow-2xs transition-all disabled:opacity-60 cursor-pointer"
+                      >
+                        {isFetchingLocation ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-purple-600 shrink-0" />
+                        ) : (
+                          <MapPinned className="h-4 w-4 text-purple-600 shrink-0" />
+                        )}
+                        <span className="whitespace-nowrap">{isFetchingLocation ? "Detecting location…" : "Use your current location"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleOpenMapPicker}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-purple-200 bg-white hover:bg-purple-50/80 text-purple-700 font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer"
+                      >
+                        <Map className="h-4 w-4 text-purple-600 shrink-0" />
+                        <span className="whitespace-nowrap">Select location on Map</span>
+                      </button>
+                    </div>
+                    {locationStatus && locationStatus.type !== "info" && (
+                      <p
+                        className={`mt-2 text-xs font-medium text-center ${
+                          locationStatus.type === "error"
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {locationStatus.message}
+                      </p>
+                    )}
+
+                    {/* Divider OR */}
+                    <div className="relative my-4 flex items-center justify-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                      <span className="absolute bg-white px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        OR
+                      </span>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-purple-900/80 mb-1.5">
                         Flat / House / Door No <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Flat 402, House No 12-3"
+                        placeholder="e.g. Flat 402, House No 12-3, Door No 5"
                         value={addressFormData.flatNo}
                         onChange={(e) =>
                           setAddressFormData((prev) => ({
@@ -3037,12 +3378,13 @@ const CartPage: React.FC = () => {
                         type="text"
                         placeholder="e.g. Near City Hospital, Opposite Metro Station"
                         value={addressFormData.landMark}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setAddressFormData((prev) => ({
                             ...prev,
                             landMark: e.target.value,
-                          }))
-                        }
+                          }));
+                          clearDetectedCoordinates();
+                        }}
                         className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
                       />
                       {addressFormErrors.landmark && (
@@ -3060,12 +3402,13 @@ const CartPage: React.FC = () => {
                         type="text"
                         placeholder="e.g. Road No 2, Banjara Hills"
                         value={addressFormData.address}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setAddressFormData((prev) => ({
                             ...prev,
                             address: e.target.value,
-                          }))
-                        }
+                          }));
+                          clearDetectedCoordinates();
+                        }}
                         className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
                       />
                       {addressFormErrors.address && (
@@ -3085,12 +3428,13 @@ const CartPage: React.FC = () => {
                           placeholder="e.g. 500081"
                           maxLength={6}
                           value={addressFormData.pincode}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setAddressFormData((prev) => ({
                               ...prev,
-                              pincode: e.target.value,
-                            }))
-                          }
+                              pincode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                            }));
+                            clearDetectedCoordinates();
+                          }}
                           className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-2xs"
                         />
                         {addressFormErrors.pincode && (
@@ -3706,6 +4050,12 @@ const CartPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      <LocationMapPicker
+        isOpen={isMapPickerOpen}
+        onClose={handleMapPickerClose}
+        onConfirmLocation={handleMapLocationConfirmed}
+        initialCoords={detectedCoordinates}
+      />
     </div>
   );
 };

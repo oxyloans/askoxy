@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import type { ExternalNewsArticle } from "../types";
 
+
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "";
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -215,7 +216,14 @@ export default function ExternalArticlePage() {
   const [sourceArticles, setSourceArticles] = useState<ExternalNewsArticle[]>([]);
   const [shareOpen, setShareOpen] = useState(false);
   const [linkedinPreviewOpen, setLinkedinPreviewOpen] = useState(false);
+  const [copiedToast, setCopiedToast] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
   const navigate = useNavigate();
+
+  function showToast(msg: string) {
+    setCopiedToast(msg);
+    setTimeout(() => setCopiedToast(""), 2500);
+  }
 
   useEffect(() => {
     if (!sourceName || !id) return;
@@ -304,7 +312,15 @@ export default function ExternalArticlePage() {
       navigator.share({ title, text, url: canonicalUrl }).catch(() => {});
     } else {
       navigator.clipboard.writeText(canonicalUrl);
+      showToast("✅ Link copied to clipboard!");
     }
+  }
+
+  function handleCopyContent() {
+    navigator.clipboard.writeText(getLinkedInPostContent());
+    setIsCopied(true);
+    showToast("✅ Content copied to clipboard!");
+    setTimeout(() => setIsCopied(false), 2500);
   }
 
   function goToExternalArticle(nextId?: number | null) {
@@ -405,25 +421,21 @@ export default function ExternalArticlePage() {
                 href="https://tvradhakrishna.com/"
                 target="_blank"
                 rel="noreferrer"
-                className="group flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl border-l-4 border-amber-400 bg-amber-50 hover:bg-amber-100 shadow-sm transition mb-4"
+                className="group inline-flex flex-col items-center mb-4 rounded-xl overflow-hidden transition-all hover:shadow-lg"
+                style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ede9fe 100%)", border: "1px solid #bae6fd", boxShadow: "0 2px 12px rgba(14,165,233,0.1)" }}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="shrink-0 w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center font-black text-[10px] tracking-tight">
-                    <span className="text-red-600">TV</span><span className="text-blue-600">RK</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Sponsored by</p>
-                    <p className="text-sm font-extrabold text-amber-800 leading-tight">
-                      Radhakrishna Thatavarti
-                      <span className="ml-1.5 text-xs font-normal text-amber-500">CEO, OxyGroup</span>
-                    </p>
-                  </div>
+                <div className="w-full flex items-center justify-center py-0.5 px-4" style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1, #a855f7)" }}>
+                  <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-white">Sponsored by</span>
                 </div>
-                <img
-                  src="https://i.ibb.co/Rw9zb11/tvrklogo.png"
-                  alt="tvrklogo"
-                  className="h-12 w-auto object-contain rounded-lg border-2 border-amber-300 bg-white px-3 py-2 shadow-md shrink-0"
-                />
+                <div className="flex flex-col items-center px-4 py-2 gap-1">
+                  <div className="rounded-lg overflow-hidden bg-white" style={{ border: "1px solid #e0f2fe", padding: "3px 8px" }}>
+                    <img src="https://i.ibb.co/Rw9zb11/tvrklogo.png" alt="TVRADHAKRISHNA.COM" className="h-6 w-auto object-contain" />
+                  </div>
+                  <p className="text-xs font-black tracking-tight leading-snug text-center whitespace-nowrap" style={{ color: "#0f172a" }}>
+                    Every Journey.{" "}
+                    <span style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>One Partner.</span>
+                  </p>
+                </div>
               </a>
 
               <div className="flex flex-wrap gap-2 items-center text-xs uppercase tracking-widest">
@@ -492,6 +504,8 @@ export default function ExternalArticlePage() {
 
         </main>
       </div>
+
+
 
       <div className="mt-12 max-w-6xl mx-auto border-t border-ink/10 pt-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
@@ -573,7 +587,7 @@ export default function ExternalArticlePage() {
                 if (pid === "linkedin") {
                   return (
                     <button key={pid} type="button"
-                      onClick={() => { setShareOpen(false); setLinkedinPreviewOpen(true); }}
+                      onClick={() => { setShareOpen(false); setLinkedinPreviewOpen(true); showToast("Opening LinkedIn preview…"); }}
                       className="flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-white text-xs font-semibold transition hover:opacity-90 active:scale-95"
                       style={{ backgroundColor: bg }}>
                       <span className="text-lg leading-none">{icon}</span>
@@ -645,9 +659,13 @@ export default function ExternalArticlePage() {
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button type="button"
-                  onClick={() => navigator.clipboard.writeText(getLinkedInPostContent())}
-                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
-                  📋 Copy Content
+                  onClick={handleCopyContent}
+                  className={`rounded-xl border py-3 text-sm font-semibold transition ${
+                    isCopied
+                      ? "bg-green-600 text-white border-green-600 font-bold"
+                      : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                  }`}>
+                  {isCopied ? "✅ Copied!" : "📋 Copy Content"}
                 </button>
                 <button type="button"
                   onClick={() => { window.open(buildShareContent("linkedin"), "_blank", "noopener,noreferrer"); setLinkedinPreviewOpen(false); }}
@@ -657,6 +675,13 @@ export default function ExternalArticlePage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* COPIED TOAST */}
+      {copiedToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-slate-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg backdrop-blur-sm animate-fade-in">
+          {copiedToast}
         </div>
       )}
     </div>
