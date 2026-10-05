@@ -220,36 +220,67 @@ const handleUserDetailsClick = async (userId: string) => {
     };
   };
 
+  // Rotary API data normalization
+  const normalizeFromRotaryApi = (rotary: any): UserData => {
+    const nameGuess =
+      rotary.name ||
+      rotary.fullName ||
+      `${rotary.firstName || rotary.userName || ""} ${rotary.lastName || ""}`.trim();
+    const mobile =
+      (rotary.mobileNumbers && String(rotary.mobileNumbers).trim()) ||
+      (rotary.mobileNumber && String(rotary.mobileNumber).trim()) ||
+      (rotary.secondaryMobile && String(rotary.secondaryMobile).trim()) ||
+      (rotary.businessPhone && String(rotary.businessPhone).trim()) ||
+      "";
+    const whatsapp =
+      (rotary.whatsappNumber && String(rotary.whatsappNumber).trim()) ||
+      (rotary.whastappNumber && String(rotary.whastappNumber).trim()) ||
+      mobile;
+    const address =
+      rotary.address ||
+      rotary.businessAddress ||
+      buildAddress(rotary) ||
+      (rotary.clubName ? `Club: ${rotary.clubName}` : "");
+    return {
+      userId: rotary.userId || rotary.rotaryId || rotary.id || userId,
+      fullName: (nameGuess && String(nameGuess).trim()) || "—",
+      mobileNumber: mobile || "—",
+      whatsappNumber: whatsapp || "—",
+      userType: rotary.userType || rotary.classification || "ROTARY",
+      address: address || "No",
+    };
+  };
+
   try {
     // 1) PRIMARY: POST /getDataWithMobileOrWhatsappOrUserId
-    const primary = await axios.post(
-      `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
-      { userId: userId || null },
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    const list = primary?.data?.activeUsersResponse || [];
-    if (primary.status === 200 && Array.isArray(list) && list.length > 0) {
-      const transformed = normalizeFromListApi(list[0]);
-      setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-      return;
-    }
+    try {
+      const primary = await axios.post(
+        `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
+        { userId: userId || null },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      const list = primary?.data?.activeUsersResponse || [];
+      if (primary.status === 200 && Array.isArray(list) && list.length > 0) {
+        const transformed = normalizeFromListApi(list[0]);
+        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+        return;
+      }
+    } catch {}
 
     // 2) FALLBACK: GET /getDataWithMobileOrUserId?userId=...
-    const fallback = await axios.get(
-      `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
-      { params: { userId } }
-    );
+    try {
+      const fallback = await axios.get(
+        `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
+        { params: { userId } }
+      );
+      if (fallback?.status === 200 && fallback?.data) {
+        const transformed = normalizeFromSingleApi(fallback.data);
+        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+        return;
+      }
+    } catch {}
 
-    if (fallback?.status === 200 && fallback?.data) {
-      const transformed = normalizeFromSingleApi(fallback.data);
-      setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-      return;
-    }
-
-    // 3) FINAL FALLBACK (Kukatpally style):
-    //    /getAdvocatesDataWithMobileOrUserId
-    // Prefer GET with params; if API expects POST, we'll try that too.
+    // 3) FALLBACK: /getAdvocatesDataWithMobileOrUserId (GET or POST)
     try {
       const advGet = await axios.get(
         `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
@@ -257,12 +288,15 @@ const handleUserDetailsClick = async (userId: string) => {
       );
       if (advGet?.status === 200 && advGet?.data) {
         const data = Array.isArray(advGet.data) ? advGet.data[0] : advGet.data;
-        const transformed = normalizeFromAdvocateApi(data);
-        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-        return;
+        if (data && (data.id || data.userId || data.advocateName || data.fullName || data.mobileNumber)) {
+          const transformed = normalizeFromAdvocateApi(data);
+          setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+          return;
+        }
       }
-    } catch {
-      // If GET fails (or API expects body), try POST
+    } catch {}
+
+    try {
       const advPost = await axios.post(
         `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
         { userId },
@@ -270,55 +304,57 @@ const handleUserDetailsClick = async (userId: string) => {
       );
       if (advPost?.status === 200 && advPost?.data) {
         const data = Array.isArray(advPost.data) ? advPost.data[0] : advPost.data;
-        const transformed = normalizeFromAdvocateApi(data);
-        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-        return;
-      }
-    }
-
-    message.error("No user details found in all sources.");
-  } catch (error) {
-    // If primary threw an exception, still attempt the subsequent fallbacks:
-    try {
-      const fb = await axios.get(
-        `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
-        { params: { userId } }
-      );
-      if (fb?.status === 200 && fb?.data) {
-        const transformed = normalizeFromSingleApi(fb.data);
-        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-        return;
-      }
-    } catch { /* swallow and continue */ }
-
-    try {
-      const advGet = await axios.get(
-        `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
-        { params: { userId } }
-      );
-      if (advGet?.status === 200 && advGet?.data) {
-        const data = Array.isArray(advGet.data) ? advGet.data[0] : advGet.data;
-        const transformed = normalizeFromAdvocateApi(data);
-        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-        return;
-      }
-    } catch {
-      try {
-        const advPost = await axios.post(
-          `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
-          { userId },
-          { headers: { "Content-Type": "application/json" } }
-        );
-        if (advPost?.status === 200 && advPost?.data) {
-          const data = Array.isArray(advPost.data) ? advPost.data[0] : advPost.data;
+        if (data && (data.id || data.userId || data.advocateName || data.fullName || data.mobileNumber)) {
           const transformed = normalizeFromAdvocateApi(data);
           setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
           return;
         }
-      } catch {
-        message.error("Failed to fetch user/advocate details");
       }
-    }
+    } catch {}
+
+    // 4) FALLBACK: /getRotaryDataByUserId (GET or POST)
+    try {
+      const rotGet = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/getRotaryDataByUserId`,
+        { params: { userId } }
+      );
+      if (rotGet?.status === 200 && rotGet?.data) {
+        const data = Array.isArray(rotGet.data)
+          ? rotGet.data[0]
+          : rotGet.data.content
+          ? rotGet.data.content[0]
+          : rotGet.data;
+        if (data && (data.rotaryId || data.id || data.userId || data.name || data.mobileNumbers || data.mobileNumber)) {
+          const transformed = normalizeFromRotaryApi(data);
+          setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+          return;
+        }
+      }
+    } catch {}
+
+    try {
+      const rotPost = await axios.post(
+        `${BASE_URL}/user-service/getRotaryDataByUserId`,
+        { userId },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      if (rotPost?.status === 200 && rotPost?.data) {
+        const data = Array.isArray(rotPost.data)
+          ? rotPost.data[0]
+          : rotPost.data.content
+          ? rotPost.data.content[0]
+          : rotPost.data;
+        if (data && (data.rotaryId || data.id || data.userId || data.name || data.mobileNumbers || data.mobileNumber)) {
+          const transformed = normalizeFromRotaryApi(data);
+          setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+          return;
+        }
+      }
+    } catch {}
+
+    message.error("No user details found in all sources (User / Advocate / Rotary).");
+  } catch (error) {
+    message.error("Failed to fetch user/advocate/rotary details");
   } finally {
     setLoadingRows((prev) => ({ ...prev, [userId]: false }));
   }

@@ -1,36 +1,44 @@
-import { Modal, Spin, Select, Button, message, SelectProps } from "antd";
-import TextArea from "antd/es/input/TextArea";
+import { Modal, Spin, Select, Button, message, SelectProps, Input } from "antd";
 import React, { useEffect, useState } from "react";
 import { adminApi } from "../utils/axiosInstances";
 import axios from "axios";
+import DEFAULT_BASE_URL from "../Config";
+
+const { TextArea } = Input;
 
 interface Comment {
   adminComments: string;
   commentsUpdateBy: string;
   commentsCreatedDate: string;
   customerBehaviour?: string;
+  callingType?: string;
+  dataType?: string;
   isActive?: boolean | null;
 }
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: (newComment: string, details?: any) => void;
   userId?: string;
-  updatedBy: string | null | undefined;
-  storedUniqueId: string | null | undefined;
-  record: any;
-  BASE_URL: string;
+  updatedBy?: string | null | undefined;
+  storedUniqueId?: string | null | undefined;
+  record?: any;
+  BASE_URL?: string;
+  dataType?: string;
   initialIsActive?: boolean | null;
 }
 
 const HelpDeskCommentsModal: React.FC<Props> = ({
   open,
   onClose,
+  onSuccess,
   userId,
   updatedBy,
   storedUniqueId,
   record,
-  BASE_URL,
+  BASE_URL = DEFAULT_BASE_URL,
+  dataType,
 }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -39,11 +47,6 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
   const [userResponse, setUserResponse] = useState<string | undefined>();
   const [callingType, setCallingType] = useState<string | undefined>();
   const [orderId, setOrderId] = useState("");
-  const [isActive, setIsActive] = useState<string | undefined>();
-  const [currentIsActiveStatus, setCurrentIsActiveStatus] = useState<
-    boolean | null | undefined
-  >(null);
-  const { Option } = Select;
 
   const emojiOptions: SelectProps["options"] = [
     { label: "😊 Polite", value: "POLITE" },
@@ -62,14 +65,13 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     { label: "⏳ Call Waiting", value: "CALLWAITING" },
   ];
 
-  const isActiveOptions: SelectProps["options"] = [
-    { label: "Yes", value: "true" },
-    { label: "No", value: "false" },
-  ];
   const isCallingTypeOptions: SelectProps["options"] = [
     { label: "RICE", value: "RICE" },
     { label: "GOLD", value: "GOLD" },
     { label: "BOTH", value: "BOTH" },
+    { label: "OFFICIAL DATA", value: "OFFICIAL_DATA" },
+    { label: "OFFICIAL", value: "OFFICIAL" },
+    { label: "GENERAL", value: "GENERAL" },
   ];
 
   // Helper function to get emoji for customer behaviour
@@ -79,72 +81,46 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     return option ? option.label : behaviour;
   };
 
-  // Helper function to get display text for isActive status
-  const getIsActiveDisplayText = (status: boolean | null | undefined) => {
-    if (status === null || status === undefined) return "Not Set";
-    return status ? "Active" : "Inactive";
-  };
-
-  // Helper function to get badge color for isActive status
-  const getIsActiveBadgeColor = (status: boolean | null | undefined) => {
-    if (status === null || status === undefined)
-      return "bg-gray-100 text-gray-700";
-    return status ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
-  };
-
   useEffect(() => {
-    console.log(userId, "userId in HelpDeskCommentsModal");
-
-    if (open && userId) {
-      fetchComments();
-      // Get current isActive status from record or set from latest comment
-      setCurrentIsActiveStatus(
-        record?.isActive !== undefined ? record.isActive : null,
-      );
-      setIsActive(record?.isActive !== undefined ? record.isActive : null);
+    if (open && (userId || record?.id || record?.userId)) {
+      const targetUserId = userId || record?.id || record?.userId;
+      fetchComments(targetUserId);
     }
   }, [open, userId, record]);
 
   const formatDate = (input: string) => {
+    if (!input) return "";
     const date = new Date(input);
+    if (isNaN(date.getTime())) return input;
     return date.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const fetchComments = async (): Promise<void> => {
+  const fetchComments = async (targetId?: string): Promise<void> => {
+    const idToFetch = targetId || userId || record?.id || record?.userId;
+    if (!idToFetch) return;
+
     setLoadingComments(true);
     try {
       const response = await axios.post(
         `${BASE_URL}/user-service/fetchAdminComments`,
-        { userId },
-        { headers: { "Content-Type": "application/json" } },
+        { userId: idToFetch },
+        { headers: { "Content-Type": "application/json" } }
       );
-      
-      // Handle successful response
+
       if (response.status === 200) {
         const commentsData = Array.isArray(response.data) ? response.data : [];
         setComments(commentsData);
-
-        // If no record isActive status, get from latest comment
-        if (
-          commentsData.length > 0 &&
-          (record?.isActive === undefined || record?.isActive === null)
-        ) {
-          const latestComment = commentsData[0];
-          setCurrentIsActiveStatus(latestComment.isActive);
-          setIsActive(latestComment.isActive);
-        }
       }
     } catch (error: any) {
       console.error("Error fetching comments:", error);
-      
-      // Handle different status codes
       if (error.response) {
         const statusCode = error.response.status;
-        
         switch (statusCode) {
           case 400:
             message.error("Bad request. Please check the user ID.");
@@ -156,28 +132,17 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
             message.error("Access forbidden. You don't have permission.");
             break;
           case 404:
-            message.info("No comments found for this user.");
-            break;
           case 500:
-            message.info("No comments found.");
+            // No previous comments
             break;
           case 502:
-            message.error("Server error. Please try again later.");
-            break;
           case 503:
             message.error("Service unavailable. Please try again later.");
             break;
           default:
-            message.error(`Request failed with status ${statusCode}. Please try again.`);
+            break;
         }
-      } else if (error.request) {
-        // Network error
-        message.error("Network error. Please check your connection.");
-      } else {
-        // Other error
-        message.error("An unexpected error occurred. Please try again.");
       }
-      
       setComments([]);
     } finally {
       setLoadingComments(false);
@@ -192,13 +157,9 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     setCallingType(value);
   };
 
-  const handleIsActiveChange = (value: string) => {
-    setIsActive(value);
-  };
-
   const handleSubmitComment = async (): Promise<void> => {
     if (!userResponse?.trim()) {
-      message.warning("Please enter customer behaviour");
+      message.warning("Please select user response");
       return;
     }
     if (!callingType?.trim()) {
@@ -210,42 +171,52 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
       return;
     }
 
-    // If status is being updated, include it; otherwise skip
-    const shouldUpdateIsActive =
-      currentIsActiveStatus === null || currentIsActiveStatus === undefined;
-
-    let commentText = newComment;
+    let commentText = newComment.trim();
     if (orderId) {
-      commentText = `Regarding order Id ${orderId} ${newComment}`;
+      commentText = `Regarding order Id ${orderId}: ${commentText}`;
     }
 
-    let commentBy = updatedBy;
+    const currentUserName =
+      updatedBy || localStorage.getItem("admin_userName")?.toUpperCase() || "ADMIN";
+    const currentAdminId =
+      storedUniqueId || localStorage.getItem("admin_uniquId") || "";
+    let commentBy = currentUserName;
     if (localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN") {
       commentBy = "ADMIN";
     }
+
+    const targetUserId = userId || record?.id || record?.userId;
+    const effectiveDataType = dataType || record?.dataType;
 
     setSubmittingComment(true);
     try {
       const requestData: any = {
         adminComments: commentText,
-        adminUserId: storedUniqueId,
+        adminUserId: currentAdminId,
         commentsUpdateBy: commentBy,
-        userId,
+        userId: targetUserId,
         callingType: callingType,
         customerBehaviour: userResponse,
       };
 
-      // Include isActive only if selected by user
-      if (shouldUpdateIsActive && isActive !== undefined) {
-        requestData.isActive = isActive === "true";
+      if (effectiveDataType) {
+        requestData.dataType = effectiveDataType;
       }
 
       await adminApi.patch(
         `${BASE_URL}/user-service/adminUpdateComments`,
         requestData,
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json" } }
       );
+
       message.success("Comment added successfully");
+      if (onSuccess) {
+        onSuccess(commentText, {
+          customerBehaviour: userResponse,
+          callingType,
+          dataType: effectiveDataType,
+        });
+      }
       resetForm();
       onClose();
     } catch (error) {
@@ -262,8 +233,6 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     setNewComment("");
     setUserResponse(undefined);
     setCallingType(undefined);
-    setIsActive(undefined);
-    setCurrentIsActiveStatus(null);
   };
 
   const colorOptions = [
@@ -277,7 +246,7 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
 
   return (
     <Modal
-      zIndex={150}
+      zIndex={1050}
       title="HelpDesk Comments"
       open={open}
       onCancel={() => {
@@ -285,11 +254,13 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
         resetForm();
       }}
       footer={null}
-      width={550}
+      width={560}
+      destroyOnClose
     >
       <div className="flex flex-col">
-        <div className="mb-5">
-          <h3 className="text-base font-semibold text-gray-800 mb-3">
+        {/* Recent Comments Section */}
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-gray-800 mb-2">
             Recent Comments
           </h3>
           {loadingComments ? (
@@ -298,7 +269,7 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
               <span className="ml-3 text-gray-500">Loading comments...</span>
             </div>
           ) : comments.length > 0 ? (
-            <div className="w-full max-w-xl max-h-80 overflow-y-auto border border-gray-200 rounded-lg shadow-sm bg-white">
+            <div className="w-full max-h-64 overflow-y-auto border border-gray-200 rounded-lg shadow-sm bg-white divide-y divide-gray-100">
               {comments.map((comment, index) => {
                 const initials = (comment.commentsUpdateBy || "U")
                   .split(" ")
@@ -314,53 +285,51 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
                 return (
                   <div
                     key={index}
-                    className="border-b border-gray-100 last:border-b-0"
+                    className="px-3 py-2 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="px-3 py-1.5 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center mb-0.5">
-                        <div
-                          className={`w-6 h-6 rounded-full ${color} flex items-center justify-center text-[10px] font-semibold mr-2`}
-                        >
-                          {initials}
-                        </div>
-                        <span className="font-medium text-sm text-gray-800">
-                          {comment.commentsUpdateBy || "Unknown"}
-                        </span>
-                        <div className="ml-auto flex items-center gap-2">
-                          {comment.customerBehaviour && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full border">
-                              {getCustomerBehaviourEmoji(
-                                comment.customerBehaviour,
-                              )}
-                            </span>
-                          )}
-                          {comment.isActive !== undefined &&
-                            comment.isActive !== null && (
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full border ${getIsActiveBadgeColor(
-                                  comment.isActive,
-                                )}`}
-                              >
-                                {getIsActiveDisplayText(comment.isActive)}
-                              </span>
-                            )}
-                          <span className="text-[10px] text-gray-400">
-                            {formatDate(comment.commentsCreatedDate)}
-                          </span>
-                        </div>
+                    <div className="flex items-center mb-1">
+                      <div
+                        className={`w-6 h-6 rounded-full ${color} flex items-center justify-center text-[10px] font-semibold mr-2 shrink-0`}
+                      >
+                        {initials}
                       </div>
-                      <p className="text-sm text-gray-600 pl-8 mt-0.5 leading-snug">
-                        {comment.adminComments}
-                      </p>
+                      <span className="font-medium text-sm text-gray-800 truncate mr-2">
+                        {comment.commentsUpdateBy || "Unknown"}
+                      </span>
+                      <div className="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
+                        {comment.customerBehaviour && (
+                          <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
+                            {getCustomerBehaviourEmoji(
+                              comment.customerBehaviour
+                            )}
+                          </span>
+                        )}
+                        {comment.callingType && (
+                          <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                            {comment.callingType}
+                          </span>
+                        )}
+                        {comment.dataType && (
+                          <span className="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">
+                            {comment.dataType}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-gray-400 shrink-0">
+                          {formatDate(comment.commentsCreatedDate)}
+                        </span>
+                      </div>
                     </div>
+                    <p className="text-sm text-gray-600 pl-8 mt-0.5 leading-relaxed break-words whitespace-pre-wrap">
+                      {comment.adminComments}
+                    </p>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
+            <div className="text-center py-6 border border-gray-200 rounded-lg bg-gray-50">
               <svg
-                className="w-6 h-6 text-gray-400 mx-auto mb-2"
+                className="w-6 h-6 text-gray-400 mx-auto mb-1.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -376,10 +345,11 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
             </div>
           )}
         </div>
-        <div className="mt-4">
-          {/* User Response */}
-          <h3 className="text-base font-semibold text-gray-800 mb-3">
-            User Response
+
+        {/* User Response */}
+        <div className="mt-3">
+          <h3 className="text-sm font-semibold text-gray-800 mb-1.5">
+            User Response <span className="text-red-500">*</span>
           </h3>
           <Select
             style={{ width: "100%" }}
@@ -389,49 +359,36 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
             onChange={handleUserResponseChange}
           />
         </div>
-        <div className="mt-4">
-          <h3 className="text-base font-semibold text-gray-800 mb-3">
-            Calling Type
+
+        {/* Calling Type */}
+        <div className="mt-3">
+          <h3 className="text-sm font-semibold text-gray-800 mb-1.5">
+            Calling Type <span className="text-red-500">*</span>
           </h3>
           <Select
+            showSearch
+            allowClear
             style={{ width: "100%" }}
             placeholder="Select a calling type"
             options={isCallingTypeOptions}
             value={callingType}
             onChange={handleCallingTypeChange}
+            filterOption={(input, option) =>
+              String(option?.label ?? "")
+                .toLowerCase()
+                .includes(input.toLowerCase()) ||
+              String(option?.value ?? "")
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
           />
-        </div>
-
-        {/* User Active Status */}
-        <div className="mt-4">
-          <h3 className="text-base font-semibold text-gray-800 mb-3">
-            User Active (Yes / No)
-          </h3>
-          <Select
-            style={{ width: "100%" }}
-            placeholder="Select user active status"
-            options={isActiveOptions}
-            value={isActive ?? "true"} // ✅ Default to "Yes"
-            onChange={handleIsActiveChange}
-          />
-
-          {currentIsActiveStatus !== null &&
-            currentIsActiveStatus !== undefined && (
-              <div className="mt-2 text-sm text-gray-600">
-                <span>Current Status: </span>
-                <span
-                  className={`px-3 py-1 rounded-full border ${getIsActiveBadgeColor(
-                    currentIsActiveStatus,
-                  )}`}
-                >
-                  {getIsActiveDisplayText(currentIsActiveStatus)}
-                </span>
-              </div>
-            )}
         </div>
 
         {/* New Comment */}
-        <div className="pt-4 mt-4">
+        <div className="mt-3">
+          <h3 className="text-sm font-semibold text-gray-800 mb-1.5">
+            Comment <span className="text-red-500">*</span>
+          </h3>
           <TextArea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
@@ -446,7 +403,7 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
             }}
           />
 
-          <div className="flex justify-end gap-3 pt-3">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               onClick={() => {
                 onClose();

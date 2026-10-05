@@ -15,15 +15,14 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import {
   ReloadOutlined,
-  SearchOutlined,
   EditOutlined,
   PlusOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  TeamOutlined,
-  CommentOutlined,
-  PhoneOutlined,
   UserOutlined,
+  PhoneOutlined,
+  CommentOutlined,
+  WhatsAppOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
 import BASE_URL from "../Config";
@@ -32,8 +31,8 @@ import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 const { Text, Title } = Typography;
 const { Search } = Input;
 
-export interface SudheerVakkalagaddaItem {
-  id: string;
+export interface WamDataItem {
+  id?: string;
   name: string;
   mobileNumber: string;
   comments?: string | null;
@@ -48,26 +47,15 @@ export interface AdminCommentRecord {
   dataType?: string | null;
 }
 
-const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 100;
 const COMMENT_TRUNCATE_LENGTH = 60;
 
 const PRIMARY_COLOR = "#008cba";
 const SUCCESS_COLOR = "#1ab394";
 const PENDING_COLOR = "#f5a623";
 
-const formatDate = (input?: string | null) => {
-  if (!input) return "";
-  const date = new Date(input);
-  if (isNaN(date.getTime())) return input;
-  return date.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-const SudheerVakkalagadda: React.FC = () => {
-  const [records, setRecords] = useState<SudheerVakkalagaddaItem[]>([]);
+const WamData: React.FC = () => {
+  const [records, setRecords] = useState<WamDataItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
@@ -80,12 +68,18 @@ const SudheerVakkalagadda: React.FC = () => {
   const [searchText, setSearchText] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] =
-    useState<SudheerVakkalagaddaItem | null>(null);
-
+  const [selectedRecord, setSelectedRecord] = useState<WamDataItem | null>(
+    null
+  );
   const [commentsMap, setCommentsMap] = useState<
     Record<string, AdminCommentRecord | null | "loading">
   >({});
+
+  const hasValue = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined) return false;
+    const text = String(value).trim();
+    return text !== "" && text !== "-" && text.toLowerCase() !== "null";
+  };
 
   const isValidComment = (value: string | null | undefined) => {
     if (value === null || value === undefined) return false;
@@ -93,21 +87,22 @@ const SudheerVakkalagadda: React.FC = () => {
     return text !== "" && text.toLowerCase() !== "null";
   };
 
-  const fetchCommentsForRows = useCallback((rows: SudheerVakkalagaddaItem[]) => {
+  const fetchCommentsForRows = useCallback((rows: WamDataItem[]) => {
     rows.forEach(async (u) => {
-      if (!u.id) return;
-      setCommentsMap((prev) => ({ ...prev, [u.id]: "loading" }));
+      const id = u.id || u.mobileNumber || u.name;
+      if (!id) return;
+      setCommentsMap((prev) => ({ ...prev, [id]: "loading" }));
       try {
         const res = await axios.post(
           `${BASE_URL}/user-service/fetchAdminComments`,
-          { userId: u.id },
+          { userId: id },
           { headers: { "Content-Type": "application/json" } }
         );
         const list = Array.isArray(res.data) ? res.data : [];
         const latest = list.length > 0 ? list[0] : null;
-        setCommentsMap((prev) => ({ ...prev, [u.id]: latest }));
+        setCommentsMap((prev) => ({ ...prev, [id]: latest }));
       } catch {
-        setCommentsMap((prev) => ({ ...prev, [u.id]: null }));
+        setCommentsMap((prev) => ({ ...prev, [id]: null }));
       }
     });
   }, []);
@@ -117,7 +112,7 @@ const SudheerVakkalagadda: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/ai-service/agent/sudheerVakkalagadda`,
+        `${BASE_URL}/ai-service/entity-records/wam-data`,
         {
           params: { page, size },
         }
@@ -133,7 +128,7 @@ const SudheerVakkalagadda: React.FC = () => {
         toast: true,
         position: "top-end",
         icon: "error",
-        title: "Unable to load records. Please try again.",
+        title: "Unable to load WAM records. Please try again.",
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
@@ -149,7 +144,7 @@ const SudheerVakkalagadda: React.FC = () => {
     fetchRecords();
   }, [fetchRecords]);
 
-  const openCommentModal = (record: SudheerVakkalagaddaItem) => {
+  const openCommentModal = (record: WamDataItem) => {
     setSelectedRecord(record);
     setModalOpen(true);
   };
@@ -164,29 +159,29 @@ const SudheerVakkalagadda: React.FC = () => {
 
   const counts = useMemo(() => {
     const updated = records.filter((r) => {
-      const commentInfo = commentsMap[r.id];
-      const commentText =
-        commentInfo && typeof commentInfo !== "string"
-          ? commentInfo.adminComments
-          : r.comments;
-      return isValidComment(commentText);
+      const id = r.id || r.mobileNumber || r.name;
+      const c = (id && commentsMap[id] && commentsMap[id] !== "loading")
+        ? (commentsMap[id] as AdminCommentRecord).adminComments
+        : r.comments;
+      return isValidComment(c);
     }).length;
+
     const pending = records.length - updated;
     return { all: records.length, updated, pending };
   }, [records, commentsMap]);
 
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
-      const commentInfo = commentsMap[record.id];
-      const commentText =
-        commentInfo && typeof commentInfo !== "string"
-          ? commentInfo.adminComments
-          : record.comments;
+      const id = record.id || record.mobileNumber || record.name;
+      const c = (id && commentsMap[id] && commentsMap[id] !== "loading")
+        ? (commentsMap[id] as AdminCommentRecord).adminComments
+        : record.comments;
+      const hasC = isValidComment(c);
 
-      if (activeTab === "updated" && !isValidComment(commentText)) {
+      if (activeTab === "updated" && !hasC) {
         return false;
       }
-      if (activeTab === "pending" && isValidComment(commentText)) {
+      if (activeTab === "pending" && hasC) {
         return false;
       }
 
@@ -196,12 +191,12 @@ const SudheerVakkalagadda: React.FC = () => {
       return (
         record.name?.toLowerCase().includes(query) ||
         record.mobileNumber?.toLowerCase().includes(query) ||
-        commentText?.toLowerCase().includes(query)
+        (c && String(c).toLowerCase().includes(query))
       );
     });
   }, [records, activeTab, searchText, commentsMap]);
 
-  const columns: ColumnsType<SudheerVakkalagaddaItem> = [
+  const columns: ColumnsType<WamDataItem> = [
     {
       title: "S.No",
       key: "sno",
@@ -217,13 +212,26 @@ const SudheerVakkalagadda: React.FC = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: 220,
-      render: (name: string) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <UserOutlined style={{ color: PRIMARY_COLOR, fontSize: 14 }} />
-          <span style={{ fontWeight: 600, color: "#111827", fontSize: 13 }}>
-            {name || "-"}
-          </span>
+      width: 250,
+      render: (name: string, record: WamDataItem) => (
+        <div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontWeight: 600,
+              color: "#111827",
+            }}
+          >
+            <UserOutlined style={{ color: PRIMARY_COLOR, fontSize: 14 }} />
+            <span>{hasValue(name) ? name : "-"}</span>
+          </div>
+          {record.id && (
+            <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2, paddingLeft: 22 }}>
+              ID: {record.id}
+            </div>
+          )}
         </div>
       ),
     },
@@ -231,25 +239,53 @@ const SudheerVakkalagadda: React.FC = () => {
       title: "Mobile Number",
       dataIndex: "mobileNumber",
       key: "mobileNumber",
-      width: 170,
-      render: (mobile: string) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <PhoneOutlined style={{ color: SUCCESS_COLOR, fontSize: 13 }} />
-          <span style={{ color: "#374151", fontSize: 13 }}>{mobile || "-"}</span>
-        </div>
-      ),
+      width: 220,
+      render: (mobileNumber: string) => {
+        if (!hasValue(mobileNumber)) {
+          return <span style={{ color: "#9ca3af" }}>-</span>;
+        }
+        const cleaned = String(mobileNumber).replace(/\D/g, "");
+        const formattedMobile = cleaned.length === 10 ? `+91 ${cleaned}` : mobileNumber;
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <PhoneOutlined style={{ color: "#10b981", fontSize: 13 }} />
+              <a
+                href={`tel:${mobileNumber}`}
+                style={{ color: PRIMARY_COLOR, fontSize: 13, fontWeight: 500 }}
+              >
+                {formattedMobile}
+              </a>
+            </div>
+            {cleaned.length >= 10 && (
+              <Tooltip title="Chat on WhatsApp">
+                <a
+                  href={`https://wa.me/${cleaned.length === 10 ? "91" + cleaned : cleaned}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#25D366", fontSize: 15 }}
+                >
+                  <WhatsAppOutlined />
+                </a>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Admin Comments",
+      dataIndex: "comments",
       key: "comments",
       width: 280,
-      render: (_value, record: SudheerVakkalagaddaItem) => {
-        const commentInfo = commentsMap[record.id];
+      render: (_comments: string | null | undefined, record: WamDataItem) => {
+        const id = record.id || record.mobileNumber || record.name;
+        const commentInfo = id ? commentsMap[id] : null;
 
         if (commentInfo === "loading") {
           return (
             <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#9ca3af", fontSize: 12 }}>
-              <Spin size="small" /> <span>Loading comments...</span>
+              <Spin size="small" /> <span>Loading...</span>
             </div>
           );
         }
@@ -299,8 +335,13 @@ const SudheerVakkalagadda: React.FC = () => {
                   {commentInfo.customerBehaviour}
                 </span>
               )}
+              {commentInfo?.callingType && (
+                <span style={{ fontSize: 10, background: "#fef3c7", color: "#92400e", padding: "0 4px", borderRadius: 6, border: "1px solid #fde68a" }}>
+                  {commentInfo.callingType}
+                </span>
+              )}
             </div>
-            <Tooltip title={text} placement="topLeft">
+            <Tooltip title={text} placement="topLeft" overlayStyle={{ maxWidth: 400 }}>
               <div
                 style={{
                   fontSize: 12,
@@ -318,7 +359,6 @@ const SudheerVakkalagadda: React.FC = () => {
             {commentInfo && (
               <div style={{ fontSize: 10, color: "#9ca3af", display: "flex", gap: 4 }}>
                 {commentInfo.commentsUpdateBy && <span>By: {commentInfo.commentsUpdateBy}</span>}
-                {commentInfo.commentsCreatedDate && <span>• {formatDate(commentInfo.commentsCreatedDate)}</span>}
               </div>
             )}
           </div>
@@ -330,8 +370,9 @@ const SudheerVakkalagadda: React.FC = () => {
       key: "action",
       width: 110,
       align: "center",
-      render: (_value, record: SudheerVakkalagaddaItem) => {
-        const commentInfo = commentsMap[record.id];
+      render: (_value, record: WamDataItem) => {
+        const id = record.id || record.mobileNumber || record.name;
+        const commentInfo = id ? commentsMap[id] : null;
         const commentText =
           commentInfo && commentInfo !== "loading"
             ? commentInfo.adminComments
@@ -378,20 +419,20 @@ const SudheerVakkalagadda: React.FC = () => {
       >
         <div>
           <Title level={4} style={{ margin: 0, color: "#111827" }}>
-            Sudheer Vakkalagadda Data
+            WAM Data
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            Manage and view Sudheer Vakkalagadda records and update comments
+            Manage and view WAM entity records and update admin comments
           </Text>
         </div>
 
         <Space wrap>
           <Search
-            placeholder="Search name, mobile or comments..."
+            placeholder="Search name, mobile number, comments..."
             allowClear
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: isMobile ? "100%" : 280 }}
+            style={{ width: isMobile ? "100%" : 300 }}
           />
           <Button
             icon={<ReloadOutlined />}
@@ -496,21 +537,21 @@ const SudheerVakkalagadda: React.FC = () => {
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <Spin size="large" />
             <div style={{ marginTop: 12, color: "#6b7280", fontSize: 14 }}>
-              Loading Sudheer Vakkalagadda records...
+              Loading WAM records...
             </div>
           </div>
         ) : filteredRecords.length === 0 ? (
           <Empty
             style={{ padding: "60px 0" }}
-            description="No records found"
+            description="No WAM records found"
           />
         ) : (
           <div style={{ width: "100%", overflowX: "auto" }}>
             <Table
               columns={columns}
-              dataSource={filteredRecords.map((item) => ({
+              dataSource={filteredRecords.map((item, idx) => ({
                 ...item,
-                key: item.id,
+                key: item.id || `${item.mobileNumber || item.name}-${idx}`,
               }))}
               pagination={false}
               size="middle"
@@ -550,33 +591,39 @@ const SudheerVakkalagadda: React.FC = () => {
       <HelpDeskCommentsModal
         open={modalOpen}
         onClose={closeCommentModal}
-        onSuccess={(newComment, details) => {
+        onSuccess={(newComment) => {
           if (selectedRecord) {
-            setCommentsMap((prev) => ({
-              ...prev,
-              [selectedRecord.id]: {
-                adminComments: newComment,
-                commentsUpdateBy: localStorage.getItem("admin_userName")?.toUpperCase() || "ADMIN",
-                commentsCreatedDate: new Date().toISOString(),
-                ...details,
-              },
-            }));
-            setRecords((prev: SudheerVakkalagaddaItem[]) =>
-              prev.map((item: SudheerVakkalagaddaItem) =>
-                item.id === selectedRecord.id
+            const recIdentifier = selectedRecord.id || selectedRecord.mobileNumber || selectedRecord.name;
+            setRecords((prev: WamDataItem[]) =>
+              prev.map((item: WamDataItem) =>
+                (item.id && item.id === selectedRecord.id) ||
+                (item.mobileNumber && item.mobileNumber === selectedRecord.mobileNumber) ||
+                item.name === selectedRecord.name
                   ? { ...item, comments: newComment }
                   : item
               )
             );
+            if (recIdentifier) {
+              setCommentsMap((prev) => ({
+                ...prev,
+                [recIdentifier]: {
+                  ...(prev[recIdentifier] && prev[recIdentifier] !== "loading"
+                    ? (prev[recIdentifier] as AdminCommentRecord)
+                    : {}),
+                  adminComments: newComment,
+                  commentsUpdateBy: "You",
+                },
+              }));
+            }
           }
         }}
-        userId={selectedRecord?.id}
+        userId={selectedRecord?.id || selectedRecord?.mobileNumber || selectedRecord?.name}
         record={selectedRecord}
-        dataType="SUDHEER_VAKKALAGADDA"
+        dataType="WAM_DATA"
         BASE_URL={BASE_URL}
       />
     </div>
   );
 };
 
-export default SudheerVakkalagadda;
+export default WamData;

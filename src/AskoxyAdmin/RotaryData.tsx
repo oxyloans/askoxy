@@ -20,6 +20,7 @@ import {
   Descriptions,
   Image,
   Badge,
+  Spin,
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import {
@@ -31,9 +32,15 @@ import {
   AppstoreOutlined,
   UserOutlined,
   ShopOutlined,
+  EditOutlined,
+  PlusOutlined,
+  CommentOutlined,
+  PhoneOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
+import { adminApi as axios } from "../utils/axiosInstances";
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -105,6 +112,7 @@ export interface RotaryApiMember {
   updatedAt?: string | number | null;
   products?: RotaryProductService[] | null;
   services?: RotaryProductService[] | null;
+  comments?: string | null;
 }
 
 interface RotaryListResponse {
@@ -228,6 +236,15 @@ const PAGE_SIZE = 20;
 const TABLE_SCROLL_WIDTH = 3700;
 const DEFAULT_DISTRICT_ID = 3150;
 
+export interface AdminCommentRecord {
+  adminComments?: string | null;
+  commentsUpdateBy?: string | null;
+  commentsCreatedDate?: string | null;
+  customerBehaviour?: string | null;
+  callingType?: string | null;
+  dataType?: string | null;
+}
+
 const RotaryDataAdmin: React.FC = () => {
   const [rows, setRows] = useState<RotaryApiMember[]>([]);
   const [loading, setLoading] = useState(false);
@@ -249,6 +266,10 @@ const RotaryDataAdmin: React.FC = () => {
   const [updatedPage, setUpdatedPage] = useState(0);
   const [updatedTotal, setUpdatedTotal] = useState(0);
 
+  const [commentsMap, setCommentsMap] = useState<
+    Record<string, AdminCommentRecord | null | "loading">
+  >({});
+
   const [reportLoading, setReportLoading] = useState(false);
   const DEFAULT_REPORT_START = dayjs("2026-08-13");
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>([
@@ -264,6 +285,135 @@ const RotaryDataAdmin: React.FC = () => {
   // 360 Profile Modal State
   const [selectedMember, setSelectedMember] = useState<RotaryApiMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Comment Modal State
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [selectedCommentRecord, setSelectedCommentRecord] =
+    useState<RotaryApiMember | null>(null);
+  const [commentValue, setCommentValue] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [commentSaving, setCommentSaving] = useState(false);
+
+  const fetchCommentsForRows = (memberRows: RotaryApiMember[]) => {
+    memberRows.forEach(async (u) => {
+      if (!u.id) return;
+      setCommentsMap((prev) => ({ ...prev, [u.id]: "loading" }));
+      try {
+        const res = await axios.post(
+          `${BASE_URL}/user-service/fetchAdminComments`,
+          { userId: u.id },
+          { headers: { "Content-Type": "application/json" } }
+        );
+        const list = Array.isArray(res.data) ? res.data : [];
+        const latest = list.length > 0 ? list[0] : null;
+        setCommentsMap((prev) => ({ ...prev, [u.id]: latest }));
+      } catch {
+        setCommentsMap((prev) => ({ ...prev, [u.id]: null }));
+      }
+    });
+  };
+
+  const isValidComment = (value: string | null | undefined) => {
+    if (value === null || value === undefined) return false;
+    const text = String(value).trim();
+    return text !== "" && text.toLowerCase() !== "null";
+  };
+
+  const validateComment = (value: string) => {
+    const cleanValue = value.trim();
+    if (!cleanValue) return "Please enter a comment.";
+    if (cleanValue.length < 3)
+      return "Comment must contain at least 3 characters.";
+    if (cleanValue.length > 1000)
+      return "Comment must not exceed 1000 characters.";
+    return "";
+  };
+
+  const openCommentModal = (record: RotaryApiMember) => {
+    setSelectedCommentRecord(record);
+    setCommentValue(
+      isValidComment(record.comments) ? record.comments || "" : "",
+    );
+    setCommentError("");
+    setCommentModalOpen(true);
+  };
+
+  const closeCommentModal = () => {
+    if (commentSaving) return;
+    setCommentModalOpen(false);
+    setSelectedCommentRecord(null);
+    setCommentValue("");
+    setCommentError("");
+  };
+
+  const updateComments = async () => {
+    if (!selectedCommentRecord) return;
+
+    const cleanComment = commentValue.trim();
+    const validationError = validateComment(cleanComment);
+
+    if (validationError) {
+      setCommentError(validationError);
+      message.warning(validationError);
+      return;
+    }
+
+    setCommentSaving(true);
+
+    try {
+      const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
+      const storedUniqueId = localStorage.getItem("admin_uniquId");
+      const commentsUpdateBy =
+        localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN"
+          ? "ADMIN"
+          : updatedBy || "ADMIN";
+
+      await axios.patch(
+        `${BASE_URL}/user-service/adminUpdateComments`,
+        {
+          adminComments: cleanComment,
+          adminUserId: storedUniqueId,
+          commentsUpdateBy,
+          userId: selectedCommentRecord.id,
+          isActive: true,
+          customerBehaviour: "UNDERSTANDING",
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+
+      setRows((prev) =>
+        prev.map((item) =>
+          item.id === selectedCommentRecord.id
+            ? { ...item, comments: cleanComment }
+            : item,
+        ),
+      );
+      setCreatedRows((prev) =>
+        prev.map((item) =>
+          item.id === selectedCommentRecord.id
+            ? { ...item, comments: cleanComment }
+            : item,
+        ),
+      );
+      setUpdatedRows((prev) =>
+        prev.map((item) =>
+          item.id === selectedCommentRecord.id
+            ? { ...item, comments: cleanComment }
+            : item,
+        ),
+      );
+
+      message.success("Comment updated successfully.");
+      closeCommentModal();
+    } catch (error) {
+      console.error(error);
+      message.error("Unable to update comment. Please try again.");
+    } finally {
+      setCommentSaving(false);
+    }
+  };
 
   /* ---- Fetch available district IDs ---- */
   const fetchDistricts = async () => {
@@ -311,17 +461,20 @@ const RotaryDataAdmin: React.FC = () => {
         fetchSingleReport("created", 0, startDate, endDate),
         fetchSingleReport("updated", 0, startDate, endDate),
       ]);
-      setCreatedRows(createdJson.members ?? []);
+      const created = createdJson.members ?? [];
+      const updated = updatedJson.members ?? [];
+      setCreatedRows(created);
       setCreatedTotal(
         createdJson.totalCreated ?? createdJson.pagination?.totalElements ?? 0,
       );
       setCreatedPage(createdJson.pagination?.page ?? 0);
 
-      setUpdatedRows(updatedJson.members ?? []);
+      setUpdatedRows(updated);
       setUpdatedTotal(
         updatedJson.totalUpdated ?? updatedJson.pagination?.totalElements ?? 0,
       );
       setUpdatedPage(updatedJson.pagination?.page ?? 0);
+      fetchCommentsForRows([...created, ...updated]);
     } catch {
       message.error(
         "Could not load created/updated members. Please try again.",
@@ -342,19 +495,21 @@ const RotaryDataAdmin: React.FC = () => {
       const start = dateRange[0].format("YYYY-MM-DD");
       const end = dateRange[1].format("YYYY-MM-DD");
       const json = await fetchSingleReport(type, pageNumber, start, end);
+      const members = json.members ?? [];
       if (type === "created") {
-        setCreatedRows(json.members ?? []);
+        setCreatedRows(members);
         setCreatedTotal(
           json.totalCreated ?? json.pagination?.totalElements ?? 0,
         );
         setCreatedPage(json.pagination?.page ?? pageNumber);
       } else {
-        setUpdatedRows(json.members ?? []);
+        setUpdatedRows(members);
         setUpdatedTotal(
           json.totalUpdated ?? json.pagination?.totalElements ?? 0,
         );
         setUpdatedPage(json.pagination?.page ?? pageNumber);
       }
+      fetchCommentsForRows(members);
     } catch {
       message.error(`Could not load ${type} members. Please try again.`);
     } finally {
@@ -373,9 +528,11 @@ const RotaryDataAdmin: React.FC = () => {
       );
       if (!res.ok) throw new Error(`Failed with status ${res.status}`);
       const json: RotaryListResponse = await res.json();
-      setRows(json.content ?? []);
+      const content = json.content ?? [];
+      setRows(content);
       setTotalElements(json.totalElements ?? 0);
       setPage(json.number ?? pageNumber);
+      fetchCommentsForRows(content);
     } catch {
       message.error("Could not load Rotary data. Please try again.");
       setRows([]);
@@ -396,8 +553,10 @@ const RotaryDataAdmin: React.FC = () => {
         throw new Error(`Search failed with status ${res.status}`);
       }
       const json: RotarySearchResponse = await res.json();
-      setRows(json.status && json.data ? json.data : []);
+      const searchData = json.status && json.data ? json.data : [];
+      setRows(searchData);
       setTotalElements(json.status && json.data ? json.data.length : 0);
+      fetchCommentsForRows(searchData);
     } catch {
       message.error("Search failed. Please try again.");
       setRows([]);
@@ -1203,28 +1362,151 @@ const RotaryDataAdmin: React.FC = () => {
     //   },
     // },
     {
+      title: (
+        <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+          <CommentOutlined style={{ marginRight: 6 }} />
+          Admin Comments
+        </div>
+      ),
+      key: "comments",
+      width: 270,
+      render: (_: unknown, r: RotaryApiMember) => {
+        const commentInfo = commentsMap[r.id];
+
+        if (commentInfo === "loading") {
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#9ca3af", fontSize: 12 }}>
+              <Spin size="small" /> <span>Loading...</span>
+            </div>
+          );
+        }
+
+        const commentText = commentInfo
+          ? commentInfo.adminComments
+          : r.comments;
+        const hasComment = isValidComment(commentText);
+
+        if (!hasComment) {
+          return (
+            <Tag
+              color="default"
+              style={{
+                borderRadius: 12,
+                fontSize: 11,
+                padding: "2px 8px",
+                cursor: "pointer",
+                color: "#6b7280",
+                background: "#f3f4f6",
+                border: "1px solid #e5e7eb",
+                whiteSpace: "nowrap",
+              }}
+              onClick={() => openCommentModal(r)}
+            >
+              <PlusOutlined style={{ marginRight: 4 }} /> Add Comment
+            </Tag>
+          );
+        }
+
+        const text = String(commentText);
+        const truncated =
+          text.length > 60
+            ? text.slice(0, 60) + "..."
+            : text;
+
+        return (
+          <div
+            style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 2 }}
+            onClick={() => openCommentModal(r)}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+              <Tag color="success" style={{ margin: 0, borderRadius: 10, fontSize: 10, padding: "0 5px" }}>
+                <CommentOutlined style={{ marginRight: 2 }} /> Comment
+              </Tag>
+              {commentInfo?.customerBehaviour && (
+                <span style={{ fontSize: 10, background: "#eff6ff", color: "#1d4ed8", padding: "0 4px", borderRadius: 6, border: "1px solid #dbeafe" }}>
+                  {commentInfo.customerBehaviour}
+                </span>
+              )}
+              {commentInfo?.callingType && (
+                <span style={{ fontSize: 10, background: "#fef3c7", color: "#92400e", padding: "0 4px", borderRadius: 6, border: "1px solid #fde68a" }}>
+                  {commentInfo.callingType}
+                </span>
+              )}
+            </div>
+            <Tooltip title={text} placement="topLeft" overlayStyle={{ maxWidth: 400 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#1f2937",
+                  fontWeight: 500,
+                  maxWidth: 250,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {truncated}
+              </div>
+            </Tooltip>
+            {commentInfo && (
+              <div style={{ fontSize: 10, color: "#9ca3af", display: "flex", gap: 4 }}>
+                {commentInfo.commentsUpdateBy && <span>By: {commentInfo.commentsUpdateBy}</span>}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       title: <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>Actions</div>,
       key: "actions",
       align: "center",
-      width: 120,
-      render: (_: unknown, r: RotaryApiMember) => (
-        <Button
-          type="primary"
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => openMemberModal(r)}
-          style={{
-            background: "#0E6B4F",
-            borderColor: "#0E6B4F",
-            borderRadius: 6,
-            fontWeight: 600,
-            fontSize: 13,
-            whiteSpace: "nowrap",
-          }}
-        >
-          Inspect
-        </Button>
-      ),
+      width: 200,
+      render: (_: unknown, r: RotaryApiMember) => {
+        const commentInfo = commentsMap[r.id];
+        const commentText =
+          commentInfo && commentInfo !== "loading"
+            ? commentInfo.adminComments
+            : r.comments;
+        const hasComment = isValidComment(commentText);
+
+        return (
+          <Space size={6}>
+            <Button
+              type="primary"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => openMemberModal(r)}
+              style={{
+                background: "#0E6B4F",
+                borderColor: "#0E6B4F",
+                borderRadius: 6,
+                fontWeight: 600,
+                fontSize: 12,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Inspect
+            </Button>
+            <Button
+              type="primary"
+              size="small"
+              icon={hasComment ? <EditOutlined /> : <PlusOutlined />}
+              onClick={() => openCommentModal(r)}
+              style={{
+                background: hasComment ? "#1ab394" : "#008cba",
+                borderColor: hasComment ? "#1ab394" : "#008cba",
+                borderRadius: 6,
+                fontWeight: 600,
+                fontSize: 12,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {hasComment ? "Edit" : "Comment"}
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -2104,6 +2386,50 @@ const RotaryDataAdmin: React.FC = () => {
           />
         )}
       </Modal>
+
+      {/* Comment Modal */}
+      <HelpDeskCommentsModal
+        open={commentModalOpen}
+        onClose={closeCommentModal}
+        onSuccess={(newComment) => {
+          if (selectedCommentRecord) {
+            setRows((prev) =>
+              prev.map((item) =>
+                item.id === selectedCommentRecord.id
+                  ? { ...item, comments: newComment }
+                  : item
+              )
+            );
+            setCreatedRows((prev) =>
+              prev.map((item) =>
+                item.id === selectedCommentRecord.id
+                  ? { ...item, comments: newComment }
+                  : item
+              )
+            );
+            setUpdatedRows((prev) =>
+              prev.map((item) =>
+                item.id === selectedCommentRecord.id
+                  ? { ...item, comments: newComment }
+                  : item
+              )
+            );
+            setCommentsMap((prev) => ({
+              ...prev,
+              [selectedCommentRecord.id]: {
+                adminComments: newComment,
+                commentsUpdateBy:
+                  localStorage.getItem("admin_userName")?.toUpperCase() || "ADMIN",
+                commentsCreatedDate: new Date().toISOString(),
+              },
+            }));
+          }
+        }}
+        userId={selectedCommentRecord?.id}
+        record={selectedCommentRecord}
+        dataType="ROTARY_DATA"
+        BASE_URL={BASE_URL}
+      />
     </ConfigProvider>
   );
 };

@@ -1,24 +1,39 @@
 // src/components/AdvocatesData.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Table,
   Spin,
   Pagination,
-  message,
-  Select,
   Button,
-  Card,
   Tag,
   Input,
   Empty,
   Row,
   Col,
+  Tooltip,
+  Modal,
+  Typography,
 } from "antd";
-// import { adminApi as axios } from "../utils/axiosInstances";
+import {
+  ReloadOutlined,
+  SearchOutlined,
+  EditOutlined,
+  PlusOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  TeamOutlined,
+  CommentOutlined,
+  PhoneOutlined,
+  UserOutlined,
+  HomeOutlined,
+} from "@ant-design/icons";
+import Swal from "sweetalert2";
 import BASE_URL from "../Config";
-import axios from "axios";
-import { adminApi } from "../utils/axiosInstances";
+import { adminApi as axios } from "../utils/axiosInstances";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
+
+const { Text, Title } = Typography;
+const { TextArea, Search } = Input;
 
 interface AdvocateUser {
   id: string;
@@ -27,6 +42,7 @@ interface AdvocateUser {
   mobileNumber: string;
   createdAt: string;
   houseNumber: string;
+  comments?: string | null;
 }
 
 interface ApiResponse {
@@ -34,101 +50,191 @@ interface ApiResponse {
   activeUsersResponse: AdvocateUser[];
 }
 
-interface AdminComment {
-  adminComments: string;
-  commentsCreatedDate: string;
-  commentsUpdateBy: string;
-  adminUserId: string;
-  customerBehaviour: string | null;
-  isActive: boolean;
-  customerExpectedOrderDate: string | null;
-callingType?: string | null;
+interface AdminCommentRecord {
+  adminComments?: string | null;
+  commentsUpdateBy?: string | null;
+  commentsCreatedDate?: string | null;
+  customerBehaviour?: string | null;
+  callingType?: string | null;
+  dataType?: string | null;
 }
 
 type VHState = "idle" | "loading" | "ready" | "error";
 
-const COMMENTS_API =
-  "https://meta.oxyloans.com/api/user-service/fetchAdminComments";
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_COMMENT_LENGTH = 1000;
+const COMMENT_TRUNCATE_LENGTH = 60;
+
+const PRIMARY_COLOR = "#008cba";
+const SUCCESS_COLOR = "#1ab394";
+const PENDING_COLOR = "#f5a623";
 
 const AdvocatesDataPage: React.FC = () => {
   const [data, setData] = useState<AdvocateUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(100);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const [commentsModalVisible, setCommentsModalVisible] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<AdvocateUser | null>(
-    null
+  const [activeTab, setActiveTab] = useState<"all" | "updated" | "pending">(
+    "all",
   );
+  const [filterSearchText, setFilterSearchText] = useState("");
 
-  // cache: userId -> AdminComment | null | "loading" | "error"
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<AdvocateUser | null>(
+    null,
+  );
   const [commentsMap, setCommentsMap] = useState<
-    Record<string, AdminComment | null | "loading" | "error">
+    Record<string, AdminCommentRecord | null | "loading">
   >({});
+  const [commentValue, setCommentValue] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
-  const storedUniqueId = localStorage.getItem("admin_uniquId");
+  // Search by mobile or user id
+  const [searchInput, setSearchInput] = useState("");
+  const [searchState, setSearchState] = useState<VHState>("idle");
+  const [searchResult, setSearchResult] = useState<any>(null);
 
-  // ---------------------------
-  // 1) List Data Fetch (unchanged)
-  // ---------------------------
-  const handleQuickActiveChange = async (
-    userId: string,
-    value: "true" | "false"
-  ) => {
+  const isValidComment = (value: string | null | undefined) => {
+    if (value === null || value === undefined) return false;
+    const text = String(value).trim();
+    return text !== "" && text.toLowerCase() !== "null";
+  };
+
+  const validateComment = (value: string) => {
+    const cleanValue = value.trim();
+
+    if (!cleanValue) return "Please enter a comment.";
+    if (cleanValue.length < 3)
+      return "Comment must contain at least 3 characters.";
+    if (cleanValue.length > MAX_COMMENT_LENGTH) {
+      return `Comment must not exceed ${MAX_COMMENT_LENGTH} characters.`;
+    }
+
+    return "";
+  };
+
+  const openCommentModal = (record: AdvocateUser) => {
+    setSelectedRecord(record);
+    setCommentValue(
+      isValidComment(record.comments) ? record.comments || "" : "",
+    );
+    setCommentError("");
+    setModalOpen(true);
+  };
+
+  const closeCommentModal = () => {
+    if (saving) return;
+    setModalOpen(false);
+    setSelectedRecord(null);
+    setCommentValue("");
+    setCommentError("");
+  };
+
+  const updateComments = async () => {
+    if (!selectedRecord) return;
+
+    const cleanComment = commentValue.trim();
+    const validationError = validateComment(cleanComment);
+
+    if (validationError) {
+      setCommentError(validationError);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: validationError,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    setSaving(true);
+
     try {
+      const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
+      const storedUniqueId = localStorage.getItem("admin_uniquId");
       const commentsUpdateBy =
         localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN"
           ? "ADMIN"
           : updatedBy || "ADMIN";
 
-      await adminApi.patch(
+      await axios.patch(
         `${BASE_URL}/user-service/adminUpdateComments`,
         {
-          adminComments: "Updated user active status via Advocates page",
+          adminComments: cleanComment,
           adminUserId: storedUniqueId,
           commentsUpdateBy,
-          userId,
-          isActive: value === "true",
+          userId: selectedRecord.id,
+          isActive: true,
           customerBehaviour: "UNDERSTANDING",
         },
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: { "Content-Type": "application/json" },
+        },
       );
 
-      message.success("User active status updated");
+      setData((prev) =>
+        prev.map((item) =>
+          item.id === selectedRecord.id
+            ? { ...item, comments: cleanComment }
+            : item,
+        ),
+      );
 
-      setCommentsMap((prev) => {
-        const old = prev[userId];
-
-        // ✅ Always produce a fully-typed AdminComment (boolean isActive)
-        const materialized: AdminComment =
-          old && old !== "loading" && old !== "error"
-            ? (old as AdminComment)
-            : {
-                adminComments: "—",
-                commentsCreatedDate: new Date().toISOString(),
-                commentsUpdateBy,
-                adminUserId: String(storedUniqueId || ""),
-                customerBehaviour: "UNDERSTANDING",
-                customerExpectedOrderDate: null,
-                isActive: value === "true", // <-- boolean, not undefined
-              };
-
-        return {
-          ...prev,
-          [userId]: { ...materialized, isActive: value === "true" },
-        };
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Comment updated successfully.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
       });
-    } catch {
-      message.error("Failed to update status");
+      closeCommentModal();
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Unable to update comment. Please try again.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const fetchData = async () => {
+  const fetchCommentsForRows = useCallback((rows: AdvocateUser[]) => {
+    rows.forEach(async (u) => {
+      if (!u.id) return;
+      setCommentsMap((prev) => ({ ...prev, [u.id]: "loading" }));
+      try {
+        const res = await axios.post(
+          `${BASE_URL}/user-service/fetchAdminComments`,
+          { userId: u.id },
+          { headers: { "Content-Type": "application/json" } }
+        );
+        const list = Array.isArray(res.data) ? res.data : [];
+        const latest = list.length > 0 ? list[0] : null;
+        setCommentsMap((prev) => ({ ...prev, [u.id]: latest }));
+      } catch {
+        setCommentsMap((prev) => ({ ...prev, [u.id]: null }));
+      }
+    });
+  }, []);
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await adminApi.get<ApiResponse>(
+      const response = await axios.get<ApiResponse>(
         `${BASE_URL}/user-service/getAllAdvocatesData`,
         {
           params: { pageNo: currentPage, pageSize },
@@ -139,99 +245,31 @@ const AdvocatesDataPage: React.FC = () => {
       const rows = response.data?.activeUsersResponse || [];
       setData(rows);
       setTotalCount(response.data?.totalCount || 0);
-
-      // prime & fetch comments in parallel for visible page
-      const nextMap = { ...commentsMap };
-      rows.forEach((u) => {
-        if (nextMap[u.id] === undefined) nextMap[u.id] = "loading";
+      fetchCommentsForRows(rows);
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Failed to fetch Advocates data",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
       });
-      setCommentsMap(nextMap);
-
-      Promise.all(
-        rows.map(async (u) => {
-          try {
-            const res = await axios.post<AdminComment[]>(COMMENTS_API, {
-              userId: u.id,
-            });
-            const latest =
-              Array.isArray(res.data) && res.data.length ? res.data[0] : null;
-            setCommentsMap((prev) => ({ ...prev, [u.id]: latest }));
-          } catch {
-            setCommentsMap((prev) => ({ ...prev, [u.id]: "error" }));
-          }
-        })
-      ).catch(() => {});
-    } catch {
-      message.error("Failed to fetch Advocates data");
     } finally {
       setLoading(false);
     }
-  };
-
-  // (near other state)
-  const getSelectedIsActive = () => {
-    if (!selectedRecord) return null;
-    const info = commentsMap[selectedRecord.id];
-    if (!info || info === "loading" || info === "error") return null;
-    return (info as AdminComment).isActive; // boolean
-  };
+  }, [currentPage, pageSize, fetchCommentsForRows]);
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize]);
+  }, [fetchData]);
 
   const handlePageChange = (page: number, size?: number) => {
     setCurrentPage(page);
     if (size) setPageSize(size);
   };
-
-  const showCommentsModal = (record: AdvocateUser) => {
-    setSelectedRecord(record);
-    setCommentsModalVisible(true);
-  };
-
-  const closeCommentsModalAndRefresh = () => {
-    setCommentsModalVisible(false);
-    fetchData();
-  };
-
-  const formatWhen = (raw?: string) => {
-    if (!raw) return "";
-    const match = raw.match(/\d{2}:\d{2}/); // HH:MM
-    return match ? match[0] : "";
-  };
-
-  const colorPalette = useMemo(
-    () => [
-      "magenta",
-      "red",
-      "volcano",
-      "orange",
-      "gold",
-      "lime",
-      "green",
-      "cyan",
-      "blue",
-      "geekblue",
-      "purple",
-    ],
-    []
-  );
-  const getColorForName = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++)
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    const index = Math.abs(hash) % colorPalette.length;
-    return colorPalette[index];
-  };
-
-  // ---------------------------
-  // 2) Search (new)
-  // ---------------------------
-  const [searchInput, setSearchInput] = useState("");
-  const [searchState, setSearchState] = useState<VHState>("idle");
-  const [searchResult, setSearchResult] = useState<any>(null);
 
   const doSearch = async () => {
     const q = (searchInput || "").trim();
@@ -242,17 +280,25 @@ const AdvocatesDataPage: React.FC = () => {
     }
     try {
       setSearchState("loading");
-      const isMobile = /^\d{8,}$/.test(q);
-      const params = isMobile ? { mobileNumber: q } : { userId: q };
-      const res = await adminApi.get(
+      const isMobileNum = /^\d{8,}$/.test(q);
+      const params = isMobileNum ? { mobileNumber: q } : { userId: q };
+      const res = await axios.get(
         `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
-        { params }
+        { params },
       );
       setSearchResult(res.data || null);
       setSearchState("ready");
-      if (!res.data) message.info("No user found for the given input");
+      if (!res.data) {
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "info",
+          title: "No user found for the given input",
+          showConfirmButton: false,
+          timer: 3000,
+        });
+      }
     } catch {
-      message.error("Search failed");
       setSearchState("error");
     }
   };
@@ -263,192 +309,375 @@ const AdvocatesDataPage: React.FC = () => {
     setSearchState("idle");
   };
 
-  // ---------------------------
-  // 3) Table
-  // ---------------------------
+  const filteredRecords = useMemo(() => {
+    let list = [...data];
+
+    if (activeTab === "updated") {
+      list = list.filter((item) => isValidComment(item.comments));
+    }
+
+    if (activeTab === "pending") {
+      list = list.filter((item) => !isValidComment(item.comments));
+    }
+
+    if (filterSearchText.trim()) {
+      const search = filterSearchText.toLowerCase().trim();
+      list = list.filter(
+        (item) =>
+          item.name1?.toLowerCase().includes(search) ||
+          item.name2?.toLowerCase().includes(search) ||
+          item.mobileNumber?.toLowerCase().includes(search) ||
+          item.houseNumber?.toLowerCase().includes(search) ||
+          item.id?.toLowerCase().includes(search),
+      );
+    }
+
+    return list;
+  }, [data, activeTab, filterSearchText]);
+
+  const updatedCount = data.filter((item) =>
+    isValidComment(item.comments),
+  ).length;
+  const pendingCount = data.filter(
+    (item) => !isValidComment(item.comments),
+  ).length;
+
+  const handleTabChange = (tab: "all" | "updated" | "pending") => {
+    setActiveTab(tab);
+    setFilterSearchText("");
+  };
+
   const columns = [
     {
-      title: "User ID",
-      dataIndex: "id",
-      key: "id",
-      width: 140,
-      render: (text: string) => {
-        const lastFour = text ? text.slice(-4) : "";
-        return (
-          <Tag
-            color="blue"
-            style={{ fontSize: 12, padding: "2px 6px", margin: 0 }}
-          >
-            #{lastFour}
-          </Tag>
-        );
-      },
+      title: <div style={{ textAlign: "center" }}>S.No</div>,
+      key: "serialNumber",
+      align: "center" as const,
+      width: 70,
+      render: (_value: any, _record: any, index: number) => (
+        <Text strong style={{ color: "#6b7280" }}>
+          {(currentPage - 1) * pageSize + index + 1}
+        </Text>
+      ),
     },
     {
-      title: "User Name",
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <UserOutlined style={{ marginRight: 6 }} />
+          Advocate Name
+        </div>
+      ),
       dataIndex: "name1",
       key: "name1",
+      align: "center" as const,
       width: 180,
-      render: (text: string) => (
-        <div style={{ lineHeight: 1.25 }}>{text || "—"}</div>
+      render: (text: string, record: AdvocateUser) => (
+        <Text strong style={{ color: "#1f2937" }}>
+          {text || record.name2 || "-"}
+        </Text>
       ),
     },
     {
-      title: "Mobile Number",
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <PhoneOutlined style={{ marginRight: 6 }} />
+          Mobile Number
+        </div>
+      ),
       dataIndex: "mobileNumber",
       key: "mobileNumber",
+      align: "center" as const,
       width: 160,
-      render: (text: string) => (
-        <Tag
-          color="green"
-          style={{ padding: "0 8px", fontSize: 12, margin: 0 }}
-        >
-          {text ? `📞 ${text}` : "No Mobile"}
-        </Tag>
-      ),
+      render: (text: string) =>
+        text ? (
+          <a
+            href={`tel:${text}`}
+            style={{
+              color: PRIMARY_COLOR,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            {text}
+          </a>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
     },
-    // ~15% narrower than original for a tighter layout
     {
-      title: "Updated comments",
-      key: "updatedComments",
-      width: 440,
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <HomeOutlined style={{ marginRight: 6 }} />
+          House / Address
+        </div>
+      ),
+      dataIndex: "houseNumber",
+      key: "houseNumber",
+      align: "center" as const,
+      width: 160,
+      render: (text: string) => <Text>{text || "-"}</Text>,
+    },
+    {
+      title: (
+        <div style={{ textAlign: "center" }}>
+          <CommentOutlined style={{ marginRight: 6 }} />
+          Admin Comments
+        </div>
+      ),
+      key: "comments",
+      width: 270,
       render: (_: any, record: AdvocateUser) => {
-        const info = commentsMap[record.id];
-        if (info === "loading" || info === undefined)
-          return <Spin size="small" />;
-        if (info === "error" || info === null)
+        const commentInfo = commentsMap[record.id];
+
+        if (commentInfo === "loading") {
           return (
-            <div className="text-gray-500 text-sm" style={{ lineHeight: 1.2 }}>
-              <Tag style={{ margin: 0 }}>—</Tag> No recent comments
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#9ca3af", fontSize: 12 }}>
+              <Spin size="small" /> <span>Loading...</span>
             </div>
           );
-       // when info.isActive is null/undefined
-const statusTag =
-  info.isActive === null || info.isActive === undefined ? (
-    <div className="flex items-center gap-3">
-      <span className="text-gray-700 text-xs">User Active:</span>
-      <Select
-        style={{ width: 160 }}
-        placeholder="Select status"
-        options={[
-          { label: "Yes", value: "true" },
-          { label: "No", value: "false" },
-        ]}
-        value={"true"} // ✅ default to Yes
-        onChange={(value: string) =>
-          handleQuickActiveChange(record.id, value as "true" | "false")
         }
-      />
-      {/* Removed the extra "Comment…" link */}
-    </div>
-  ) : (
-    <div className="flex items-center gap-2">
-      {info.isActive ? (
-        <Tag color="green" style={{ margin: 0 }}>ACTIVE</Tag>
-      ) : (
-        <Tag color="red" style={{ margin: 0 }}>INACTIVE</Tag>
-      )}
-      <Button
-        type="link"
-        size="small"
-        onClick={() => showCommentsModal(record)}
-        className="p-0"
-      >
-        Change
-      </Button>
-    </div>
-  );
 
+        const commentText = commentInfo
+          ? commentInfo.adminComments
+          : record.comments;
+        const hasComment = isValidComment(commentText);
 
-        const name = info.commentsUpdateBy || "—";
-        const color = getColorForName(name.toUpperCase());
-        const when = formatWhen(info.commentsCreatedDate);
-const callingType = (info.callingType ?? "").trim(); // "" if null/undefined
+        if (!hasComment) {
+          return (
+            <Tag
+              color="default"
+              style={{
+                borderRadius: 12,
+                fontSize: 11,
+                padding: "2px 8px",
+                cursor: "pointer",
+                color: "#6b7280",
+                background: "#f3f4f6",
+                border: "1px solid #e5e7eb",
+              }}
+              onClick={() => openCommentModal(record)}
+            >
+              <PlusOutlined style={{ marginRight: 4 }} /> Add Comment
+            </Tag>
+          );
+        }
+
+        const text = String(commentText);
+        const truncated =
+          text.length > COMMENT_TRUNCATE_LENGTH
+            ? text.slice(0, COMMENT_TRUNCATE_LENGTH) + "..."
+            : text;
 
         return (
           <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              lineHeight: 1.2,
-            }}
+            style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 2 }}
+            onClick={() => openCommentModal(record)}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexWrap: "wrap",
-              }}
-            >
-              {statusTag}
-              <span
-                className="text-gray-800"
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+              <Tag color="success" style={{ margin: 0, borderRadius: 10, fontSize: 10, padding: "0 5px" }}>
+                <CommentOutlined style={{ marginRight: 2 }} /> Comment
+              </Tag>
+              {commentInfo?.customerBehaviour && (
+                <span style={{ fontSize: 10, background: "#eff6ff", color: "#1d4ed8", padding: "0 4px", borderRadius: 6, border: "1px solid #dbeafe" }}>
+                  {commentInfo.customerBehaviour}
+                </span>
+              )}
+            </div>
+            <Tooltip title={text} placement="topLeft" overlayStyle={{ maxWidth: 400 }}>
+              <div
                 style={{
-                  maxWidth: 360,
+                  fontSize: 12,
+                  color: "#1f2937",
+                  fontWeight: 500,
+                  maxWidth: 250,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
-                title={info.adminComments || ""}
               >
-                {info.adminComments || "—"}
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexWrap: "wrap",
-                fontSize: 12,
-                color: "#666",
-              }}
-            >
-              <Tag color={color} style={{ margin: 0 }}>
-                <strong>{name}</strong>
-              </Tag>
-              <span>at {when || "—"}</span>
-              {info.customerBehaviour && (
-                <span>• {info.customerBehaviour}</span>
-              )}
-              {callingType && <span>• CallingType: {callingType}</span>}
-            </div>
+                {truncated}
+              </div>
+            </Tooltip>
+            {commentInfo && (
+              <div style={{ fontSize: 10, color: "#9ca3af", display: "flex", gap: 4 }}>
+                {commentInfo.commentsUpdateBy && <span>By: {commentInfo.commentsUpdateBy}</span>}
+              </div>
+            )}
           </div>
         );
       },
     },
     {
-      title: "Actions",
-      key: "actions",
-      width: 110,
-      render: (_: any, record: AdvocateUser) => (
-        <Button
-          type="default"
-          size="small"
-          onClick={() => showCommentsModal(record)}
-          className="rounded-md border border-blue-400 text-blue-600 hover:bg-blue-100"
-        >
-          Comments
-        </Button>
+      title: <div style={{ textAlign: "center" }}>Action</div>,
+      key: "action",
+      align: "center" as const,
+      width: 120,
+      render: (_: any, record: AdvocateUser) => {
+        const commentInfo = commentsMap[record.id];
+        const commentText =
+          commentInfo && commentInfo !== "loading"
+            ? commentInfo.adminComments
+            : record.comments;
+        const hasComment = isValidComment(commentText);
+
+        return (
+          <Button
+            type="primary"
+            icon={hasComment ? <EditOutlined /> : <PlusOutlined />}
+            onClick={() => openCommentModal(record)}
+            style={{
+              background: hasComment ? SUCCESS_COLOR : PRIMARY_COLOR,
+              borderColor: hasComment ? SUCCESS_COLOR : PRIMARY_COLOR,
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 12,
+            }}
+            size="small"
+          >
+            {hasComment ? "Edit" : "Add"}
+          </Button>
+        );
+      },
+    },
+  ];
+
+  // Stat card data
+  const statCards = [
+    {
+      label: "Total Advocates",
+      count: data.length,
+      color: PRIMARY_COLOR,
+      bgColor: "#e6f7ff",
+      icon: <TeamOutlined style={{ fontSize: 22, color: PRIMARY_COLOR }} />,
+    },
+    {
+      label: "Comments Updated",
+      count: updatedCount,
+      color: SUCCESS_COLOR,
+      bgColor: "#e8faf5",
+      icon: (
+        <CheckCircleOutlined style={{ fontSize: 22, color: SUCCESS_COLOR }} />
+      ),
+    },
+    {
+      label: "Comments Pending",
+      count: pendingCount,
+      color: PENDING_COLOR,
+      bgColor: "#fef9e7",
+      icon: (
+        <ClockCircleOutlined style={{ fontSize: 22, color: PENDING_COLOR }} />
       ),
     },
   ];
 
   return (
-    <Card className="shadow-md rounded-lg border-0">
-      {/* Header + Search */}
-      <div className="mb-3">
+    <div
+      style={{
+        padding: "16px",
+        background: "#f5f7fb",
+        minHeight: "100vh",
+      }}
+    >
+      {/* Page Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
+          marginBottom: 18,
+        }}
+      >
+        <div>
+          <Title
+            level={4}
+            style={{ margin: 0, color: "#1f2937", fontWeight: 700 }}
+          >
+            Advocate Data
+          </Title>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Manage Advocate records and comments
+          </Text>
+        </div>
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={fetchData}
+          loading={loading}
+          style={{
+            borderRadius: 8,
+            fontWeight: 600,
+            borderColor: PRIMARY_COLOR,
+            color: PRIMARY_COLOR,
+          }}
+        >
+          Refresh
+        </Button>
+      </div>
+
+      {/* Stat Cards */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 14,
+          marginBottom: 18,
+        }}
+      >
+        {statCards.map((card, idx) => (
+          <div
+            key={idx}
+            style={{
+              background: "#ffffff",
+              borderRadius: 12,
+              padding: "16px 20px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              borderLeft: `4px solid ${card.color}`,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                background: card.bgColor,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {card.icon}
+            </div>
+            <div>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: card.color,
+                  lineHeight: 1.2,
+                }}
+              >
+                {card.count}
+              </div>
+              <div
+                style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}
+              >
+                {card.label}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Header Search by mobile or user id */}
+      <div style={{ marginBottom: 16 }}>
         <Row gutter={[12, 12]} align="middle" justify="space-between">
-          <Col flex="auto">
-            <h2 className="text-xl font-bold text-gray-800 m-0">
-              All Advocates Data
-            </h2>
-          </Col>
           <Col flex="360px">
-            <div className="flex gap-2">
-              <Input.Search
+            <div style={{ display: "flex", gap: 8 }}>
+              <Search
                 placeholder="Search Advocate by Mobile or User ID"
                 allowClear
                 enterButton="Search"
@@ -466,39 +695,53 @@ const callingType = (info.callingType ?? "").trim(); // "" if null/undefined
 
       {/* Search Result Card */}
       {searchState !== "idle" && (
-        <div className="mb-3">
-          <Card size="small" className="border border-gray-200">
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              background: "#ffffff",
+              padding: 16,
+              borderRadius: 10,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            }}
+          >
             {searchState === "loading" && (
-              <div className="py-2">
+              <div style={{ padding: 12 }}>
                 <Spin size="small" /> Searching…
               </div>
             )}
             {searchState === "error" && <Empty description="Search failed" />}
             {searchState === "ready" && searchResult && (
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 12,
+                  fontSize: 14,
+                }}
+              >
                 <div>
-                  <div className="text-gray-500">Name</div>
-                  <div className="font-medium">
+                  <div style={{ color: "#6b7280", fontSize: 12 }}>Name</div>
+                  <div style={{ fontWeight: 600 }}>
                     {searchResult.userName || searchResult.name1 || "—"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500">Mobile</div>
-                  <div className="font-medium">
+                  <div style={{ color: "#6b7280", fontSize: 12 }}>Mobile</div>
+                  <div style={{ fontWeight: 600 }}>
                     {searchResult.mobileNumber || "—"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500">Whatsapp</div>
-                  <div className="font-medium">
+                  <div style={{ color: "#6b7280", fontSize: 12 }}>Whatsapp</div>
+                  <div style={{ fontWeight: 600 }}>
                     {searchResult.whastappNumber ||
                       searchResult.whatsappNumber ||
                       "—"}
                   </div>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="text-gray-500">Address</div>
-                  <div className="font-medium">
+                <div>
+                  <div style={{ color: "#6b7280", fontSize: 12 }}>Address</div>
+                  <div style={{ fontWeight: 600 }}>
                     {searchResult.address || "—"}
                   </div>
                 </div>
@@ -507,73 +750,189 @@ const callingType = (info.callingType ?? "").trim(); // "" if null/undefined
             {searchState === "ready" && !searchResult && (
               <Empty description="No user found" />
             )}
-          </Card>
-        </div>
-      )}
-
-      {/* Main Table */}
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Spin size="large" tip="Loading Advocates..." />
-        </div>
-      ) : (
-        <>
-          <Table
-            size="small"
-            rowClassName={() => "compact-row"}
-            columns={columns as any}
-            dataSource={data}
-            rowKey="id"
-            pagination={false}
-            scroll={{ x: 1100 }}
-          />
-
-          <div className="flex justify-end mt-4">
-            <Pagination
-              current={currentPage}
-              pageSize={pageSize}
-              total={totalCount}
-              onChange={handlePageChange}
-              showQuickJumper
-              showSizeChanger
-              pageSizeOptions={["50", "100", "200", "300"]}
-              showTotal={(t, range) =>
-                `${range[0]}-${range[1]} of ${t} advocates`
-              }
-            />
           </div>
-        </>
+        </div>
       )}
 
-      <HelpDeskCommentsModal
-        open={commentsModalVisible}
-        onClose={closeCommentsModalAndRefresh}
-        userId={selectedRecord?.id}
-        updatedBy={updatedBy}
-        storedUniqueId={storedUniqueId}
-        record={selectedRecord}
-        BASE_URL={BASE_URL}
-        initialIsActive={getSelectedIsActive()}
-      />
+      <div>
+        {/* Tabs & Search Filter Bar */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+            marginBottom: 16,
+          }}
+        >
+          {/* Filter Tabs */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Button
+              type={activeTab === "all" ? "primary" : "default"}
+              onClick={() => handleTabChange("all")}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                background: activeTab === "all" ? PRIMARY_COLOR : "#ffffff",
+                borderColor: activeTab === "all" ? PRIMARY_COLOR : "#d9d9d9",
+              }}
+            >
+              All Records ({data.length})
+            </Button>
+            <Button
+              type={activeTab === "updated" ? "primary" : "default"}
+              onClick={() => handleTabChange("updated")}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                background: activeTab === "updated" ? SUCCESS_COLOR : "#ffffff",
+                borderColor:
+                  activeTab === "updated" ? SUCCESS_COLOR : "#d9d9d9",
+                color: activeTab === "updated" ? "#fff" : undefined,
+              }}
+            >
+              Comments Updated ({updatedCount})
+            </Button>
+            <Button
+              type={activeTab === "pending" ? "primary" : "default"}
+              onClick={() => handleTabChange("pending")}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                background: activeTab === "pending" ? PENDING_COLOR : "#ffffff",
+                borderColor:
+                  activeTab === "pending" ? PENDING_COLOR : "#d9d9d9",
+                color: activeTab === "pending" ? "#fff" : undefined,
+              }}
+            >
+              Comments Pending ({pendingCount})
+            </Button>
+          </div>
 
-      {/* Compact row styles */}
-      <style>
-        {`
-        .compact-row .ant-table-cell {
-          padding-top: 6px !important;
-          padding-bottom: 6px !important;
-        }
-        .compact-row .ant-tag {
-          line-height: 18px;
-        }
-        .compact-row .ant-btn-sm {
-          height: 24px;
-          padding: 0 8px;
-          font-size: 12px;
-        }
-      `}
-      </style>
-    </Card>
+          {/* Table local search */}
+          <Search
+            allowClear
+            placeholder="Filter by name, mobile, house or ID"
+            prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
+            value={filterSearchText}
+            onChange={(e) => setFilterSearchText(e.target.value)}
+            style={{
+              maxWidth: 320,
+              width: "100%",
+              borderRadius: 8,
+            }}
+          />
+        </div>
+
+        {/* Table or Loading */}
+        {loading ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 60,
+              gap: 12,
+            }}
+          >
+            <Spin size="large" />
+            <Text type="secondary">Loading Advocates...</Text>
+          </div>
+        ) : (
+          <>
+            <Table
+              rowKey="id"
+              dataSource={filteredRecords}
+              columns={columns as any}
+              pagination={false}
+              bordered
+              size="middle"
+              scroll={{ x: true }}
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={
+                      <span style={{ color: "#9ca3af" }}>
+                        {filterSearchText
+                          ? `No results found for "${filterSearchText}"`
+                          : activeTab === "updated"
+                            ? "No records with comments found"
+                            : activeTab === "pending"
+                              ? "No pending records found"
+                              : "No records found"}
+                      </span>
+                    }
+                  />
+                ),
+              }}
+            />
+
+            {/* Pagination */}
+            <div
+              style={{
+                marginTop: 16,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                Showing <strong>{filteredRecords.length}</strong> of{" "}
+                <strong>{data.length}</strong> records on this page
+                {activeTab !== "all" && <> (filtered by {activeTab})</>}
+              </Text>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={totalCount}
+                showSizeChanger
+                pageSizeOptions={["50", "100", "200", "300"]}
+                showTotal={(totalRecords, range) =>
+                  `${range[0]}-${range[1]} of ${totalRecords} advocates`
+                }
+                onChange={handlePageChange}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Comment Modal */}
+      <HelpDeskCommentsModal
+        open={modalOpen}
+        onClose={closeCommentModal}
+        onSuccess={(newComment) => {
+          if (selectedRecord) {
+            setData((prev: AdvocateUser[]) =>
+              prev.map((item: AdvocateUser) =>
+                item.id === selectedRecord.id
+                  ? { ...item, comments: newComment }
+                  : item
+              )
+            );
+            setCommentsMap((prev) => ({
+              ...prev,
+              [selectedRecord.id]: {
+                ...(prev[selectedRecord.id] && prev[selectedRecord.id] !== "loading"
+                  ? (prev[selectedRecord.id] as any)
+                  : {}),
+                adminComments: newComment,
+                commentsUpdateBy: "You",
+              },
+            }));
+          }
+        }}
+        userId={selectedRecord?.id}
+        record={selectedRecord}
+        dataType="ADVOCATE_DATA"
+        BASE_URL={BASE_URL}
+      />
+    </div>
   );
 };
 

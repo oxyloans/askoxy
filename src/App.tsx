@@ -59,6 +59,8 @@ import TwoYearsServiceData from "./AskoxyAdmin/TwoYearsServiceData";
 import UnknownData from "./AskoxyAdmin/UnknownData";
 import NaukriRasData from "./AskoxyAdmin/NaukriRasData";
 import K2kFintechData from "./AskoxyAdmin/K2kFintechData";
+import NbfcData from "./AskoxyAdmin/NbfcData";
+import WamData from "./AskoxyAdmin/WamData";
 import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
 import OxyLoansIntegration from "./components/OxyLoansIntegration";
 import EventDetails from "./AskoxyAdmin/EventDetails";
@@ -2399,6 +2401,30 @@ const App: React.FC = () => {
                 <Route
                   path="k2kfintech"
                   element={<K2kFintechData />}
+                />
+                <Route
+                  path="nbfc-data"
+                  element={<NbfcData />}
+                />
+                <Route
+                  path="nbfcdata"
+                  element={<NbfcData />}
+                />
+                <Route
+                  path="nbfc"
+                  element={<NbfcData />}
+                />
+                <Route
+                  path="wam-data"
+                  element={<WamData />}
+                />
+                <Route
+                  path="wamdata"
+                  element={<WamData />}
+                />
+                <Route
+                  path="wam"
+                  element={<WamData />}
                 />
                 <Route
                   path="kukatpallyassignedData"

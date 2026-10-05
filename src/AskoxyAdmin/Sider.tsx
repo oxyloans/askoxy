@@ -55,6 +55,7 @@ import {
   IdcardOutlined,
   TeamOutlined,
   CalendarOutlined,
+  BankOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdWork } from "react-icons/md";
@@ -333,6 +334,18 @@ const Sidebar: React.FC = () => {
             title: "K2K Fintech",
             icon: <TeamOutlined className="text-emerald-500" />,
             link: "/admin/k2k-fintech",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "NBFC Data",
+            icon: <BankOutlined className="text-cyan-600" />,
+            link: "/admin/nbfc-data",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "WAM Data",
+            icon: <TeamOutlined className="text-teal-500" />,
+            link: "/admin/wam-data",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
           {
