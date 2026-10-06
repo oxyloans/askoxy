@@ -251,6 +251,40 @@ const handleUserDetailsClick = async (userId: string) => {
     };
   };
 
+  // Entity Records / All Data API normalization (ai-service)
+  const normalizeFromAllDataApi = (item: any): UserData => {
+    const nameGuess =
+      item.name ||
+      item.fullName ||
+      item.applicantName ||
+      `${item.firstName || item.userName || ""} ${item.lastName || ""}`.trim();
+    const mobile =
+      (item.mobileNumber && String(item.mobileNumber).trim()) ||
+      (item.mobileNumbers && String(item.mobileNumbers).trim()) ||
+      (item.phone && String(item.phone).trim()) ||
+      (item.secondaryMobile && String(item.secondaryMobile).trim()) ||
+      "";
+    const whatsapp =
+      (item.whatsappNumber && String(item.whatsappNumber).trim()) ||
+      (item.whastappNumber && String(item.whastappNumber).trim()) ||
+      mobile;
+    const address =
+      item.officeAddress ||
+      item.address ||
+      item.businessAddress ||
+      buildAddress(item);
+    return {
+      userId: item.id || item.userId || userId,
+      fullName: (nameGuess && String(nameGuess).trim()) || "—",
+      mobileNumber: mobile || "—",
+      whatsappNumber: whatsapp || "—",
+      userType: item.userType || item.dataType || item.role || "ENTITY_DATA",
+      address: address || "No",
+    };
+  };
+
+  const isPhoneNumber = (val: string) => /^\+?[0-9]{10,13}$/.test(String(val).trim());
+
   try {
     // 1) PRIMARY: POST /getDataWithMobileOrWhatsappOrUserId
     try {
@@ -333,6 +367,25 @@ const handleUserDetailsClick = async (userId: string) => {
     } catch {}
 
     try {
+      const rotGet2 = await axios.get(
+        `${BASE_URL}/user-service/getRotaryDataByUserId`,
+        { params: { userId } }
+      );
+      if (rotGet2?.status === 200 && rotGet2?.data) {
+        const data = Array.isArray(rotGet2.data)
+          ? rotGet2.data[0]
+          : rotGet2.data.content
+          ? rotGet2.data.content[0]
+          : rotGet2.data;
+        if (data && (data.rotaryId || data.id || data.userId || data.name || data.mobileNumbers || data.mobileNumber)) {
+          const transformed = normalizeFromRotaryApi(data);
+          setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+          return;
+        }
+      }
+    } catch {}
+
+    try {
       const rotPost = await axios.post(
         `${BASE_URL}/user-service/getRotaryDataByUserId`,
         { userId },
@@ -352,9 +405,42 @@ const handleUserDetailsClick = async (userId: string) => {
       }
     } catch {}
 
-    message.error("No user details found in all sources (User / Advocate / Rotary).");
+    // 5) FALLBACK: GET /ai-service/entity-records/getAllDataByUserId?userId=... (only ID, not phone number)
+    if (userId && !isPhoneNumber(userId)) {
+      try {
+        const allDataRes = await axios.get(
+          `${BASE_URL}/ai-service/entity-records/getAllDataByUserId`,
+          { params: { userId } }
+        );
+        if (allDataRes?.status === 200 && allDataRes?.data) {
+          const data = Array.isArray(allDataRes.data)
+            ? allDataRes.data[0]
+            : allDataRes.data.content
+            ? allDataRes.data.content[0]
+            : allDataRes.data.data
+            ? allDataRes.data.data
+            : allDataRes.data;
+          if (
+            data &&
+            (data.id ||
+              data.userId ||
+              data.name ||
+              data.fullName ||
+              data.mobileNumber ||
+              data.email ||
+              data.applicantName)
+          ) {
+            const transformed = normalizeFromAllDataApi(data);
+            setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+            return;
+          }
+        }
+      } catch {}
+    }
+
+    message.error("No user details found in all sources (User / Advocate / Rotary / Entity Records).");
   } catch (error) {
-    message.error("Failed to fetch user/advocate/rotary details");
+    message.error("Failed to fetch user/advocate/rotary/entity details");
   } finally {
     setLoadingRows((prev) => ({ ...prev, [userId]: false }));
   }

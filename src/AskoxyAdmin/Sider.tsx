@@ -908,63 +908,65 @@ const Sidebar: React.FC = () => {
                       )}
                     </div>
 
-                    <div
-                      className={`overflow-hidden transition-all duration-400 ease-in-out ${
+                                        <div
+                      className={`grid transition-all duration-300 ease-in-out ${
                         isExpanded && !collapsed
-                          ? "mt-1 max-h-[1000px] opacity-100"
-                          : "max-h-0 opacity-0"
+                          ? "mt-1 grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0"
                       }`}
                     >
-                      <ul className="ml-4 space-y-1 border-l-2 border-gray-600 pl-3">
-                        {categoryItems.map((item, itemIndex) => (
-                          <li key={itemIndex}>
-                            <Link
-                              to={item.link}
-                              className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
-                                ${
-                                  isActive(item.link)
-                                    ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                                    : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
-                                }`}
-                              onClick={(e) => {
-                                if (item.onClick) {
-                                  e.preventDefault();
-                                  item.onClick();
-                                } else if (isMobile && isMobileOpen) {
-                                  setIsMobileOpen(false);
-                                }
-                              }}
-                            >
-                              <span className="z-10 mr-3 text-sm transition-all duration-300">
-                                {React.cloneElement(
-                                  item.icon as React.ReactElement,
-                                  {
-                                    className: isActive(item.link)
-                                      ? "text-white"
-                                      : "text-white group-hover:text-gray-800 transition-colors duration-300",
-                                  },
-                                )}
-                              </span>
-                              <span
-                                className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${
-                                  isActive(item.link)
-                                    ? "text-white"
-                                    : "text-white group-hover:text-gray-800"
-                                }`}
+                      <div className="overflow-hidden">
+                        <ul className="ml-4 space-y-1 border-l-2 border-gray-600 pl-3">
+                          {categoryItems.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link
+                                to={item.link}
+                                className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
+                                  ${
+                                    isActive(item.link)
+                                      ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
+                                      : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                                  }`}
+                                onClick={(e) => {
+                                  if (item.onClick) {
+                                    e.preventDefault();
+                                    item.onClick();
+                                  } else if (isMobile && isMobileOpen) {
+                                    setIsMobileOpen(false);
+                                  }
+                                }}
                               >
-                                {item.title}
-                              </span>
-                              {isActive(item.link) && (
-                                <div className="absolute right-2 z-10 h-6 w-1 rounded-full bg-blue-300" />
-                              )}
+                                <span className="z-10 mr-3 text-sm transition-all duration-300">
+                                  {React.cloneElement(
+                                    item.icon as React.ReactElement,
+                                    {
+                                      className: isActive(item.link)
+                                        ? "text-white"
+                                        : "text-white group-hover:text-gray-800 transition-colors duration-300",
+                                    },
+                                  )}
+                                </span>
+                                <span
+                                  className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${
+                                    isActive(item.link)
+                                      ? "text-white"
+                                      : "text-white group-hover:text-gray-800"
+                                  }`}
+                                >
+                                  {item.title}
+                                </span>
+                                {isActive(item.link) && (
+                                  <div className="absolute right-2 z-10 h-6 w-1 rounded-full bg-blue-300" />
+                                )}
 
-                              {!isActive(item.link) && (
-                                <div className="absolute inset-0 rounded-lg bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                              )}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                                {!isActive(item.link) && (
+                                  <div className="absolute inset-0 rounded-lg bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                )}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </li>
                 );
