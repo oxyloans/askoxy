@@ -22,6 +22,8 @@ import {
   Plus,
   X,
   Info,
+  Sparkles,
+  Gem,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
@@ -100,6 +102,28 @@ interface Coupon {
   status: string;
   couponDesc?: string;
   minOrder?: number;
+}
+
+interface GoldSilverCoupon {
+  id: string;
+  categoryId: string;
+  categoryType: string;
+  couponName: string;
+  couponCode: string;
+  offerStartTime?: string;
+  offerEndTime?: string;
+  offerStartDate?: number[];
+  offerEndDate?: number[];
+  discountValue: number;
+  discountType?: string;
+  description?: string;
+  memberCount?: number;
+  assignedMemberCount?: number | null;
+  remainingMemberCount?: number | null;
+  activeNow?: boolean;
+  message?: string;
+  errorMessage?: string | null;
+  active: boolean;
 }
 
 interface DayInfo {
@@ -222,21 +246,25 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   let hasSilver = false;
 
   items.forEach((item) => {
-    const categories = [item.catergoryName, item.categoryName]
-      .filter(Boolean)
-      .join(" ");
-
+    const category = (item.catergoryName || item.categoryName || "").trim().toUpperCase();
     const itemName = item.itemName || "";
 
-    if (/gold/i.test(categories) || /gold/i.test(itemName)) {
+    if (category === "GOLD") {
       hasGold = true;
-    }
-
-    if (/silver/i.test(categories) || /silver/i.test(itemName)) {
+    } else if (category === "SILVER") {
       hasSilver = true;
+    } else {
+      if (/\bGOLD\b/i.test(itemName)) {
+        hasGold = true;
+      }
+      if (/\bSILVER\b/i.test(itemName)) {
+        hasSilver = true;
+      }
     }
   });
-   console.log("hasGold:", hasGold, "hasSilver:", hasSilver);
+
+  console.log("hasGold:", hasGold, "hasSilver:", hasSilver);
+  if (hasGold && hasSilver) return "SILVER,GOLD";
   if (hasGold) return "GOLD";
   if (hasSilver) return "SILVER";
 
@@ -252,6 +280,13 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
     "ONLINE",
   );
+  const hasPreciousMetalInCart = Boolean(getPreciousMetalCategory(cartData));
+
+  useEffect(() => {
+    if (hasPreciousMetalInCart && selectedPayment === "COD") {
+      setSelectedPayment("ONLINE");
+    }
+  }, [hasPreciousMetalInCart, selectedPayment]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
     state?.selectedAddress || null,
   );
@@ -360,6 +395,9 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [language, setLanguage] = useState<"english" | "telugu">("english");
   const [showCouponsModal, setShowCouponsModal] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const [goldSilverCoupons, setGoldSilverCoupons] = useState<GoldSilverCoupon[]>([]);
+  const [goldSilverCouponsLoading, setGoldSilverCouponsLoading] = useState<boolean>(false);
+  const [couponModalActiveTab, setCouponModalActiveTab] = useState<"general" | "goldSilver">("general");
   const [walletApplicable, setWalletApplicable] = useState(false);
   const [minOrderForWallet, setMinOrderForWallet] = useState(500);
   const [minOrderAmount, setMinOrderAmount] = useState(499);
@@ -466,6 +504,7 @@ useEffect(() => {
       fetchTimeSlots(false);
     }
     fetchAvailableCoupons();
+    fetchGoldSilverCoupons();
     const queryParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(queryParams.entries());
     const order = params.trans;
@@ -927,8 +966,40 @@ useEffect(() => {
     }
   };
 
+  const GOLD_SILVER_OFFER_GET_URL =
+    `${BASE_URL}/order-service/getGoldSilverItemOffer`;
+  const GOLD_SILVER_OFFER_APPLY_URL =
+    `${BASE_URL}/order-service/applyGoldSilverItemOfferToCustomer`;
+
+  const fetchGoldSilverCoupons = async (): Promise<GoldSilverCoupon[]> => {
+    try {
+      setGoldSilverCouponsLoading(true);
+      const response = await axios.get(GOLD_SILVER_OFFER_GET_URL, {
+        headers: { accept: "*/*" },
+      });
+
+      const rawList = Array.isArray(response.data)
+        ? response.data
+        : response.data?.value || [];
+
+      // Show only coupons that are active right now (activeNow: true)
+      const activeList: GoldSilverCoupon[] = (rawList || []).filter(
+        (coupon: any) => coupon.activeNow === true && coupon.active === true
+      );
+
+      setGoldSilverCoupons(activeList);
+      return activeList;
+    } catch (error) {
+      console.error("Error fetching Gold & Silver coupons:", error);
+      setGoldSilverCoupons([]);
+      return [];
+    } finally {
+      setGoldSilverCouponsLoading(false);
+    }
+  };
+
   const handleOpenCouponsModal = async () => {
-    await fetchAvailableCoupons();
+    await Promise.all([fetchAvailableCoupons(), fetchGoldSilverCoupons()]);
     setShowCouponsModal(true);
   };
 
@@ -1313,7 +1384,161 @@ useEffect(() => {
   //   }
   // };
 
-  const handleApplyCoupon = () => {
+  const applyGoldSilverCoupon = async (coupon: GoldSilverCoupon) => {
+    const trimmedCode = coupon.couponCode.trim().toUpperCase();
+    setCouponCode(trimmedCode);
+    setCoupenLoading(true);
+
+    // Detect if cart has Gold, Silver, or both directly from catergoryName
+    let hasGold = false;
+    let hasSilver = false;
+
+    cartData.forEach((item) => {
+      const category = (item.catergoryName || item.categoryName || "").trim().toUpperCase();
+      const itemName = item.itemName || "";
+
+      if (category === "GOLD") {
+        hasGold = true;
+      } else if (category === "SILVER") {
+        hasSilver = true;
+      } else {
+        if (/\bGOLD\b/i.test(itemName)) {
+          hasGold = true;
+        }
+        if (/\bSILVER\b/i.test(itemName)) {
+          hasSilver = true;
+        }
+      }
+    });
+
+    let detectedCategoryType = "";
+    if (hasGold && hasSilver) {
+      detectedCategoryType = "SILVER,GOLD";
+    } else if (hasSilver) {
+      detectedCategoryType = "SILVER";
+    } else if (hasGold) {
+      detectedCategoryType = "GOLD";
+    } else {
+      detectedCategoryType =
+        coupon.categoryType ||
+        (coupon.couponCode.toUpperCase().includes("SILVER") ? "SILVER" : "GOLD");
+    }
+
+    const payload = {
+      categoryType: detectedCategoryType,
+      couponCode: trimmedCode,
+      couponId: coupon.id,
+      customerId: customerId,
+      subTotal: Math.round(Number(grandTotal || 0)),
+    };
+
+    console.log("Applying Gold/Silver coupon with categoryType:", detectedCategoryType, payload);
+
+    try {
+      const response = await axios.post(
+        GOLD_SILVER_OFFER_APPLY_URL,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            accept: "*/*",
+          },
+        }
+      );
+
+      // Handle API failure response: { errorMessage: "...", subtotal: 0.0, discountValue: 0.0, totalAmount: 0.0 }
+      if (response.data?.errorMessage) {
+        setCoupenApplied(false);
+        setCoupenDetails(0);
+        Modal.error({
+          title: <span className="text-lg font-bold text-gray-900">Coupon Alert</span>,
+          centered: true,
+          width: 480,
+          okText: "OK",
+          okButtonProps: {
+            size: "large",
+            className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 shadow-sm",
+          },
+          content: (
+            <div className="py-3">
+              <p className="text-base text-gray-800 font-semibold leading-relaxed">
+                {response.data.errorMessage}
+              </p>
+            </div>
+          ),
+        });
+        return;
+      }
+
+      const discount = Number(
+        response.data?.discountValue ??
+          response.data?.discount ??
+          coupon.discountValue ??
+          0
+      );
+
+      if (discount <= 0 && response.data?.totalAmount === 0 && response.data?.subtotal === 0) {
+        setCoupenApplied(false);
+        setCoupenDetails(0);
+        Modal.error({
+          title: <span className="text-lg font-bold text-gray-900">Coupon Alert</span>,
+          centered: true,
+          width: 480,
+          okText: "OK",
+          okButtonProps: {
+            size: "large",
+            className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 shadow-sm",
+          },
+          content: (
+            <div className="py-3">
+              <p className="text-base text-gray-800 font-semibold leading-relaxed">
+                This coupon code could not be applied.
+              </p>
+            </div>
+          ),
+        });
+        return;
+      }
+
+      setCoupenDetails(discount);
+      setCoupenApplied(true);
+      setCouponCode(trimmedCode);
+      message.success(
+        response.data?.message ||
+          `Coupon ${trimmedCode} applied successfully! Saved ₹${discount.toFixed(0)}`
+      );
+      setShowCouponsModal(false);
+    } catch (error: any) {
+      console.error("Error applying gold/silver coupon:", error);
+      setCoupenApplied(false);
+      setCoupenDetails(0);
+      const errMsg =
+        error?.response?.data?.errorMessage ||
+        error?.response?.data?.message ||
+        "Failed to apply Gold/Silver coupon. Please try again.";
+      Modal.error({
+        title: <span className="text-lg font-bold text-gray-900">Coupon Alert</span>,
+        centered: true,
+        width: 480,
+        okText: "OK",
+        okButtonProps: {
+          size: "large",
+          className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 shadow-sm",
+        },
+        content: (
+          <div className="py-3">
+            <p className="text-base text-gray-800 font-semibold leading-relaxed">
+              {errMsg}
+            </p>
+          </div>
+        ),
+      });
+    } finally {
+      setCoupenLoading(false);
+    }
+  };
+
+  const handleApplyCoupon = async () => {
     // Validate coupon code - trim whitespace and check if empty
     const trimmedCouponCode = couponCode.trim();
 
@@ -1334,17 +1559,35 @@ useEffect(() => {
       return;
     }
 
+    setCoupenLoading(true);
+
+    // 1. Check if code matches any active Gold/Silver coupon
+    let currentGsCoupons = goldSilverCoupons;
+    if (!currentGsCoupons || currentGsCoupons.length === 0) {
+      currentGsCoupons = await fetchGoldSilverCoupons();
+    }
+
+    const matchedGoldSilver = currentGsCoupons.find(
+      (c) =>
+        c.couponCode.trim().toUpperCase() === trimmedCouponCode.toUpperCase()
+    );
+
+    if (matchedGoldSilver) {
+      await applyGoldSilverCoupon(matchedGoldSilver);
+      return;
+    }
+
+    // 2. Otherwise proceed with regular general coupon API
     const data = {
       couponCode: trimmedCouponCode.toUpperCase(), // Convert to uppercase for consistency
       customerId: customerId,
       subTotal: grandTotal,
     };
-    setCoupenLoading(true);
 
     customerApi
       .post(`${BASE_URL}/order-service/applycoupontocustomer`, data)
       .then((response) => {
-        const { discount, grandTotal } = response.data;
+        const { discount } = response.data;
         message.info(response.data.message);
         setCoupenDetails(discount || 0);
         setCoupenApplied(response.data.couponApplied);
@@ -1780,7 +2023,7 @@ useEffect(() => {
 
   const renderPaymentMethods = () => {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <div className={`grid ${hasPreciousMetalInCart ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"} gap-3.5`}>
         {/* Online Payment */}
         <div
           className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
@@ -1828,52 +2071,54 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Cash on Delivery */}
-        <div
-          className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
-            selectedPayment === "COD"
-              ? "border-purple-600 bg-gradient-to-br from-purple-50/90 via-amber-50/30 to-white ring-2 ring-purple-600/20 shadow-xs"
-              : "border-gray-200 hover:border-purple-300 bg-white hover:bg-amber-50/20 shadow-2xs"
-          }`}
-          onClick={() => setSelectedPayment("COD")}
-        >
-          <div className="flex items-start gap-3">
+        {/* Cash on Delivery - only for non-gold/silver items */}
+        {!hasPreciousMetalInCart && (
+          <div
+            className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
+              selectedPayment === "COD"
+                ? "border-purple-600 bg-gradient-to-br from-purple-50/90 via-amber-50/30 to-white ring-2 ring-purple-600/20 shadow-xs"
+                : "border-gray-200 hover:border-purple-300 bg-white hover:bg-amber-50/20 shadow-2xs"
+            }`}
+            onClick={() => setSelectedPayment("COD")}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                  selectedPayment === "COD"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                <Truck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-sm font-bold text-gray-900">
+                    Cash on Delivery
+                  </span>
+                  <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded border border-amber-200">
+                    COD
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Pay with cash at your doorstep
+                </p>
+              </div>
+            </div>
+
             <div
-              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+              className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 border-2 transition-all shrink-0 ${
                 selectedPayment === "COD"
-                  ? "bg-amber-600 text-white shadow-xs"
-                  : "bg-amber-100 text-amber-700"
+                  ? "border-purple-600 bg-purple-600 text-white"
+                  : "border-gray-300 bg-white"
               }`}
             >
-              <Truck className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-sm font-bold text-gray-900">
-                  Cash on Delivery
-                </span>
-                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded border border-amber-200">
-                  COD
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Pay with cash at your doorstep
-              </p>
+              {selectedPayment === "COD" && (
+                <div className="w-2 h-2 rounded-full bg-white" />
+              )}
             </div>
           </div>
-
-          <div
-            className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 border-2 transition-all shrink-0 ${
-              selectedPayment === "COD"
-                ? "border-purple-600 bg-purple-600 text-white"
-                : "border-gray-300 bg-white"
-            }`}
-          >
-            {selectedPayment === "COD" && (
-              <div className="w-2 h-2 rounded-full bg-white" />
-            )}
-          </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -2308,7 +2553,7 @@ useEffect(() => {
         destroyOnClose
         maskClosable
         width="90%"
-        style={{ maxWidth: 620 }}
+        style={{ maxWidth: 660 }}
         bodyStyle={{
           maxHeight: "75vh",
           overflowY: "auto",
@@ -2343,61 +2588,228 @@ useEffect(() => {
         ]}
         className="responsive-modal"
       >
-        {couponsLoading ? (
-          <div className="text-center py-10">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
-            <p className="text-gray-500 text-xs mt-2">Loading available coupons...</p>
-          </div>
-        ) : availableCoupons.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-gray-50/70 rounded-xl border border-dashed border-gray-200 my-2">
-            <div className="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-400 mb-3 shadow-inner">
-              <Tag className="w-7 h-7" />
-            </div>
-            <h4 className="text-gray-800 font-semibold text-base mb-1">
-              No Coupons Available Right Now
-            </h4>
-            <p className="text-gray-500 text-xs max-w-sm">
-              You can still manually enter any coupon code you have in the coupon box on the checkout page.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-2">
-            {availableCoupons.map((coupon: Coupon) => (
-              <div
-                key={coupon.couponCode}
-                className="bg-gradient-to-br from-white to-purple-50/30 border border-purple-200/80 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-purple-400 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-sm tracking-wider text-purple-700 bg-purple-100/70 px-2.5 py-1 rounded-md border border-purple-200">
-                      {coupon.couponCode}
-                    </span>
-                    <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                      Save ₹{Number(coupon.couponValue || 0).toFixed(0)}
-                    </span>
-                  </div>
-                  <p className="text-xs font-medium text-gray-700 mb-1">
-                    Min. Order: ₹{Number(coupon.minOrder || 0).toFixed(2)}
-                  </p>
-                  {coupon.couponDesc && (
-                    <p className="text-[11px] text-gray-500 mb-3 line-clamp-2">
-                      {coupon.couponDesc}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  type="primary"
-                  block
-                  size="middle"
-                  loading={coupenLoading}
-                  onClick={() => handleSelectCoupon(coupon)}
-                  className="bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-semibold mt-2"
-                >
-                  Apply Coupon
-                </Button>
+        {/* Modal Tabs */}
+        <div className="flex items-center gap-2 mb-4 p-1 bg-gray-100 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setCouponModalActiveTab("general")}
+            className={`flex-1 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              couponModalActiveTab === "general"
+                ? "bg-white text-purple-700 shadow-xs border border-gray-200/80"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>Coupons</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                couponModalActiveTab === "general"
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {availableCoupons.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCouponModalActiveTab("goldSilver")}
+            className={`flex-1 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              couponModalActiveTab === "goldSilver"
+                ? "bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Gold & Silver Coupons</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                couponModalActiveTab === "goldSilver"
+                  ? "bg-white/30 text-white"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {goldSilverCoupons.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Tab 1: General Coupons */}
+        {couponModalActiveTab === "general" && (
+          <>
+            {couponsLoading ? (
+              <div className="text-center py-10">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
+                <p className="text-gray-500 text-xs mt-2">Loading available coupons...</p>
               </div>
-            ))}
-          </div>
+            ) : availableCoupons.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-gray-50/70 rounded-xl border border-dashed border-gray-200 my-2">
+                <div className="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-400 mb-3 shadow-inner">
+                  <Tag className="w-7 h-7" />
+                </div>
+                <h4 className="text-gray-800 font-semibold text-base mb-1">
+                  No General Coupons Available
+                </h4>
+                <p className="text-gray-500 text-xs max-w-sm">
+                  You can still manually enter any coupon code you have in the coupon box on the checkout page.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[295px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-1">
+                  {availableCoupons.map((coupon: Coupon) => (
+                    <div
+                      key={coupon.couponCode}
+                      className="bg-gradient-to-br from-white to-purple-50/30 border border-purple-200/80 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-purple-400 transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-sm tracking-wider text-purple-700 bg-purple-100/70 px-2.5 py-1 rounded-md border border-purple-200">
+                            {coupon.couponCode}
+                          </span>
+                          <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                            Save ₹{Number(coupon.couponValue || 0).toFixed(0)}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-gray-700 mb-1">
+                          Min. Order: ₹{Number(coupon.minOrder || 0).toFixed(2)}
+                        </p>
+                        {coupon.couponDesc && (
+                          <p className="text-[11px] text-gray-500 mb-3 line-clamp-2">
+                            {coupon.couponDesc}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        type="primary"
+                        block
+                        size="middle"
+                        loading={coupenLoading}
+                        onClick={() => handleSelectCoupon(coupon)}
+                        className="bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-semibold mt-2"
+                      >
+                        Apply Coupon
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Tab 2: Gold & Silver Coupons */}
+        {couponModalActiveTab === "goldSilver" && (
+          <>
+            {goldSilverCouponsLoading ? (
+              <div className="text-center py-10">
+                <Loader2 className="w-8 h-8 animate-spin text-amber-500 mx-auto" />
+                <p className="text-gray-500 text-xs mt-2">Loading Gold & Silver coupons...</p>
+              </div>
+            ) : goldSilverCoupons.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-amber-50/40 rounded-xl border border-dashed border-amber-200 my-2">
+                <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mb-3 shadow-inner">
+                  <Sparkles className="w-7 h-7" />
+                </div>
+                <h4 className="text-gray-800 font-semibold text-base mb-1">
+                  No Gold & Silver Coupons Available
+                </h4>
+                <p className="text-gray-500 text-xs max-w-sm">
+                  Check back later for exclusive discounts on Gold and Silver items.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[295px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-1">
+                  {goldSilverCoupons.map((coupon: GoldSilverCoupon) => {
+                    const isGold = (coupon.categoryType || "").toUpperCase() === "GOLD";
+                    return (
+                      <div
+                        key={coupon.id || coupon.couponCode}
+                        className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
+                          isGold
+                            ? "bg-gradient-to-br from-amber-50/60 via-white to-yellow-50/40 border-amber-200 hover:border-amber-400"
+                            : "bg-gradient-to-br from-slate-50/60 via-white to-gray-50/40 border-slate-200 hover:border-slate-400"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span
+                              className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border flex items-center gap-1 ${
+                                isGold
+                                  ? "bg-amber-100 text-amber-900 border-amber-300"
+                                  : "bg-slate-100 text-slate-800 border-slate-300"
+                              }`}
+                            >
+                              {isGold ? (
+                                <Sparkles className="w-3 h-3 text-amber-600" />
+                              ) : (
+                                <Gem className="w-3 h-3 text-slate-600" />
+                              )}
+                              {coupon.categoryType || "PRECIOUS"}
+                            </span>
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                              Save ₹{Number(coupon.discountValue || 0).toFixed(0)}
+                            </span>
+                          </div>
+
+                          <div className="mb-2">
+                            <span className="font-extrabold text-sm tracking-wider text-purple-700 bg-purple-100/70 px-2.5 py-1 rounded-md border border-purple-200 inline-block">
+                              {coupon.couponCode}
+                            </span>
+                          </div>
+
+                          {coupon.couponName && (
+                            <h4 className="text-xs font-bold text-gray-900 mb-0.5">
+                              {coupon.couponName}
+                            </h4>
+                          )}
+
+                          {coupon.description && (
+                            <p className="text-[11px] text-gray-600 mb-2 line-clamp-2">
+                              {coupon.description}
+                            </p>
+                          )}
+
+                          {(coupon.offerStartTime || coupon.offerEndTime) && (
+                            <p className="text-[10px] text-gray-500 flex items-center gap-1 mb-1">
+                              <Clock className="w-3 h-3 text-gray-400" />
+                              <span>
+                                Time: {coupon.offerStartTime || ""}
+                                {coupon.offerEndTime ? ` - ${coupon.offerEndTime}` : ""}
+                              </span>
+                            </p>
+                          )}
+
+                          {coupon.message && (
+                            <p className="text-[10px] text-emerald-700 font-medium">
+                              ✓ {coupon.message}
+                            </p>
+                          )}
+                        </div>
+
+                        <Button
+                          type="primary"
+                          block
+                          size="middle"
+                          loading={coupenLoading}
+                          onClick={() => applyGoldSilverCoupon(coupon)}
+                          className={`rounded-lg text-xs font-semibold mt-3 ${
+                            isGold
+                              ? "bg-amber-600 hover:bg-amber-700 border-amber-600"
+                              : "bg-purple-600 hover:bg-purple-700 border-purple-600"
+                          }`}
+                        >
+                          Apply Coupon
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </Modal>
     );
@@ -3005,7 +3417,7 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <div className={`grid ${hasPreciousMetalInCart ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"} gap-3.5 pt-1`}>
                   {/* Option 1: Online Payment */}
                   <div
                     onClick={() => setSelectedPayment("ONLINE")}
@@ -3047,47 +3459,58 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  {/* Option 2: Cash on Delivery */}
-                  <div
-                    onClick={() => setSelectedPayment("COD")}
-                    className={`cursor-pointer rounded-2xl p-3.5 sm:p-4 border-2 transition-all flex items-center justify-between gap-3 ${
-                      selectedPayment === "COD"
-                        ? "border-purple-400 bg-purple-50/50 shadow-2xs ring-1 ring-purple-400/20"
-                        : "border-gray-200 hover:border-purple-300 bg-white shadow-2xs hover:bg-purple-50/20"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-11 h-11 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center shrink-0 border border-gray-200">
-                        <Truck className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-gray-900 leading-tight">
-                            Cash on Delivery
-                          </span>
-                          <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-200">
-                            COD
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">
-                          Pay at delivery doorstep
-                        </p>
-                      </div>
-                    </div>
-
+                  {/* Option 2: Cash on Delivery - Only for non-gold/silver items */}
+                  {!hasPreciousMetalInCart && (
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
+                      onClick={() => setSelectedPayment("COD")}
+                      className={`cursor-pointer rounded-2xl p-3.5 sm:p-4 border-2 transition-all flex items-center justify-between gap-3 ${
                         selectedPayment === "COD"
-                          ? "border-purple-600 bg-purple-600 text-white"
-                          : "border-gray-300 bg-white"
+                          ? "border-purple-400 bg-purple-50/50 shadow-2xs ring-1 ring-purple-400/20"
+                          : "border-gray-200 hover:border-purple-300 bg-white shadow-2xs hover:bg-purple-50/20"
                       }`}
                     >
-                      {selectedPayment === "COD" && (
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      )}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center shrink-0 border border-gray-200">
+                          <Truck className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-gray-900 leading-tight">
+                              Cash on Delivery
+                            </span>
+                            <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-200">
+                              COD
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                            Pay at delivery doorstep
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
+                          selectedPayment === "COD"
+                            ? "border-purple-600 bg-purple-600 text-white"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      >
+                        {selectedPayment === "COD" && (
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
+
+                {hasPreciousMetalInCart && (
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs mt-2">
+                    <span className="text-sm">ℹ️</span>
+                    <span>
+                      Cash on Delivery (COD) is not available for Gold and Silver items. Please use Online Payment.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3276,7 +3699,7 @@ useEffect(() => {
                         onClick={handleOpenCouponsModal}
                         className="text-xs font-bold text-purple-700 bg-purple-100/80 hover:bg-purple-200 px-2.5 py-1 rounded-lg border border-purple-200 hover:underline transition-all"
                       >
-                        View All Coupons {availableCoupons.length > 0 ? `(${availableCoupons.length})` : ""}
+                        View All Coupons {(availableCoupons.length + goldSilverCoupons.length) > 0 ? `(${availableCoupons.length + goldSilverCoupons.length})` : ""}
                       </button>
                     </div>
 
