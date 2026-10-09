@@ -353,23 +353,23 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       type: "dropdown",
-      key: "oxyloans",
+      key: "partner",
       icon: <FaHandshake size={18} />,
-      label: "OxyLoans Partner Network",
+      label: "Partner Network",
       items: [
         {
-          to: "/main/oxyloans",
-          label: "OxyLoans Journeys",
+          to: "/main/partner/journeys",
+          label: "Partner Journeys",
           icon: <FaRoute size={16} />,
         },
         {
-          to: "/main/oxyloans/referral-network",
-          label: "Referral Network",
+          to: "/main/partner/referral-network",
+          label: "Partner Referral Network",
           icon: <FaUsers size={16} />,
         },
         {
-          to: "/main/oxyloans/summary",
-          label: "OxyLoans Summary",
+          to: "/main/partner/summary",
+          label: "Partner Summary",
           icon: <FaChartPie size={16} />,
         },
       ],
@@ -387,7 +387,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     // OxyLoans "Overview" is the parent path of the other OxyLoans pages.
     // Keep it exact so Overview does not remain highlighted when
     // Referral Network or Summary is selected.
-    if (to === "/main/oxyloans") {
+    if (to === "/main/partner/journeys") {
       return location.pathname === to;
     }
 

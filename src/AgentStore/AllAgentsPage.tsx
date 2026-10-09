@@ -1445,7 +1445,7 @@ const AllAgentsPage: React.FC = () => {
 
   const fetchUploadedFiles = async (assistantId: string) => {
     if (!assistantId) {
-      message.error("Missing assistantId.");
+      message.error("Missing agent ID.");
       return;
     }
     setLoadingFiles((m) => ({ ...m, [assistantId]: true }));
@@ -1669,7 +1669,7 @@ const AllAgentsPage: React.FC = () => {
   // MULTI-FILE upload (assistant-level)
   const uploadFiles = async (assistantId: string, files: File[]) => {
     if (!assistantId)
-      return message.error("Missing assistantId for file upload.");
+      return message.error("Missing agent ID for file upload.");
     if (!files || files.length === 0)
       return message.error("Please choose at least one file.");
     setUploadingMap((prev) => ({ ...prev, [assistantId]: true }));
@@ -1677,7 +1677,7 @@ const AllAgentsPage: React.FC = () => {
       const fd = new FormData();
       for (const f of files) {
         fd.append("file", f);
-        fd.append("files", f);
+        // fd.append("files", f);
       }
       const res = await authFetch(
         `${BASE_URL}/ai-service/agent/${encodeURIComponent(
@@ -1945,11 +1945,12 @@ const AllAgentsPage: React.FC = () => {
                                   className="hidden"
                                   onChange={(e) => {
                                     const f = e.currentTarget.files?.[0];
-                                    if (f && a.assistantId)
-                                      uploadImage(a.assistantId, f);
-                                    else if (!a.assistantId)
+                                    const targetId = a.assistantId || a.id;
+                                    if (f && targetId)
+                                      uploadImage(targetId, f);
+                                    else if (!targetId)
                                       message.error(
-                                        "Missing assistantId for image upload.",
+                                        "Missing agent ID for image upload.",
                                       );
                                     e.currentTarget.value = "";
                                     setAvatarMenuFor(null);
@@ -2140,15 +2141,16 @@ const AllAgentsPage: React.FC = () => {
                               multiple
                               onChange={(e) => {
                                 const list = e.target.files;
+                                const targetId = a.assistantId || a.id;
                                 if (list && list.length > 0) {
-                                  if (a.assistantId)
+                                  if (targetId)
                                     uploadFiles(
-                                      a.assistantId,
+                                      targetId,
                                       Array.from(list),
                                     );
                                   else
                                     message.error(
-                                      "This agent has no assistantId yet. Open/Edit & save the agent, then upload.",
+                                      "Missing agent ID for file upload.",
                                     );
                                 } else {
                                   message.error(
@@ -2163,12 +2165,14 @@ const AllAgentsPage: React.FC = () => {
 
                         <Button
                           size="small"
-                          onClick={() =>
-                            a.assistantId
-                              ? fetchUploadedFiles(a.assistantId)
-                              : message.error("Missing assistantId.")
+                          onClick={() => {
+                            const targetId = a.assistantId || a.id;
+                            if (targetId) fetchUploadedFiles(targetId);
+                            else message.error("Missing agent ID.");
+                          }}
+                          loading={
+                            !!loadingFiles[a.assistantId || a.id || ""]
                           }
-                          loading={!!loadingFiles[a.assistantId || ""]}
                         >
                           View Files
                         </Button>
@@ -2481,7 +2485,7 @@ const AllAgentsPage: React.FC = () => {
                       </div>
 
                       {/* Uploading indicator for files */}
-                      {uploadingMap[a.assistantId || ""] && (
+                      {uploadingMap[a.assistantId || a.id || ""] && (
                         <div className="mt-2 text-xs text-purple-600 flex items-center">
                           <svg
                             className="animate-spin -ml-1 mr-2 h-4 w-4 text-purple-600"

@@ -533,7 +533,7 @@ const OxyLoansIntegration: React.FC = () => {
                   level={2}
                   className="!m-0 !text-[24px] !font-bold !leading-tight !text-slate-900 sm:!text-[28px]"
                 >
-                  OxyLoans Journeys
+                  Partner Journeys
                 </Title>
 
                 <Text className="mt-1.5 block !text-[13px] !leading-5 !text-slate-500 sm:!text-sm">

@@ -26,7 +26,12 @@ const logos = [
     href: "https://oxybricks.world/",
   },
   {
-    src: "https://i.ibb.co/gb9bNnTZ/oxygoldlogo-bk.png" ,
+    src: "https://i.ibb.co/XxJJRXx5/jun-logo.png",
+    name: "OXY JOURNEYS",
+    href: "https://www.oxyjourneys.com/"
+  },
+  {
+    src: "https://i.ibb.co/gb9bNnTZ/oxygoldlogo-bk.png",
     name: "OXYGOLD.AI",
     href: "https://www.oxygold.ai/",
   },

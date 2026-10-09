@@ -2436,7 +2436,7 @@ const CartPage: React.FC = () => {
     }
 
     .address-custom-scroll::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
     }
 
     .address-custom-scroll::-webkit-scrollbar-track {
@@ -2451,6 +2451,25 @@ const CartPage: React.FC = () => {
 
     .address-custom-scroll::-webkit-scrollbar-thumb:hover {
       background: #a855f7;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f8fafc;
+      border-radius: 9999px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #c084fc;
+      border-radius: 9999px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: #9333ea;
     }
 
     /* Prevent modal opening from causing layout shift / jumping */
@@ -2501,15 +2520,23 @@ const CartPage: React.FC = () => {
                     <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
                   </div>
                 ) : !cartData || cartData.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-64 text-center">
-                    <h2 className="text-xl font-bold mb-4">
+                  <div className="flex flex-col items-center justify-center text-center py-14 px-4 bg-white rounded-2xl border border-dashed border-purple-200 shadow-2xs my-2">
+                    <div className="w-16 h-16 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 mb-3 shadow-inner">
+                      <ShoppingBag className="w-8 h-8 text-purple-500" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-1">
                       Your cart is empty
-                    </h2>
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-500 max-w-xs mb-5 leading-relaxed">
+                      Looks like you haven't added anything to your cart yet. Explore our products and discover great offers!
+                    </p>
                     <button
+                      type="button"
                       onClick={() => navigate("/main/dashboard/products")}
-                      className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-2 rounded-md hover:from-purple-700 hover:to-purple-500"
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-md shadow-purple-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer border-none"
                     >
-                      Browse items
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Browse Items</span>
                     </button>
                   </div>
                 ) : (
@@ -2548,8 +2575,8 @@ const CartPage: React.FC = () => {
                       <div className="col-span-2 text-right text-gray-700">Total</div>
                     </div>
 
-                    {/* Items List */}
-                    <div className="space-y-2.5 sm:space-y-0 sm:divide-y sm:divide-gray-100">
+                    {/* Items List (Displays up to 3 items cleanly without scrollbar; scrollbar activates for 4 or more items) */}
+                    <div className={`space-y-2 sm:space-y-0 sm:divide-y sm:divide-gray-100 pr-1.5 scrollbar-thin ${cartData.length > 3 ? "max-h-[280px] sm:max-h-[320px] overflow-y-auto" : ""}`}>
                       {cartData.map((item) => {
                         const itemQty =
                           item.status === "ADD"
@@ -2561,17 +2588,17 @@ const CartPage: React.FC = () => {
 
                         return (
                           <React.Fragment key={item.itemId}>
-                            {/* MOBILE VIEW (Card Layout) */}
-                            <div className="block sm:hidden p-3.5 bg-white rounded-2xl border border-gray-200/90 shadow-2xs space-y-3">
-                              {/* Row 1: Image & Name */}
-                              <div className="flex items-start gap-3 min-w-0">
+                            {/* MOBILE VIEW (Compact Card Layout) */}
+                            <div className="block sm:hidden p-2.5 bg-white rounded-xl border border-gray-200/80 shadow-2xs space-y-2">
+                              {/* Row 1: Image & Details */}
+                              <div className="flex items-start gap-2.5 min-w-0">
                                 <div
                                   onClick={() =>
                                     navigate(`/main/itemsdisplay/${item.itemId}`, {
                                       state: { item },
                                     })
                                   }
-                                  className="w-16 h-16 rounded-xl bg-white border border-gray-200/80 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden cursor-pointer"
+                                  className="w-12 h-12 rounded-lg bg-white border border-gray-200/80 p-0.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden cursor-pointer"
                                 >
                                   {item.image ? (
                                     <img
@@ -2589,7 +2616,7 @@ const CartPage: React.FC = () => {
                                     />
                                   ) : null}
                                   <div
-                                    className={`w-full h-full rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-base ${
+                                    className={`w-full h-full rounded-md bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-xs ${
                                       item.image ? "hidden" : "flex"
                                     }`}
                                   >
@@ -2599,7 +2626,7 @@ const CartPage: React.FC = () => {
 
                                 <div className="min-w-0 flex-1">
                                   {item.quantity < 6 && item.quantity > 0 && (
-                                    <p className="text-[10px] text-red-500 font-bold leading-none mb-0.5">
+                                    <p className="text-[9px] text-red-500 font-bold leading-none mb-0.5">
                                       Only {item.quantity} left
                                     </p>
                                   )}
@@ -2609,12 +2636,12 @@ const CartPage: React.FC = () => {
                                         state: { item },
                                       })
                                     }
-                                    className="font-semibold text-sm text-purple-900 leading-snug break-words hover:text-purple-700 cursor-pointer"
+                                    className="font-bold text-xs text-purple-900 leading-snug line-clamp-2 hover:text-purple-700 cursor-pointer"
                                   >
                                     {item.itemName}
                                   </h4>
                                   {(item.weight || item.units) && (
-                                    <div className="text-sm font-semibold text-purple-700 mt-0.5">
+                                    <div className="text-[11px] font-semibold text-purple-700 mt-0.5">
                                       {item.weight} {item.units}
                                     </div>
                                   )}
@@ -2623,8 +2650,8 @@ const CartPage: React.FC = () => {
                                       item.itemId,
                                       comboPricing.display,
                                     ) && (
-                                      <Tag color="purple" className="text-[10px] mt-0.5 font-medium">
-                                        Combo offer item
+                                      <Tag color="purple" className="text-[9px] px-1.5 py-0 mt-0.5 font-medium">
+                                        Combo offer
                                       </Tag>
                                     )}
                                 </div>
@@ -2633,12 +2660,12 @@ const CartPage: React.FC = () => {
                               {/* Row 2: Price, Stepper & Total */}
                               <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
                                 {/* Price */}
-                                <div className="flex items-baseline gap-1.5 shrink-0">
-                                  <span className="text-base font-bold text-purple-900">
+                                <div className="flex items-baseline gap-1 shrink-0">
+                                  <span className="text-xs font-bold text-purple-900">
                                     ₹{item.itemPrice}
                                   </span>
                                   {item.priceMrp && Number(item.priceMrp) > 0 && (
-                                    <span className="text-xs line-through text-gray-400">
+                                    <span className="text-[10px] line-through text-gray-400">
                                       ₹{item.priceMrp}
                                     </span>
                                   )}
@@ -2647,22 +2674,22 @@ const CartPage: React.FC = () => {
                                 {/* Stepper */}
                                 <div className="flex items-center justify-center">
                                   {item.quantity === 0 ? (
-                                    <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg">
+                                    <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
                                       OUT OF STOCK
                                     </span>
                                   ) : item.status === "ADD" ? (
-                                    <div className="flex items-center h-8 border border-purple-300 bg-purple-50/40 rounded-xl overflow-hidden shadow-2xs">
+                                    <div className="flex items-center h-7 border border-purple-300 bg-purple-50/40 rounded-lg overflow-hidden shadow-2xs">
                                       <button
                                         onClick={() => handleDecrease(item)}
                                         disabled={loadingItems[item.itemId]}
-                                        className="w-7 h-7 flex items-center justify-center text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+                                        className="w-6 h-6 flex items-center justify-center text-purple-700 hover:bg-purple-100 disabled:opacity-50"
                                         aria-label="Decrease quantity"
                                       >
-                                        <Minus className="w-3.5 h-3.5" />
+                                        <Minus className="w-3 h-3" />
                                       </button>
-                                      <div className="px-1.5 min-w-[24px] text-center">
+                                      <div className="px-1 min-w-[20px] text-center">
                                         {loadingItems[item.itemId] ? (
-                                          <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600 inline" />
+                                          <Loader2 className="w-3 h-3 animate-spin text-purple-600 inline" />
                                         ) : (
                                           <span className="text-xs font-bold text-purple-900">
                                             {regularCartItems[item.itemId] || 0}
@@ -2683,7 +2710,7 @@ const CartPage: React.FC = () => {
                                             item.quantity ||
                                           loadingItems[item.itemId]
                                         }
-                                        className={`w-7 h-7 flex items-center justify-center text-purple-700 hover:bg-purple-100 ${
+                                        className={`w-6 h-6 flex items-center justify-center text-purple-700 hover:bg-purple-100 ${
                                           (regularCartItems[item.itemId] || 0) >=
                                           item.quantity
                                             ? "opacity-40 cursor-not-allowed"
@@ -2691,18 +2718,18 @@ const CartPage: React.FC = () => {
                                         }`}
                                         aria-label="Increase quantity"
                                       >
-                                        <Plus className="w-3.5 h-3.5" />
+                                        <Plus className="w-3 h-3" />
                                       </button>
                                     </div>
                                   ) : (
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1">
                                       <Tag
                                         color={item.status === "FREE" ? "green" : "blue"}
-                                        className="text-[11px] font-bold"
+                                        className="text-[9px] font-bold px-1.5 py-0"
                                       >
                                         {item.status === "FREE" ? "FREE" : "COMBO"}
                                       </Tag>
-                                      <div className="w-7 h-7 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center">
+                                      <div className="w-6 h-6 rounded-lg bg-gray-50 border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center">
                                         {item.cartQuantity}
                                       </div>
                                     </div>
@@ -2711,9 +2738,9 @@ const CartPage: React.FC = () => {
 
                                 {/* Total */}
                                 <div className="text-right shrink-0">
-                                  <span className="text-base font-bold text-purple-950">
+                                  <span className="text-xs font-bold text-purple-950">
                                     {isFreeItem(item) ? (
-                                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
                                         FREE
                                       </span>
                                     ) : (
@@ -2725,23 +2752,23 @@ const CartPage: React.FC = () => {
 
                               {/* Row 3: Savings */}
                               {typeof item.saveAmount === "number" && item.saveAmount > 0 && (
-                                <div className="text-sm font-bold text-emerald-600 pt-0.5">
+                                <div className="text-[11px] font-bold text-emerald-600 pt-0.5">
                                   Save ₹{Number(item.saveAmount).toFixed(2)} ({item.savePercentage ?? 0}% OFF)
                                 </div>
                               )}
                             </div>
 
-                            {/* DESKTOP VIEW (Table Row) */}
-                            <div className="hidden sm:grid py-4 first:pt-1 grid-cols-12 gap-2 sm:gap-3 items-center">
+                            {/* DESKTOP VIEW (Compact Table Row) */}
+                            <div className="hidden sm:grid py-2.5 first:pt-1 grid-cols-12 gap-2 sm:gap-3 items-center">
                               {/* Col 1: Item Thumbnail & Details */}
-                              <div className="col-span-6 flex items-center gap-3 sm:gap-4 min-w-0">
+                              <div className="col-span-6 flex items-center gap-2.5 sm:gap-3 min-w-0">
                                 <div
                                   onClick={() =>
                                     navigate(`/main/itemsdisplay/${item.itemId}`, {
                                       state: { item },
                                     })
                                   }
-                                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border border-purple-100 p-1.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden cursor-pointer hover:shadow-md hover:border-purple-300 transition-all"
+                                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white border border-purple-100 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden cursor-pointer hover:shadow-md hover:border-purple-300 transition-all"
                                 >
                                   {item.image ? (
                                     <img
@@ -2759,7 +2786,7 @@ const CartPage: React.FC = () => {
                                     />
                                   ) : null}
                                   <div
-                                    className={`w-full h-full rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-lg sm:text-xl ${
+                                    className={`w-full h-full rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-sm sm:text-base ${
                                       item.image ? "hidden" : "flex"
                                     }`}
                                   >
@@ -2769,7 +2796,7 @@ const CartPage: React.FC = () => {
 
                                 <div className="min-w-0 flex-1">
                                   {item.quantity < 6 && item.quantity > 0 && (
-                                    <p className="text-[10px] sm:text-xs text-red-500 font-bold leading-none mb-1">
+                                    <p className="text-[10px] text-red-500 font-bold leading-none mb-0.5">
                                       Only {item.quantity} left
                                     </p>
                                   )}
@@ -2779,13 +2806,13 @@ const CartPage: React.FC = () => {
                                         state: { item },
                                       })
                                     }
-                                    className="font-normal text-sm sm:text-base text-gray-900 leading-snug break-words hover:text-purple-700 cursor-pointer transition-colors"
+                                    className="font-bold text-xs sm:text-sm text-gray-900 leading-snug line-clamp-2 hover:text-purple-700 cursor-pointer transition-colors"
                                     title={item.itemName}
                                   >
                                     {item.itemName}
                                   </h4>
                                   {(item.weight || item.units) && (
-                                    <div className="text-sm sm:text-base font-semibold text-purple-700 mt-1">
+                                    <div className="text-xs font-semibold text-purple-700 mt-0.5">
                                       {item.weight} {item.units}
                                     </div>
                                   )}
@@ -2794,12 +2821,12 @@ const CartPage: React.FC = () => {
                                       item.itemId,
                                       comboPricing.display,
                                     ) && (
-                                      <Tag color="purple" className="text-[10px] mt-1 font-semibold">
+                                      <Tag color="purple" className="text-[10px] mt-0.5 font-semibold">
                                         Combo offer item
                                       </Tag>
                                     )}
                                   {typeof item.saveAmount === "number" && item.saveAmount > 0 && (
-                                    <div className="text-sm sm:text-base font-bold text-emerald-600 mt-1">
+                                    <div className="text-xs font-bold text-emerald-600 mt-0.5">
                                       Save ₹{Number(item.saveAmount).toFixed(2)} ({item.savePercentage ?? 0}% OFF)
                                     </div>
                                   )}
@@ -2808,7 +2835,7 @@ const CartPage: React.FC = () => {
 
                               {/* Col 2: Price */}
                               <div className="col-span-2 text-center">
-                                <span className="text-sm sm:text-base font-bold text-gray-900 block">
+                                <span className="text-xs sm:text-sm font-bold text-gray-900 block">
                                   ₹{item.itemPrice}
                                 </span>
                                 {item.priceMrp && Number(item.priceMrp) > 0 && (

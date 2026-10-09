@@ -13,6 +13,7 @@ import {
   List,
   Space,
   Pagination,
+  Alert,
 } from "antd";
 import BASE_URL from "../Config";
 import {
@@ -20,6 +21,7 @@ import {
   ExclamationCircleOutlined,
   FileTextOutlined,
   TrophyOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 import customerApi from "../utils/axiosInstances";
 import { useNavigate } from "react-router-dom";
@@ -49,6 +51,7 @@ type JobRow = {
   coverLetter?: string;
   noticePeriod?: string;
   resumeUrl?: string;
+  userId?: string;
   appliedAt?: string;
   updatedAt?: string;
   jobStatus?: boolean; // ✅ backend field
@@ -67,6 +70,21 @@ export const getAppliedJobDisplayData = (
   jobLocations: job.marketingJobs?.jobLocations || job.jobLocations || "N/A",
   experience: job.marketingJobs?.experience || job.experience || "N/A",
 });
+
+export const buildFullResumeUrl = (
+  url?: string | null,
+  targetUserId?: string | null,
+): string => {
+  if (!url) return "";
+  const cleanUrl = url.trim();
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+  const uid = targetUserId || localStorage.getItem("userId") || "";
+  const baseUrl = `https://oxybricksv1test.s3.ap-south-1.amazonaws.com/null/${uid}`;
+  const relativePath = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
+  return `${baseUrl}${relativePath}`;
+};
 
 type ExamQuestion = {
   question: string;
@@ -144,6 +162,12 @@ const AppliedJobs: React.FC = () => {
   const [openExam, setOpenExam] = useState(false);
   const [examLoading, setExamLoading] = useState(false);
   const [examData, setExamData] = useState<ExamResultData | null>(null);
+
+  // Resume modal
+  const [resumeModal, setResumeModal] = useState<boolean>(false);
+  const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [iframeLoading, setIframeLoading] = useState<boolean>(true);
+  const [resumeError, setResumeError] = useState<boolean>(false);
 
   const isMobile = !screens.md; // < md = mobile/tablet small
 
@@ -343,26 +367,40 @@ const AppliedJobs: React.FC = () => {
         key: "resumeUrl",
         align: "center" as const,
         responsive: ["md"] as any,
-        render: (url: string) =>
-          url ? (
-            <Button
-              size="small"
-              type="primary"
-              onClick={() => {
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "resume.pdf";
-                link.target = "_blank";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-            >
-              Download
-            </Button>
-          ) : (
-            "N/A"
-          ),
+        render: (url: string, record: JobRow) => (
+          <Button
+            size="small"
+            icon={<FilePdfOutlined />}
+            disabled={!url}
+            style={
+              url
+                ? {
+                    background: "#008cba",
+                    borderColor: "#008cba",
+                    color: "#fff",
+                  }
+                : {}
+            }
+            onClick={() => {
+              if (!url) return;
+              try {
+                const fullUrl = buildFullResumeUrl(url, record.userId);
+                const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+                  fullUrl
+                )}&embedded=true`;
+                setResumeUrl(viewerUrl);
+                setIframeLoading(true);
+                setResumeError(false);
+                setResumeModal(true);
+              } catch (error) {
+                console.error("Invalid resume URL:", error);
+                setResumeError(true);
+              }
+            }}
+          >
+            View Resume
+          </Button>
+        ),
       },
       {
         title: "Applied",
@@ -447,19 +485,30 @@ const AppliedJobs: React.FC = () => {
               <Button
                 size="small"
                 block
-                type="primary"
+                icon={<FilePdfOutlined />}
+                style={{
+                  background: "#008cba",
+                  borderColor: "#008cba",
+                  color: "#fff",
+                }}
                 className="!h-9 !whitespace-normal !text-xs"
                 onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = job.resumeUrl!;
-                  link.download = "resume.pdf";
-                  link.target = "_blank";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+                  try {
+                    const fullUrl = buildFullResumeUrl(job.resumeUrl, job.userId);
+                    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+                      fullUrl
+                    )}&embedded=true`;
+                    setResumeUrl(viewerUrl);
+                    setIframeLoading(true);
+                    setResumeError(false);
+                    setResumeModal(true);
+                  } catch (error) {
+                    console.error("Invalid resume URL:", error);
+                    setResumeError(true);
+                  }
                 }}
               >
-                Resume
+                View Resume
               </Button>
             ) : (
               <Button size="small" block disabled className="!h-9 !text-xs">
@@ -507,7 +556,6 @@ const AppliedJobs: React.FC = () => {
       ))}
     </div>
   );
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-violet-50 p-2 sm:p-6 md:p-8">
       <div className="mx-auto min-w-0 max-w-7xl">
@@ -609,6 +657,57 @@ const AppliedJobs: React.FC = () => {
         <div className="max-h-[50vh] overflow-auto whitespace-pre-wrap text-sm text-slate-700">
           {coverText}
         </div>
+      </Modal>
+
+      {/* Resume Viewer Modal */}
+      <Modal
+        title={
+          <Space>
+            <FilePdfOutlined style={{ color: "#008cba" }} />
+            <span style={{ fontWeight: 700 }}>Resume Viewer</span>
+          </Space>
+        }
+        open={resumeModal}
+        onCancel={() => {
+          setResumeModal(false);
+          setIframeLoading(true);
+          setResumeError(false);
+        }}
+        footer={<Button onClick={() => setResumeModal(false)}>Close</Button>}
+        width="75vw"
+        style={{ top: 16, maxWidth: 1000 }}
+        styles={{ body: { height: "78vh", padding: 0, overflow: "hidden" } }}
+        destroyOnClose
+        maskClosable
+      >
+        {iframeLoading && !resumeError && (
+          <div className="flex items-center justify-center h-full">
+            <Spin size="large" tip="Loading resume..." />
+          </div>
+        )}
+        {resumeError && (
+          <div className="flex flex-col items-center justify-center h-full p-6">
+            <Alert
+              type="error"
+              message="Unable to load resume"
+              description="The file could not be displayed."
+              showIcon
+            />
+          </div>
+        )}
+        {!resumeError && (
+          <iframe
+            src={resumeUrl}
+            title="Resume Viewer"
+            className="w-full h-full border-none"
+            style={{ display: iframeLoading ? "none" : "block" }}
+            onLoad={() => setIframeLoading(false)}
+            onError={() => {
+              setIframeLoading(false);
+              setResumeError(true);
+            }}
+          />
+        )}
       </Modal>
 
       {/* ✅ Exam Result Modal */}

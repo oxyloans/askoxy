@@ -161,6 +161,25 @@ const CheckoutPage: React.FC = () => {
   const [silverDiscount, setSilverDiscount] = useState<number>(0);
   const [silverGst, setSilverGst] = useState<number>(0);
 
+  const [removedGeneralItems, setRemovedGeneralItems] = useState<CartItem[]>([]);
+  const [isSeparationModalOpen, setIsSeparationModalOpen] = useState<boolean>(false);
+  const [hasSeparatedNoticeShown, setHasSeparatedNoticeShown] = useState<boolean>(false);
+
+  const isPreciousMetalItem = (item: CartItem): boolean => {
+    const category = (
+      item.catergoryName ||
+      item.categoryName ||
+      (item as any).categoryType ||
+      (item as any).category ||
+      ""
+    ).trim();
+    const itemName = item.itemName || "";
+    return (
+      /GOLD|SILVER/i.test(category) ||
+      /\b(gold|silver)\b/i.test(itemName)
+    );
+  };
+
   const isSilverItem = (item: CartItem) =>
     [
       item.catergoryName,
@@ -984,7 +1003,7 @@ useEffect(() => {
 
       // Show only coupons that are active right now (activeNow: true)
       const activeList: GoldSilverCoupon[] = (rawList || []).filter(
-        (coupon: any) => coupon.activeNow === true && coupon.active === true
+        (coupon: any) =>  coupon.active === true
       );
 
       setGoldSilverCoupons(activeList);
@@ -1065,7 +1084,36 @@ useEffect(() => {
       );
 
       if (response.data.customerCartResponseList) {
-        const cartItems = response.data.customerCartResponseList;
+        const rawCartItems: CartItem[] = response.data.customerCartResponseList;
+
+        const preciousItems = rawCartItems.filter(isPreciousMetalItem);
+        const generalItems = rawCartItems.filter((item) => !isPreciousMetalItem(item));
+
+        let cartItems = rawCartItems;
+
+        if (preciousItems.length > 0 && generalItems.length > 0) {
+          cartItems = preciousItems;
+          setRemovedGeneralItems(generalItems);
+
+          // Auto-remove general items from cart endpoint so Gold & Silver order is isolated
+          generalItems.forEach((genItem) => {
+            customerApi
+              .delete(`${BASE_URL}/cart-service/cart/remove`, {
+                data: { customerId, itemId: genItem.itemId },
+              })
+              .catch((err) =>
+                console.error("Auto remove general item failed:", genItem.itemId, err)
+              );
+          });
+
+          if (!hasSeparatedNoticeShown) {
+            setIsSeparationModalOpen(true);
+            setHasSeparatedNoticeShown(true);
+          }
+        } else {
+          setRemovedGeneralItems([]);
+        }
+
         setCartData(cartItems || []);
 
         const totalQuantity = cartItems.reduce(
@@ -2951,6 +2999,173 @@ useEffect(() => {
     );
   };
 
+  const renderSeparationModal = (): JSX.Element => {
+    return (
+      <Modal
+        open={isSeparationModalOpen}
+        onCancel={() => setIsSeparationModalOpen(false)}
+        centered
+        destroyOnClose
+        maskClosable
+        width="92%"
+        style={{ maxWidth: 450 }}
+        bodyStyle={{
+          padding: 0,
+          borderRadius: 20,
+          overflow: "hidden",
+          background: "#ffffff",
+        }}
+        title={null}
+        closable={false}
+        footer={null}
+        className="responsive-modal"
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 p-4 sm:p-4.5 text-white relative overflow-hidden">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner shrink-0">
+                <Gem className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold text-white leading-tight">
+                  Gold & Silver Separate Order
+                </h3>
+                <p className="text-[11px] text-amber-100 font-medium mt-0.5">
+                  General products removed from checkout
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSeparationModalOpen(false)}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Short Professional Notice & Removed Items List */}
+        <div className="p-4 sm:p-5 space-y-3 bg-slate-50/60">
+          <style>{`
+            .scrollbar-thin::-webkit-scrollbar {
+              width: 4px;
+              height: 4px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-track {
+              background: #f8fafc;
+              border-radius: 9999px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb {
+              background: #f59e0b;
+              border-radius: 9999px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+              background: #d97706;
+            }
+          `}</style>
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/90 flex items-start gap-2 shadow-2xs">
+            <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-900 leading-snug font-medium">
+              Gold & Silver items require specialized delivery and are processed as a separate order. General items were removed from this checkout.
+            </p>
+          </div>
+
+          {removedGeneralItems.length > 0 ? (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                  Removed Products ({removedGeneralItems.length})
+                </span>
+                <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                  Saved in Cart
+                </span>
+              </div>
+              {/* Displays 3 items cleanly without scrollbar; scrollbar displays when 4 or more items */}
+              <div className={`space-y-1.5 pr-1 scrollbar-thin ${removedGeneralItems.length > 3 ? "max-h-[162px] sm:max-h-[172px] overflow-y-auto" : ""}`}>
+                {removedGeneralItems.map((item, idx) => {
+                  const itemImgUrl = item.image || item.itemImage;
+                  return (
+                    <div
+                      key={item.itemId || idx}
+                      className="flex items-center justify-between p-2 rounded-xl bg-white border border-gray-200/80 shadow-2xs gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                          {itemImgUrl ? (
+                            <img
+                              src={resolveAskoxyUrl(itemImgUrl)}
+                              alt={item.itemName}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <ShoppingBag className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h5 className="font-bold text-xs text-gray-900 leading-snug line-clamp-2">
+                            {item.itemName}
+                          </h5>
+                          <p className="text-[10px] text-gray-500 mt-0.5">
+                            Qty: {item.cartQuantity} • ₹{item.itemPrice}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md shrink-0">
+                        Separated
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Centered Empty State when no items */
+            <div className="flex flex-col items-center justify-center text-center py-6 px-4 bg-white rounded-xl border border-dashed border-gray-200 shadow-2xs">
+              <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 mb-2 shadow-inner">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <h4 className="text-xs sm:text-sm font-bold text-gray-800 mb-0.5">
+                No Separated General Products
+              </h4>
+              <p className="text-[11px] text-gray-500 mb-3 max-w-xs leading-tight">
+                All items in your cart belong to this order.
+              </p>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setIsSeparationModalOpen(false);
+                  navigate("/main/home");
+                }}
+                className="bg-amber-600 hover:bg-amber-700 text-xs font-bold rounded-lg h-8 px-4 border-none shadow-2xs"
+              >
+                Browse Items
+              </Button>
+            </div>
+          )}
+
+          <div className="pt-1 flex flex-col-reverse sm:flex-row items-center justify-end gap-2">
+            <Button
+              onClick={() => navigate("/main/mycart")}
+              className="w-full sm:w-auto text-xs font-bold rounded-xl h-9 px-4 border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Return to Cart
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => setIsSeparationModalOpen(false)}
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-bold rounded-xl h-9 px-5 border-none shadow-sm"
+            >
+              Proceed with Order
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   if(cashfreeLoading){
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -3020,11 +3235,28 @@ useEffect(() => {
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50/70">
+    <div className="flex flex-col min-h-screen bg-white">
+      <style>{`
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: #f8fafc;
+          border-radius: 9999px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #c084fc;
+          border-radius: 9999px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #9333ea;
+        }
+      `}</style>
       <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 lg:px-6 pt-1 sm:pt-2.5 pb-6">
         <main className="min-w-0">
           {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5 bg-white p-3.5 sm:p-4 rounded-2xl border border-purple-100 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5 py-1">
             <div className="flex items-center gap-3.5">
               <button
                 onClick={() => navigate(-1)}
@@ -3045,6 +3277,45 @@ useEffect(() => {
               </div>
             </div>
           </div>
+
+          {/* Gold & Silver Separation Banner */}
+          {removedGeneralItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 sm:mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white shadow-xs relative overflow-hidden border border-amber-300/40"
+            >
+              <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 relative z-10">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 border border-white/30 shadow-inner">
+                    <Sparkles className="w-5 h-5 text-amber-100" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug">
+                        Gold & Silver Separate Order Active
+                      </h3>
+                      <span className="text-[9px] sm:text-[10px] font-extrabold bg-white/25 border border-white/40 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Notice
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-50 mt-0.5 leading-tight max-w-xl">
+                      Gold & Silver items are ordered separately. {removedGeneralItems.length} general product{removedGeneralItems.length > 1 ? "s were" : " was"} removed from this checkout.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSeparationModalOpen(true)}
+                  className="self-start sm:self-center text-xs font-extrabold bg-white text-amber-900 hover:bg-amber-50 px-3.5 py-1.5 rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <Info className="w-3.5 h-3.5 text-amber-700" />
+                  <span>View Items ({removedGeneralItems.length})</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column: Segregated Section Cards */}
@@ -3311,8 +3582,8 @@ useEffect(() => {
                   <div className="col-span-2 sm:col-span-3 text-right text-gray-800">Total</div>
                 </div>
 
-                {/* Items List */}
-                <div className="divide-y divide-gray-100 max-h-[28rem] overflow-y-auto pr-1">
+                {/* Items List (Displays up to 3 items cleanly without scrollbar; scrolling activates for 4 or more items) */}
+                <div className={`divide-y divide-gray-100 pr-1 scrollbar-thin ${cartData.length > 3 ? "max-h-[220px] sm:max-h-[245px] overflow-y-auto" : ""}`}>
                   {cartData.length === 0 ? (
                     <p className="text-gray-500 text-xs text-center py-6">Your cart is empty</p>
                   ) : (
@@ -3356,7 +3627,7 @@ useEffect(() => {
                             </div>
 
                             <div className="min-w-0">
-                              <h4 className="font-bold text-xs sm:text-sm text-gray-900 leading-snug truncate">
+                              <h4 className="font-bold text-xs sm:text-sm text-gray-900 leading-snug line-clamp-2">
                                 {item.itemName}
                               </h4>
                               {(item.weight || item.units) && (
@@ -3984,6 +4255,7 @@ useEffect(() => {
           </div>
         </Modal>
       )}
+      {renderSeparationModal()}
     </div>
   );
 };

@@ -959,7 +959,7 @@ const App: React.FC = () => {
       "blog/:id/:type",
       "/credera/jobs",
       "/jpl",
-      "/oxyloans-partner",
+      "/partner",
       "/fpl",
       "/oxygold",
       "/viewjobdetails/default/ALL",
@@ -978,7 +978,7 @@ const App: React.FC = () => {
       // Login pages
       currentPath === "/admin" ||
       currentPath === "/partnerlogin" ||
-      currentPath === "/oxyloans-partner" ||
+      currentPath === "/partner" ||
       currentPath === "/userlogin" ||
       currentPath === "/employee-login" ||
       currentPath === "/employee-register" ||
@@ -1200,13 +1200,13 @@ const App: React.FC = () => {
               <Route path="/radhai-RandD" element={<RadhAIRAndDPage />} />
               <Route path="/talktoceo" element={<TalkToCEO />} />
               <Route
-  path="/sep-19-loans-walkin"
-  element={<Sep19LoansWalkIn />}
-/>
- <Route
-  path="/alljourneys"
-  element={<JourneysPagewithoutlogin />}
-/>
+                path="/sep-19-loans-walkin"
+                element={<Sep19LoansWalkIn />}
+              />
+              <Route
+                path="/alljourneys"
+                element={<JourneysPagewithoutlogin />}
+              />
               <Route path="/internships" element={<InternshipPage />} />
               <Route
                 path="/radhai-assistant"
@@ -1319,7 +1319,7 @@ const App: React.FC = () => {
               <Route path="/whatsapplogin" element={<WhatsappLogin />} />
               <Route path="/whatsappregister" element={<WhatsappRegister />} />
 
- <Route path="/oxyloans-partner" element={<OxyLoansOverviewPage />} />
+              <Route path="/partner" element={<OxyLoansOverviewPage />} />
               {/* ===================================================== */}
               {/* ✅ OTHER PUBLIC ROUTES */}
               {/* ===================================================== */}
@@ -2072,9 +2072,9 @@ const App: React.FC = () => {
                   path="dashboard/leaguejourneys"
                   element={<LeagueJourneysPage />}
                 />
-                <Route path="oxyloans" element={<OxyLoansIntegration />} />
-                <Route path="oxyloans/referral-network" element={<OxyLoansReferralNetwork />} />
-                <Route path="oxyloans/summary" element={<OxyLoansSummary />} />
+                <Route path="partner/journeys" element={<OxyLoansIntegration />} />
+                <Route path="partner/referral-network" element={<OxyLoansReferralNetwork />} />
+                <Route path="partner/summary" element={<OxyLoansSummary />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />
@@ -2138,7 +2138,7 @@ const App: React.FC = () => {
                   path="viewjobdetails/:id/:company"
                   element={<JobViewPage />}
                 />
-                 <Route path="job-program" element={<JobProgramDashboard />} />
+                <Route path="job-program" element={<JobProgramDashboard />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="writetous" element={<WriteToUs />} />
                 <Route path="writetous/:id" element={<WriteToUs />} />
@@ -2440,7 +2440,7 @@ const App: React.FC = () => {
                 <Route path="orderReport" element={<OrderReport />} />
                 <Route path="feedback" element={<FeedbackDashboard />} />
                 <Route path="helpdashboard" element={<HelpDeskDashboard />} />
-                  <Route path="event-details" element={<EventDetails />} />
+                <Route path="event-details" element={<EventDetails />} />
                 <Route path="allroleblogs" element={<RoleBasedBlogsList />} />
                 <Route path="addroleblogs" element={<AddRoleBasedBlog />} />
                 <Route path="todaycalls" element={<CallerHistoryPage />} />

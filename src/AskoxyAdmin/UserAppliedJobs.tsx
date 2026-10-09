@@ -83,6 +83,21 @@ interface ResultData {
   isEligible: boolean;
 }
 
+export const buildFullResumeUrl = (
+  url?: string | null,
+  targetUserId?: string | null,
+): string => {
+  if (!url) return "";
+  const cleanUrl = url.trim();
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+  const uid = targetUserId || localStorage.getItem("userId") || "";
+  const baseUrl = `https://oxybricksv1test.s3.ap-south-1.amazonaws.com/null/${uid}`;
+  const relativePath = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
+  return `${baseUrl}${relativePath}`;
+};
+
 interface PagedResponse {
   content: AppliedJob[];
   totalElements: number;
@@ -138,6 +153,7 @@ const AppliedJobsDashboard: React.FC = () => {
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [iframeLoading, setIframeLoading] = useState<boolean>(true);
   const [resumeError, setResumeError] = useState<boolean>(false);
+
 
   // Result modal
   const [resultModal, setResultModal] = useState<boolean>(false);
@@ -328,13 +344,35 @@ const AppliedJobsDashboard: React.FC = () => {
           size="small"
           icon={<FilePdfOutlined />}
           disabled={!url}
-          style={url ? { background: "#008cba", borderColor: "#008cba", color: "#fff" } : {}}
+          style={
+            url
+              ? {
+                background: "#008cba",
+                borderColor: "#008cba",
+                color: "#fff",
+              }
+              : {}
+          }
           onClick={() => {
             if (!url) return;
-            setResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`);
-            setIframeLoading(true);
-            setResumeError(false);
-            setResumeModal(true);
+
+            try {
+              // Generate complete resume URL
+              const fullUrl = buildFullResumeUrl(url,  localStorage.getItem("userId"));
+
+              // Create Google Docs Viewer URL
+              const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+                fullUrl
+              )}&embedded=true`;
+
+              setResumeUrl(viewerUrl);
+              setIframeLoading(true);
+              setResumeError(false);
+              setResumeModal(true);
+            } catch (error) {
+              console.error("Invalid resume URL:", error);
+              setResumeError(true);
+            }
           }}
         >
           View Resume
@@ -504,23 +542,23 @@ const AppliedJobsDashboard: React.FC = () => {
             pagination={
               isSearchActive
                 ? {
-                    current: clientPage,
-                    pageSize: pageSize,
-                    total: filteredJobs.length,
-                    showSizeChanger: false,
-                    showTotal: (total: number, range: [number, number]) =>
-                      `${range[0]}-${range[1]} of ${total} jobs`,
-                    onChange: (p: number) => setClientPage(p),
-                  }
+                  current: clientPage,
+                  pageSize: pageSize,
+                  total: filteredJobs.length,
+                  showSizeChanger: false,
+                  showTotal: (total: number, range: [number, number]) =>
+                    `${range[0]}-${range[1]} of ${total} jobs`,
+                  onChange: (p: number) => setClientPage(p),
+                }
                 : {
-                    current: page + 1,
-                    pageSize: pageSize,
-                    total: totalElements,
-                    showSizeChanger: false,
-                    showTotal: (total: number, range: [number, number]) =>
-                      `${range[0]}-${range[1]} of ${total} jobs`,
-                    onChange: (newPage: number) => setPage(newPage - 1),
-                  }
+                  current: page + 1,
+                  pageSize: pageSize,
+                  total: totalElements,
+                  showSizeChanger: false,
+                  showTotal: (total: number, range: [number, number]) =>
+                    `${range[0]}-${range[1]} of ${total} jobs`,
+                  onChange: (newPage: number) => setPage(newPage - 1),
+                }
             }
             scroll={{ x: true }}
             bordered

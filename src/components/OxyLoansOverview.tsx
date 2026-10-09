@@ -268,7 +268,7 @@ const OxyLoansOverviewPage: React.FC = () => {
 
         const userId = localStorage.getItem("userId");
 
-        const redirectPath = `/main/oxyloans?journey=${encodeURIComponent(
+        const redirectPath = `/main/partner/journeys?journey=${encodeURIComponent(
           selectedJourney,
         )}`;
 
