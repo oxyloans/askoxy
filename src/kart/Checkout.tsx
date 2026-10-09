@@ -56,6 +56,8 @@ interface CartItem {
   itemDescription?: string;
   catergoryName?: string;
   categoryName?: string;
+  categoryType?: string;
+  category?: string;
   weight?: string | number;
   units?: string;
 }
@@ -125,6 +127,70 @@ interface GoldSilverCoupon {
   errorMessage?: string | null;
   active: boolean;
 }
+
+const getOfferEndDate = (coupon: GoldSilverCoupon): Date | null => {
+  const [year, month, day] = coupon.offerEndDate || [];
+  const hasValidEndDate =
+    typeof year === "number" &&
+    Number.isInteger(year) &&
+    typeof month === "number" &&
+    Number.isInteger(month) &&
+    month >= 1 &&
+    month <= 12 &&
+    typeof day === "number" &&
+    Number.isInteger(day) &&
+    day >= 1 &&
+    day <= 31;
+  const endDateValue = hasValidEndDate ? new Date(year, month - 1, day) : null;
+  return endDateValue &&
+    endDateValue.getFullYear() === year &&
+    endDateValue.getMonth() === month - 1 &&
+    endDateValue.getDate() === day
+    ? endDateValue
+    : null;
+};
+
+const getOfferExpiryDate = (coupon: GoldSilverCoupon): Date | null => {
+  const endDate = getOfferEndDate(coupon);
+  const timeMatch = coupon.offerEndTime?.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!endDate || !timeMatch) return null;
+
+  const displayedHour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (displayedHour < 1 || displayedHour > 12 || minute > 59) return null;
+
+  let hour = displayedHour % 12;
+  if (timeMatch[3].toUpperCase() === "PM") hour += 12;
+
+  return new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+    hour,
+    minute,
+  );
+};
+
+const formatOfferTimeRemaining = (
+  coupon: GoldSilverCoupon,
+  now: number,
+): string | null => {
+  const expiry = getOfferExpiryDate(coupon)?.getTime();
+  if (expiry === undefined) return null;
+
+  const remainingSeconds = Math.max(0, Math.floor((expiry - now) / 1000));
+  if (remainingSeconds === 0) return "Offer expired";
+
+  const days = Math.floor(remainingSeconds / 86400);
+  const hours = Math.floor((remainingSeconds % 86400) / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
+  const seconds = remainingSeconds % 60;
+  const time = [hours, minutes, seconds]
+    .map((unit) => String(unit).padStart(2, "0"))
+    .join(":");
+
+  return days > 0 ? `${days}d ${time} left` : `${time} left`;
+};
 
 interface DayInfo {
   dayOfWeek: string;
@@ -289,6 +355,34 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
 
   return null;
 };
+
+const getCartCategoryTypes = (items: CartItem[]): string => {
+  const categories = Array.from(
+    new Set(
+      items
+        .flatMap((item) => {
+          const category =
+            item.catergoryName ||
+            item.categoryName ||
+            item.categoryType ||
+            item.category;
+          return category ? String(category).split(",") : [];
+        })
+        .map((category) => category.trim().toUpperCase())
+        .filter(Boolean),
+    ),
+  );
+
+  if (
+    categories.length === 2 &&
+    categories.includes("GOLD") &&
+    categories.includes("SILVER")
+  ) {
+    return "SILVER,GOLD";
+  }
+
+  return categories.join(",");
+};
   const [loading, setLoading] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
@@ -417,6 +511,7 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const [goldSilverCoupons, setGoldSilverCoupons] = useState<GoldSilverCoupon[]>([]);
   const [goldSilverCouponsLoading, setGoldSilverCouponsLoading] = useState<boolean>(false);
   const [couponModalActiveTab, setCouponModalActiveTab] = useState<"general" | "goldSilver">("general");
+  const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const [walletApplicable, setWalletApplicable] = useState(false);
   const [minOrderForWallet, setMinOrderForWallet] = useState(500);
   const [minOrderAmount, setMinOrderAmount] = useState(499);
@@ -426,6 +521,15 @@ const getPreciousMetalCategory = (items: CartItem[]): string | null => {
   const userData = localStorage.getItem("profileData");
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [minOrderToPlace, setMinOrderToPlace] = useState(0);
+
+  useEffect(() => {
+    if (!showCouponsModal || couponModalActiveTab !== "goldSilver") return;
+
+    setCountdownNow(Date.now());
+    const intervalId = window.setInterval(() => setCountdownNow(Date.now()), 1000);
+    return () => window.clearInterval(intervalId);
+  }, [showCouponsModal, couponModalActiveTab]);
+
   //states for small cart fee and service fee
   const [smallCartFee, setSmallCartFee] = useState<number>(0);
   const [serviceFee, setServiceFee] = useState<number>(0);
@@ -1434,43 +1538,15 @@ useEffect(() => {
 
   const applyGoldSilverCoupon = async (coupon: GoldSilverCoupon) => {
     const trimmedCode = coupon.couponCode.trim().toUpperCase();
+    const detectedCategoryType = getCartCategoryTypes(cartData);
+
+    if (!detectedCategoryType) {
+      message.error("Unable to determine the category of items in your cart.");
+      return;
+    }
+
     setCouponCode(trimmedCode);
     setCoupenLoading(true);
-
-    // Detect if cart has Gold, Silver, or both directly from catergoryName
-    let hasGold = false;
-    let hasSilver = false;
-
-    cartData.forEach((item) => {
-      const category = (item.catergoryName || item.categoryName || "").trim().toUpperCase();
-      const itemName = item.itemName || "";
-
-      if (category === "GOLD") {
-        hasGold = true;
-      } else if (category === "SILVER") {
-        hasSilver = true;
-      } else {
-        if (/\bGOLD\b/i.test(itemName)) {
-          hasGold = true;
-        }
-        if (/\bSILVER\b/i.test(itemName)) {
-          hasSilver = true;
-        }
-      }
-    });
-
-    let detectedCategoryType = "";
-    if (hasGold && hasSilver) {
-      detectedCategoryType = "SILVER,GOLD";
-    } else if (hasSilver) {
-      detectedCategoryType = "SILVER";
-    } else if (hasGold) {
-      detectedCategoryType = "GOLD";
-    } else {
-      detectedCategoryType =
-        coupon.categoryType ||
-        (coupon.couponCode.toUpperCase().includes("SILVER") ? "SILVER" : "GOLD");
-    }
 
     const payload = {
       categoryType: detectedCategoryType,
@@ -2772,6 +2848,10 @@ useEffect(() => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-1">
                   {goldSilverCoupons.map((coupon: GoldSilverCoupon) => {
                     const isGold = (coupon.categoryType || "").toUpperCase() === "GOLD";
+                    const timeRemaining = formatOfferTimeRemaining(
+                      coupon,
+                      countdownNow,
+                    );
                     return (
                       <div
                         key={coupon.id || coupon.couponCode}
@@ -2826,6 +2906,19 @@ useEffect(() => {
                               <span>
                                 Time: {coupon.offerStartTime || ""}
                                 {coupon.offerEndTime ? ` - ${coupon.offerEndTime}` : ""}
+                              </span>
+                            </p>
+                          )}
+
+                          {timeRemaining && (
+                            <p
+                              className="text-[10px] font-bold text-red-600 flex items-center gap-1 mb-1"
+                            >
+                              <Clock className="w-3 h-3" />
+                              <span>
+                                {timeRemaining === "Offer expired"
+                                  ? timeRemaining
+                                  : `Time left: ${timeRemaining}`}
                               </span>
                             </p>
                           )}
