@@ -545,7 +545,7 @@ const OxyLoansIntegration: React.FC = () => {
                 type="default"
                 icon={<TeamOutlined />}
                 onClick={() => {
-                  window.location.href = "/main/oxyloans/referral-network";
+                  window.location.href = "/main/partner/referral-network";
                 }}
                 className="
                   !h-11 w-full shrink-0

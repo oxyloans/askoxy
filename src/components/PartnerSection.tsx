@@ -201,7 +201,7 @@ const PartnerSection: React.FC = () => {
               {/* CTA */}
               <div className="mt-6 flex justify-center md:justify-start">
                 <Link
-                  to="/oxyloans-partner"
+                  to="/partner"
                   className="
                     group
                     inline-flex

@@ -24,8 +24,8 @@ const Header: React.FC = () => {
       return "/main/dashboard/myblogs";
     }
 
-    if (pathname === "/oxyloans-partner") {
-      return `/main/oxyloans${search}${hash}`;
+    if (pathname === "/partner") {
+      return `/main/partner/journeys${search}${hash}`;
     }
 
     if (pathname.startsWith("/services/")) {

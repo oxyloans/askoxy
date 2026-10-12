@@ -7,6 +7,7 @@ import { load, Cashfree } from "@cashfreepayments/cashfree-js";
 import Footer from "../components/Footer";
 import {
   ArrowLeft,
+  Calendar,
   CreditCard,
   Truck,
   Tag,
@@ -128,26 +129,47 @@ interface GoldSilverCoupon {
   active: boolean;
 }
 
-const getOfferEndDate = (coupon: GoldSilverCoupon): Date | null => {
-  const [year, month, day] = coupon.offerEndDate || [];
-  const hasValidEndDate =
-    typeof year === "number" &&
-    Number.isInteger(year) &&
-    typeof month === "number" &&
-    Number.isInteger(month) &&
-    month >= 1 &&
-    month <= 12 &&
-    typeof day === "number" &&
-    Number.isInteger(day) &&
-    day >= 1 &&
-    day <= 31;
-  const endDateValue = hasValidEndDate ? new Date(year, month - 1, day) : null;
-  return endDateValue &&
-    endDateValue.getFullYear() === year &&
-    endDateValue.getMonth() === month - 1 &&
-    endDateValue.getDate() === day
-    ? endDateValue
-    : null;
+const getOfferDate = (dateParts?: number[]): Date | null => {
+  const [year, month, day] = dateParts || [];
+  if (
+    typeof year !== "number" ||
+    !Number.isInteger(year) ||
+    typeof month !== "number" ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12 ||
+    typeof day !== "number" ||
+    !Number.isInteger(day) ||
+    day < 1 ||
+    day > 31
+  ) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const getOfferEndDate = (coupon: GoldSilverCoupon): Date | null =>
+  getOfferDate(coupon.offerEndDate);
+
+const formatOfferDate = (dateParts?: number[]): string | null => {
+  const date = getOfferDate(dateParts);
+  if (!date) return null;
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 const getOfferExpiryDate = (coupon: GoldSilverCoupon): Date | null => {
@@ -394,12 +416,6 @@ const getCartCategoryTypes = (items: CartItem[]): string => {
     "ONLINE",
   );
   const hasPreciousMetalInCart = Boolean(getPreciousMetalCategory(cartData));
-
-  useEffect(() => {
-    if (hasPreciousMetalInCart && selectedPayment === "COD") {
-      setSelectedPayment("ONLINE");
-    }
-  }, [hasPreciousMetalInCart, selectedPayment]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
     state?.selectedAddress || null,
   );
@@ -473,6 +489,15 @@ const getCartCategoryTypes = (items: CartItem[]): string => {
   };
 
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
+  const isCodAvailable =
+    !hasPreciousMetalInCart || grandTotalAmount >= 50000;
+
+  useEffect(() => {
+    if (!isCodAvailable && selectedPayment === "COD") {
+      setSelectedPayment("ONLINE");
+    }
+  }, [isCodAvailable, selectedPayment]);
+
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
   const [deliveryFeeMessage, setDeliveryFeeMessage] = useState("");
   const [isDeliveryFeeLoading, setIsDeliveryFeeLoading] = useState(false);
@@ -510,7 +535,7 @@ const getCartCategoryTypes = (items: CartItem[]): string => {
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [goldSilverCoupons, setGoldSilverCoupons] = useState<GoldSilverCoupon[]>([]);
   const [goldSilverCouponsLoading, setGoldSilverCouponsLoading] = useState<boolean>(false);
-  const [couponModalActiveTab, setCouponModalActiveTab] = useState<"general" | "goldSilver">("general");
+  const [couponModalActiveTab, setCouponModalActiveTab] = useState<"general" | "goldSilver">("goldSilver");
   const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const [walletApplicable, setWalletApplicable] = useState(false);
   const [minOrderForWallet, setMinOrderForWallet] = useState(500);
@@ -1153,8 +1178,18 @@ useEffect(() => {
         orderStatus: selectedPayment,
         pincode: selectedAddress.pincode,
         walletAmount: usedWalletAmount,
-        couponCode: couponCode ? couponCode.toUpperCase() : null,
-        couponValue: couponCode !== null ? coupenDetails : 0,
+        ...(getPreciousMetalCategory(cartData)
+          ? {
+              silverAndGoldCouponCode: couponCode
+                ? couponCode.toUpperCase()
+                : null,
+              silverAndGoldCouponAmount:
+                couponCode !== null ? coupenDetails : 0,
+            }
+          : {
+              couponCode: couponCode ? couponCode.toUpperCase() : null,
+              couponValue: couponCode !== null ? coupenDetails : 0,
+            }),
         deliveryBoyFee: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
         smallCartFee: cartData.length > 0 ? smallCartFee : 0,
         serviceFee: cartData.length > 0 ? serviceFee : 0,
@@ -1958,6 +1993,14 @@ useEffect(() => {
         return;
       }
 
+      if (selectedPayment === "COD" && !isCodAvailable) {
+        setSelectedPayment("ONLINE");
+        message.warning(
+          "Cash on Delivery is only available for Gold and Silver orders of ₹50,000 or more.",
+        );
+        return;
+      }
+
       if (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) {
         Modal.error({
           title: "Error",
@@ -1969,6 +2012,27 @@ useEffect(() => {
       setLoading(true);
 
       const finalWalletAmount = useWallet ? usedWalletAmount : 0;
+      const orderCategoryName = cartData.some((item) =>
+        [
+          item.catergoryName,
+          item.categoryName,
+          item.categoryType,
+          item.category,
+          item.itemName,
+        ].some((value) => /\bGOLD\b/i.test(String(value || ""))),
+      )
+        ? "GOLD"
+        : cartData.some((item) =>
+              [
+                item.catergoryName,
+                item.categoryName,
+                item.categoryType,
+                item.category,
+                item.itemName,
+              ].some((value) => /\bSILVER\b/i.test(String(value || ""))),
+            )
+          ? "SILVER"
+          : null;
       console.log(
         "Final Wallet Amount:",
         finalWalletAmount,
@@ -1989,8 +2053,17 @@ useEffect(() => {
           orderStatus: selectedPayment,
           pincode: selectedAddress?.pincode,
           walletAmount: finalWalletAmount,
-          couponCode: coupenApplied ? couponCode.toUpperCase() : null,
-          couponValue: coupenDetails || 0,
+          ...(hasPreciousMetalInCart
+            ? {
+                silverAndGoldCouponCode: coupenApplied
+                  ? couponCode.toUpperCase()
+                  : null,
+                silverAndGoldCouponAmount: coupenDetails || 0,
+              }
+            : {
+                couponCode: coupenApplied ? couponCode.toUpperCase() : null,
+                couponValue: coupenDetails || 0,
+              }),
           deliveryBoyFee: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
           amount: grandTotalAmount,
           subTotal: grandTotal,
@@ -2003,7 +2076,7 @@ useEffect(() => {
           orderFrom: "WEB",
           paymentType: selectedPayment === "COD" ? 0 : 1,
           handlingFee: handlingFee,
-          categoryName: getPreciousMetalCategory(cartData),
+          categoryName: orderCategoryName,
           returnUrl: `https://www.askoxy.ai/main/checkout?trans={paymentId}`
         }
       );
@@ -2147,7 +2220,7 @@ useEffect(() => {
 
   const renderPaymentMethods = () => {
     return (
-      <div className={`grid ${hasPreciousMetalInCart ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"} gap-3.5`}>
+      <div className={`grid ${isCodAvailable ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"} gap-3.5`}>
         {/* Online Payment */}
         <div
           className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
@@ -2195,8 +2268,8 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Cash on Delivery - only for non-gold/silver items */}
-        {!hasPreciousMetalInCart && (
+        {/* COD is available for all other carts and precious-metal carts of ₹50,000 or more. */}
+        {isCodAvailable && (
           <div
             className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start justify-between ${
               selectedPayment === "COD"
@@ -2716,28 +2789,6 @@ useEffect(() => {
         <div className="flex items-center gap-2 mb-4 p-1 bg-gray-100 rounded-xl">
           <button
             type="button"
-            onClick={() => setCouponModalActiveTab("general")}
-            className={`flex-1 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              couponModalActiveTab === "general"
-                ? "bg-white text-purple-700 shadow-xs border border-gray-200/80"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <Tag className="w-3.5 h-3.5" />
-            <span>Coupons</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                couponModalActiveTab === "general"
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-gray-200 text-gray-600"
-              }`}
-            >
-              {availableCoupons.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setCouponModalActiveTab("goldSilver")}
             className={`flex-1 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               couponModalActiveTab === "goldSilver"
@@ -2757,9 +2808,31 @@ useEffect(() => {
               {goldSilverCoupons.length}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setCouponModalActiveTab("general")}
+            className={`flex-1 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              couponModalActiveTab === "general"
+                ? "bg-white text-purple-700 shadow-xs border border-gray-200/80"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>Coupons</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                couponModalActiveTab === "general"
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {availableCoupons.length}
+            </span>
+          </button>
         </div>
 
-        {/* Tab 1: General Coupons */}
+        {/* Tab 2: General Coupons */}
         {couponModalActiveTab === "general" && (
           <>
             {couponsLoading ? (
@@ -2800,9 +2873,11 @@ useEffect(() => {
                           Min. Order: ₹{Number(coupon.minOrder || 0).toFixed(2)}
                         </p>
                         {coupon.couponDesc && (
-                          <p className="text-[11px] text-gray-500 mb-3 line-clamp-2">
-                            {coupon.couponDesc}
-                          </p>
+                          <Tooltip title={coupon.couponDesc} placement="top">
+                            <p className="text-[11px] text-gray-500 mb-3 truncate">
+                              {coupon.couponDesc}
+                            </p>
+                          </Tooltip>
                         )}
                       </div>
                       <Button
@@ -2823,7 +2898,7 @@ useEffect(() => {
           </>
         )}
 
-        {/* Tab 2: Gold & Silver Coupons */}
+        {/* Tab 1: Gold & Silver Coupons */}
         {couponModalActiveTab === "goldSilver" && (
           <>
             {goldSilverCouponsLoading ? (
@@ -2848,6 +2923,8 @@ useEffect(() => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-1">
                   {goldSilverCoupons.map((coupon: GoldSilverCoupon) => {
                     const isGold = (coupon.categoryType || "").toUpperCase() === "GOLD";
+                    const offerStartDate = formatOfferDate(coupon.offerStartDate);
+                    const offerEndDate = formatOfferDate(coupon.offerEndDate);
                     const timeRemaining = formatOfferTimeRemaining(
                       coupon,
                       countdownNow,
@@ -2895,17 +2972,18 @@ useEffect(() => {
                           )}
 
                           {coupon.description && (
-                            <p className="text-[11px] text-gray-600 mb-2 line-clamp-2">
-                              {coupon.description}
-                            </p>
+                            <Tooltip title={coupon.description} placement="top">
+                              <p className="text-[11px] text-gray-600 mb-2 truncate">
+                                {coupon.description}
+                              </p>
+                            </Tooltip>
                           )}
 
-                          {(coupon.offerStartTime || coupon.offerEndTime) && (
-                            <p className="text-[10px] text-gray-500 flex items-center gap-1 mb-1">
-                              <Clock className="w-3 h-3 text-gray-400" />
+                          {offerEndDate && (
+                            <p className="text-[10px] font-semibold text-gray-900 flex items-center gap-1 mb-1">
+                              <Calendar className="w-3 h-3 text-gray-700" />
                               <span>
-                                Time: {coupon.offerStartTime || ""}
-                                {coupon.offerEndTime ? ` - ${coupon.offerEndTime}` : ""}
+                                Expires on: {offerEndDate}
                               </span>
                             </p>
                           )}
@@ -3781,7 +3859,7 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <div className={`grid ${hasPreciousMetalInCart ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"} gap-3.5 pt-1`}>
+                <div className={`grid ${isCodAvailable ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"} gap-3.5 pt-1`}>
                   {/* Option 1: Online Payment */}
                   <div
                     onClick={() => setSelectedPayment("ONLINE")}
@@ -3823,8 +3901,8 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  {/* Option 2: Cash on Delivery - Only for non-gold/silver items */}
-                  {!hasPreciousMetalInCart && (
+                  {/* COD is available for all other carts and precious-metal carts of ₹50,000 or more. */}
+                  {isCodAvailable && (
                     <div
                       onClick={() => setSelectedPayment("COD")}
                       className={`cursor-pointer rounded-2xl p-3.5 sm:p-4 border-2 transition-all flex items-center justify-between gap-3 ${
@@ -3867,11 +3945,11 @@ useEffect(() => {
                   )}
                 </div>
 
-                {hasPreciousMetalInCart && (
+                {hasPreciousMetalInCart && !isCodAvailable && (
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs mt-2">
                     <span className="text-sm">ℹ️</span>
                     <span>
-                      Cash on Delivery (COD) is not available for Gold and Silver items. Please use Online Payment.
+                      Cash on Delivery (COD) is not available for Gold and Silver orders below ₹50,000. Please use Online Payment.
                     </span>
                   </div>
                 )}
