@@ -288,11 +288,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "Job Applications",
           icon: <FaRegCheckCircle size={16} />,
         },
-        {
-          to: "/main/job-program",
-          label: "Job Program",
-          icon: <FaRegCheckCircle size={16} />,
-        },
+        // {
+        //   to: "/main/job-program",
+        //   label: "Job Program",
+        //   icon: <FaRegCheckCircle size={16} />,
+        // },
         {
           to: "/main/dashboard/leaguejourneys",
           label: "League Journeys",

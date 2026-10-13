@@ -241,13 +241,13 @@ export default function JobProgramDashboard({
           </Title>
           
         </div>
-        <Paragraph type="secondary" className="!mt-1 !mb-0 text-sm text-gray-500">
+        {/* <Paragraph type="secondary" className="!mt-1 !mb-0 text-sm text-gray-500">
           Track your 9-day program journey, monitor module completion, and stay prepared for upcoming assessments.
-        </Paragraph>
+        </Paragraph> */}
       </div>
 
       {/* ─── 2. Metric Stat Cards ─── */}
-      <Row gutter={[16, 16]}>
+      {/* <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card
             bordered={false}
@@ -347,7 +347,7 @@ export default function JobProgramDashboard({
             </div>
           </Card>
         </Col>
-      </Row>
+      </Row> */}
 
       {/* ─── 3. Program Status & Eligibility Row ─── */}
       <Row gutter={[16, 16]}>
@@ -484,7 +484,7 @@ export default function JobProgramDashboard({
       </Card>
 
       {/* ─── 6. Program Days Grid with Ant Design Cards ─── */}
-      <Card
+      {/* <Card
         bordered={false}
         className="shadow-sm rounded-2xl bg-white border border-gray-100"
       >
@@ -596,7 +596,7 @@ export default function JobProgramDashboard({
             );
           })}
         </Row>
-      </Card>
+      </Card> */}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 
 import s1 from "../assets/img/s1.png";
 import s5 from "../assets/img/s5.png";
-import s6 from "../assets/img/s6.png";
+import s6 from "../assets/img/Golden Partnership Handshake Poster.png";
 import s7 from "../assets/img/s7.png";
 import s8 from "../assets/img/s8.png";
 import s9 from "../assets/img/s9.png";
@@ -94,6 +94,7 @@ export default function SuperOurApp() {
     };
 
   const tiles: Tile[] = [
+     { id: "s6", src: s6, route: "/partner", title: "Join as\nPartner Earn\nMoney" },
     {
       id: "s16",
       src: s16,
@@ -118,7 +119,7 @@ export default function SuperOurApp() {
       route: "/aiblockchainanditservices",
       title: "BlockChain &\nCrypto",
     },
-    { id: "s6", src: s6, route: "/realestate", title: "Real Estate" },
+   
     { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
     { id: "s8", src: s8, route: "/glms", title: "GLMS, Blogs\nJob Street" },
     {
