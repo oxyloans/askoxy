@@ -8,6 +8,7 @@ import {
   RiCheckboxCircleLine,
   RiAddLine,
   RiCloseLine,
+  RiUserAddLine,
 } from "react-icons/ri";
 import { placeOutboundCall } from "../api";
 import {
@@ -79,6 +80,7 @@ const SCENARIO_COLORS: Record<OutboundScenario, string> = {
   BIRTHDAY_WISH: "text-pink-500",
   RECOVERY: "text-red-500",
   USER_QUERY: "text-violet-500",
+  REGISTRATION_ONBOARDING: "text-indigo-500",
 };
 
 const SCENARIO_FIELD_SUGGESTIONS: Record<OutboundScenario, string[]> = {
@@ -90,7 +92,75 @@ const SCENARIO_FIELD_SUGGESTIONS: Record<OutboundScenario, string[]> = {
   BIRTHDAY_WISH: ["Customer Name", "Date of Birth"],
   RECOVERY: ["Loan Account No", "Outstanding Amount", "Due Date"],
   USER_QUERY: ["User Name", "Query", "Context"],
+  // Registration has its own structured fields below, so no free-form suggestions.
+  REGISTRATION_ONBOARDING: [],
 };
+
+/* ------------------------------------------------------------------ */
+/* Registration & Onboarding structured fields                         */
+/* ------------------------------------------------------------------ */
+
+/** Every registration field is a plain text input (no dropdowns), since the
+ *  accepted values are the same across all platforms. */
+interface RegistrationDetails {
+  customerId: string;
+  customerType: string;
+  registrationStatus: string;
+  kycStatus: string;
+  panStatus: string;
+  bankStatus: string;
+  referred: string;
+  referredBy: string;
+  pendingRequirements: string;
+}
+
+const REGISTRATION_FIELDS: {
+  key: keyof RegistrationDetails;
+  label: string;
+  placeholder: string;
+  required?: boolean;
+}[] = [
+  {
+    key: "customerId",
+    label: "Customer ID",
+    placeholder: "e.g. TEST12345",
+    required: true,
+  },
+  {
+    key: "customerType",
+    label: "Customer Type",
+    placeholder: "e.g. BORROWER or LENDER",
+  },
+  {
+    key: "registrationStatus",
+    label: "Registration Status",
+    placeholder: "e.g. COMPLETED",
+  },
+  { key: "kycStatus", label: "KYC Status", placeholder: "e.g. COMPLETED" },
+  { key: "panStatus", label: "PAN Status", placeholder: "e.g. PENDING" },
+  { key: "bankStatus", label: "Bank Status", placeholder: "e.g. COMPLETED" },
+  { key: "referred", label: "Referred", placeholder: "e.g. true or false" },
+  { key: "referredBy", label: "Referred By", placeholder: "e.g. Gopal Krishna" },
+  {
+    key: "pendingRequirements",
+    label: "Pending Requirements",
+    placeholder: "e.g. PAN card",
+  },
+];
+
+const emptyRegistration = (): RegistrationDetails => ({
+  customerId: "",
+  customerType: "",
+  registrationStatus: "",
+  kycStatus: "",
+  panStatus: "",
+  bankStatus: "",
+  referred: "",
+  referredBy: "",
+  pendingRequirements: "",
+});
+
+/* ------------------------------------------------------------------ */
 
 interface CustomField {
   id: string;
@@ -135,6 +205,9 @@ const MakeCall: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [userQuery, setUserQuery] = useState("");
+  const [registration, setRegistration] = useState<RegistrationDetails>(
+    emptyRegistration(),
+  );
   const [customFields, setCustomFields] = useState<CustomField[]>([
     emptyField(),
   ]);
@@ -145,12 +218,18 @@ const MakeCall: React.FC = () => {
     scenario: OutboundScenario;
   } | null>(null);
 
+  const isRegistration = scenario === "REGISTRATION_ONBOARDING";
+
   const handlePlatformChange = (p: Platform) => {
     setPlatform(p);
   };
 
   const handleScenarioChange = (v: OutboundScenario) => {
     setScenario(v);
+  };
+
+  const updateRegistration = (key: keyof RegistrationDetails, value: string) => {
+    setRegistration((prev) => ({ ...prev, [key]: value }));
   };
 
   const addCustomField = () => {
@@ -201,15 +280,35 @@ const MakeCall: React.FC = () => {
     f.label.trim().toLowerCase(),
   );
 
-  // Only phone number and customer name are required — every other field is
-  // optional, free-form, and simply omitted from the payload if left blank.
+  // Phone number and customer name are always required. For Registration &
+  // Onboarding, customer ID is required too; the other fields are optional.
+  const isRegistrationValid =
+    !isRegistration || registration.customerId.trim().length > 0;
+
   const isFormValid =
-    phoneNumber.trim().length > 0 && customerName.trim().length > 0;
+    phoneNumber.trim().length > 0 &&
+    customerName.trim().length > 0 &&
+    isRegistrationValid;
+
+  /** Registration payload in the exact shape the backend expects. */
+  const buildRegistrationPayload = () => {
+    const filled = Object.fromEntries(
+      REGISTRATION_FIELDS.map(({ key }) => [key, registration[key].trim()])
+        .filter(([, v]) => v.length > 0),
+    );
+    return {
+      customerId: registration.customerId.trim(),
+      customerName: customerName.trim(),
+      ...filled,
+    };
+  };
 
   const handleSubmit = async () => {
     if (!isFormValid) {
       message.warning(
-        "Please enter a phone number and customer name before placing the call.",
+        isRegistration
+          ? "Please fill phone number, customer name and customer ID."
+          : "Please enter a phone number and customer name before placing the call.",
       );
       return;
     }
@@ -220,23 +319,32 @@ const MakeCall: React.FC = () => {
         filledCustomFields.map((f) => [slugify(f.label), f.value.trim()]),
       );
 
+      const payload = isRegistration
+        ? {
+            // Extra free-form fields first so the structured ones always win.
+            ...extraPayload,
+            ...buildRegistrationPayload(),
+          }
+        : {
+            customerName: customerName.trim(),
+            ...(scenario === "USER_QUERY" && userQuery.trim()
+              ? { userQuery: userQuery.trim() }
+              : {}),
+            ...extraPayload,
+          };
+
       await placeOutboundCall({
         phoneNumber: normalized,
         scenario,
         platform,
-        payload: {
-          customerName: customerName.trim(),
-          ...(scenario === "USER_QUERY" && userQuery.trim()
-            ? { userQuery: userQuery.trim() }
-            : {}),
-          ...extraPayload,
-        },
+        payload,
       });
       message.success(`Outbound call placed to ${normalized}.`);
       setLastResult({ phoneNumber: normalized, platform, scenario });
       setPhoneNumber("");
       setCustomerName("");
       setUserQuery("");
+      setRegistration(emptyRegistration());
       setCustomFields([emptyField()]);
     } catch (err) {
       message.error("Failed to place the call. Please try again.");
@@ -278,7 +386,6 @@ const MakeCall: React.FC = () => {
               className="flex gap-1 border-b border-slate-200 overflow-x-auto whitespace-nowrap no-scrollbar"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {" "}
               {PLATFORMS.map((p) => {
                 const active = p === platform;
                 const accent = PLATFORM_ACCENT[p];
@@ -331,7 +438,7 @@ const MakeCall: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
               <div className="text-xs font-medium text-slate-500 mb-1.5">
-                Phone Number
+                Phone Number <span className="text-rose-500">*</span>
               </div>
               <Input
                 size="large"
@@ -343,7 +450,7 @@ const MakeCall: React.FC = () => {
             </div>
             <div>
               <div className="text-xs font-medium text-slate-500 mb-1.5">
-                Customer Name
+                Customer Name <span className="text-rose-500">*</span>
               </div>
               <Input
                 size="large"
@@ -374,11 +481,50 @@ const MakeCall: React.FC = () => {
             </div>
           )}
 
+          {/* Registration & Onboarding structured fields */}
+          {isRegistration && (
+            <div className="mb-6 rounded-lg border border-indigo-100 bg-indigo-50/30 p-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-4">
+                <RiUserAddLine className="text-indigo-500" />
+                Registration & Onboarding
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {REGISTRATION_FIELDS.map(
+                  ({ key, label, placeholder, required }) => (
+                    <div
+                      key={key}
+                      className={
+                        key === "pendingRequirements" ? "sm:col-span-2" : ""
+                      }
+                    >
+                      <div className="text-xs font-medium text-slate-500 mb-1.5">
+                        {label}
+                        {required && <span className="text-rose-500"> *</span>}
+                      </div>
+                      <Input
+                        size="large"
+                        placeholder={placeholder}
+                        value={registration[key]}
+                        onChange={(e) =>
+                          updateRegistration(key, e.target.value)
+                        }
+                        className="rounded-lg"
+                      />
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Free-form call details, same builder for every platform and scenario */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
               <RiFlashlightLine className={SCENARIO_COLORS[scenario]} />
-              {OUTBOUND_SCENARIO_LABELS[scenario]} Details
+              {isRegistration
+                ? "Additional Details"
+                : `${OUTBOUND_SCENARIO_LABELS[scenario]} Details`}
             </div>
             <Button
               size="small"
@@ -392,7 +538,7 @@ const MakeCall: React.FC = () => {
           <p className="text-xs text-slate-400 mb-3">
             Optional — add whatever information is relevant for this call.
             Nothing here is required or fixed; leave it blank to send with just
-            the caller details.
+            the {isRegistration ? "details above" : "caller details"}.
           </p>
 
           {suggestions.length > 0 && (
@@ -505,6 +651,21 @@ const MakeCall: React.FC = () => {
                   {customerName || "—"}
                 </span>
               </div>
+
+              {isRegistration && (
+                <>
+                  <div className="border-t border-indigo-100 my-1" />
+                  {REGISTRATION_FIELDS.map(({ key, label }) => (
+                    <div key={key} className="flex justify-between gap-3">
+                      <span className="text-slate-500 shrink-0">{label}</span>
+                      <span className="font-semibold text-slate-800 text-right truncate">
+                        {registration[key].trim() || "—"}
+                      </span>
+                    </div>
+                  ))}
+                </>
+              )}
+
               {filledCustomFields.length > 0 ? (
                 filledCustomFields.map((f) => (
                   <div key={f.id} className="flex justify-between gap-3">

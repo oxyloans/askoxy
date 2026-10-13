@@ -104,7 +104,8 @@ export const OUTBOUND_SCENARIOS = [
   "ORDER_STATUS_UPDATE",
   "BIRTHDAY_WISH",
   "RECOVERY",
-  "USER_QUERY"
+  "USER_QUERY",
+  "REGISTRATION_ONBOARDING",
 ] as const;
  
 export type OutboundScenario = (typeof OUTBOUND_SCENARIOS)[number];
@@ -118,6 +119,7 @@ export const OUTBOUND_SCENARIO_LABELS: Record<OutboundScenario, string> = {
   BIRTHDAY_WISH: "Birthday Wish",
   RECOVERY:"Recovery calls",
   USER_QUERY: "User Query",
+  REGISTRATION_ONBOARDING: "Registration & Onboarding",
 };
 
 
@@ -167,6 +169,12 @@ export const SCENARIO_PAYLOAD_FIELDS: Record<OutboundScenario, PayloadFieldConfi
     USER_QUERY: [
     { key: "customerName", label: "Customer Name", type: "text", placeholder: "Ravi Kumar" },
     { key: "userQuery", label: "User Query", type: "text", placeholder: "I want to know my loan status" },
+  ],
+   REGISTRATION_ONBOARDING: [
+    { key: "customerName", label: "Customer Name", type: "text", placeholder: "Ravi Kumar" },
+    { key: "mobileNumber", label: "Mobile Number", type: "text", placeholder: "9876543210" },
+    { key: "registrationDate", label: "Registration Date", type: "date" },
+    { key: "registrationStatus", label: "Registration Status", type: "text", placeholder: "Completed" },
   ],
 };
  

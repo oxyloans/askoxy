@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import BASE_URL from "../Config";
+// const BASE_URL = "http://localhost:9876/api";
 
 const BORROWER_PORTAL_URL = "https://oxyloans.com";
+
+// Limits enforced by the backend (BorrowerFlowService) — checked here first so the borrower gets an instant, clear message.
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_FILES_PER_UPLOAD = 5;
+
+// The chat is remembered in this browser so a refresh doesn't lose the application.
+const STORAGE_KEY = "oxyloans_borrower_chat_v1";
+const STORAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface ChatMessage {
   role: "USER" | "ASSISTANT";
@@ -12,6 +21,14 @@ interface ChatResponseDTO {
   bfSessionId: string;
   bfReply: string;
   bfStage: string;
+}
+
+interface SavedChat {
+  sessionId: string;
+  stage: string;
+  messages: ChatMessage[];
+  visited: string[];
+  savedAt: number;
 }
 
 type Language = "EN" | "TE";
@@ -29,7 +46,7 @@ const STAGES = [
   { key: "AWAITING_INCOME_PROOF", label: "Payslip", note: "Salaried borrowers only" },
   { key: "AWAITING_BANK_STATEMENT", label: "Bank Statement", note: "Recent statement" },
   { key: "OFFER_CONSENT", label: "Risk Review & Offer", note: "Review and accept" },
-  { key: "SUBMITTED", label: "Login & Complete", note: "eSign & eNACH on portal" },
+  { key: "SUBMITTED", label: "Login & Complete", note: "Check status on portal" },
 ] as const;
 
 const CLOSED_STAGES = ["DECLINED"];
@@ -50,26 +67,26 @@ const UI_TEXT: Record<
 > = {
   EN: {
     placeholder: "Type your reply…",
-    closedPlaceholder: "This application is closed.",
+    closedPlaceholder: "Changed your mind? You can still reply here.",
     disclaimer: "Responses may contain mistakes. Please verify important financial information.",
     loginTitle: "Application registered",
     loginBody:
-      "Log in to the OxyLoans borrower portal with your registered mobile number to complete eSign & eNACH and track your application.",
+      "Log in to the OxyLoans borrower portal with your registered mobile number to check your loan status.",
     loginButton: "Login to OxyLoans",
     closedTitle: "Application closed",
-    closedBody: "This application won't continue. You can start a new one anytime.",
+    closedBody: "This application isn't continuing. If you changed your mind, reply here — or start a new one anytime.",
     newApplication: "Start new application",
   },
   TE: {
     placeholder: "మీ సమాధానం టైప్ చేయండి…",
-    closedPlaceholder: "ఈ దరఖాస్తు మూసివేయబడింది.",
+    closedPlaceholder: "మనసు మార్చుకున్నారా? మీరు ఇక్కడే సమాధానం ఇవ్వవచ్చు.",
     disclaimer: "ప్రతిస్పందనలలో పొరపాట్లు ఉండవచ్చు. ముఖ్యమైన ఆర్థిక సమాచారాన్ని దయచేసి ధృవీకరించండి.",
     loginTitle: "దరఖాస్తు నమోదైంది",
     loginBody:
-      "eSign & eNACH పూర్తి చేయడానికి మరియు మీ దరఖాస్తు స్థితిని చూడటానికి మీ నమోదిత మొబైల్ నంబర్‌తో OxyLoans బారోవర్ పోర్టల్‌లో లాగిన్ అవ్వండి.",
+      "మీ లోన్ స్థితిని చూడటానికి మీ నమోదిత మొబైల్ నంబర్‌తో OxyLoans బారోవర్ పోర్టల్‌లో లాగిన్ అవ్వండి.",
     loginButton: "OxyLoans లో లాగిన్ అవ్వండి",
     closedTitle: "దరఖాస్తు మూసివేయబడింది",
-    closedBody: "ఈ దరఖాస్తు కొనసాగదు. మీరు ఎప్పుడైనా కొత్త దరఖాస్తు ప్రారంభించవచ్చు.",
+    closedBody: "ఈ దరఖాస్తు కొనసాగడం లేదు. మనసు మార్చుకుంటే ఇక్కడే సమాధానం ఇవ్వండి — లేదా కొత్త దరఖాస్తు ప్రారంభించండి.",
     newApplication: "కొత్త దరఖాస్తు ప్రారంభించండి",
   },
 };
@@ -77,6 +94,21 @@ const UI_TEXT: Record<
 function stageIndex(stage: string): number {
   const i = STAGES.findIndex((s) => s.key === stage);
   return i === -1 ? STAGES.length : i; // unknown stage -> treat as "past the tracked list"
+}
+
+function loadSavedChat(): SavedChat | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as SavedChat;
+    if (!saved.sessionId || !Array.isArray(saved.messages) || Date.now() - saved.savedAt > STORAGE_MAX_AGE_MS) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return saved;
+  } catch {
+    return null; // storage unavailable (private mode etc.) — just start fresh
+  }
 }
 
 /** Turns URLs and "oxyloans.com" in assistant replies into clickable links. */
@@ -124,6 +156,8 @@ async function callApi<T>(url: string, options: RequestInit = {}): Promise<T> {
       throw new Error("Session validation failed. Please refresh the page to start a new chat.");
     } else if (res.status === 404) {
       throw new Error("The requested chat service could not be found. Please try again later.");
+    } else if (res.status === 413) {
+      throw new Error("That file is too large. Please upload a file under 10 MB — a smaller PDF or a photo works.");
     } else {
       throw new Error("We are currently facing an issue processing your request. Please try again in a few moments.");
     }
@@ -173,18 +207,26 @@ function FilePreviewThumbnail({ file }: { file: File }) {
 }
 
 export default function BorrowerChatPage() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [stage, setStage] = useState<string>("LOAN_AMOUNT");
+  // Restore the previous chat from this browser, if there is one.
+  const [saved] = useState<SavedChat | null>(loadSavedChat);
+
+  const [sessionId, setSessionId] = useState<string | null>(saved?.sessionId ?? null);
+  const [stage, setStage] = useState<string>(saved?.stage ?? "LOAN_AMOUNT");
   const [language, setLanguage] = useState<Language>("EN");
   // Static welcome shown on page load — no API call. The session is only created
   // (via /start) when the user sends their first input.
-  const [messages, setMessages] = useState<ChatMessage[]>([{ role: "ASSISTANT", text: WELCOME_MESSAGE }]);
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    saved && saved.messages.length > 0 ? saved.messages : [{ role: "ASSISTANT", text: WELCOME_MESSAGE }],
+  );
   const [inputValue, setInputValue] = useState("");
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  // Tracks whether the payslip step was skipped (non-salaried borrowers jump Aadhaar -> Bank Statement)
-  const [payslipSkipped, setPayslipSkipped] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  // Every stage the application has been in. The payslip step is "skipped" if the application moved past it without ever
+  // stopping there (non-salaried borrowers, or documents the backend already had) — this stays correct even when the
+  // backend jumps several steps at once or goes back a step (e.g. after the borrower corrects their name).
+  const visitedRef = useRef<Set<string>>(new Set(saved?.visited ?? ["LOAN_AMOUNT"]));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -193,7 +235,7 @@ export default function BorrowerChatPage() {
   const recognitionRef = useRef<any>(null);
 
   // Session is created lazily — only when the user sends their first input.
-  const sessionIdRef = useRef<string | null>(null);
+  const sessionIdRef = useRef<string | null>(saved?.sessionId ?? null);
   const startPromiseRef = useRef<Promise<string> | null>(null);
 
   const ensureSession = async (): Promise<string> => {
@@ -218,23 +260,44 @@ export default function BorrowerChatPage() {
   };
 
   const updateStage = (next: string) => {
-    setStage((prev) => {
-      if (prev === "AWAITING_AADHAAR" && next === "AWAITING_BANK_STATEMENT") setPayslipSkipped(true);
-      return next;
-    });
+    visitedRef.current.add(next);
+    setStage(next);
   };
 
   const resetChat = () => {
     sessionIdRef.current = null;
     startPromiseRef.current = null;
+    visitedRef.current = new Set(["LOAN_AMOUNT"]);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
     setSessionId(null);
     setStage("LOAN_AMOUNT");
-    setPayslipSkipped(false);
     setMessages([{ role: "ASSISTANT", text: WELCOME_MESSAGE }]);
     setInputValue("");
     setPendingFiles([]);
     setConnectionError(null);
+    setFileError(null);
   };
+
+  // Remember the conversation in this browser.
+  useEffect(() => {
+    if (!sessionId) return;
+    try {
+      const payload: SavedChat = {
+        sessionId,
+        stage,
+        messages,
+        visited: Array.from(visitedRef.current),
+        savedAt: Date.now(),
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      /* storage full or unavailable — the chat still works, it just won't survive a refresh */
+    }
+  }, [sessionId, stage, messages]);
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -272,12 +335,14 @@ export default function BorrowerChatPage() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, stage]);
 
+  // DECLINED shows the "closed" card, but the borrower can still reply (the backend takes them back to the offer if they
+  // say they accept after all), so the input stays enabled.
   const isClosed = CLOSED_STAGES.includes(stage);
   const isSubmitted = stage === "SUBMITTED";
 
   const handleSend = async () => {
     const text = inputValue.trim();
-    if ((!text && pendingFiles.length === 0) || sending || uploading || isClosed) return;
+    if ((!text && pendingFiles.length === 0) || sending || uploading) return;
 
     const filesToSend = [...pendingFiles];
 
@@ -291,6 +356,7 @@ export default function BorrowerChatPage() {
     setPendingFiles([]);
     resetTextareaHeight();
     setConnectionError(null);
+    setFileError(null);
 
     const isUpload = filesToSend.length > 0;
     isUpload ? setUploading(true) : setSending(true);
@@ -314,6 +380,9 @@ export default function BorrowerChatPage() {
         (err as Error).message || "We are currently facing an issue processing your request. Please try again.";
       setConnectionError(errMsg);
       setMessages((prev) => [...prev, { role: "ASSISTANT", text: errMsg }]);
+      // Nothing reached the assistant, so give the borrower their message and files back to resend.
+      if (filesToSend.length > 0) setPendingFiles(filesToSend);
+      if (text) setInputValue(text);
     } finally {
       setSending(false);
       setUploading(false);
@@ -333,8 +402,24 @@ export default function BorrowerChatPage() {
     const selectedFiles = e.target.files;
     if (!selectedFiles || selectedFiles.length === 0) return;
     const filesArray = Array.from(selectedFiles);
-    setPendingFiles((prev) => [...prev, ...filesArray]);
     if (fileInputRef.current) fileInputRef.current.value = "";
+
+    // Same limits as the backend, with a specific message instead of a generic upload failure
+    const tooBig = filesArray.filter((f) => f.size > MAX_FILE_BYTES);
+    let accepted = filesArray.filter((f) => f.size <= MAX_FILE_BYTES);
+    const problems: string[] = [];
+    if (tooBig.length > 0) {
+      problems.push(
+        `${tooBig.map((f) => `"${f.name}"`).join(", ")} ${tooBig.length === 1 ? "is" : "are"} over the 10 MB limit — please upload a smaller PDF or photo.`,
+      );
+    }
+    const room = MAX_FILES_PER_UPLOAD - pendingFiles.length;
+    if (accepted.length > room) {
+      problems.push(`You can attach up to ${MAX_FILES_PER_UPLOAD} files at a time.`);
+      accepted = accepted.slice(0, Math.max(room, 0));
+    }
+    setFileError(problems.length > 0 ? problems.join(" ") : null);
+    if (accepted.length > 0) setPendingFiles((prev) => [...prev, ...accepted]);
   };
 
   const removePendingFile = (index: number) => {
@@ -348,7 +433,10 @@ export default function BorrowerChatPage() {
   const currentStageIndex = stageIndex(stage);
   const knownStage = STAGES.find((s) => s.key === stage);
   const ui = UI_TEXT[language];
-  const inputDisabled = sending || uploading || isClosed;
+  const inputDisabled = sending || uploading;
+  const payslipIndex = stageIndex("AWAITING_INCOME_PROOF");
+  const payslipSkipped = !visitedRef.current.has("AWAITING_INCOME_PROOF") && currentStageIndex > payslipIndex;
+  const bannerText = connectionError || fileError;
 
   // Per-step display state: done / active / skipped / pending
   const stepState = (key: string, i: number) => {
@@ -498,6 +586,18 @@ export default function BorrowerChatPage() {
                 {ui.loginButton}
               </a>
             )}
+            {/* Always available, so a borrower can start over (e.g. if a saved chat can no longer be continued) */}
+            {sessionId && (
+              <button
+                onClick={() => {
+                  if (window.confirm("Start a new application? Your current chat will be cleared from this screen.")) resetChat();
+                }}
+                className="px-2.5 py-1 rounded-lg text-[12px] font-semibold shrink-0"
+                style={{ border: "1px solid #ddd2b8", color: "#6b6455", background: "#ffffff" }}
+              >
+                {ui.newApplication}
+              </button>
+            )}
             <div className="flex items-center rounded-lg overflow-hidden shrink-0" style={{ border: "1px solid #ddd2b8" }}>
               <button
                 onClick={() => setLanguage("EN")}
@@ -560,14 +660,17 @@ export default function BorrowerChatPage() {
           })}
         </div>
 
-        {connectionError && (
+        {bannerText && (
           <div
             className="px-4 md:px-7 py-3 text-[13px] flex items-center justify-between"
             style={{ background: "#f6e4de", borderBottom: "1px solid #e3bfae", color: "#a3452f" }}
           >
-            <span>{connectionError}</span>
+            <span>{bannerText}</span>
             <button
-              onClick={() => setConnectionError(null)}
+              onClick={() => {
+                setConnectionError(null);
+                setFileError(null);
+              }}
               className="ml-4 flex-none text-[12px] font-semibold underline hover:no-underline"
             >
               Dismiss
@@ -707,7 +810,7 @@ export default function BorrowerChatPage() {
               className="flex items-end gap-2.5 px-3 py-2 rounded-xl transition-shadow"
               style={{
                 border: "1.5px solid #d9c9a8",
-                background: isClosed ? "#f1f1f1" : "#fafafa",
+                background: "#fafafa",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
               }}
             >
@@ -738,7 +841,6 @@ export default function BorrowerChatPage() {
               <textarea
                 ref={textareaRef}
                 rows={1}
-                disabled={isClosed}
                 placeholder={isClosed ? ui.closedPlaceholder : ui.placeholder}
                 value={inputValue}
                 onChange={(e) => {

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import BASE_URL from "../Config"; 
+import BASE_URL from "../Config";
+// const BASE_URL = "http://localhost:9876/api"; 
 
 interface BorrowerChatSession {
   bfSessionId: string;
   bfStage: string;
   bfBorrowerName?: string;
-  bfPhoneNumber?: string;
+  bfPhoneNumber?: string; 
   bfRequestedLoanAmount?: number;
   bfApprovedLoanAmount?: number;
   bfLoanPurpose?: string;

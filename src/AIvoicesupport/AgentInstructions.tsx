@@ -55,6 +55,7 @@ const SCENARIO_COLORS: Record<OutboundScenario, string> = {
   BIRTHDAY_WISH: "text-pink-500",
   RECOVERY: "text-red-500",
   USER_QUERY: "text-violet-500",
+  REGISTRATION_ONBOARDING: "text-indigo-500",
 };
 
 const AgentInstructions: React.FC = () => {
