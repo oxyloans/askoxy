@@ -1147,13 +1147,15 @@ const ProductServiceManager: React.FC = () => {
       setCompanyErrors(companyErrors);
       if (Object.keys(companyErrors).length) {
         setStatus((prev) => ({ ...prev, COMPANY: "error" }));
-        await Swal.fire({
-          icon: "error",
-          title: "Company details need attention",
-          text: "Please fix the highlighted fields before continuing.",
-          confirmButtonText: "Review fields",
-          confirmButtonColor: "#7C3AED",
-        });
+        window.setTimeout(() => {
+          const firstInvalid = document.getElementById("company-form-section")?.querySelector('[aria-invalid="true"]');
+          if (firstInvalid) {
+            firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+            (firstInvalid as HTMLElement).focus?.();
+          } else {
+            document.getElementById("company-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 50);
         return;
       }
 
@@ -1220,205 +1222,290 @@ const ProductServiceManager: React.FC = () => {
     const isPositiveNumber = (value: string) => value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) > 0;
     const isNonNegativeNumber = (value: string) => value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
 
-    const nextProductErrors: Record<string, FieldErrors> = {};
-    const filledProducts = products.filter(isProductFilled);
-    filledProducts.forEach((p) => {
-      const errs: FieldErrors = {};
-      if (!p.name.trim()) errs.name = "Product name is required";
-      if (!p.category.trim()) errs.category = "Select a product category";
-      if (!isPositiveNumber(p.price)) errs.price = "Enter a valid selling price greater than 0";
-      if (!p.availability) errs.availability = "Select availability";
-      if (!p.priceType) errs.priceType = "Select a price type";
-      if (p.quantity && !isPositiveNumber(p.quantity)) errs.quantity = "Enter a valid quantity greater than 0";
-      if (p.quantity && !p.quantityUnit) errs.quantityUnit = "Select a quantity unit";
-      if (p.mrp && !isPositiveNumber(p.mrp)) errs.mrp = "Enter a valid MRP greater than 0";
-      if (p.mrp && p.price && Number(p.mrp) < Number(p.price)) errs.mrp = "MRP cannot be lower than selling price";
-      if (p.stockQuantity && (!isNonNegativeNumber(p.stockQuantity) || !Number.isInteger(Number(p.stockQuantity)))) errs.stockQuantity = "Enter a whole stock quantity (0 or more)";
-      if (!p.productCondition) errs.productCondition = "Select product condition";
-      if (!p.returnAvailable) errs.returnAvailable = "Select return availability";
-      if (p.returnAvailable === "true" && (!p.returnDays.trim() || !isPositiveNumber(p.returnDays) || !Number.isInteger(Number(p.returnDays)))) errs.returnDays = "Enter return window in whole days";
-      if (!p.warrantyAvailable) errs.warrantyAvailable = "Select warranty availability";
-      if (p.warrantyAvailable === "true" && !p.warrantyPeriod.trim()) errs.warrantyPeriod = "Enter warranty period";
-      if (!p.imageUrl.trim()) errs.imageUrl = "Upload a product image";
-      else if (!isValidHttpsUrl(p.imageUrl))
-        errs.imageUrl = "Product image URL must start with https://";
-      if (Object.keys(errs).length) nextProductErrors[p.id] = errs;
-    });
+    /* ---------- Save PRODUCT only ---------- */
+    if (activeKind === "PRODUCT") {
+      const nextProductErrors: Record<string, FieldErrors> = {};
+      const filledProducts = products.filter(isProductFilled);
+      const targetProducts = filledProducts.length > 0 ? filledProducts : products;
 
-    const nextServiceErrors: Record<string, FieldErrors> = {};
-    const filledServices = services.filter(isServiceFilled);
-    filledServices.forEach((s) => {
-      const errs: FieldErrors = {};
-      if (!s.name.trim()) errs.name = "Service name is required";
-      if (!s.category.trim()) errs.category = "Select a service category";
-      if (!isPositiveNumber(s.price)) errs.price = "Enter a valid service fee greater than 0";
-      if (!s.availability) errs.availability = "Select availability";
-      if (!s.serviceMode) errs.serviceMode = "Select service mode";
-      if (!s.bookingRequired) errs.bookingRequired = "Select booking requirement";
-      if (s.imageUrl.trim() && !isValidHttpsUrl(s.imageUrl))
-        errs.imageUrl = "Service image URL must start with https://";
-      if (s.brochureUrl.trim() && !isValidHttpsUrl(s.brochureUrl))
-        errs.brochureUrl = "Brochure / portfolio URL must start with https://";
-      if (Object.keys(errs).length) nextServiceErrors[s.id] = errs;
-    });
-
-    setProductErrors(nextProductErrors);
-    setServiceErrors(nextServiceErrors);
-
-    if (Object.keys(nextProductErrors).length) {
-      setActiveKind("PRODUCT");
-      await Swal.fire({
-        icon: "error",
-        title: "Product details need attention",
-        text: "Please fix the highlighted product fields before saving.",
-        confirmButtonText: "Review fields",
-        confirmButtonColor: "#7C3AED",
+      targetProducts.forEach((p) => {
+        const errs: FieldErrors = {};
+        if (!p.name.trim()) errs.name = "Product name is required";
+        if (!p.category.trim()) errs.category = "Select a product category";
+        if (!isPositiveNumber(p.price)) errs.price = "Enter a valid selling price greater than 0";
+        if (!p.availability) errs.availability = "Select availability";
+        if (!p.priceType) errs.priceType = "Select a price type";
+        if (p.quantity && !isPositiveNumber(p.quantity)) errs.quantity = "Enter a valid quantity greater than 0";
+        if (p.quantity && !p.quantityUnit) errs.quantityUnit = "Select a quantity unit";
+        if (p.mrp && !isPositiveNumber(p.mrp)) errs.mrp = "Enter a valid MRP greater than 0";
+        if (p.mrp && p.price && Number(p.mrp) < Number(p.price)) errs.mrp = "MRP cannot be lower than selling price";
+        if (p.stockQuantity && (!isNonNegativeNumber(p.stockQuantity) || !Number.isInteger(Number(p.stockQuantity)))) errs.stockQuantity = "Enter a whole stock quantity (0 or more)";
+        if (!p.productCondition) errs.productCondition = "Select product condition";
+        if (!p.returnAvailable) errs.returnAvailable = "Select return availability";
+        if (p.returnAvailable === "true" && (!p.returnDays.trim() || !isPositiveNumber(p.returnDays) || !Number.isInteger(Number(p.returnDays)))) errs.returnDays = "Enter return window in whole days";
+        if (!p.warrantyAvailable) errs.warrantyAvailable = "Select warranty availability";
+        if (p.warrantyAvailable === "true" && !p.warrantyPeriod.trim()) errs.warrantyPeriod = "Enter warranty period";
+        if (!p.imageUrl.trim()) errs.imageUrl = "Upload a product image";
+        else if (!isValidHttpsUrl(p.imageUrl))
+          errs.imageUrl = "Product image URL must start with https://";
+        if (Object.keys(errs).length) nextProductErrors[p.id] = errs;
       });
-      window.setTimeout(() => document.getElementById(`entry-${Object.keys(nextProductErrors)[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-      return;
-    }
-    if (Object.keys(nextServiceErrors).length) {
-      setActiveKind("SERVICE");
-      await Swal.fire({
-        icon: "error",
-        title: "Service details need attention",
-        text: "Please fix the highlighted service fields before saving.",
-        confirmButtonText: "Review fields",
+
+      setProductErrors(nextProductErrors);
+
+      if (Object.keys(nextProductErrors).length) {
+        const firstErrId = Object.keys(nextProductErrors)[0];
+        window.setTimeout(() => {
+          const entryEl = document.getElementById(`entry-${firstErrId}`);
+          if (entryEl) {
+            entryEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            const firstInvalid = entryEl.querySelector('[aria-invalid="true"]');
+            (firstInvalid as HTMLElement)?.focus?.();
+          }
+        }, 50);
+        return;
+      }
+
+      const validProducts = targetProducts.filter(
+        (p) => p.name.trim() && p.category.trim(),
+      );
+
+      if (!validProducts.length) {
+        await Swal.fire({
+          icon: "info",
+          title: "Nothing to save yet",
+          text: "Add at least one product before continuing.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#7C3AED",
+        });
+        return;
+      }
+
+      const totalItems = validProducts.length;
+      const entryLabel = editId ? "product" : `${totalItems} product${totalItems === 1 ? "" : "s"}`;
+      const saveConfirm = await Swal.fire({
+        icon: "question",
+        title: editId ? `Update ${entryLabel}?` : `Save ${entryLabel}?`,
+        text: editId
+          ? `Please confirm the updated ${entryLabel} details are correct.`
+          : "Please review the information before submitting.",
+        showCancelButton: true,
+        confirmButtonText: editId ? "Yes, update" : "Yes, save",
+        cancelButtonText: "Review details",
         confirmButtonColor: "#7C3AED",
+        reverseButtons: true,
+        focusCancel: true,
       });
-      window.setTimeout(() => document.getElementById(`entry-${Object.keys(nextServiceErrors)[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-      return;
-    }
+      if (!saveConfirm.isConfirmed) return;
 
-    const validProducts = filledProducts.filter(
-      (p) => p.name.trim() && p.category.trim(),
-    );
-    const validServices = filledServices.filter(
-      (s) => s.name.trim() && s.category.trim(),
-    );
+      setSavingAll(true);
+      const nextStatus: Record<string, SaveStatus> = {};
+      validProducts.forEach((e) => (nextStatus[e.id] = "saving"));
+      setStatus((prev) => ({ ...prev, ...nextStatus }));
 
-    if (!validProducts.length && !validServices.length) {
-      await Swal.fire({
-        icon: "info",
-        title: "Nothing to save yet",
-        text: `Add at least one ${activeKind === "PRODUCT" ? "product" : "service"} before continuing.`,
-        confirmButtonText: "OK",
-        confirmButtonColor: "#7C3AED",
-      });
-      return;
-    }
+      const results = await Promise.allSettled(
+        validProducts.map((p) =>
+          saveEntry(buildProductPayload(p, memberId)).then((res) => ({
+            id: p.id,
+            savedId: res.savedId,
+            msg: res.message,
+            kind: "PRODUCT" as const,
+          })),
+        ),
+      );
 
-    const totalItems = validProducts.length + validServices.length;
-    const entryLabel = editId
-      ? activeKind === "PRODUCT" ? "product" : "service"
-      : `${totalItems} listing${totalItems === 1 ? "" : "s"}`;
-    const saveConfirm = await Swal.fire({
-      icon: "question",
-      title: editId ? `Update ${entryLabel}?` : `Save ${entryLabel}?`,
-      text: editId
-        ? `Please confirm the updated ${entryLabel} details are correct.`
-        : "Please review the information before submitting.",
-      showCancelButton: true,
-      confirmButtonText: editId ? "Yes, update" : "Yes, save",
-      cancelButtonText: "Review details",
-      confirmButtonColor: "#7C3AED",
-      reverseButtons: true,
-      focusCancel: true,
-    });
-    if (!saveConfirm.isConfirmed) return;
+      const finalStatus: Record<string, SaveStatus> = {};
+      let failCount = 0;
+      let successMsg = "";
+      let errorMsg = "";
 
-    setSavingAll(true);
-    const nextStatus: Record<string, SaveStatus> = {};
-    [...validProducts, ...validServices].forEach(
-      (e) => (nextStatus[e.id] = "saving"),
-    );
-    setStatus((prev) => ({ ...prev, ...nextStatus }));
-
-    const results = await Promise.allSettled([
-      ...validProducts.map((p) =>
-        saveEntry(buildProductPayload(p, memberId)).then((res) => ({
-          id: p.id,
-          savedId: res.savedId,
-          msg: res.message,
-          kind: "PRODUCT" as const,
-        })),
-      ),
-      ...validServices.map((s) =>
-        saveEntry(buildServicePayload(s, memberId)).then((res) => ({
-          id: s.id,
-          savedId: res.savedId,
-          msg: res.message,
-          kind: "SERVICE" as const,
-        })),
-      ),
-    ]);
-
-    const finalStatus: Record<string, SaveStatus> = {};
-    let failCount = 0;
-    let successMsg = "";
-    let errorMsg = "";
-
-    results.forEach((r) => {
-      if (r.status === "fulfilled") {
-        finalStatus[r.value.id] = "saved";
-        successMsg = r.value.msg;
-        // Replace temp id with real UUID so next save does UPDATE
-        if (r.value.savedId && r.value.savedId !== r.value.id) {
-          if (r.value.kind === "PRODUCT") {
+      results.forEach((r) => {
+        if (r.status === "fulfilled") {
+          finalStatus[r.value.id] = "saved";
+          successMsg = r.value.msg;
+          if (r.value.savedId && r.value.savedId !== r.value.id) {
             setProducts((prev) =>
               prev.map((p) =>
                 p.id === r.value.id ? { ...p, id: r.value.savedId } : p,
               ),
             );
-          } else {
+          }
+        } else {
+          failCount += 1;
+          if (!errorMsg) {
+            errorMsg =
+              r.reason instanceof Error ? r.reason.message : String(r.reason);
+          }
+        }
+      });
+
+      validProducts.forEach((e) => {
+        if (!finalStatus[e.id]) finalStatus[e.id] = "error";
+      });
+      setStatus((prev) => ({ ...prev, ...finalStatus }));
+      setSavingAll(false);
+
+      if (failCount === 0) {
+        await Swal.fire({
+          icon: "success",
+          title: editId ? "Product updated" : "Product saved",
+          text: successMsg || "Product saved successfully.",
+          confirmButtonText: "Done",
+          confirmButtonColor: "#7C3AED",
+        });
+        setProducts([emptyProduct()]);
+        setProductErrors({});
+        setStatus({});
+        navigate("/main/dashboard/my-products-services?tab=PRODUCT", { replace: true });
+      } else {
+        await Swal.fire({
+          icon: "error",
+          title: "Some products were not saved",
+          text: `${failCount} item${failCount > 1 ? "s" : ""} failed to save${errorMsg ? `: ${errorMsg}` : ". Please retry."}`,
+          confirmButtonText: "Review and retry",
+          confirmButtonColor: "#7C3AED",
+        });
+      }
+      return;
+    }
+
+    /* ---------- Save SERVICE only ---------- */
+    if (activeKind === "SERVICE") {
+      const nextServiceErrors: Record<string, FieldErrors> = {};
+      const filledServices = services.filter(isServiceFilled);
+      const targetServices = filledServices.length > 0 ? filledServices : services;
+
+      targetServices.forEach((s) => {
+        const errs: FieldErrors = {};
+        if (!s.name.trim()) errs.name = "Service name is required";
+        if (!s.category.trim()) errs.category = "Select a service category";
+        if (!isPositiveNumber(s.price)) errs.price = "Enter a valid service fee greater than 0";
+        if (!s.availability) errs.availability = "Select availability";
+        if (!s.serviceMode) errs.serviceMode = "Select service mode";
+        if (!s.bookingRequired) errs.bookingRequired = "Select booking requirement";
+        if (s.imageUrl.trim() && !isValidHttpsUrl(s.imageUrl))
+          errs.imageUrl = "Service image URL must start with https://";
+        if (s.brochureUrl.trim() && !isValidHttpsUrl(s.brochureUrl))
+          errs.brochureUrl = "Brochure / portfolio URL must start with https://";
+        if (Object.keys(errs).length) nextServiceErrors[s.id] = errs;
+      });
+
+      setServiceErrors(nextServiceErrors);
+
+      if (Object.keys(nextServiceErrors).length) {
+        const firstErrId = Object.keys(nextServiceErrors)[0];
+        window.setTimeout(() => {
+          const entryEl = document.getElementById(`entry-${firstErrId}`);
+          if (entryEl) {
+            entryEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            const firstInvalid = entryEl.querySelector('[aria-invalid="true"]');
+            (firstInvalid as HTMLElement)?.focus?.();
+          }
+        }, 50);
+        return;
+      }
+
+      const validServices = targetServices.filter(
+        (s) => s.name.trim() && s.category.trim(),
+      );
+
+      if (!validServices.length) {
+        await Swal.fire({
+          icon: "info",
+          title: "Nothing to save yet",
+          text: "Add at least one service before continuing.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#7C3AED",
+        });
+        return;
+      }
+
+      const totalItems = validServices.length;
+      const entryLabel = editId ? "service" : `${totalItems} service${totalItems === 1 ? "" : "s"}`;
+      const saveConfirm = await Swal.fire({
+        icon: "question",
+        title: editId ? `Update ${entryLabel}?` : `Save ${entryLabel}?`,
+        text: editId
+          ? `Please confirm the updated ${entryLabel} details are correct.`
+          : "Please review the information before submitting.",
+        showCancelButton: true,
+        confirmButtonText: editId ? "Yes, update" : "Yes, save",
+        cancelButtonText: "Review details",
+        confirmButtonColor: "#7C3AED",
+        reverseButtons: true,
+        focusCancel: true,
+      });
+      if (!saveConfirm.isConfirmed) return;
+
+      setSavingAll(true);
+      const nextStatus: Record<string, SaveStatus> = {};
+      validServices.forEach((e) => (nextStatus[e.id] = "saving"));
+      setStatus((prev) => ({ ...prev, ...nextStatus }));
+
+      const results = await Promise.allSettled(
+        validServices.map((s) =>
+          saveEntry(buildServicePayload(s, memberId)).then((res) => ({
+            id: s.id,
+            savedId: res.savedId,
+            msg: res.message,
+            kind: "SERVICE" as const,
+          })),
+        ),
+      );
+
+      const finalStatus: Record<string, SaveStatus> = {};
+      let failCount = 0;
+      let successMsg = "";
+      let errorMsg = "";
+
+      results.forEach((r) => {
+        if (r.status === "fulfilled") {
+          finalStatus[r.value.id] = "saved";
+          successMsg = r.value.msg;
+          if (r.value.savedId && r.value.savedId !== r.value.id) {
             setServices((prev) =>
               prev.map((s) =>
                 s.id === r.value.id ? { ...s, id: r.value.savedId } : s,
               ),
             );
           }
+        } else {
+          failCount += 1;
+          if (!errorMsg) {
+            errorMsg =
+              r.reason instanceof Error ? r.reason.message : String(r.reason);
+          }
         }
+      });
+
+      validServices.forEach((e) => {
+        if (!finalStatus[e.id]) finalStatus[e.id] = "error";
+      });
+      setStatus((prev) => ({ ...prev, ...finalStatus }));
+      setSavingAll(false);
+
+      if (failCount === 0) {
+        await Swal.fire({
+          icon: "success",
+          title: editId ? "Service updated" : "Service saved",
+          text: successMsg || "Service saved successfully.",
+          confirmButtonText: "Done",
+          confirmButtonColor: "#7C3AED",
+        });
+        setServices([emptyService()]);
+        setServiceErrors({});
+        setStatus({});
+        navigate("/main/dashboard/my-products-services?tab=SERVICE", { replace: true });
       } else {
-        failCount += 1;
-        if (!errorMsg) {
-          errorMsg =
-            r.reason instanceof Error ? r.reason.message : String(r.reason);
-        }
+        await Swal.fire({
+          icon: "error",
+          title: "Some items were not saved",
+          text: `${failCount} item${failCount > 1 ? "s" : ""} failed to save${errorMsg ? `: ${errorMsg}` : ". Please retry."}`,
+          confirmButtonText: "Review and retry",
+          confirmButtonColor: "#7C3AED",
+        });
       }
-    });
-
-    [...validProducts, ...validServices].forEach((e) => {
-      if (!finalStatus[e.id]) finalStatus[e.id] = "error";
-    });
-    setStatus((prev) => ({ ...prev, ...finalStatus }));
-    setSavingAll(false);
-
-    if (failCount === 0) {
-      const savedKind = activeKind;
-      await Swal.fire({
-        icon: "success",
-        title: editId ? `${savedKind === "PRODUCT" ? "Product" : "Service"} updated` : `${savedKind === "PRODUCT" ? "Product" : "Service"} saved`,
-        text: successMsg || `${savedKind === "PRODUCT" ? "Product" : "Service"} saved successfully.`,
-        confirmButtonText: "Done",
-        confirmButtonColor: "#7C3AED",
-      });
-      setProducts([emptyProduct()]);
-      setServices([emptyService()]);
-      setProductErrors({});
-      setServiceErrors({});
-      setStatus({});
-      navigate(
-        `/main/dashboard/my-products-services?tab=${savedKind}`,
-        { replace: true },
-      );
-    } else {
-      await Swal.fire({
-        icon: "error",
-        title: "Some items were not saved",
-        text: `${failCount} item${failCount > 1 ? "s" : ""} failed to save${errorMsg ? `: ${errorMsg}` : ". Please retry."}`,
-        confirmButtonText: "Review and retry",
-        confirmButtonColor: "#7C3AED",
-      });
+      return;
     }
   };
 
@@ -1992,7 +2079,7 @@ const ProductServiceManager: React.FC = () => {
 
         {/* COMPANY */}
         {activeKind === "COMPANY" && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+          <div id="company-form-section" className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
             {/* {hasCompany === false && !editId && !companyId && (
               <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-white px-4 py-3 text-sm text-amber-800">
                 <span className="mt-0.5 text-base">⚠️</span>

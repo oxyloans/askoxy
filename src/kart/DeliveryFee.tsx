@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { message } from "antd";
 import axios from "axios";
 
 const API_BASE_URL = "https://deliverydistance.onrender.com/api/delivery"
@@ -136,7 +135,6 @@ export const calculateDeliveryFee = async (
     userLng > 180
   ) {
     console.error("Invalid coordinates:", { userLat, userLng });
-    message.error("Invalid location coordinates provided.");
     return {
       fee: null,
       distance: 0,
@@ -153,14 +151,6 @@ export const calculateDeliveryFee = async (
 
   try {
     const result = await getFinalDeliveryFee(userLat, userLng, cartAmount);
-    
-    if (result.fee === null) {
-      message.error({
-        key: "delivery-availability-error",
-        content: result.note || "Delivery not available for this location",
-        duration: 4,
-      });
-    }
 
     console.log(
       `Calculated delivery fee: ₹${result.fee}, handling fee: ₹${result.handlingFee}, total: ₹${result.grandTotal}, walletApplicable: ${result.walletApplicable}, canPlaceOrder: ${result.canPlaceOrder}, cartAmount: ${cartAmount}`
@@ -169,11 +159,6 @@ export const calculateDeliveryFee = async (
     return result;
   } catch (error) {
     console.error("Error calculating delivery fee:", error);
-    message.error({
-      key: "delivery-availability-error",
-      content: "Error calculating delivery fee",
-      duration: 4,
-    });
     return {
       fee: null,
       distance: 0,
@@ -208,9 +193,6 @@ const DeliveryFee: React.FC<DeliveryFeeProps> = ({
         onFeeCalculated(result.fee, result.handlingFee);
       } else {
         console.warn("Coordinates missing:", { userLat, userLng });
-        message.error(
-          "Please provide valid location coordinates to calculate delivery fee"
-        );
         onFeeCalculated(null, null);
       }
     };

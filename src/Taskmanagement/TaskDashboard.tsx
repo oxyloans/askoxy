@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
+// import Swal from "sweetalert2";
 import {
     ArrowRight,
     CheckCircle2,
@@ -24,6 +24,7 @@ interface TaskStatusCounts {
     totalCount: number;
 }
 
+/*
 interface EmployeeSkillsResponse {
     employeeId?: string | null;
     skills?: string | null;
@@ -63,6 +64,7 @@ interface EmployeeInfoResponse {
     employeeIdNumber?: string | null;
     linkdinUrl?: string | null;
 }
+*/
 
 interface RecentTask {
     taskAssignBy?: string | null;
@@ -219,12 +221,14 @@ const STATUS_FILTER_MAP: Record<string, string> = {
 const getTasksUrlByStatus = (status: string) =>
     `/taskmanagement/assignedtasks?status=${encodeURIComponent(status)}`;
 
+/*
 const hasProfileValue = (value: unknown): boolean => {
     if (value === null || value === undefined) return false;
     if (typeof value === "string") return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
     return true;
 };
+*/
 
 const TaskDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -236,6 +240,7 @@ const TaskDashboard: React.FC = () => {
     const [recentError, setRecentError] = useState(false);
     const userName = sessionStorage.getItem("Name") || "User";
 
+    /*
     const checkEmployeeProfileCompletion = async () => {
         const userId = sessionStorage.getItem("userId");
         if (!userId) return;
@@ -366,6 +371,7 @@ const TaskDashboard: React.FC = () => {
             console.error("Error checking employee profile completion:", profileCheckError);
         }
     };
+    */
 
     const fetchDashboard = async () => {
         const userId = sessionStorage.getItem("userId");
@@ -425,7 +431,7 @@ const TaskDashboard: React.FC = () => {
 
     useEffect(() => {
         fetchDashboard();
-        checkEmployeeProfileCompletion();
+        // checkEmployeeProfileCompletion();
     }, []);
 
     const completionRate = useMemo(() => {

@@ -504,6 +504,12 @@ const Sidebar: React.FC = () => {
             roles: ["HELPDESKSUPERADMIN"],
           },
           {
+            title: "Agent Automation",
+            icon: <FaRobot className="text-blue-400" />,
+            link: "/admin/agent-automation",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
             title: "All Service & Blogs Details",
             icon: <RiListUnordered className="text-purple-400" />,
             link: "/admin/allcampaignsdetails",

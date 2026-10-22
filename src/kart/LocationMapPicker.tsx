@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   X,
   Search,
-  Navigation,
+ 
   MapPin,
-  Check,
+ 
   Loader2,
   ArrowRight,
-  Target,
+ 
   ArrowLeft,
 } from "lucide-react";
 import axios from "axios";
@@ -232,22 +232,51 @@ export const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         leafletMapInstance.current.remove();
       }
 
-      const map = window.L.map(mapRef.current, {
+      const L = window.L;
+      if (!L) return;
+
+      const map = L.map(mapRef.current, {
         center: [coords.lat, coords.lng],
         zoom: 17,
         zoomControl: false,
       });
       leafletMapInstance.current = map;
 
-      // OpenStreetMap tile layer (Free, high-contrast, zero watermark)
-      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      // Google Maps Street Map Tiles (Zero watermark, real Google streets, landmarks, and roads)
+      const tileLayer = L.tileLayer("https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+        maxZoom: 20,
+        subdomains: ["0", "1", "2", "3"],
+        attribution: "",
+      });
+
+      // OpenStreetMap Standard Tiles fallback if Google tile has error
+      const osmFallback = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        subdomains: ["a", "b", "c"],
-        attribution: "© OpenStreetMap contributors",
-      }).addTo(map);
+        attribution: "",
+      });
+
+      // Try Google tile layer first; fallback gracefully to OSM if Google tile fails
+      let fallbackActivated = false;
+      tileLayer.on("tileerror", () => {
+        if (!fallbackActivated) {
+          fallbackActivated = true;
+          try {
+            if (map.hasLayer(tileLayer)) {
+              map.removeLayer(tileLayer);
+            }
+            if (!map.hasLayer(osmFallback)) {
+              osmFallback.addTo(map);
+            }
+          } catch (e) {
+            console.warn("Tile fallback switch error:", e);
+          }
+        }
+      });
+
+      tileLayer.addTo(map);
 
       // Custom Pin Marker
-      const pinIcon = window.L.divIcon({
+      const pinIcon = L.divIcon({
         className: "custom-red-pin-marker",
         html: `<div style="position:relative;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);cursor:pointer;">
           <div style="width:34px;height:34px;background:#7c3aed;border-radius:50%;border:3px solid white;box-shadow:0 6px 16px rgba(124,58,237,0.4);display:flex;align-items:center;justify-content:center;color:white;">
@@ -259,7 +288,7 @@ export const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         iconAnchor: [17, 46],
       });
 
-      const marker = window.L.marker([coords.lat, coords.lng], {
+      const marker = L.marker([coords.lat, coords.lng], {
         icon: pinIcon,
         draggable: true,
       }).addTo(map);

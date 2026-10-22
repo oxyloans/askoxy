@@ -20,12 +20,16 @@ import {
   Sunset,
   Check,
   MapPin,
+  MapPinOff,
   Plus,
   X,
   Info,
   Sparkles,
   Gem,
+  AlertCircle,
+  Zap,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
@@ -424,6 +428,14 @@ const getCartCategoryTypes = (items: CartItem[]): string => {
     useState<boolean>(false);
   const [isAddressLoading, setIsAddressLoading] = useState<boolean>(false);
 
+  const handleOpenAddressChangeModal = () => {
+    if (addresses && addresses.length > 0) {
+      setIsAddressSelectModalOpen(true);
+    } else {
+      navigate("/main/address");
+    }
+  };
+
   const getCoordinates = async (address: string) => {
     try {
       const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
@@ -471,6 +483,13 @@ const getCartCategoryTypes = (items: CartItem[]): string => {
   };
 
   const handleSelectAddress = async (address: Address) => {
+    // Immediately clear out-of-range info and fees when selecting another address
+    setDeliveryFee(0);
+    setDeliveryFeeNote("");
+    setDeliveryDistance(0);
+    setCanPlaceOrder(true);
+    setDeliveryFeeMessage("");
+
     let targetAddress = address;
     if (!targetAddress.latitude || !targetAddress.longitude) {
       const fullAddress = `${targetAddress.flatNo}, ${targetAddress.landMark}, ${targetAddress.address}, ${targetAddress.pincode}`;
@@ -546,6 +565,10 @@ const getCartCategoryTypes = (items: CartItem[]): string => {
   const userData = localStorage.getItem("profileData");
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [minOrderToPlace, setMinOrderToPlace] = useState(0);
+  const [deliveryFeeNote, setDeliveryFeeNote] = useState<string>("");
+  const [deliveryDistance, setDeliveryDistance] = useState<number>(0);
+  const [couponErrorMessage, setCouponErrorMessage] = useState<string>("");
+  const [selectedInstantSlot, setSelectedInstantSlot] = useState<string>("");
 
   useEffect(() => {
     if (!showCouponsModal || couponModalActiveTab !== "goldSilver") return;
@@ -788,42 +811,54 @@ useEffect(() => {
     }
   };
 
+  const getTodaySlotDetails = () => {
+    const todayDate = new Date();
+    const dayStr = String(todayDate.getDate()).padStart(2, "0");
+    const monthNum = String(todayDate.getMonth() + 1).padStart(2, "0");
+    const yearStr = todayDate.getFullYear();
+    const formattedDateNum = `${dayStr}-${monthNum}-${yearStr}`;
+
+    let todaySlot = timeSlots.find(
+      (slot) => slot.date === formattedDateNum || (slot as any).isToday
+    );
+    if (!todaySlot && isEligibleToday && timeSlots.length > 0) {
+      todaySlot = timeSlots[0];
+    }
+
+    const availableSlots: string[] = [];
+    if (todaySlot) {
+      if (todaySlot.slot1Status === false && todaySlot.timeSlot1) availableSlots.push(todaySlot.timeSlot1);
+      if (todaySlot.slot2Status === false && todaySlot.timeSlot2) availableSlots.push(todaySlot.timeSlot2);
+      if (todaySlot.slot3Status === false && todaySlot.timeSlot3) availableSlots.push(todaySlot.timeSlot3);
+      if (todaySlot.slot4Status === false && todaySlot.timeSlot4) availableSlots.push(todaySlot.timeSlot4);
+    }
+
+    return { todaySlot, availableSlots, todayDate, formattedDateNum };
+  };
+
+  useEffect(() => {
+    if (isModalVisible && isEligibleToday && timeSlots.length > 0) {
+      const { availableSlots } = getTodaySlotDetails();
+      if (availableSlots.length > 0 && !selectedInstantSlot) {
+        setSelectedInstantSlot(availableSlots[0]);
+      }
+    }
+  }, [isModalVisible, isEligibleToday, timeSlots, selectedInstantSlot]);
+
   const handleOk = () => {
     setIsModalVisible(false);
 
     if (isEligibleToday) {
-      const todayDate = new Date();
-      const formattedToday = `${String(todayDate.getDate()).padStart(
-        2,
-        "0",
-      )}-${String(todayDate.getMonth() + 1).padStart(
-        2,
-        "0",
-      )}-${todayDate.getFullYear()}`;
+      const { todaySlot, availableSlots } = getTodaySlotDetails();
+      const slotToUse = selectedInstantSlot || (availableSlots.length > 0 ? availableSlots[0] : null);
 
-      // Find today's slot from already fetched timeSlots
-      const todaySlot = timeSlots.find((slot) => slot.date === formattedToday);
-
-      if (todaySlot) {
-        // Try to auto-select the first available time slot based on status (false = available)
-        let availableTimeSlot = null;
-        if (todaySlot.slot1Status === false && todaySlot.timeSlot1) {
-          availableTimeSlot = todaySlot.timeSlot1;
-        } else if (todaySlot.slot2Status === false && todaySlot.timeSlot2) {
-          availableTimeSlot = todaySlot.timeSlot2;
-        } else if (todaySlot.slot3Status === false && todaySlot.timeSlot3) {
-          availableTimeSlot = todaySlot.timeSlot3;
-        } else if (todaySlot.slot4Status === false && todaySlot.timeSlot4) {
-          availableTimeSlot = todaySlot.timeSlot4;
-        }
-
-        if (availableTimeSlot) {
-          handleSelectTimeSlot(
-            todaySlot.date,
-            availableTimeSlot,
-            todaySlot.dayOfWeek,
-          );
-        }
+      if (todaySlot && slotToUse) {
+        setSelectedDate(todaySlot.date);
+        setSelectedTimeSlot(slotToUse);
+        setSelectedDay(todaySlot.dayOfWeek);
+        setShowTimeSlotModal(false);
+      } else {
+        openTimeSlotModal();
       }
     }
   };
@@ -1322,6 +1357,8 @@ useEffect(() => {
             minOrderAmount: minOrderamnt,
             canPlaceOrder: canPlace,
             minOrderToPlace,
+            note,
+            distance,
           } = await calculateDeliveryFee(
             selectedAddress.latitude,
             selectedAddress.longitude,
@@ -1332,7 +1369,15 @@ useEffect(() => {
           setCanPlaceOrder(canPlace);
           setMinOrderToPlace(minOrderToPlace ?? minOrderamnt);
           setMinOrderAmount(minOrderamnt);
-          deliveryFee = fee ?? 0;
+          setMinOrderForWallet(minWallet ?? 500);
+          if (fee !== null) {
+            setDeliveryFeeNote("");
+            setDeliveryDistance(0);
+          } else {
+            setDeliveryFeeNote(note || "");
+            setDeliveryDistance(distance || 0);
+          }
+          deliveryFee = fee;
           handlingFee = calculatedHandlingFee;
           setDeliveryFeeMessage("");
           console.log(
@@ -1609,19 +1654,26 @@ useEffect(() => {
       if (response.data?.errorMessage) {
         setCoupenApplied(false);
         setCoupenDetails(0);
-        Modal.error({
-          title: <span className="text-lg font-bold text-gray-900">Coupon Alert</span>,
+        const errMsg = response.data.errorMessage;
+        setCouponErrorMessage(errMsg);
+        Modal.warning({
+          title: <span className="text-base sm:text-lg font-bold text-gray-900">Coupon Notice</span>,
           centered: true,
-          width: 480,
-          okText: "OK",
+          width: 460,
+          okText: "Got it",
           okButtonProps: {
             size: "large",
-            className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 shadow-sm",
+            className: "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl px-6 shadow-sm border-none cursor-pointer",
           },
           content: (
-            <div className="py-3">
-              <p className="text-base text-gray-800 font-semibold leading-relaxed">
-                {response.data.errorMessage}
+            <div className="py-2 space-y-2">
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-amber-900">
+                <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                  {errMsg}
+                </p>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                Please verify that the items in your cart match the coupon's eligible category, or choose a different offer.
               </p>
             </div>
           ),
@@ -1639,19 +1691,26 @@ useEffect(() => {
       if (discount <= 0 && response.data?.totalAmount === 0 && response.data?.subtotal === 0) {
         setCoupenApplied(false);
         setCoupenDetails(0);
-        Modal.error({
-          title: <span className="text-lg font-bold text-gray-900">Coupon Alert</span>,
+        const errMsg = "This coupon code could not be applied to your cart.";
+        setCouponErrorMessage(errMsg);
+        Modal.warning({
+          title: <span className="text-base sm:text-lg font-bold text-gray-900">Coupon Notice</span>,
           centered: true,
-          width: 480,
-          okText: "OK",
+          width: 460,
+          okText: "Got it",
           okButtonProps: {
             size: "large",
-            className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 shadow-sm",
+            className: "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl px-6 shadow-sm border-none cursor-pointer",
           },
           content: (
-            <div className="py-3">
-              <p className="text-base text-gray-800 font-semibold leading-relaxed">
-                This coupon code could not be applied.
+            <div className="py-2 space-y-2">
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-amber-900">
+                <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                  {errMsg}
+                </p>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                Please check the minimum order value or eligible product categories for this offer.
               </p>
             </div>
           ),
@@ -1675,20 +1734,23 @@ useEffect(() => {
         error?.response?.data?.errorMessage ||
         error?.response?.data?.message ||
         "Failed to apply Gold/Silver coupon. Please try again.";
-      Modal.error({
-        title: <span className="text-lg font-bold text-gray-900">Coupon Alert</span>,
+      setCouponErrorMessage(errMsg);
+      Modal.warning({
+        title: <span className="text-base sm:text-lg font-bold text-gray-900">Coupon Notice</span>,
         centered: true,
-        width: 480,
-        okText: "OK",
+        width: 460,
+        okText: "Got it",
         okButtonProps: {
           size: "large",
-          className: "bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 shadow-sm",
+          className: "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl px-6 shadow-sm border-none cursor-pointer",
         },
         content: (
-          <div className="py-3">
-            <p className="text-base text-gray-800 font-semibold leading-relaxed">
-              {errMsg}
-            </p>
+          <div className="py-2 space-y-2">
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-amber-900">
+              <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                {errMsg}
+              </p>
+            </div>
           </div>
         ),
       });
@@ -1702,23 +1764,48 @@ useEffect(() => {
     const trimmedCouponCode = couponCode.trim();
 
     if (!trimmedCouponCode) {
-      message.error("Please enter a valid coupon code");
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: "Please enter a valid coupon code",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       return;
     }
 
     // Check if coupon code contains only spaces
     if (trimmedCouponCode.length === 0) {
-      message.error("Coupon code cannot be empty or contain only spaces");
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: "Coupon code cannot be empty",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       return;
     }
 
     // Additional validation for minimum length
     if (trimmedCouponCode.length < 3) {
-      message.error("Please enter a valid coupon code (minimum 3 characters)");
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: "Coupon code must be at least 3 characters",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       return;
     }
 
     setCoupenLoading(true);
+    setCouponErrorMessage("");
 
     // 1. Check if code matches any active Gold/Silver coupon
     let currentGsCoupons = goldSilverCoupons;
@@ -1746,19 +1833,38 @@ useEffect(() => {
     customerApi
       .post(`${BASE_URL}/order-service/applycoupontocustomer`, data)
       .then((response) => {
-        const { discount } = response.data;
-        message.info(response.data.message);
-        setCoupenDetails(discount || 0);
-        setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
-
-        // Update the coupon code state with the trimmed and uppercase version
-        setCouponCode(trimmedCouponCode.toUpperCase());
+        const { discount, couponApplied, message: resMessage } = response.data;
+        if (couponApplied) {
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: `Coupon ${trimmedCouponCode.toUpperCase()} applied! Saved ₹${Number(discount || 0).toFixed(2)}`,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          setCoupenDetails(discount || 0);
+          setCoupenApplied(true);
+          setCouponErrorMessage("");
+          setCouponCode(trimmedCouponCode.toUpperCase());
+        } else {
+          const errMsg = resMessage || "Invalid coupon code.";
+          setCoupenDetails(0);
+          setCoupenApplied(false);
+          setCouponErrorMessage(errMsg);
+        }
       })
       .catch((error) => {
         console.error("Error in applying coupon:", error);
-        message.error("Failed to apply coupon. Please check the coupon code and try again.");
         setCoupenLoading(false);
+        const errMsg =
+          error?.response?.data?.message ||
+          "Failed to apply coupon. Please check the coupon code and try again.";
+        setCoupenDetails(0);
+        setCoupenApplied(false);
+        setCouponErrorMessage(errMsg);
       });
   };
 
@@ -1767,12 +1873,21 @@ useEffect(() => {
     const trimmedCouponCode = coupon.couponCode.trim();
 
     if (!trimmedCouponCode) {
-      message.error("Invalid coupon code");
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: "Invalid coupon code",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       return;
     }
 
     setCouponCode(trimmedCouponCode.toUpperCase());
     setCoupenLoading(true);
+    setCouponErrorMessage("");
 
     const data = {
       couponCode: trimmedCouponCode.toUpperCase(),
@@ -1786,14 +1901,42 @@ useEffect(() => {
         data
       );
 
-      const { discount, grandTotal } = response.data;
-      message.success(`Coupon ${trimmedCouponCode.toUpperCase()} applied successfully`);
-      setCoupenDetails(discount || 0);
-      setCoupenApplied(response.data.couponApplied);
-      setShowCouponsModal(false);
-    } catch (error) {
+      const { discount, couponApplied, message: resMessage } = response.data;
+      if (couponApplied) {
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
+          title: `Coupon ${trimmedCouponCode.toUpperCase()} applied! Saved ₹${Number(discount || 0).toFixed(2)}`,
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+        setCoupenDetails(discount || 0);
+        setCoupenApplied(true);
+        setCouponErrorMessage("");
+        setShowCouponsModal(false);
+      } else {
+        const errMsg = resMessage || "Invalid coupon code.";
+        setCoupenDetails(0);
+        setCoupenApplied(false);
+        setCouponErrorMessage(errMsg);
+      }
+    } catch (error: any) {
       console.error("Error applying coupon:", error);
-      message.error("Failed to apply coupon. Please try again.");
+      const errMsg =
+        error?.response?.data?.message ||
+        "Failed to apply coupon. Please try again.";
+      setCouponErrorMessage(errMsg);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: errMsg,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     } finally {
       setCoupenLoading(false);
     }
@@ -1803,10 +1946,19 @@ useEffect(() => {
     setCouponCode("");
     setCoupenApplied(false);
     setCoupenDetails(0);
+    setCouponErrorMessage("");
     setUseWallet(false);
     setUsedWalletAmount(0);
     setAfterWallet(walletAmount);
-    message.info("Coupon removed successfully");
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "info",
+      title: "Coupon removed successfully",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
   };
 
   const getWalletAmount = async () => {
@@ -1869,9 +2021,15 @@ useEffect(() => {
     }
 
     if (totalAmount < minOrderForWallet) {
-      message.warning(
-        `Wallet requires a minimum cart of ₹${minOrderForWallet}`,
-      );
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: `Wallet requires a minimum cart of ₹${minOrderForWallet}`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       return;
     }
 
@@ -1898,7 +2056,15 @@ useEffect(() => {
         setUsedWalletAmount(newUseWallet ? walletToApply : 0);
         setAfterWallet(walletAmount - (newUseWallet ? walletToApply : 0));
         setGrandTotalAmount(baseAmount - (newUseWallet ? walletToApply : 0));
-        message.success(newUseWallet ? "Wallet Applied" : "Wallet Removed");
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
+          title: newUseWallet ? "Wallet Applied" : "Wallet Removed",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
       },
     });
   };
@@ -1918,19 +2084,20 @@ useEffect(() => {
   const handlePayment = async () => {
     console.log("Exchange policy accepted:", exchangePolicyAccepted);
     if (couponCode && !coupenApplied) {
-      notification.warning({
-        message: "Coupon Not Applied",
-        description:
-          "You entered a coupon code but didn't apply it. Please apply or remove the coupon code.",
-        placement: "topRight",
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: "You entered a coupon code but didn't apply it. Please apply or remove it.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
       });
-
       return;
     }
 
     const isRiceCart = isRiceOnlyCart(cartData);
     if (isRiceCart && !exchangePolicyAccepted) {
-      const Swal = require("sweetalert2");
       Swal.fire({
         icon: "warning",
         title: "Confirmation Required",
@@ -1943,12 +2110,16 @@ useEffect(() => {
 
     try {
       if (cartData.length === 0) {
-        Modal.error({
-          title: "Cart Empty",
-          content: "Please add items to your cart before proceeding.",
-          okText: "OK",
-          onOk: () => navigate("/main/mycart"),
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "warning",
+          title: "Your cart is empty. Please add items to proceed.",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
         });
+        navigate("/main/mycart");
         return;
       }
 
@@ -1958,53 +2129,94 @@ useEffect(() => {
       );
 
       if (hasStockIssues) {
-        Modal.error({
+        Swal.fire({
+          icon: "warning",
           title: "Stock Issues",
-          content:
-            "Some items in your cart are out of stock or exceed available stock. Please adjust before proceeding.",
-          okText: "OK",
-          onOk: () => navigate("/main/mycart"),
-        });
+          text: "Some items in your cart are out of stock or exceed available stock. Please adjust before proceeding.",
+          confirmButtonText: "View Cart",
+          confirmButtonColor: "#7c3aed",
+        }).then(() => navigate("/main/mycart"));
         return;
       }
 
       if (!selectedTimeSlot) {
-        const Swal = require("sweetalert2");
         Swal.fire({
           icon: "warning",
           title: "Time Slot Required",
-          text: "Please select a delivery time slot.",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#f59e0b",
-        });
+          text: "Please select a delivery time slot to continue.",
+          confirmButtonText: "Choose Slot",
+          confirmButtonColor: "#7c3aed",
+        }).then(() => openTimeSlotModal());
         return;
       }
 
       if (useWallet && usedWalletAmount > walletAmount) {
-        Modal.error({
-          title: "Wallet Error",
-          content: "Insufficient wallet balance",
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "error",
+          title: "Insufficient wallet balance",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
         });
         return;
       }
 
       if (!selectedAddress) {
-        Modal.error({ title: "Error", content: "Please select an address." });
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "warning",
+          title: "Please select a delivery address.",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+        setIsAddressSelectModalOpen(true);
         return;
       }
 
       if (selectedPayment === "COD" && !isCodAvailable) {
         setSelectedPayment("ONLINE");
-        message.warning(
-          "Cash on Delivery is only available for Gold and Silver orders of ₹50,000 or more.",
-        );
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "info",
+          title: "COD is only available for Gold and Silver orders of ₹50,000 or more.",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
         return;
       }
 
       if (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) {
-        Modal.error({
-          title: "Error",
-          content: "Delivery not available for this location.",
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "info",
+          title:
+            deliveryFeeNote && deliveryFeeNote.toLowerCase() !== "out of service range"
+              ? deliveryFeeNote
+              : "Delivery is currently unavailable for this address. Please choose another location.",
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true,
+        });
+        handleOpenAddressChangeModal();
+        return;
+      }
+
+      if (minOrderToPlace > 0 && totalAmount < minOrderToPlace && !isPreciousMetalOnlyCart(cartData)) {
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "warning",
+          title: `Minimum order amount to place order is ₹${minOrderToPlace}. Please add ₹${(minOrderToPlace - totalAmount).toFixed(0)} more items.`,
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true,
         });
         return;
       }
@@ -3129,7 +3341,12 @@ useEffect(() => {
                 return (
                   <div
                     key={address.id || `addr-${idx}`}
-                    onClick={() => handleSelectAddress(address)}
+                    onClick={() => {
+                      setDeliveryFee(0);
+                      setDeliveryFeeNote("");
+                      setDeliveryDistance(0);
+                      handleSelectAddress(address);
+                    }}
                     className={`cursor-pointer rounded-2xl p-4 transition-all flex items-start justify-between gap-3 ${
                       isSelected
                         ? "bg-purple-50/80 border-2 border-purple-600 shadow-xs ring-1 ring-purple-400/20"
@@ -4150,7 +4367,10 @@ useEffect(() => {
                       <input
                         type="text"
                         value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponErrorMessage("");
+                        }}
                         placeholder="ENTER COUPON CODE"
                         className="w-full px-3 py-2 text-xs sm:text-sm border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-500 uppercase font-semibold placeholder:normal-case placeholder:font-normal bg-white transition-all"
                         disabled={coupenApplied}
@@ -4160,7 +4380,7 @@ useEffect(() => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={deleteCoupen}
-                          className="px-4 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shrink-0 shadow-xs"
+                          className="px-4 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shrink-0 shadow-xs cursor-pointer"
                         >
                           Remove
                         </motion.button>
@@ -4170,7 +4390,7 @@ useEffect(() => {
                           whileTap={{ scale: 0.98 }}
                           onClick={handleApplyCoupon}
                           disabled={!couponCode.trim() || couponCode.trim().length < 3 || coupenLoading}
-                          className="px-4 py-2 text-xs font-bold bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors shrink-0 flex items-center justify-center min-w-[76px] shadow-xs"
+                          className="px-4 py-2 text-xs font-bold bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors shrink-0 flex items-center justify-center min-w-[76px] shadow-xs cursor-pointer"
                         >
                           {coupenLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -4180,6 +4400,14 @@ useEffect(() => {
                         </motion.button>
                       )}
                     </div>
+
+                    {/* Inline Coupon Error Feedback */}
+                    {couponErrorMessage && !coupenApplied && (
+                      <div className="flex items-center gap-2 p-2.5 bg-amber-50/90 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium animate-fadeIn">
+                        <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>{couponErrorMessage}</span>
+                      </div>
+                    )}
 
                     {/* Applied Coupon Banner */}
                     {coupenApplied && (
@@ -4276,6 +4504,72 @@ useEffect(() => {
                     </label>
                   </div>
 
+                  {/* Min Order Requirement Alert */}
+                  {minOrderToPlace > 0 && !hasPreciousMetalInCart && (
+                    <div className={`p-3 rounded-xl border mt-3 transition-all ${
+                      totalAmount < minOrderToPlace
+                        ? "bg-amber-50 border-amber-200 text-amber-900"
+                        : "bg-emerald-50 border-emerald-200 text-emerald-900"
+                    }`}>
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <ShoppingBag className="w-4 h-4 text-amber-600" />
+                          <span>Minimum Order Requirement</span>
+                        </div>
+                        <span className="font-extrabold text-xs">₹{minOrderToPlace}</span>
+                      </div>
+                      {totalAmount < minOrderToPlace ? (
+                        <div className="text-[11px] text-amber-700 mt-1 flex items-center justify-between">
+                          <span>Add ₹{(minOrderToPlace - totalAmount).toFixed(0)} more items to place order</span>
+                          <span className="font-semibold text-amber-800">Current: ₹{totalAmount.toFixed(0)}</span>
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-emerald-700 mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Minimum order requirement met!</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Delivery Out of Range Notice */}
+                  {deliveryFee === null && selectedAddress && !hasPreciousMetalInCart && (
+                    <div className="p-3.5 bg-gradient-to-r from-sky-50/95 to-indigo-50/70 border border-sky-200/90 rounded-2xl mt-3 text-sky-950 shadow-xs">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5 border border-sky-200">
+                          <MapPin className="w-4 h-4 text-sky-700" />
+                        </div>
+                        <div className="flex-1 min-w-0 text-xs">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sky-950 text-xs">
+                              Delivery Unavailable at this Location
+                            </span>
+                            {deliveryDistance > 0 && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100/90 text-sky-800 border border-sky-200">
+                                {deliveryDistance.toFixed(1)} km away
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sky-800/90 text-[11px] mt-1 leading-relaxed">
+                            {deliveryFeeNote && deliveryFeeNote.toLowerCase() !== "out of service range"
+                              ? deliveryFeeNote
+                              : "This address is outside our current service coverage radius. Please choose or add an eligible delivery address to place your order."}
+                          </p>
+                          <div className="mt-2.5">
+                            <button
+                              type="button"
+                              onClick={handleOpenAddressChangeModal}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50/80 px-3 py-1.5 rounded-xl border border-indigo-200/90 shadow-2xs transition-all cursor-pointer"
+                            >
+                              <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Select Different Address →</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
@@ -4288,16 +4582,21 @@ useEffect(() => {
                       !selectedTimeSlot ||
                       cartData.length === 0 ||
                       (deliveryFee === null && !isPreciousMetalOnlyCart(cartData)) ||
-                      !canPlaceOrder
+                      (!canPlaceOrder && !hasPreciousMetalInCart) ||
+                      (minOrderToPlace > 0 && totalAmount < minOrderToPlace && !hasPreciousMetalInCart)
                     }
-                    className="w-full mt-5 py-3.5 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed flex items-center justify-center shadow-md shadow-purple-500/25 transition-all text-sm sm:text-base"
+                    className="w-full mt-4 py-3.5 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed flex items-center justify-center shadow-md shadow-purple-500/25 transition-all text-sm sm:text-base cursor-pointer"
                   >
                     {loading ? (
                       <Loader2 className="w-5 h-5 animate-spin mr-2" />
                     ) : (
                       <div className="flex items-center justify-between w-full px-4">
                         <span>
-                          {selectedPayment === "ONLINE"
+                          {deliveryFee === null && !hasPreciousMetalInCart
+                            ? "Delivery Unavailable for Location"
+                            : minOrderToPlace > 0 && totalAmount < minOrderToPlace && !hasPreciousMetalInCart
+                            ? `Min Order ₹${minOrderToPlace} Required`
+                            : selectedPayment === "ONLINE"
                             ? "Proceed to Payment"
                             : "Place Order"}
                         </span>
@@ -4318,114 +4617,159 @@ useEffect(() => {
       {renderTimeSlotModal()}
       {renderDeliveryTimelineModal()}
       {renderCouponsModal()}
-      {isEligibleToday && (
-        <Modal
-          open={isModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-          centered
-          destroyOnClose
-          maskClosable
-          width="90%"
-          style={{ maxWidth: 500 }}
-          className="instant-delivery-modal"
-          maskStyle={{
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(8px)",
-          }}
-          bodyStyle={{
-            padding: 0,
-            borderRadius: 20,
-            overflow: "hidden",
-            background: "transparent",
-          }}
-          closeIcon={null}
-        >
-          <div className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-2xl overflow-hidden shadow-2xl">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full blur-2xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-2xl animate-pulse delay-1000"></div>
-            </div>
+      {isEligibleToday && (() => {
+        const { todaySlot, availableSlots: instantAvailableSlots } = getTodaySlotDetails();
+        return (
+          <Modal
+            open={isModalVisible}
+            onCancel={handleCancel}
+            footer={null}
+            centered
+            destroyOnClose
+            maskClosable
+            width="92%"
+            style={{ maxWidth: 480 }}
+            className="instant-delivery-modal"
+            maskStyle={{
+              backgroundColor: "rgba(15, 23, 42, 0.65)",
+              backdropFilter: "blur(6px)",
+            }}
+            bodyStyle={{
+              padding: 0,
+              borderRadius: 24,
+              overflow: "hidden",
+              background: "transparent",
+            }}
+            closeIcon={null}
+          >
+            <div className="relative bg-white">
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 rounded-full flex items-center justify-center transition-all shadow-2xs z-20 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
 
-            {/* Close Button */}
-            <button
-              onClick={handleCancel}
-              className="absolute top-4 right-4 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg z-10"
-            >
-              <CloseCircleOutlined className="text-gray-600 text-lg" />
-            </button>
-
-            <div className="relative p-8 sm:p-10">
-              {/* Icon and Title Section */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg mb-4 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-ping opacity-25"></div>
-                  <CheckCircleOutlined className="text-3xl text-white relative z-10" />
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                  🚀 Instant Delivery
-                </h2>
-                <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto"></div>
-              </div>
-
-              {/* Content Box */}
-              <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/40 shadow-sm transition-all hover:shadow-md">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mt-1">
-                    <CheckCircleOutlined className="text-sm text-white" />
+              <div className="relative p-5 sm:p-7 max-h-[85vh] overflow-y-auto">
+                {/* Icon and Title Section */}
+                <div className="text-center mb-5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1  bg-emerald-50  text-emerald-800 text-xs font-bold mb-2.5">
+                    <Zap className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
+                    <span>Instant Delivery Eligible</span>
                   </div>
-                  <div>
-                    <p className="text-lg font-semibold text-gray-800 mb-2">
-                      You're all set for today! ✨
-                    </p>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Your location qualifies for our lightning-fast instant
-                      delivery service. Ready to get your order delivered in
-                      record time?
-                    </p>
+
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-950 tracking-tight">
+                    You're all set for today! ✨
+                  </h2>
+                  <p className="text-gray-600 text-xs sm:text-sm mt-1.5 max-w-md mx-auto leading-relaxed">
+                    Your location qualifies for our lightning-fast instant delivery service. Choose a preferred time slot below to get your order delivered today.
+                  </p>
+                </div>
+
+                {/* Delivery Window Selection Box */}
+                <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 mb-5 border border-gray-200">
+                  <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-gray-200">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 border border-purple-200">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-gray-900">
+                          Today's Delivery Slots
+                        </div>
+                        <div className="text-xs text-purple-700 font-semibold">
+                          {todaySlot?.date || "Today"}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-purple-800 border border-purple-200 shadow-2xs">
+                      {instantAvailableSlots.length} {instantAvailableSlots.length === 1 ? "Slot" : "Slots"}
+                    </span>
+                  </div>
+
+                  {instantAvailableSlots.length === 0 ? (
+                    <div className="p-3.5 bg-white rounded-xl text-center text-xs sm:text-sm text-gray-700 font-medium border border-gray-200">
+                      Instant delivery will be dispatched automatically in the earliest available slot upon confirmation.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {instantAvailableSlots.map((slotTime, idx) => {
+                        const isSelected =
+                          (selectedInstantSlot || instantAvailableSlots[0]) === slotTime;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedInstantSlot(slotTime)}
+                            className={`cursor-pointer w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left ${
+                              isSelected
+                                ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/20 scale-[1.01]"
+                                : "bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50/30 text-gray-900 shadow-2xs"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Clock
+                                className={`w-4 h-4 shrink-0 ${
+                                  isSelected ? "text-white" : "text-purple-600"
+                                }`}
+                              />
+                              <span className="text-xs sm:text-sm font-bold truncate">
+                                {slotTime}
+                              </span>
+                            </div>
+                            {isSelected ? (
+                              <div className="w-5 h-5 rounded-full bg-white text-purple-700 flex items-center justify-center shrink-0 ml-1 shadow-xs">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                              </div>
+                            ) : (
+                              <div className="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0 ml-1" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-600 px-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <span>Select your preferred delivery time slot above</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleCancel}
+                    block
+                    className="h-11 sm:h-12 bg-white hover:bg-gray-50 text-gray-800 hover:text-black font-bold rounded-xl border border-gray-300 flex items-center justify-center transition-all text-xs sm:text-sm order-2 sm:order-1 cursor-pointer"
+                  >
+                    Choose Another Day
+                  </Button>
+
+                  <Button
+                    type="primary"
+                    onClick={handleOk}
+                    block
+                    className="h-11 sm:h-12 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 font-extrabold rounded-xl border-none shadow-md shadow-purple-500/25 flex items-center justify-center transition-all text-white text-xs sm:text-sm order-1 sm:order-2 cursor-pointer"
+                  >
+                    Confirm Today's Delivery
+                  </Button>
+                </div>
+
+                {/* Delivery Time Indicator */}
+                <div className="mt-3.5 text-center">
+                  <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 px-3.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span>Your order will be dispatched & delivered today</span>
                   </div>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  onClick={handleCancel}
-                  block
-                  size="large"
-                  icon={<CloseCircleOutlined />}
-                  className="h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl border border-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
-                >
-                  Maybe Later
-                </Button>
-
-                <Button
-                  type="primary"
-                  onClick={handleOk}
-                  block
-                  size="large"
-                  icon={<CheckCircleOutlined />}
-                  className="h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-medium rounded-xl border-none shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
-                >
-                  Confirm Delivery
-                </Button>
-              </div>
-
-              {/* Delivery Time Indicator */}
-              <div className="mt-5 text-center">
-                <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-sm border border-amber-200 shadow-sm">
-                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                  <span className="font-medium">
-                    Order will be delivered today
-                  </span>
-                </div>
-              </div>
             </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        );
+      })()}
       {renderSeparationModal()}
     </div>
   );

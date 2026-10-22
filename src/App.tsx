@@ -617,6 +617,7 @@ const JobsAdminPage = lazy(() => import("./AskoxyAdmin/Alljobdetails"));
 const AddReference = lazy(() => import("./PartnerWeb/AddReference"));
 const UserAppliedJob = lazy(() => import("./AskoxyAdmin/UserAppliedJobs"));
 const InterestedCandidates = lazy(() => import("./AskoxyAdmin/InterestedCandidates"));
+const AgentAutomationAdmin = lazy(() => import("./AskoxyAdmin/AgentAutomationAdmin"));
 const StockTable = lazy(() => import("./PartnerWeb/StockDetails"));
 const MarketReport = lazy(() => import("./PartnerWeb/Marketreport"));
 const FreeAiBookLandingPage = lazy(() => import("./FREEAIBOOK/LandingPage"));
@@ -2459,6 +2460,10 @@ const App: React.FC = () => {
                 <Route
                   path="interested-candidates"
                   element={<InterestedCandidates />}
+                />
+                <Route
+                  path="agent-automation"
+                  element={<AgentAutomationAdmin />}
                 />
                 <Route path="assistants" element={<AssistantDashboard />} />
                 <Route

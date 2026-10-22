@@ -27,7 +27,10 @@ import {
   ShoppingBag,
   ShoppingCart,
   Leaf,
+  MapPinOff,
+  AlertCircle,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
 import { Button, message, Modal, Input, Tag, Tooltip } from "antd";
@@ -187,6 +190,17 @@ const CartPage: React.FC = () => {
   const [isDeliveryFeeLoading, setIsDeliveryFeeLoading] = useState(false);
   const [isPreciousMetalDistanceFeeLoading, setIsPreciousMetalDistanceFeeLoading] = useState(false);
   const lastDeliveryFeeRequestKeyRef = useRef<string>("");
+  const [canPlaceOrder, setCanPlaceOrder] = useState<boolean>(true);
+  const [minOrderToPlace, setMinOrderToPlace] = useState<number>(0);
+  const [minOrderForWallet, setMinOrderForWallet] = useState<number>(0);
+  const [deliveryFeeNote, setDeliveryFeeNote] = useState<string>("");
+  const [deliveryDistance, setDeliveryDistance] = useState<number>(0);
+  const [isOutOfServiceModalOpen, setIsOutOfServiceModalOpen] = useState<boolean>(false);
+  const [outOfServiceInfo, setOutOfServiceInfo] = useState<{
+    distance?: number | string;
+    note?: string;
+    items?: CartItem[];
+  }>({});
   //states for small cart fee and serivce charges
   // const [smallCartFee, setSmallCartFee] = useState<number>(0);
   // const [serviceFee, setServiceFee] = useState<number>(0);
@@ -1280,34 +1294,10 @@ const CartPage: React.FC = () => {
           pincode: "",
           addressType: "Home",
         });
-        Modal.error({
-          title: "Delivery Unavailable",
-          content: (
-            <>
-              <p>
-                Sorry! We're unable to deliver to this address as it is{" "}
-                {withinRadius.distanceInKm} km away, beyond our 25 km delivery
-                radius. Please select another saved address within the radius or
-                add a new one to proceed. We appreciate your understanding!
-              </p>
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button type="default" onClick={() => Modal.destroyAll()}>
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    Modal.destroyAll();
-                    setIsAddressModalOpen(true);
-                  }}
-                >
-                  Add New Address
-                </Button>
-              </div>
-            </>
-          ),
-          footer: null,
-        });
+        showOutOfServiceModal(
+          withinRadius.distanceInKm,
+          `Sorry! Address is ${withinRadius.distanceInKm} km away, beyond our 25 km delivery radius.`
+        );
         return;
       }
 
@@ -1577,6 +1567,15 @@ const CartPage: React.FC = () => {
     setShowAddressForm(false);
   };
 
+  const handleOpenAddressChangeModal = () => {
+    if (addresses && addresses.length > 0) {
+      setIsAddressSelectModalOpen(true);
+    } else {
+      resetAddressForm();
+      setIsAddressModalOpen(true);
+    }
+  };
+
   const handleToProcess = async () => {
     if (!cartData || cartData.length === 0) {
       message.error("Your cart is empty, Please Add At least one Item");
@@ -1689,27 +1688,26 @@ const CartPage: React.FC = () => {
       ? (preciousMetalDistanceFee ?? 0)
       : deliveryFee;
 
+    if (minOrderToPlace > 0 && cartTotal < minOrderToPlace && !hasPreciousMetalItems(checkoutItems)) {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: `Minimum order amount is ₹${minOrderToPlace}. Please add ₹${(minOrderToPlace - cartTotal).toFixed(0)} more to checkout.`,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
     if (effectiveDeliveryFee === null && !isPreciousMetalOnlyCart(checkoutItems)) {
       const outOfServiceItems = getOutOfServiceItems(checkoutItems);
-      Modal.error({
-        title: "Out of Service Range",
-        content: (
-          <>
-            <p>
-              Delivery is not available for the selected address.
-              {outOfServiceItems.length > 0 ? (
-                <>
-                  {" "}
-                  Remove <strong>{formatItemNames(outOfServiceItems)}</strong> to
-                  continue. Gold and silver items will remain in the cart.
-                </>
-              ) : (
-                " Please choose another address within the service area."
-              )}
-            </p>
-          </>
-        ),
-      });
+      showOutOfServiceModal(
+        deliveryDistance,
+        deliveryFeeNote || "Delivery is not available for this address.",
+        outOfServiceItems
+      );
       return;
     }
 
@@ -2044,6 +2042,18 @@ const CartPage: React.FC = () => {
           );
           setDeliveryFee(result.fee);
           setHandlingFee(result.handlingFee);
+          setCanPlaceOrder(result.canPlaceOrder);
+          setMinOrderToPlace(result.minOrderToPlace ?? result.minOrderAmount ?? 0);
+          setMinOrderForWallet(result.minOrderForWallet ?? 0);
+          if (result.fee !== null) {
+            setDeliveryFeeNote("");
+            setDeliveryDistance(0);
+            setOutOfServiceInfo({});
+            setIsOutOfServiceModalOpen(false);
+          } else {
+            setDeliveryFeeNote(result.note || "");
+            setDeliveryDistance(result.distance || 0);
+          }
           setDeliveryFeeMessage("");
           console.log("Delivery fees calculated:", result);
         } finally {
@@ -2057,7 +2067,34 @@ const CartPage: React.FC = () => {
     fetchDeliveryFee();
   }, [cartData, selectedAddress?.latitude, selectedAddress?.longitude, cartTotal]);
 
+  const showOutOfServiceModal = (
+    distance?: number | string,
+    note?: string,
+    items?: CartItem[]
+  ) => {
+    setOutOfServiceInfo({ distance, note, items });
+    setIsOutOfServiceModalOpen(true);
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "info",
+      title: note || "Address is out of delivery service range",
+      showConfirmButton: false,
+      timer: 3500,
+      timerProgressBar: true,
+    });
+  };
+
   const handleAddressChange = async (selectedAddress: Address) => {
+    // Immediately clear all out-of-range info before evaluating new address
+    setIsOutOfServiceModalOpen(false);
+    setOutOfServiceInfo({});
+    setDeliveryFeeNote("");
+    setDeliveryDistance(0);
+    setDeliveryFee(0);
+    setCanPlaceOrder(true);
+    lastDeliveryFeeRequestKeyRef.current = "";
+
     const fullAddress = `${selectedAddress?.flatNo}, ${selectedAddress?.landMark}, ${selectedAddress?.address}, ${selectedAddress?.pincode}`;
     const coordinates = await getCoordinates(fullAddress);
 
@@ -2073,37 +2110,19 @@ const CartPage: React.FC = () => {
     console.log({ withinRadius });
 
     if (!withinRadius.isWithin && !hasPreciousMetalItems()) {
-      Modal.error({
-        title: "Delivery Unavailable",
-        content: (
-          <>
-            <p>
-              Sorry! We're unable to deliver to this address as it is{" "}
-              {withinRadius.distanceInKm} km away, beyond our 25 km delivery
-              radius. Please select another saved address within the radius or
-              add a new one to proceed. We appreciate your understanding!
-            </p>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button type="default" onClick={() => Modal.destroyAll()}>
-                Cancel
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => {
-                  Modal.destroyAll();
-                  setIsAddressModalOpen(true);
-                }}
-              >
-                Add New Address
-              </Button>
-            </div>
-          </>
-        ),
-        footer: null,
-      });
+      showOutOfServiceModal(
+        withinRadius.distanceInKm,
+        `Sorry! Address is ${withinRadius.distanceInKm} km away, beyond our 25 km delivery radius.`
+      );
       setCoordinatesReady(false);
       return { ...withinRadius, isWithin: false };
     }
+
+    // New address is within radius - clear info completely
+    setIsOutOfServiceModalOpen(false);
+    setOutOfServiceInfo({});
+    setDeliveryFeeNote("");
+    setDeliveryDistance(0);
 
     setSelectedAddress({
       ...selectedAddress,
@@ -2134,6 +2153,8 @@ const CartPage: React.FC = () => {
       !cartData ||
       cartData.length === 0 ||
       (deliveryFee === null && !hasPreciousMetalItems()) ||
+      (!canPlaceOrder && !hasPreciousMetalItems()) ||
+      (minOrderToPlace > 0 && cartTotal < minOrderToPlace && !hasPreciousMetalItems()) ||
       hasStockIssues()
     );
   };
@@ -2141,7 +2162,10 @@ const CartPage: React.FC = () => {
   const getCheckoutButtonLabel = (): string => {
     if (!selectedAddress) return "Select an Address to Proceed";
     if (!cartData || cartData.length === 0) return "Cart is Empty";
-    if (deliveryFee === null && !hasPreciousMetalItems()) return "Delivery Not Available";
+    if (deliveryFee === null && !hasPreciousMetalItems()) return "Delivery Unavailable for Location";
+    if (minOrderToPlace > 0 && cartTotal < minOrderToPlace && !hasPreciousMetalItems()) {
+      return `Min Order ₹${minOrderToPlace} Required`;
+    }
     if (hasStockIssues()) return "Cannot Checkout - Stock Issues";
     return "Proceed to Checkout";
   };
@@ -2325,6 +2349,128 @@ const CartPage: React.FC = () => {
     itemCostSubtotal +
     totalGstAmount +
     (cartData.length > 0 ? handlingFee || 0 : 0);
+
+  const renderOutOfServiceModal = () => {
+    const distanceVal =
+      outOfServiceInfo.distance !== undefined && outOfServiceInfo.distance !== null
+        ? typeof outOfServiceInfo.distance === "number"
+          ? outOfServiceInfo.distance.toFixed(1)
+          : String(outOfServiceInfo.distance)
+        : deliveryDistance > 0
+        ? deliveryDistance.toFixed(1)
+        : null;
+
+    return (
+      <Modal
+        open={isOutOfServiceModalOpen}
+        onCancel={() => setIsOutOfServiceModalOpen(false)}
+        footer={null}
+        centered
+        width={480}
+        className="out-of-service-modal"
+        styles={{
+          content: {
+            padding: 0,
+            borderRadius: 24,
+            overflow: "hidden",
+            boxShadow: "0 25px 50px -12px rgba(59, 130, 246, 0.25)",
+          },
+        }}
+      >
+        <div className="relative overflow-hidden bg-white">
+          {/* Header with gradient and icon */}
+          <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-600 text-white p-5 sm:p-6 relative">
+            <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 blur-xl pointer-events-none" />
+            <div className="relative z-10 flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0 shadow-sm">
+                <Info className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider bg-white/25 px-2 py-0.5 rounded-full text-white backdrop-blur-sm">
+                    Delivery Notice
+                  </span>
+                  {distanceVal && (
+                    <span className="text-[11px] font-semibold bg-black/20 px-2 py-0.5 rounded-full text-white/95">
+                      {distanceVal} km away
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg sm:text-xl font-extrabold text-white tracking-tight mt-1">
+                  Delivery Unavailable at this Location
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOutOfServiceModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-5 sm:p-6 space-y-4">
+            <div className="p-4 rounded-2xl bg-sky-50/90 border border-sky-200/90">
+              <div className="flex items-start gap-2.5">
+                <Info className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
+                <div className="text-xs sm:text-sm text-sky-950 leading-relaxed font-medium">
+                  {outOfServiceInfo.note && outOfServiceInfo.note.toLowerCase() !== "out of service range"
+                    ? outOfServiceInfo.note
+                    : "We're sorry! This address is outside our active delivery coverage area. Please choose a saved address within our delivery area or add a new delivery address to complete your order."}
+                </div>
+              </div>
+            </div>
+
+            {selectedAddress && (
+              <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200/80 text-xs text-gray-700">
+                <div className="flex items-center gap-1.5 font-bold text-gray-800 mb-1">
+                  <MapPin className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Current Selected Address</span>
+                  <span className="ml-auto text-[10px] font-semibold uppercase bg-purple-100 text-purple-700 px-2 py-0.5 rounded-md">
+                    {selectedAddress.addressType || "Delivery"}
+                  </span>
+                </div>
+                <p className="line-clamp-2 text-gray-600">
+                  {selectedAddress.flatNo && `${selectedAddress.flatNo}, `}
+                  {selectedAddress.landMark && `${selectedAddress.landMark}, `}
+                  {selectedAddress.address}
+                  {selectedAddress.pincode && ` - ${selectedAddress.pincode}`}
+                </p>
+              </div>
+            )}
+
+            <div className="text-xs text-gray-500 leading-relaxed bg-amber-50/60 border border-amber-200/60 rounded-xl p-3">
+              💡 <strong>Tip:</strong> You can select any other saved address within our delivery area or add a new address to proceed with checkout.
+            </div>
+
+            {/* Action buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOutOfServiceModalOpen(false);
+                  handleOpenAddressChangeModal();
+                }}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-800 hover:to-purple-700 shadow-md shadow-purple-200 hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>Select Another Saved Address</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOutOfServiceModalOpen(false)}
+                className="py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-gray-800 transition cursor-pointer"
+              >
+                Keep Reviewing Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -2520,7 +2666,7 @@ const CartPage: React.FC = () => {
                     <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
                   </div>
                 ) : !cartData || cartData.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-center py-14 px-4 bg-white rounded-2xl border border-dashed border-purple-200 shadow-2xs my-2">
+                  <div className="flex flex-col items-center justify-center text-center py-14 px-4 bg-white shadow-2xs my-2">
                     <div className="w-16 h-16 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 mb-3 shadow-inner">
                       <ShoppingBag className="w-8 h-8 text-purple-500" />
                     </div>
@@ -3239,6 +3385,79 @@ const CartPage: React.FC = () => {
                         </ul>
                       </div>
                     )}
+
+                    {/* Minimum Order Requirement Notice */}
+                    {minOrderToPlace > 0 && !hasPreciousMetalItems() && (
+                      <div
+                        className={`p-3 rounded-xl border mb-3 transition-all ${
+                          cartTotal < minOrderToPlace
+                            ? "bg-amber-50 border-amber-200 text-amber-900"
+                            : "bg-emerald-50 border-emerald-200 text-emerald-900"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 font-bold">
+                            <ShoppingBag className="w-4 h-4 text-amber-600" />
+                            <span>Minimum Order Requirement</span>
+                          </div>
+                          <span className="font-extrabold text-xs">₹{minOrderToPlace}</span>
+                        </div>
+                        {cartTotal < minOrderToPlace ? (
+                          <div className="text-[11px] text-amber-700 mt-1 flex items-center justify-between">
+                            <span>
+                              Add ₹{(minOrderToPlace - cartTotal).toFixed(0)} more items to checkout
+                            </span>
+                            <span className="font-semibold text-amber-800">
+                              Current: ₹{cartTotal.toFixed(0)}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-emerald-700 mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Minimum order requirement met!</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Delivery Out of Range Notice */}
+                    {deliveryFee === null && selectedAddress && !hasPreciousMetalItems() && (
+                      <div className="p-3.5 bg-gradient-to-r from-sky-50/95 to-indigo-50/70 border border-sky-200/90 rounded-2xl mb-3 text-sky-950 shadow-xs">
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5 border border-sky-200">
+                            <MapPin className="w-4 h-4 text-sky-700" />
+                          </div>
+                          <div className="flex-1 min-w-0 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-sky-950 text-xs">
+                                Delivery Unavailable at this Location
+                              </span>
+                              {deliveryDistance > 0 && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100/90 text-sky-800 border border-sky-200">
+                                  {deliveryDistance.toFixed(1)} km away
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sky-800/90 text-[11px] mt-1 leading-relaxed">
+                              {deliveryFeeNote && deliveryFeeNote.toLowerCase() !== "out of service range"
+                                ? deliveryFeeNote
+                                : "This address is outside our current service coverage radius. Please choose or add an eligible delivery address to place your order."}
+                            </p>
+                            <div className="mt-2.5">
+                              <button
+                                type="button"
+                                onClick={handleOpenAddressChangeModal}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50/80 px-3 py-1.5 rounded-xl border border-indigo-200/90 shadow-2xs transition-all cursor-pointer"
+                              >
+                                <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Select Different Address →</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   <button
                     className={`w-full py-3 px-6 rounded-lg transition ${isCheckoutDisabled()
                         ? "bg-gray-400 cursor-not-allowed"
@@ -3999,6 +4218,15 @@ const CartPage: React.FC = () => {
                     <div
                       key={address.id}
                       onClick={async () => {
+                        // Immediately clear all out-of-range info before switching address
+                        setIsOutOfServiceModalOpen(false);
+                        setOutOfServiceInfo({});
+                        setDeliveryFeeNote("");
+                        setDeliveryDistance(0);
+                        setDeliveryFee(0);
+                        setCanPlaceOrder(true);
+                        lastDeliveryFeeRequestKeyRef.current = "";
+
                         await handleAddressChange(address);
                         setIsAddressSelectModalOpen(false);
                       }}
@@ -4083,6 +4311,7 @@ const CartPage: React.FC = () => {
         onConfirmLocation={handleMapLocationConfirmed}
         initialCoords={detectedCoordinates}
       />
+      {renderOutOfServiceModal()}
     </div>
   );
 };

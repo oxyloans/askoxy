@@ -81,8 +81,8 @@ const ACTION_CONFIG: Record<ActionStatus, { label: string; color: string; bg: st
 
 
 
-const normalizeStatus = (status?: string | null): TaskStatus | ActionStatus => {
-  const value = (status || "").trim().toUpperCase().replace(/\s+/g, "_");
+const normalizeStatus = (status?: string | null, taskStatus?: string | null): TaskStatus | ActionStatus => {
+  const value = (status || taskStatus || "").trim().toUpperCase().replace(/\s+/g, "_");
   if (["COMPLETED", "COMPLETE", "DONE"].includes(value)) return "COMPLETED";
   if (["ACCEPTED", "ACCEPT"].includes(value)) return "ACCEPTED";
   if (["REJECTED", "REJECT"].includes(value)) return "REJECTED";
@@ -137,6 +137,13 @@ const normalizeTasks = (list: unknown): TaskItem[] => {
       : String(assigned ?? "").replace(/^\[|\]$/g, "").trim().length > 0;
 
     return hasTaskId && hasTaskName && hasAssignee;
+  }).map((task: any) => {
+    const resolved = task.status || task.taskStatus || task.task_status || "ASSIGNED";
+    return {
+      ...task,
+      status: resolved,
+      taskStatus: task.taskStatus || resolved,
+    };
   });
 };
 
@@ -421,29 +428,106 @@ const Assignedtasksbasedstatus: React.FC = () => {
     try {
       const now = new Date();
       const fmt = (d: Date) => d.toISOString().slice(0, 19);
-      // Single action API for Accept / Reject / Hold / Completed.
-      // This replaces the old taskUpdate + add-comment APIs.
-      await employeeApi.patch(
-        `${BASE_URL}/ai-service/agent/taskCommentsUpdation`,
-        {
+      const safeComment = cleanComment || (action === "ACCEPTED" ? "Task accepted" : action);
+      const lowerStatus = action.toLowerCase();
+      const upperStatus = action.toUpperCase();
+      const nowIso = fmt(now);
+
+      const updateTaskEntity = async () => {
+        const payload = (statusVal: string) => ({
+          id: taskId,
           taskId,
-          taskStatus: action,
-          comments: cleanComment,
-          taskStartDate: fmt(now),
-          taskEndDate: fmt(now),
+          status: statusVal,
+          taskStatus: statusVal,
+          ...(statusVal.toLowerCase() === "completed" ? { taskCompleteDate: nowIso } : {}),
+        });
+
+        // 1. Primary attempt: lowercase query param & payload (matches backend database conventions)
+        try {
+          return await employeeApi.patch(
+            `${BASE_URL}/ai-service/agent/taskUpdate?id=${taskId}&status=${lowerStatus}`,
+            payload(lowerStatus),
+          );
+        } catch (firstErr: any) {
+          console.warn("taskUpdate with lowercase status failed, attempting uppercase...", firstErr?.response?.data || firstErr?.message);
+          // 2. Secondary attempt: uppercase query param & payload
+          try {
+            return await employeeApi.patch(
+              `${BASE_URL}/ai-service/agent/taskUpdate?id=${taskId}&status=${upperStatus}`,
+              payload(upperStatus),
+            );
+          } catch (secondErr: any) {
+            console.warn("taskUpdate with uppercase status failed, attempting with taskId query param...", secondErr?.response?.data || secondErr?.message);
+            // 3. Fallback attempt: taskId query param
+            try {
+              return await employeeApi.patch(
+                `${BASE_URL}/ai-service/agent/taskUpdate?taskId=${taskId}&status=${lowerStatus}`,
+                payload(lowerStatus),
+              );
+            } catch (thirdErr: any) {
+              console.error("All taskUpdate attempts failed:", thirdErr?.response?.data || thirdErr?.message);
+              throw firstErr || secondErr || thirdErr;
+            }
+          }
         }
-      );
+      };
+
+      // 1. Update task status in main tasks entity table
+      // 2. Update tracking timeline and comments
+      const results = await Promise.allSettled([
+        updateTaskEntity(),
+        employeeApi.patch(
+          `${BASE_URL}/ai-service/agent/taskCommentsUpdation`,
+          {
+            taskId,
+            taskStatus: action,
+            comments: safeComment,
+            taskStartDate: fmt(now),
+            taskEndDate: fmt(now),
+          },
+        ),
+      ]);
+
+      const [taskUpdateRes, commentsRes] = results;
+
+      if (taskUpdateRes.status === "rejected") {
+        console.error("taskUpdate API rejected:", taskUpdateRes.reason);
+      }
+      if (commentsRes.status === "rejected") {
+        console.error("taskCommentsUpdation API rejected:", commentsRes.reason);
+      }
+
+      if (taskUpdateRes.status === "rejected" && commentsRes.status === "rejected") {
+        const errorReason: any = taskUpdateRes.reason || commentsRes.reason;
+        throw errorReason;
+      } else if (taskUpdateRes.status === "rejected") {
+        throw taskUpdateRes.reason;
+      }
+
       const updateStatus = (list: TaskItem[]) =>
         list.map((task) =>
-          task.id === taskId ? { ...task, status: action } : task
+          task.id === taskId ? { ...task, status: action, taskStatus: action } : task
         );
 
       setTasks(updateStatus);
       setSearchResults(updateStatus);
       closeAction();
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: `Task marked as ${action.toLowerCase()}!`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+
+      // Refetch from server to ensure database and UI stay synchronized
+      fetchTasks(statusFilter);
     } catch (err: any) {
       setActionModal((p) =>
-        p ? { ...p, submitting: false, error: err?.response?.data?.message || "Failed to update. Please try again." } : p
+        p ? { ...p, submitting: false, error: err?.response?.data?.message || err?.message || "Failed to update task. Please try again." } : p
       );
     }
   };

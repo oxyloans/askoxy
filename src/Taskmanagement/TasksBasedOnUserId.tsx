@@ -19,6 +19,7 @@ interface TaskItem {
   taskAssignTo: Array<string | null> | null;
   taskName: string | null;
   status: TaskStatus | null;
+  taskStatus?: string | null;
   id: string;
   tastCreatedDate: string | null;
   taskAssignedDate: string | null;
@@ -80,8 +81,9 @@ const formatDate = (dateStr?: string | null): string => {
   return dateStr;
 };
 
-const normalizeStatus = (status?: string | null): TaskStatus | ActionStatus => {
-  const value = (status || "").trim().toUpperCase().replace(/\s+/g, "_");
+const normalizeStatus = (status?: string | null, taskStatus?: string | null): TaskStatus | ActionStatus => {
+  const raw = status || taskStatus || "";
+  const value = String(raw).trim().toUpperCase().replace(/\s+/g, "_");
 
   if (["COMPLETED", "COMPLETE", "DONE"].includes(value)) return "COMPLETED";
   if (["ACCEPTED", "ACCEPT"].includes(value)) return "ACCEPTED";
@@ -387,25 +389,104 @@ const TaskBasedOnUserId: React.FC = () => {
     try {
       const now = new Date();
       const fmt = (date: Date) => date.toISOString().slice(0, 19);
+      const safeComment = cleanComment || (action === "ACCEPTED" ? "Task accepted" : action);
+      const lowerStatus = action.toLowerCase();
+      const upperStatus = action.toUpperCase();
+      const nowIso = fmt(now);
 
-      await employeeApi.patch(
-        `${BASE_URL}/ai-service/agent/taskCommentsUpdation`,
-        {
+      const updateTaskEntity = async () => {
+        const payload = (statusVal: string) => ({
+          id: taskId,
           taskId,
-          taskStatus: action,
-          comments: cleanComment,
-          taskStartDate: fmt(now),
-          taskEndDate: fmt(now),
-        },
-      );
+          status: statusVal,
+          taskStatus: statusVal,
+          ...(statusVal.toLowerCase() === "completed" ? { taskCompleteDate: nowIso } : {}),
+        });
+
+        // 1. Primary attempt: lowercase query param & payload (matches backend database conventions)
+        try {
+          return await employeeApi.patch(
+            `${BASE_URL}/ai-service/agent/taskUpdate?id=${taskId}&status=${lowerStatus}`,
+            payload(lowerStatus),
+          );
+        } catch (firstErr: any) {
+          console.warn("taskUpdate with lowercase status failed, attempting uppercase...", firstErr?.response?.data || firstErr?.message);
+          // 2. Secondary attempt: uppercase query param & payload
+          try {
+            return await employeeApi.patch(
+              `${BASE_URL}/ai-service/agent/taskUpdate?id=${taskId}&status=${upperStatus}`,
+              payload(upperStatus),
+            );
+          } catch (secondErr: any) {
+            console.warn("taskUpdate with uppercase status failed, attempting with taskId query param...", secondErr?.response?.data || secondErr?.message);
+            // 3. Fallback attempt: taskId query param
+            try {
+              return await employeeApi.patch(
+                `${BASE_URL}/ai-service/agent/taskUpdate?taskId=${taskId}&status=${lowerStatus}`,
+                payload(lowerStatus),
+              );
+            } catch (thirdErr: any) {
+              console.error("All taskUpdate attempts failed:", thirdErr?.response?.data || thirdErr?.message);
+              throw firstErr || secondErr || thirdErr;
+            }
+          }
+        }
+      };
+
+      // 1. Update task status in main tasks entity table
+      // 2. Update tracking timeline and comments
+      const results = await Promise.allSettled([
+        updateTaskEntity(),
+        employeeApi.patch(
+          `${BASE_URL}/ai-service/agent/taskCommentsUpdation`,
+          {
+            taskId,
+            taskStatus: action,
+            comments: safeComment,
+            taskStartDate: fmt(now),
+            taskEndDate: fmt(now),
+          },
+        ),
+      ]);
+
+      const [taskUpdateRes, commentsRes] = results;
+
+      if (taskUpdateRes.status === "rejected") {
+        console.error("taskUpdate API rejected:", taskUpdateRes.reason);
+      }
+      if (commentsRes.status === "rejected") {
+        console.error("taskCommentsUpdation API rejected:", commentsRes.reason);
+      }
+
+      if (taskUpdateRes.status === "rejected" && commentsRes.status === "rejected") {
+        const errorReason: any = taskUpdateRes.reason || commentsRes.reason;
+        throw errorReason;
+      } else if (taskUpdateRes.status === "rejected") {
+        throw taskUpdateRes.reason;
+      }
 
       const updateStatus = (list: TaskItem[]) =>
         list.map((task) =>
-          task.id === taskId ? { ...task, status: action } : task,
+          task.id === taskId
+            ? { ...task, status: action, taskStatus: action }
+            : task,
         );
 
       setTasks(updateStatus);
       closeAction();
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: `Task marked as ${action.toLowerCase()}!`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+
+      // Refetch from server to ensure database and UI stay synchronized
+      fetchTasks(statusFilter);
     } catch (err: any) {
       setActionModal((previous) =>
         previous
@@ -414,7 +495,8 @@ const TaskBasedOnUserId: React.FC = () => {
             submitting: false,
             error:
               err?.response?.data?.message ||
-              "Failed to update. Please try again.",
+              err?.message ||
+              "Failed to update task. Please try again.",
           }
           : previous,
       );
@@ -515,7 +597,7 @@ const TaskBasedOnUserId: React.FC = () => {
     }
   };
 
-  const fetchTasks = async (filter: StatusFilter = "ALL") => {
+  const fetchTasks = async (_filter: StatusFilter = "ALL") => {
     try {
       setLoading(true);
       setError("");
@@ -527,16 +609,26 @@ const TaskBasedOnUserId: React.FC = () => {
         {
           params: {
             userId,
-            ...(filter !== "ALL" ? { status: filter.toLowerCase() } : {}),
           },
         },
       );
 
-      const taskData = Array.isArray(response?.data)
+      const rawTaskData = Array.isArray(response?.data)
         ? response.data
         : Array.isArray(response?.data?.data)
           ? response.data.data
           : [];
+
+      const taskData = rawTaskData.map((item: any) => {
+        const id = item.id || item.taskId || item._id || "";
+        const resolved = item.status || item.taskStatus || item.task_status || "ASSIGNED";
+        return {
+          ...item,
+          id: String(id),
+          status: resolved,
+          taskStatus: item.taskStatus || resolved,
+        };
+      });
 
       setTasks(sortTasksByCreatedDate(taskData));
     } catch (err) {
@@ -572,7 +664,7 @@ const TaskBasedOnUserId: React.FC = () => {
   const counts = useMemo(() => {
     return tasks.reduce(
       (accumulator, task) => {
-        const status = normalizeStatus(task.status);
+        const status = normalizeStatus(task.status, task.taskStatus);
 
         accumulator.total += 1;
 
@@ -599,7 +691,7 @@ const TaskBasedOnUserId: React.FC = () => {
     const query = searchText.trim().toLowerCase();
 
     return tasks.filter((task) => {
-      const status = normalizeStatus(task.status);
+      const status = normalizeStatus(task.status, task.taskStatus);
       const matchesStatus = statusFilter === "ALL" || status === statusFilter;
       if (!matchesStatus) return false;
 
@@ -649,8 +741,8 @@ const TaskBasedOnUserId: React.FC = () => {
     }
   }, [currentPage, totalPages]);
 
-  const statusLabel = (status?: string | null) => {
-    const normalized = normalizeStatus(status);
+  const statusLabel = (status?: string | null, taskStatus?: string | null) => {
+    const normalized = normalizeStatus(status, taskStatus);
 
     if (normalized === "COMPLETED") return "Completed";
     if (normalized === "ACCEPTED") return "Accepted";
@@ -931,7 +1023,7 @@ const TaskBasedOnUserId: React.FC = () => {
           ) : (
             <div className="task-grid">
               {paginatedTasks.map((task) => {
-                const normalizedStatus = normalizeStatus(task.status);
+                const normalizedStatus = normalizeStatus(task.status, task.taskStatus);
 
                 return (
                   <article className="task-card" key={task.id} style={{ gridTemplateColumns: task.image ? "124px minmax(0,1fr)" : "minmax(0,1fr)" }}>
@@ -952,7 +1044,7 @@ const TaskBasedOnUserId: React.FC = () => {
                           className={`status-badge status-badge--${normalizedStatus.toLowerCase()}`}
                         >
                           <span className="status-dot" />
-                          {statusLabel(task.status)}
+                          {statusLabel(task.status, task.taskStatus)}
                         </span>
                       </div>
 

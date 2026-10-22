@@ -386,7 +386,7 @@ const TicketHistoryPage: React.FC = () => {
       render: (ticket: Ticket) => (
         <div>
           <div className="font-semibold text-gray-800">
-            {ticket.randomTicketId}
+            #{ticket.randomTicketId.slice(-4)}
           </div>
 
           <div className="text-xs text-gray-500">

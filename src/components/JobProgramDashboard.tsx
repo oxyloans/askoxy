@@ -410,7 +410,7 @@ export default function JobProgramDashboard({
           </Card>
         </Col>
 
-        <Col xs={24} md={8}>
+        {/* <Col xs={24} md={8}>
           <Card
             bordered={false}
             className="shadow-sm rounded-2xl h-full border border-gray-100 flex flex-col justify-between bg-white"
@@ -439,7 +439,7 @@ export default function JobProgramDashboard({
               </Tag>
             </div>
           </Card>
-        </Col>
+        </Col> */}
       </Row>
 
       {/* ─── 4. Extension Request Card ─── */}
