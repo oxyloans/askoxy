@@ -11,11 +11,12 @@ const MAX_FILES_PER_UPLOAD = 5;
 // The chat is remembered in this browser so a refresh doesn't lose the application.
 const STORAGE_KEY = "oxyloans_borrower_chat_v1";
 const STORAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const LANGUAGE_KEY = "oxyloans_borrower_chat_lang";
 
 interface ChatMessage {
   role: "USER" | "ASSISTANT";
   text: string;
-}
+} 
 
 interface ChatResponseDTO {
   bfSessionId: string;
@@ -31,25 +32,37 @@ interface SavedChat {
   savedAt: number;
 }
 
-type Language = "EN" | "TE";
+type Language = "EN" | "TE" | "HI";
+const LANGUAGE_OPTIONS: { key: Language; label: string }[] = [
+  { key: "EN", label: "EN" },
+  { key: "TE", label: "తెలుగు" },
+  { key: "HI", label: "हिन्दी" },
+];
 
-const WELCOME_MESSAGE =
-  "Welcome! I'm OxyLoans' AI assistant, and I'm glad you're here. We encourage every borrower to borrow only based on genuine need — please enter the loan amount you'd like to borrow, and I'll help you through the rest.";
+const WELCOME_MESSAGES: Record<Language, string> = {
+  EN: "Welcome! I'm OxyLoans' AI assistant, and I'm glad you're here. We encourage every borrower to borrow only based on genuine need — please enter the loan amount you'd like to borrow, and I'll help you through the rest.",
+  HI: "स्वागत है! मैं OxyLoans का AI असिस्टेंट हूँ, आपसे मिलकर खुशी हुई। हम चाहते हैं कि हर कर्ज़दार केवल वास्तविक ज़रूरत के अनुसार ही कर्ज़ ले — कृपया वह लोन राशि दर्ज करें जो आप लेना चाहते हैं, बाकी प्रक्रिया में मैं आपकी मदद करूँगा।",
+  TE: "స్వాగతం! నేను OxyLoans AI అసిస్టెంట్‌ని, మీరు ఇక్కడికి రావడం సంతోషంగా ఉంది. నిజమైన అవసరానికి మాత్రమే రుణం తీసుకోవాలని మేము ప్రోత్సహిస్తాము — దయచేసి మీకు కావలసిన లోన్ మొత్తాన్ని నమోదు చేయండి, మిగతా దశల్లో నేను సహాయం చేస్తాను.",
+};
 
 const STAGES = [
-  { key: "LOAN_AMOUNT", label: "Loan Amount", note: "How much you need" },
-  { key: "LOAN_PURPOSE", label: "Purpose", note: "What it's for" },
-  { key: "LOGIN_MOBILE", label: "Mobile Number", note: "Get logged in" },
-  { key: "BORROWER_TYPE", label: "Profile", note: "Salaried, student, business…" },
-  { key: "AWAITING_PAN", label: "PAN Card", note: "Identity proof" },
-  { key: "AWAITING_AADHAAR", label: "Aadhaar Card", note: "Identity proof" },
-  { key: "AWAITING_INCOME_PROOF", label: "Payslip", note: "Salaried borrowers only" },
-  { key: "AWAITING_BANK_STATEMENT", label: "Bank Statement", note: "Recent statement" },
-  { key: "OFFER_CONSENT", label: "Risk Review & Offer", note: "Review and accept" },
-  { key: "SUBMITTED", label: "Login & Complete", note: "Check status on portal" },
+  { key: "LOAN_AMOUNT", label: "Loan Amount", note: "How much you need", labelTe: "లోన్ మొత్తం", noteTe: "మీకు ఎంత కావాలి", labelHi: "लोन राशि", noteHi: "आपको कितना चाहिए" },
+  { key: "LOAN_PURPOSE", label: "Purpose", note: "What it's for", labelTe: "ఉద్దేశ్యం", noteTe: "దేనికి కావాలి", labelHi: "उद्देश्य", noteHi: "किसलिए चाहिए" },
+  { key: "LOGIN_MOBILE", label: "Mobile Number", note: "Get logged in", labelTe: "మొబైల్ నంబర్", noteTe: "లాగిన్ కోసం", labelHi: "मोबाइल नंबर", noteHi: "लॉगिन के लिए" },
+  { key: "BORROWER_NAME", label: "Your Name", note: "As on your PAN card", labelTe: "మీ పేరు", noteTe: "PAN కార్డ్ ప్రకారం", labelHi: "आपका नाम", noteHi: "PAN कार्ड के अनुसार" },
+  { key: "BORROWER_TYPE", label: "Profile", note: "Salaried, student, business…", labelTe: "ప్రొఫైల్", noteTe: "ఉద్యోగి, విద్యార్థి, వ్యాపారం…", labelHi: "प्रोफ़ाइल", noteHi: "नौकरीपेशा, छात्र, व्यवसाय…" },
+  { key: "OCCUPATION_DETAILS", label: "Work & Income", note: "About your work", labelTe: "పని & ఆదాయం", noteTe: "మీ పని వివరాలు", labelHi: "काम और आय", noteHi: "आपके काम की जानकारी" },
+  { key: "AWAITING_PAN", label: "PAN Card", note: "Identity proof", labelTe: "PAN కార్డ్", noteTe: "గుర్తింపు రుజువు", labelHi: "PAN कार्ड", noteHi: "पहचान प्रमाण" },
+  { key: "AWAITING_AADHAAR", label: "Aadhaar Card", note: "Identity proof", labelTe: "ఆధార్ కార్డ్", noteTe: "గుర్తింపు రుజువు", labelHi: "आधार कार्ड", noteHi: "पहचान प्रमाण" },
+  { key: "AWAITING_INCOME_PROOF", label: "Payslip", note: "Salaried borrowers only", labelTe: "పేస్లిప్", noteTe: "జీతం పొందేవారికి మాత్రమే", labelHi: "पेस्लिप", noteHi: "केवल नौकरीपेशा के लिए" },
+  { key: "AWAITING_BANK_STATEMENT", label: "Bank Statement", note: "Recent statement", labelTe: "బ్యాంక్ స్టేట్‌మెంట్", noteTe: "ఇటీవలి స్టేట్‌మెంట్", labelHi: "बैंक स्टेटमेंट", noteHi: "हाल का स्टेटमेंट" },
+  { key: "OFFER_CONSENT", label: "Risk Review & Offer", note: "Review and accept", labelTe: "రిస్క్ రివ్యూ & ఆఫర్", noteTe: "సమీక్షించి అంగీకరించండి", labelHi: "रिस्क रिव्यू और ऑफ़र", noteHi: "देखें और स्वीकार करें" },
+  { key: "SUBMITTED", label: "Login & Complete", note: "Check status on portal", labelTe: "లాగిన్ & పూర్తి", noteTe: "పోర్టల్‌లో స్థితి చూడండి", labelHi: "लॉगिन और पूरा करें", noteHi: "पोर्टल पर स्थिति देखें" },
 ] as const;
 
 const CLOSED_STAGES = ["DECLINED"];
+
+const SPEECH_LANG: Record<Language, string> = { EN: "en-IN", TE: "te-IN", HI: "hi-IN" };
 
 const UI_TEXT: Record<
   Language,
@@ -63,6 +76,27 @@ const UI_TEXT: Record<
     closedTitle: string;
     closedBody: string;
     newApplication: string;
+    assistantNote: string;
+    verifying: string;
+    processing: string;
+    caseRef: string;
+    dismiss: string;
+    notRequired: string;
+    connectionIssue: string;
+    newAppConfirm: string;
+    newAppTitle: string;
+    cancel: string;
+    startNew: string;
+    speechUnsupported: string;
+    errNetwork: string;
+    errSession: string;
+    errNotFound: string;
+    errTooLarge: string;
+    errGeneric: string;
+    errEmpty: string;
+    errInvalid: string;
+    fileTooBig: (names: string, many: boolean) => string;
+    maxFiles: (n: number) => string;
   }
 > = {
   EN: {
@@ -71,11 +105,32 @@ const UI_TEXT: Record<
     disclaimer: "Responses may contain mistakes. Please verify important financial information.",
     loginTitle: "Application registered",
     loginBody:
-      "Log in to the OxyLoans borrower portal with your registered mobile number to check your loan status.",
-    loginButton: "Login to OxyLoans",
+      "Log in or register on the OxyLoans borrower portal with your registered mobile number, complete your profile and upload all the required documents — it helps us serve you better.",
+    loginButton: "Login / Register on OxyLoans",
     closedTitle: "Application closed",
     closedBody: "This application isn't continuing. If you changed your mind, reply here — or start a new one anytime.",
     newApplication: "Start new application",
+    assistantNote: "Assistant note",
+    verifying: "Verifying documents…",
+    processing: "Processing your input…",
+    caseRef: "Case reference",
+    dismiss: "Dismiss",
+    notRequired: "Not required for your profile",
+    connectionIssue: "Connection issue",
+    newAppConfirm: "Start a new application? Your current chat will be cleared from this screen.",
+    newAppTitle: "Start a new application?",
+    cancel: "Cancel",
+    startNew: "Start new",
+    speechUnsupported: "Speech recognition is not supported in this browser.",
+    errNetwork: "We are experiencing a temporary network issue. Please check your internet connection or try again shortly.",
+    errSession: "Session validation failed. Please refresh the page to start a new chat.",
+    errNotFound: "The requested chat service could not be found. Please try again later.",
+    errTooLarge: "That file is too large. Please upload a file under 10 MB — a smaller PDF or a photo works.",
+    errGeneric: "We are currently facing an issue processing your request. Please try again in a few moments.",
+    errEmpty: "The server responded with an empty response.",
+    errInvalid: "Received an invalid response from the server. Please try again shortly.",
+    fileTooBig: (names, many) => `${names} ${many ? "are" : "is"} over the 10 MB limit — please upload a smaller PDF or photo.`,
+    maxFiles: (n) => `You can attach up to ${n} files at a time.`,
   },
   TE: {
     placeholder: "మీ సమాధానం టైప్ చేయండి…",
@@ -83,11 +138,65 @@ const UI_TEXT: Record<
     disclaimer: "ప్రతిస్పందనలలో పొరపాట్లు ఉండవచ్చు. ముఖ్యమైన ఆర్థిక సమాచారాన్ని దయచేసి ధృవీకరించండి.",
     loginTitle: "దరఖాస్తు నమోదైంది",
     loginBody:
-      "మీ లోన్ స్థితిని చూడటానికి మీ నమోదిత మొబైల్ నంబర్‌తో OxyLoans బారోవర్ పోర్టల్‌లో లాగిన్ అవ్వండి.",
-    loginButton: "OxyLoans లో లాగిన్ అవ్వండి",
+      "మీ నమోదిత మొబైల్ నంబర్‌తో OxyLoans బారోవర్ పోర్టల్‌లో లాగిన్ అవ్వండి లేదా నమోదు చేసుకోండి, మీ ప్రొఫైల్ పూర్తి చేసి, అవసరమైన అన్ని పత్రాలను అప్‌లోడ్ చేయండి — ఇది మీకు మెరుగైన సేవ అందించడంలో మాకు సహాయపడుతుంది.",
+    loginButton: "OxyLoans లో లాగిన్ / నమోదు",
     closedTitle: "దరఖాస్తు మూసివేయబడింది",
     closedBody: "ఈ దరఖాస్తు కొనసాగడం లేదు. మనసు మార్చుకుంటే ఇక్కడే సమాధానం ఇవ్వండి — లేదా కొత్త దరఖాస్తు ప్రారంభించండి.",
     newApplication: "కొత్త దరఖాస్తు ప్రారంభించండి",
+    assistantNote: "అసిస్టెంట్ సందేశం",
+    verifying: "పత్రాలను ధృవీకరిస్తున్నాము…",
+    processing: "మీ సమాధానాన్ని పరిశీలిస్తున్నాము…",
+    caseRef: "కేసు సూచిక",
+    dismiss: "మూసివేయి",
+    notRequired: "మీ ప్రొఫైల్‌కు అవసరం లేదు",
+    connectionIssue: "కనెక్షన్ సమస్య",
+    newAppConfirm: "కొత్త దరఖాస్తు ప్రారంభించాలా? ప్రస్తుత చాట్ ఈ స్క్రీన్ నుండి తొలగించబడుతుంది.",
+    newAppTitle: "కొత్త దరఖాస్తు ప్రారంభించాలా?",
+    cancel: "రద్దు చేయి",
+    startNew: "కొత్తది ప్రారంభించు",
+    speechUnsupported: "ఈ బ్రౌజర్‌లో వాయిస్ ఇన్‌పుట్‌కు మద్దతు లేదు.",
+    errNetwork: "తాత్కాలిక నెట్‌వర్క్ సమస్య ఉంది. దయచేసి మీ ఇంటర్నెట్ కనెక్షన్ చూసుకుని మళ్లీ ప్రయత్నించండి.",
+    errSession: "సెషన్ ధృవీకరణ విఫలమైంది. కొత్త చాట్ ప్రారంభించడానికి పేజీని రిఫ్రెష్ చేయండి.",
+    errNotFound: "చాట్ సేవ కనుగొనబడలేదు. దయచేసి కొద్దిసేపటి తర్వాత ప్రయత్నించండి.",
+    errTooLarge: "ఆ ఫైల్ చాలా పెద్దది. దయచేసి 10 MB కంటే తక్కువ ఫైల్ అప్‌లోడ్ చేయండి — చిన్న PDF లేదా ఫోటో సరిపోతుంది.",
+    errGeneric: "మీ అభ్యర్థనను ప్రాసెస్ చేయడంలో సమస్య ఎదురైంది. దయచేసి కొద్దిసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.",
+    errEmpty: "సర్వర్ నుండి ఖాళీ స్పందన వచ్చింది.",
+    errInvalid: "సర్వర్ నుండి చెల్లని స్పందన వచ్చింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+    fileTooBig: (names, many) => `${names} 10 MB పరిమితి దాటింది${many ? "ని" : ""} — దయచేసి చిన్న PDF లేదా ఫోటో అప్‌లోడ్ చేయండి.`,
+    maxFiles: (n) => `ఒకేసారి గరిష్టంగా ${n} ఫైళ్లు జతచేయవచ్చు.`,
+  },
+  HI: {
+    placeholder: "अपना जवाब लिखें…",
+    closedPlaceholder: "मन बदल गया? आप यहीं जवाब दे सकते हैं।",
+    disclaimer: "उत्तरों में गलतियाँ हो सकती हैं। कृपया महत्वपूर्ण वित्तीय जानकारी की पुष्टि कर लें।",
+    loginTitle: "आवेदन दर्ज हो गया",
+    loginBody:
+      "अपने पंजीकृत मोबाइल नंबर से OxyLoans बॉरोअर पोर्टल पर लॉगिन करें या रजिस्टर करें, अपनी प्रोफ़ाइल पूरी करें और सभी आवश्यक दस्तावेज़ अपलोड करें — इससे हम आपकी बेहतर सेवा कर पाएँगे।",
+    loginButton: "OxyLoans पर लॉगिन / रजिस्टर",
+    closedTitle: "आवेदन बंद हो गया",
+    closedBody: "यह आवेदन आगे नहीं बढ़ रहा है। मन बदला हो तो यहीं जवाब दें — या कभी भी नया आवेदन शुरू करें।",
+    newApplication: "नया आवेदन शुरू करें",
+    assistantNote: "असिस्टेंट संदेश",
+    verifying: "दस्तावेज़ जाँचे जा रहे हैं…",
+    processing: "आपका जवाब प्रोसेस हो रहा है…",
+    caseRef: "केस संदर्भ",
+    dismiss: "बंद करें",
+    notRequired: "आपकी प्रोफ़ाइल के लिए ज़रूरी नहीं",
+    connectionIssue: "कनेक्शन समस्या",
+    newAppConfirm: "क्या नया आवेदन शुरू करें? आपकी मौजूदा चैट इस स्क्रीन से हट जाएगी।",
+    newAppTitle: "नया आवेदन शुरू करें?",
+    cancel: "रद्द करें",
+    startNew: "नया शुरू करें",
+    speechUnsupported: "इस ब्राउज़र में वॉइस इनपुट समर्थित नहीं है।",
+    errNetwork: "अस्थायी नेटवर्क समस्या है। कृपया अपना इंटरनेट कनेक्शन जाँचें या थोड़ी देर बाद फिर कोशिश करें।",
+    errSession: "सेशन सत्यापन विफल रहा। नई चैट शुरू करने के लिए पेज रीफ़्रेश करें।",
+    errNotFound: "चैट सेवा नहीं मिली। कृपया बाद में कोशिश करें।",
+    errTooLarge: "यह फ़ाइल बहुत बड़ी है। कृपया 10 MB से छोटी फ़ाइल अपलोड करें — छोटा PDF या फ़ोटो चलेगा।",
+    errGeneric: "आपका अनुरोध प्रोसेस करने में समस्या आ रही है। कृपया कुछ देर बाद फिर कोशिश करें।",
+    errEmpty: "सर्वर से खाली जवाब मिला।",
+    errInvalid: "सर्वर से अमान्य जवाब मिला। कृपया फिर कोशिश करें।",
+    fileTooBig: (names, many) => `${names} 10 MB की सीमा से बड़ी ${many ? "हैं" : "है"} — कृपया छोटा PDF या फ़ोटो अपलोड करें।`,
+    maxFiles: (n) => `एक बार में अधिकतम ${n} फ़ाइलें जोड़ सकते हैं।`,
   },
 };
 
@@ -134,7 +243,8 @@ function renderWithLinks(text: string) {
   });
 }
 
-async function callApi<T>(url: string, options: RequestInit = {}): Promise<T> {
+async function callApi<T>(url: string, options: RequestInit = {}, lang: Language = "EN"): Promise<T> {
+  const t = UI_TEXT[lang];
   let res: Response;
   try {
     res = await fetch(url, {
@@ -143,9 +253,7 @@ async function callApi<T>(url: string, options: RequestInit = {}): Promise<T> {
     });
   } catch (err) {
     console.error("Network/CORS error calling", url, err);
-    throw new Error(
-      "We are experiencing a temporary network issue. Please check your internet connection or try again shortly.",
-    );
+    throw new Error(t.errNetwork);
   }
 
   const raw = await res.text();
@@ -153,22 +261,22 @@ async function callApi<T>(url: string, options: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     console.error(`API ${url} returned ${res.status}:`, raw);
     if (res.status === 401 || res.status === 403) {
-      throw new Error("Session validation failed. Please refresh the page to start a new chat.");
+      throw new Error(t.errSession);
     } else if (res.status === 404) {
-      throw new Error("The requested chat service could not be found. Please try again later.");
+      throw new Error(t.errNotFound);
     } else if (res.status === 413) {
-      throw new Error("That file is too large. Please upload a file under 10 MB — a smaller PDF or a photo works.");
+      throw new Error(t.errTooLarge);
     } else {
-      throw new Error("We are currently facing an issue processing your request. Please try again in a few moments.");
+      throw new Error(t.errGeneric);
     }
   }
-  if (!raw) throw new Error("The server responded with an empty response.");
+  if (!raw) throw new Error(t.errEmpty);
 
   try {
     return JSON.parse(raw) as T;
   } catch {
     console.error(`API ${url} returned non-JSON body:`, raw);
-    throw new Error("Received an invalid response from the server. Please try again shortly.");
+    throw new Error(t.errInvalid);
   }
 }
 
@@ -212,11 +320,19 @@ export default function BorrowerChatPage() {
 
   const [sessionId, setSessionId] = useState<string | null>(saved?.sessionId ?? null);
   const [stage, setStage] = useState<string>(saved?.stage ?? "LOAN_AMOUNT");
-  const [language, setLanguage] = useState<Language>("EN");
+  const [language, setLanguage] = useState<Language>(() => {
+    try {
+      const v = window.localStorage.getItem(LANGUAGE_KEY);
+      return v === "TE" || v === "HI" ? v : "EN";
+    } catch {
+      return "EN";
+    }
+  });
+  const languageRef = useRef<Language>(language);
   // Static welcome shown on page load — no API call. The session is only created
   // (via /start) when the user sends their first input.
   const [messages, setMessages] = useState<ChatMessage[]>(
-    saved && saved.messages.length > 0 ? saved.messages : [{ role: "ASSISTANT", text: WELCOME_MESSAGE }],
+    saved && saved.messages.length > 0 ? saved.messages : [{ role: "ASSISTANT", text: WELCOME_MESSAGES[language] }],
   );
   const [inputValue, setInputValue] = useState("");
   const [sending, setSending] = useState(false);
@@ -230,6 +346,8 @@ export default function BorrowerChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const ui = UI_TEXT[language];
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -242,9 +360,11 @@ export default function BorrowerChatPage() {
     if (sessionIdRef.current) return sessionIdRef.current;
 
     if (!startPromiseRef.current) {
-      startPromiseRef.current = callApi<ChatResponseDTO>(`${BASE_URL}/vibecode-service/borrower/start`, {
-        method: "POST",
-      })
+      startPromiseRef.current = callApi<ChatResponseDTO>(
+        `${BASE_URL}/vibecode-service/borrower/start?bfLanguage=${languageRef.current}`,
+        { method: "POST" },
+        languageRef.current,
+      )
         .then((data) => {
           sessionIdRef.current = data.bfSessionId;
           setSessionId(data.bfSessionId);
@@ -275,12 +395,34 @@ export default function BorrowerChatPage() {
     }
     setSessionId(null);
     setStage("LOAN_AMOUNT");
-    setMessages([{ role: "ASSISTANT", text: WELCOME_MESSAGE }]);
+    setMessages([{ role: "ASSISTANT", text: WELCOME_MESSAGES[languageRef.current] }]);
     setInputValue("");
     setPendingFiles([]);
     setConnectionError(null);
     setFileError(null);
   };
+
+  // Esc closes the new-application dialog.
+  useEffect(() => {
+    if (!showNewChatDialog) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowNewChatDialog(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showNewChatDialog]);
+
+  // Keep the chosen language for the next visit, and use it for the welcome message while the chat has not started yet.
+  useEffect(() => {
+    languageRef.current = language;
+    try {
+      window.localStorage.setItem(LANGUAGE_KEY, language);
+    } catch {
+      /* ignore */
+    }
+    setMessages((prev) => (prev.length === 1 && prev[0].role === "ASSISTANT" ? [{ role: "ASSISTANT", text: WELCOME_MESSAGES[language] }] : prev));
+    if (recognitionRef.current) recognitionRef.current.lang = SPEECH_LANG[language];
+  }, [language]);
 
   // Remember the conversation in this browser.
   useEffect(() => {
@@ -305,7 +447,7 @@ export default function BorrowerChatPage() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = "en-IN";
+      recognition.lang = SPEECH_LANG[languageRef.current];
 
       recognition.onstart = () => setIsListening(true);
       recognition.onend = () => setIsListening(false);
@@ -324,7 +466,7 @@ export default function BorrowerChatPage() {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in this browser.");
+      alert(UI_TEXT[languageRef.current].speechUnsupported);
       return;
     }
     if (isListening) recognitionRef.current.stop();
@@ -366,18 +508,20 @@ export default function BorrowerChatPage() {
 
       const formData = new FormData();
       if (text) formData.append("bfMessage", text);
+      formData.append("bfLanguage", languageRef.current);
       filesToSend.forEach((file) => formData.append("files", file));
 
       const data = await callApi<ChatResponseDTO>(
         `${BASE_URL}/vibecode-service/borrower/chat?bfSessionId=${encodeURIComponent(sid)}`,
         { method: "POST", body: formData },
+        languageRef.current,
       );
 
       updateStage(data.bfStage);
       setMessages((prev) => [...prev, { role: "ASSISTANT", text: data.bfReply }]);
     } catch (err) {
       const errMsg =
-        (err as Error).message || "We are currently facing an issue processing your request. Please try again.";
+        (err as Error).message || UI_TEXT[languageRef.current].errGeneric;
       setConnectionError(errMsg);
       setMessages((prev) => [...prev, { role: "ASSISTANT", text: errMsg }]);
       // Nothing reached the assistant, so give the borrower their message and files back to resend.
@@ -409,13 +553,11 @@ export default function BorrowerChatPage() {
     let accepted = filesArray.filter((f) => f.size <= MAX_FILE_BYTES);
     const problems: string[] = [];
     if (tooBig.length > 0) {
-      problems.push(
-        `${tooBig.map((f) => `"${f.name}"`).join(", ")} ${tooBig.length === 1 ? "is" : "are"} over the 10 MB limit — please upload a smaller PDF or photo.`,
-      );
+      problems.push(ui.fileTooBig(tooBig.map((f) => `"${f.name}"`).join(", "), tooBig.length !== 1));
     }
     const room = MAX_FILES_PER_UPLOAD - pendingFiles.length;
     if (accepted.length > room) {
-      problems.push(`You can attach up to ${MAX_FILES_PER_UPLOAD} files at a time.`);
+      problems.push(ui.maxFiles(MAX_FILES_PER_UPLOAD));
       accepted = accepted.slice(0, Math.max(room, 0));
     }
     setFileError(problems.length > 0 ? problems.join(" ") : null);
@@ -432,7 +574,6 @@ export default function BorrowerChatPage() {
 
   const currentStageIndex = stageIndex(stage);
   const knownStage = STAGES.find((s) => s.key === stage);
-  const ui = UI_TEXT[language];
   const inputDisabled = sending || uploading;
   const payslipIndex = stageIndex("AWAITING_INCOME_PROOF");
   const payslipSkipped = !visitedRef.current.has("AWAITING_INCOME_PROOF") && currentStageIndex > payslipIndex;
@@ -447,11 +588,15 @@ export default function BorrowerChatPage() {
     return "pending";
   };
 
+  const stageLabel = (s: (typeof STAGES)[number]) => (language === "TE" ? s.labelTe : language === "HI" ? s.labelHi : s.label);
+  const stageNote = (s: (typeof STAGES)[number]) => (language === "TE" ? s.noteTe : language === "HI" ? s.noteHi : s.note);
   const headerLabel = connectionError
-    ? "Connection issue"
+    ? ui.connectionIssue
     : isClosed
       ? ui.closedTitle
-      : knownStage?.label ?? stage;
+      : knownStage
+        ? stageLabel(knownStage)
+        : stage;
 
   return (
     <div className="flex h-screen w-full" style={{ background: "#f4f5f7", fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -514,10 +659,10 @@ export default function BorrowerChatPage() {
                         }}
                       >
                         {done && <span style={{ color: "#3f7a5c", fontSize: "10px" }}>●</span>}
-                        {s.label}
+                        {stageLabel(s)}
                       </div>
                       <div className="text-[11px] mt-0.5" style={{ color: active ? "#6b6455" : "#5f6d88" }}>
-                        {skipped ? "Not required for your profile" : s.note}
+                        {skipped ? ui.notRequired : stageNote(s)}
                       </div>
                     </div>
                   </div>
@@ -544,7 +689,7 @@ export default function BorrowerChatPage() {
         {sessionId && (
           <div className="mt-auto pt-6" style={{ borderTop: "1px solid #33415c" }}>
             <div className="bf-label text-[9px] mb-1" style={{ color: "#5f6d88" }}>
-              Case reference
+              {ui.caseRef}
             </div>
             <div className="bf-mono text-[11.5px]" style={{ color: "#d8cba3" }}>
               {sessionId.slice(0, 13)}
@@ -589,9 +734,7 @@ export default function BorrowerChatPage() {
             {/* Always available, so a borrower can start over (e.g. if a saved chat can no longer be continued) */}
             {sessionId && (
               <button
-                onClick={() => {
-                  if (window.confirm("Start a new application? Your current chat will be cleared from this screen.")) resetChat();
-                }}
+                onClick={() => setShowNewChatDialog(true)}
                 className="px-2.5 py-1 rounded-lg text-[12px] font-semibold shrink-0"
                 style={{ border: "1px solid #ddd2b8", color: "#6b6455", background: "#ffffff" }}
               >
@@ -599,26 +742,19 @@ export default function BorrowerChatPage() {
               </button>
             )}
             <div className="flex items-center rounded-lg overflow-hidden shrink-0" style={{ border: "1px solid #ddd2b8" }}>
-              <button
-                onClick={() => setLanguage("EN")}
-                className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
-                style={{
-                  background: language === "EN" ? "#1b2a41" : "#ffffff",
-                  color: language === "EN" ? "#ffffff" : "#6b6455",
-                }}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage("TE")}
-                className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
-                style={{
-                  background: language === "TE" ? "#1b2a41" : "#ffffff",
-                  color: language === "TE" ? "#ffffff" : "#6b6455",
-                }}
-              >
-                తెలుగు
-              </button>
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setLanguage(opt.key)}
+                  className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
+                  style={{
+                    background: language === opt.key ? "#1b2a41" : "#ffffff",
+                    color: language === opt.key ? "#ffffff" : "#6b6455",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -652,7 +788,7 @@ export default function BorrowerChatPage() {
                     textDecoration: skipped ? "line-through" : "none",
                   }}
                 >
-                  {s.label}
+                  {stageLabel(s)}
                 </div>
                 {i < STAGES.length - 1 && <span className="text-[#33415c] text-[10px] mx-0.5">›</span>}
               </div>
@@ -673,7 +809,7 @@ export default function BorrowerChatPage() {
               }}
               className="ml-4 flex-none text-[12px] font-semibold underline hover:no-underline"
             >
-              Dismiss
+              {ui.dismiss}
             </button>
           </div>
         )}
@@ -688,7 +824,7 @@ export default function BorrowerChatPage() {
                   style={{ borderLeft: "3px solid #a9824f", background: "#fafafa" }}
                 >
                   <div className="bf-label text-[10px] mb-1.5 font-semibold" style={{ color: "#a9824f" }}>
-                    Assistant note
+                    {ui.assistantNote}
                   </div>
                   <div
                     className="text-[14px] md:text-[14.5px] leading-relaxed whitespace-pre-wrap"
@@ -714,10 +850,10 @@ export default function BorrowerChatPage() {
             <div className="w-full max-w-[700px] mx-auto mb-5 px-4 md:px-7">
               <div className="pl-3 md:pl-4" style={{ borderLeft: "2.5px solid #ddd2b8" }}>
                 <div className="bf-label text-[9.5px] mb-1" style={{ color: "#a39a86" }}>
-                  Assistant note
+                  {ui.assistantNote}
                 </div>
                 <div className="text-[14px]" style={{ color: "#8c8474" }}>
-                  {uploading ? "Verifying documents…" : "Processing your input…"}
+                  {uploading ? ui.verifying : ui.processing}
                 </div>
               </div>
             </div>
@@ -892,6 +1028,51 @@ export default function BorrowerChatPage() {
           </div>
         </div>
       </div>
+
+      {/* New application confirmation */}
+      {showNewChatDialog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(27, 42, 65, 0.55)" }}
+          onClick={() => setShowNewChatDialog(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bf-new-chat-title"
+            className="w-full max-w-[400px] rounded-xl p-5 md:p-6"
+            style={{ background: "#ffffff", borderTop: "4px solid #a9824f", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div id="bf-new-chat-title" className="bf-serif text-[18px] font-medium" style={{ color: "#1b2a41" }}>
+              {ui.newAppTitle}
+            </div>
+            <div className="text-[13.5px] mt-2 leading-relaxed" style={{ color: "#6b6455" }}>
+              {ui.newAppConfirm}
+            </div>
+            <div className="flex justify-end gap-2.5 mt-5">
+              <button
+                onClick={() => setShowNewChatDialog(false)}
+                className="px-4 py-2 rounded-lg text-[13px] font-semibold"
+                style={{ border: "1px solid #ddd2b8", color: "#6b6455", background: "#ffffff" }}
+              >
+                {ui.cancel}
+              </button>
+              <button
+                autoFocus
+                onClick={() => {
+                  setShowNewChatDialog(false);
+                  resetChat();
+                }}
+                className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white"
+                style={{ background: "#1b2a41" }}
+              >
+                {ui.startNew}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
