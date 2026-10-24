@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Modal, Input, Button, message, Form, Spin, Steps } from "antd";
+import { Modal, Input, message, Form, Spin, Steps } from "antd";
 import { CheckCircleOutlined, FileDoneOutlined } from "@ant-design/icons";
 import axios from "axios";
 import BASE_URL from "../Config";
@@ -50,7 +50,12 @@ const JobApplicationModal: React.FC<Props> = ({
     try {
       const values = await form.validateFields();
 
-      const sessionResumeUrl = sessionStorage.getItem("resumeUrl");
+      const sessionResumeUrl =
+        sessionStorage.getItem(`resumeUrl_${jobId}`) ||
+        sessionStorage.getItem("resumeUrl") ||
+        localStorage.getItem(`resumeUrl_${userId}_${jobId}`) ||
+        localStorage.getItem(`resumeUrl_${jobId}`) ||
+        localStorage.getItem("resumeUrl");
 
       if (!sessionResumeUrl) {
         message.error(
@@ -66,7 +71,11 @@ const JobApplicationModal: React.FC<Props> = ({
       setStatusText("Analyzing your resume against the job requirements...");
 
       // 🔹 Read atsScoreViewerId stored by ExamResultsPage after exam submission
-      const atsScoreViewerId = sessionStorage.getItem("atsScoreViewerId");
+      const atsScoreViewerId =
+        sessionStorage.getItem(`atsScoreViewerId_${jobId}`) ||
+        sessionStorage.getItem("atsScoreViewerId") ||
+        localStorage.getItem(`atsScoreViewerId_${userId}_${jobId}`) ||
+        localStorage.getItem(`atsScoreViewerId_${jobId}`);
 
       const payload: Record<string, any> = {
         ...values,
@@ -93,11 +102,25 @@ const JobApplicationModal: React.FC<Props> = ({
       resetAll();
       onClose();
 
-      // 🔹 Clean up all exam-related sessionStorage keys after successful apply
+      // 🔹 Clean up all exam-related sessionStorage and localStorage keys after successful apply
       sessionStorage.removeItem("resumeUrl");
+      sessionStorage.removeItem(`resumeUrl_${jobId}`);
       sessionStorage.removeItem("atsScoreViewerId");
+      sessionStorage.removeItem(`atsScoreViewerId_${jobId}`);
       sessionStorage.removeItem("atsScoreHistoryId");
+      sessionStorage.removeItem(`atsScoreHistoryId_${jobId}`);
       sessionStorage.removeItem("examPassed");
+      sessionStorage.removeItem(`examPassed_${jobId}`);
+
+      localStorage.removeItem(`examPassed_${jobId}`);
+      if (userId) {
+        localStorage.removeItem(`examPassed_${userId}_${jobId}`);
+        localStorage.removeItem(`atsScoreViewerId_${userId}_${jobId}`);
+        localStorage.removeItem(`resumeUrl_${userId}_${jobId}`);
+      }
+      localStorage.removeItem(`atsScoreViewerId_${jobId}`);
+      localStorage.removeItem(`resumeUrl_${jobId}`);
+      localStorage.removeItem(`atsScoreHistoryId_${jobId}`);
 
       navigate("/main/appliedjobs", { replace: true });
     } catch (err: any) {

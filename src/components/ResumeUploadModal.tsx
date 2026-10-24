@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Upload, Button, message, Spin, Steps } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -8,6 +8,7 @@ import BASE_URL from "../Config";
 type Props = {
   open: boolean;
   onClose: () => void;
+  onExamAlreadyPassed?: () => void;
   userId: string;
   jobId: string;
   jobDesignation: string;
@@ -17,6 +18,7 @@ type Props = {
 const ResumeUploadModal: React.FC<Props> = ({
   open,
   onClose,
+  onExamAlreadyPassed,
   userId,
   jobId,
   jobDesignation,
@@ -28,6 +30,69 @@ const ResumeUploadModal: React.FC<Props> = ({
   const [statusText, setStatusText] = useState<string>("");
 
   const navigate = useNavigate();
+
+  // 🔹 If candidate has already passed exam (status: true) for this jobId, bypass upload and trigger cover letter modal
+  useEffect(() => {
+    if (!open || !jobId || !userId) return;
+
+    const checkAlreadyPassed = async () => {
+      const isLocallyPassed =
+        sessionStorage.getItem(`examPassed_${jobId}`) === "true" ||
+        localStorage.getItem(`examPassed_${jobId}`) === "true" ||
+        localStorage.getItem(`examPassed_${userId}_${jobId}`) === "true";
+
+      if (isLocallyPassed) {
+        onClose();
+        if (onExamAlreadyPassed) {
+          onExamAlreadyPassed();
+        }
+        return;
+      }
+
+      try {
+        const historyId =
+          sessionStorage.getItem(`atsScoreHistoryId_${jobId}`) ||
+          localStorage.getItem(`atsScoreHistoryId_${jobId}`) ||
+          sessionStorage.getItem("atsScoreHistoryId") ||
+          localStorage.getItem("atsScoreHistoryId") ||
+          "";
+        const historyQuery = historyId
+          ? `&atsScoreHistoryId=${encodeURIComponent(historyId)}`
+          : "";
+        const res = await axios.get(
+          `${BASE_URL}/marketing-service/campgin/exam-score-new?jobId=${encodeURIComponent(jobId)}&userId=${encodeURIComponent(userId)}${historyQuery}`,
+        );
+
+        if (res.data?.status === true) {
+          sessionStorage.setItem("examPassed", "true");
+          sessionStorage.setItem(`examPassed_${jobId}`, "true");
+          localStorage.setItem(`examPassed_${jobId}`, "true");
+          if (userId) {
+            localStorage.setItem(`examPassed_${userId}_${jobId}`, "true");
+          }
+
+          if (res.data?.atsScoreViewerId) {
+            const vId = String(res.data.atsScoreViewerId);
+            sessionStorage.setItem("atsScoreViewerId", vId);
+            sessionStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+            localStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+            if (userId) {
+              localStorage.setItem(`atsScoreViewerId_${userId}_${jobId}`, vId);
+            }
+          }
+
+          onClose();
+          if (onExamAlreadyPassed) {
+            onExamAlreadyPassed();
+          }
+        }
+      } catch (err) {
+        // Not passed or error, proceed with normal upload modal
+      }
+    };
+
+    checkAlreadyPassed();
+  }, [open, jobId, userId, onClose, onExamAlreadyPassed]);
 
   const handleFileChange = async (info: any) => {
     const file = info.file;
@@ -61,6 +126,14 @@ const ResumeUploadModal: React.FC<Props> = ({
 
       setFileList([file]);
 
+      // 🔹 Persist resumeUrl in sessionStorage and localStorage scoped by jobId
+      sessionStorage.setItem("resumeUrl", fileUrl);
+      sessionStorage.setItem(`resumeUrl_${jobId}`, fileUrl);
+      localStorage.setItem(`resumeUrl_${jobId}`, fileUrl);
+      if (userId) {
+        localStorage.setItem(`resumeUrl_${userId}_${jobId}`, fileUrl);
+      }
+
       // 🔹 STEP 2: ATS
       setCurrentStep(1);
       setStatusText("Checking ATS...");
@@ -78,6 +151,11 @@ const ResumeUploadModal: React.FC<Props> = ({
       const isEligible = atsRes.data?.status === true;
 
       const atsScoreHistoryId = atsRes.data?.atsHistoryData?.id;
+      if (atsScoreHistoryId) {
+        sessionStorage.setItem("atsScoreHistoryId", String(atsScoreHistoryId));
+        sessionStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
+        localStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
+      }
 
       // 🔹 STEP 3: EXAM STEP
       setCurrentStep(2);

@@ -68,12 +68,39 @@ const ExamResultsPage: React.FC = () => {
         setResult(res.data);
 
         // 🔹 Use backend status (not client-side percentage logic)
-        // Store atsScoreViewerId in sessionStorage so JobApplicationModal can use it
-        if (res.data?.status === true && res.data?.atsScoreViewerId) {
-          sessionStorage.setItem(
-            "atsScoreViewerId",
-            String(res.data.atsScoreViewerId),
-          );
+        // Store atsScoreViewerId, examPassed, and resumeUrl in sessionStorage and localStorage
+        if (res.data?.status === true) {
+          sessionStorage.setItem("examPassed", "true");
+          sessionStorage.setItem(`examPassed_${jobId}`, "true");
+          localStorage.setItem(`examPassed_${jobId}`, "true");
+          if (userId) {
+            localStorage.setItem(`examPassed_${userId}_${jobId}`, "true");
+          }
+
+          if (res.data?.atsScoreViewerId) {
+            const vId = String(res.data.atsScoreViewerId);
+            sessionStorage.setItem("atsScoreViewerId", vId);
+            sessionStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+            localStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+            if (userId) {
+              localStorage.setItem(`atsScoreViewerId_${userId}_${jobId}`, vId);
+            }
+          }
+
+          if (fileUrl) {
+            sessionStorage.setItem("resumeUrl", fileUrl);
+            sessionStorage.setItem(`resumeUrl_${jobId}`, fileUrl);
+            localStorage.setItem(`resumeUrl_${jobId}`, fileUrl);
+            if (userId) {
+              localStorage.setItem(`resumeUrl_${userId}_${jobId}`, fileUrl);
+            }
+          }
+
+          if (atsScoreHistoryId) {
+            sessionStorage.setItem("atsScoreHistoryId", String(atsScoreHistoryId));
+            sessionStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
+            localStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
+          }
         }
       } catch (err) {
         console.error(err);
@@ -150,10 +177,33 @@ const ExamResultsPage: React.FC = () => {
           <button
             onClick={() => {
               sessionStorage.setItem("examPassed", "true");
+              sessionStorage.setItem(`examPassed_${jobId}`, "true");
+              localStorage.setItem(`examPassed_${jobId}`, "true");
+              if (userId) {
+                localStorage.setItem(`examPassed_${userId}_${jobId}`, "true");
+              }
               if (fileUrl) {
                 sessionStorage.setItem("resumeUrl", fileUrl);
+                sessionStorage.setItem(`resumeUrl_${jobId}`, fileUrl);
+                localStorage.setItem(`resumeUrl_${jobId}`, fileUrl);
+                if (userId) {
+                  localStorage.setItem(`resumeUrl_${userId}_${jobId}`, fileUrl);
+                }
               }
-              // atsScoreViewerId is already stored in sessionStorage above
+              if (result?.atsScoreViewerId) {
+                const vId = String(result.atsScoreViewerId);
+                sessionStorage.setItem("atsScoreViewerId", vId);
+                sessionStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+                localStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+                if (userId) {
+                  localStorage.setItem(`atsScoreViewerId_${userId}_${jobId}`, vId);
+                }
+              }
+              if (atsScoreHistoryId) {
+                sessionStorage.setItem("atsScoreHistoryId", String(atsScoreHistoryId));
+                sessionStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
+                localStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
+              }
               navigate(`/main/viewjobdetails/${jobId}/ALL`, {
                 state: {
                   openApplyModal: true,

@@ -129,7 +129,10 @@ const Whiteboardtheme: React.FC = () => {
   const jobsCountCard = (desktop = false) => (
     <button
       type="button"
-      onClick={handleSignIn}
+      onClick={() => {
+        setModalActionType("signin");
+        setIsWalkInModalOpen(true);
+      }}
       className="flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
       style={{
         width: desktop ? "clamp(140px, 12vw, 196px)" : "148px",

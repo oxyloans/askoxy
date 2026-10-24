@@ -1182,8 +1182,8 @@ const ItemDisplayPage = () => {
       <div className="min-h-screen bg-gray-50/50">
         <div className="px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
           {/* Breadcrumb skeleton */}
-          <div className="flex items-center space-x-2 mb-6">
-            <div className="h-4 w-12 bg-gray-200 rounded"></div>
+          <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 mb-6">
+            <div className="h-4 w-14 bg-gray-200 rounded"></div>
             <div className="h-4 w-3 bg-gray-200 rounded"></div>
             <div className="h-4 w-20 bg-gray-200 rounded"></div>
             <div className="h-4 w-3 bg-gray-200 rounded"></div>
@@ -1510,19 +1510,29 @@ const ItemDisplayPage = () => {
       </Modal>
 
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <nav className="flex items-center space-x-2 text-sm mb-6">
+        <nav aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm mb-6 text-gray-500">
           <button
-            onClick={() => navigate("/main/dashboard/products")}
-            className="flex items-center text-gray-600 hover:text-purple-600 transition-colors"
+            type="button"
+            onClick={() => navigate("/main/dashboard/home")}
+            className="inline-flex items-center gap-1 text-gray-500 hover:text-purple-600 font-medium transition-colors cursor-pointer bg-transparent border-0 p-0"
           >
-            <Home className="w-4 h-4 mr-1" />
-            Home
+            <Home className="w-4 h-4 shrink-0" />
+            <span>Home</span>
           </button>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-600">Categories</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-purple-600 font-medium">
-            {itemDetails?.category}
+          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+          <button
+            type="button"
+            onClick={() => navigate("/main/dashboard/products")}
+            className="inline-flex items-center text-gray-500 hover:text-purple-600 font-medium transition-colors cursor-pointer bg-transparent border-0 p-0"
+          >
+            Categories
+          </button>
+          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+          <span
+            className="text-purple-600 font-semibold truncate max-w-[200px] sm:max-w-xs md:max-w-md"
+            title={itemDetails?.category || itemDetails?.itemName || "Kolam Rice"}
+          >
+            {itemDetails?.category || itemDetails?.itemName || "Kolam Rice"}
           </span>
         </nav>
 

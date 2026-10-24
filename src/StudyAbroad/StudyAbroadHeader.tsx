@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Logo from "../assets/img/askoxylogonew.png";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { navigateToStudentArea } from "./studentNavigation";
 
 interface StudyAbroadHeaderProps {
   onNavClick: (
@@ -31,8 +32,8 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
 }: StudyAbroadHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
-  const [clicked, setClicked] = useState(false);
   const navigate = useNavigate();
+  const handleClick = () => navigateToStudentArea(navigate);
 
   const scrollRef = React.useRef(isScrolled);
 
@@ -63,11 +64,6 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const handleClick = () => {
-    setClicked(true);
-    navigate("/student-home");
-  };
 
   const handleNavClick = useCallback(
     (

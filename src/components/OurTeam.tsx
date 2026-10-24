@@ -15,14 +15,14 @@ import Narendra from "../assets/img/narendra.png";
 const teamMembers = [
   {
     name: "RadhaKrishna.T",
-    role: "CEO & Co-Founder",
+    role: "Co-Founder & CEO",
     img: Radha,
     linkedin: "https://www.linkedin.com/in/oxyradhakrishna/",
     bio: "Visionary leader driving innovation in AI and digital transformation with over 15 years of experience in technology and strategy.",
   },
   {
     name: "Ramadevi.T",
-    role: "Co-Founder",
+    role: "Co-Founder & CTO",
     img: Rama,
     linkedin: "https://www.linkedin.com/in/ramadevi-thatavarti/",
     bio: "Strategic thinker passionate about building sustainable business models and fostering growth through people-centric leadership.",
@@ -74,82 +74,76 @@ const teamMembers = [
 
 const OurPeople: React.FC = () => {
   return (
-    <section className="px-3 sm:px-4 lg:px-6 xl:px-8 py-6 sm:py-8 lg:py-10 mx-auto bg-white">
-      <motion.div
-        className="max-w-xl mb-6 sm:mb-8 lg:mb-10 md:mx-auto sm:text-center lg:max-w-2xl"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
-        <h2 className="max-w-lg mb-4 sm:mb-6 font-sans text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold leading-tight tracking-tight text-gray-900 md:mx-auto">
-          Our Leadership Team
-        </h2>
-        <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-          Passionate innovators driving AI-powered transformation with
-          expertise, dedication, and a shared vision for the future.
-        </p>
-      </motion.div>
+    <section className="py-12 sm:py-16 lg:py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="max-w-2xl mb-10 sm:mb-12 lg:mb-16 mx-auto text-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-3 sm:mb-4">
+            Our Leadership Team
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+            Passionate innovators driving AI-powered transformation with
+            expertise, dedication, and a shared vision for the future.
+          </p>
+        </motion.div>
 
-      <motion.div
-        className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-      >
-        {teamMembers.map((member, index) => (
-          <motion.div
-            key={member.name}
-            initial={{ opacity: 0, y: 20, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{
-              duration: 0.4,
-              delay: 0.3 + index * 0.05,
-              ease: "easeOut",
-            }}
-            whileHover={{
-              y: -6,
-              transition: { duration: 0.2, ease: "easeOut" },
-            }}
-            className="group overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl"
-          >
-            <div className="relative w-full overflow-hidden bg-slate-100">
-              <img
-                className="object-contain w-full h-56 sm:h-64 md:h-72 lg:h-72"
-                src={member.img}
-                alt={member.name}
-                loading="lazy"
-              />
-            </div>
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 lg:gap-x-12 gap-y-12 sm:gap-y-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+        >
+          {teamMembers.map((member, index) => (
+            <motion.a
+              key={member.name}
+              href={member.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.4,
+                delay: 0.1 + index * 0.05,
+                ease: "easeOut",
+              }}
+              whileHover={{ y: -4 }}
+              className="group flex flex-col items-center text-center cursor-pointer transition-transform duration-200"
+              aria-label={`${member.name} - ${member.role}`}
+            >
+              {/* Circular Avatar with LinkedIn hover overlay */}
+              <div className="relative w-40 h-40 sm:w-44 sm:h-44 lg:w-48 lg:h-48 rounded-full overflow-hidden bg-gradient-to-b from-slate-100 to-slate-200 shadow-sm transition-shadow duration-300 group-hover:shadow-lg">
+                <img
+                  className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                  src={member.img}
+                  alt={member.name}
+                  loading="lazy"
+                />
 
-            <div className="p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900">
-                    {member.name}
-                  </h3>
-                  <p className="mt-1 text-sm sm:text-base font-medium text-teal-600">
-                    {member.role}
-                  </p>
+                {/* LinkedIn Overlay on Hover */}
+                <div className="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <span className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0A66C2] transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                    <FaLinkedinIn className="w-5 h-5" />
+                  </span>
                 </div>
-                <motion.a
-                  href={member.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-teal-400 hover:bg-teal-500 hover:text-white"
-                >
-                  <FaLinkedinIn className="h-4 w-4 sm:h-5 sm:w-5" />
-                </motion.a>
               </div>
 
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                {member.bio}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+              {/* Member Details */}
+              <div className="mt-5 sm:mt-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight transition-colors duration-200 group-hover:text-blue-600">
+                  {member.name}
+                </h3>
+                <p className="mt-1 text-sm sm:text-base font-medium text-[#4b6b94]">
+                  {member.role}
+                </p>
+              </div>
+            </motion.a>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 };

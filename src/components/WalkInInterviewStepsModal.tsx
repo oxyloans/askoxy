@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
@@ -139,50 +140,56 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
   }, [isOpen, onClose]);
 
   const handleAction = () => {
+    onClose();
     if (onActionClick) onActionClick();
     else window.open("https://www.askoxy.ai/", "_blank", "noopener,noreferrer");
   };
 
-  if (!isOpen) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-[99999] flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onMouseDown={(event) =>
-          event.target === event.currentTarget && onClose()
-        }
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="application-journey-title"
-      >
-        <motion.section
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.98 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="flex max-h-[96dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-xl bg-slate-50 shadow-2xl sm:max-h-[92vh] sm:rounded-2xl"
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 z-[999999] flex items-end justify-center bg-slate-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onMouseDown={(event) =>
+            event.target === event.currentTarget && onClose()
+          }
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="application-journey-title"
         >
-          <header className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-indigo-950 to-violet-950 px-4 py-5 text-white sm:px-7 sm:py-6">
-            <div className="absolute -right-16 -top-24 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl" />
-            <div className="relative flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-violet-100">
-                  <Map size={14} /> Easy Application Guide
+          <motion.section
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="relative flex max-h-[96dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-xl bg-slate-50 shadow-2xl sm:max-h-[92vh] sm:rounded-2xl"
+          >
+            {/* X close button — always visible at top-right of the modal card */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-3 top-3 z-[100] grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-xl border border-white/20 bg-slate-900/80 text-white shadow-lg backdrop-blur-sm transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
+              aria-label="Close application roadmap"
+            >
+              <X size={19} />
+            </button>
+
+            <header className="relative shrink-0 overflow-hidden bg-gradient-to-r from-slate-950 via-indigo-950 to-violet-950 px-4 py-5 pr-14 text-white sm:px-7 sm:py-6 sm:pr-16">
+              <div className="absolute -right-16 -top-24 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl" />
+              <div className="relative z-10 flex items-start gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-violet-100">
+                    <Map size={14} /> Easy Application Guide
+                  </div>
+                 
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
-                aria-label="Close application roadmap"
-              >
-                <X size={19} />
-              </button>
-            </div>
-          </header>
+            </header>
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-7">
             <div className="mb-5 flex items-center justify-between gap-3">
@@ -289,20 +296,22 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
             </div>
           </div>
 
-          <footer className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <footer className="shrink-0 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
             <p className="text-center text-xs text-slate-500 sm:text-left">
               Review each step before starting your application.
             </p>
             <div className="grid grid-cols-2 gap-2 sm:flex">
               <button
+                type="button"
                 onClick={onClose}
-                className="h-10 rounded-xl border border-slate-200 px-4 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                className="h-10 cursor-pointer rounded-xl border border-slate-200 px-4 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
               >
                 Close
               </button>
               <button
+                type="button"
                 onClick={handleAction}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-xs font-bold text-white transition hover:bg-indigo-700"
+                className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-xs font-bold text-white transition hover:bg-indigo-700"
               >
                 Start Applying <ExternalLink size={15} />
               </button>
@@ -310,8 +319,10 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
           </footer>
         </motion.section>
       </motion.div>
-    </AnimatePresence>
-  );
+    )}
+  </AnimatePresence>,
+  document.body
+);
 };
 
 export default WalkInInterviewStepsModal;

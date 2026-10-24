@@ -1,15 +1,11 @@
 import React from "react";
 import { ArrowRight, CheckCircle, GraduationCap, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { navigateToStudentArea } from "./studentNavigation";
 const CallToActionSection = () => {
 
-  const [clicked, setClicked] = React.useState(false);
-    const navigate = useNavigate();
-  const handleFreeConsultation = () => {
-    setClicked(true);
-    navigate("/student-home");
-   
-  };
+  const navigate = useNavigate();
+  const handleFreeConsultation = () => navigateToStudentArea(navigate);
   
   return (
     <section className="py-16 bg-gradient-to-r from-purple-600 via-purple-700 to-blue-800">
@@ -20,10 +16,12 @@ const CallToActionSection = () => {
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 leading-snug">
               Ready to Begin Your Global Education Journey?
             </h2>
-            <p className="text-purple-100 text-lg sm:text-xl mb-8">
-              Join thousands of students who have successfully started their
-              international education journey with our expert guidance and
-              complete support.
+            <p className="text-purple-100 text-lg sm:text-xl mb-4">
+              Empower 1 million students to study abroad and lead life-changing
+              careers.
+            </p>
+            <p className="text-purple-100 text-base sm:text-lg mb-8">
+              Our vision is to help students fulfill their global dreams.
             </p>
 
             {/* Benefits List */}

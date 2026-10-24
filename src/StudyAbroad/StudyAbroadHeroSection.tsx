@@ -11,11 +11,11 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import { navigateToStudentArea } from "./studentNavigation";
 
 function StudyAbroadHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
-  const [clicked, setClicked] = useState(false);
   const navigate = useNavigate();
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const fullHeadingText = "Your Global Education Journey";
@@ -64,11 +64,7 @@ function StudyAbroadHeroSection() {
     }
   };
 
-  const handleFreeConsultation = () => {
-    setClicked(true);
-    navigate("/student-home");
-    console.log("Navigating to /student-home");
-  };
+  const handleFreeConsultation = () => navigateToStudentArea(navigate);
 
   return (
     <section className="bg-white  overflow-hidden  flex items-center relative">
@@ -99,7 +95,7 @@ function StudyAbroadHeroSection() {
               Empower{" "}
               <strong className="text-purple-700">1 million students</strong> to
               study abroad and lead life-changing careers. Our vision is to help
-              students fulfill their global dreams by 2030–2050.
+              students fulfill their global dreams.
               <span className="block text-purple-600 mt-2 font-medium text-sm sm:text-base">
                 Operating in <strong>25+ countries</strong> with a{" "}
                 <strong className="text-green-600">

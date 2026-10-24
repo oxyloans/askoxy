@@ -16,6 +16,7 @@ import {
   CalendarX2,
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import BASE_URL,{uploadurlwithId} from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { Button, message, Select } from "antd";
@@ -97,6 +98,7 @@ const JobViewPage: React.FC = () => {
   const [applyselectedJob, setApplySelectedJob] = useState<{
     jobDesignation: string;
     companyName: string;
+    jobId?: string;
   } | null>(null);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
   const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>(
@@ -438,15 +440,20 @@ const JobViewPage: React.FC = () => {
       setApplySelectedJob({
         jobDesignation: selectedJob.jobDesignation,
         companyName: selectedJob.companyName,
+        jobId: selectedJob.id,
       });
-      const examPassed = sessionStorage.getItem("examPassed");
-      if (examPassed === "true") {
+      const examPassed =
+        sessionStorage.getItem(`examPassed_${selectedJob.id}`) === "true" ||
+        localStorage.getItem(`examPassed_${selectedJob.id}`) === "true" ||
+        (userId && localStorage.getItem(`examPassed_${userId}_${selectedJob.id}`) === "true") ||
+        sessionStorage.getItem("examPassed") === "true";
+      if (examPassed) {
         setIsModalOpen(true);
       } else {
         setShowResumeModal(true);
       }
     }
-  }, [selectedJob]);
+  }, [selectedJob, userId]);
 
   useEffect(() => {
     filterJobs();
@@ -570,7 +577,7 @@ const JobViewPage: React.FC = () => {
     return Array.from(valueMap.values());
   };
 
-  const handleClick = (
+  const handleClick = async (
     jobId: string,
     jobDesignation: string,
     companyName: string,
@@ -585,8 +592,67 @@ const JobViewPage: React.FC = () => {
       return;
     }
 
-    // Always open ResumeUploadModal directly — no agent check needed
-    setApplySelectedJob({ jobDesignation, companyName });
+    const matchedJob = jobs.find((j) => j.id === jobId);
+    if (matchedJob) {
+      setSelectedJob(matchedJob);
+    }
+    setApplySelectedJob({ jobDesignation, companyName, jobId });
+
+    // 1. Fast local check: did candidate already pass exam for this jobId?
+    const isLocallyPassed =
+      sessionStorage.getItem(`examPassed_${jobId}`) === "true" ||
+      localStorage.getItem(`examPassed_${jobId}`) === "true" ||
+      localStorage.getItem(`examPassed_${userId}_${jobId}`) === "true";
+
+    if (isLocallyPassed) {
+      setShowResumeModal(false);
+      setIsModalOpen(true);
+      return;
+    }
+
+    // 2. Authoritative backend check: query exam-score-new API
+    try {
+      const historyId =
+        sessionStorage.getItem(`atsScoreHistoryId_${jobId}`) ||
+        localStorage.getItem(`atsScoreHistoryId_${jobId}`) ||
+        sessionStorage.getItem("atsScoreHistoryId") ||
+        localStorage.getItem("atsScoreHistoryId") ||
+        "";
+      const historyQuery = historyId
+        ? `&atsScoreHistoryId=${encodeURIComponent(historyId)}`
+        : "";
+      const res = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/exam-score-new?jobId=${encodeURIComponent(jobId)}&userId=${encodeURIComponent(userId)}${historyQuery}`,
+      );
+
+      if (res.data?.status === true) {
+        // Status is true -> exam passed! Cache info and directly open cover letter modal
+        sessionStorage.setItem("examPassed", "true");
+        sessionStorage.setItem(`examPassed_${jobId}`, "true");
+        localStorage.setItem(`examPassed_${jobId}`, "true");
+        if (userId) {
+          localStorage.setItem(`examPassed_${userId}_${jobId}`, "true");
+        }
+
+        if (res.data?.atsScoreViewerId) {
+          const vId = String(res.data.atsScoreViewerId);
+          sessionStorage.setItem("atsScoreViewerId", vId);
+          sessionStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+          localStorage.setItem(`atsScoreViewerId_${jobId}`, vId);
+          if (userId) {
+            localStorage.setItem(`atsScoreViewerId_${userId}_${jobId}`, vId);
+          }
+        }
+
+        setShowResumeModal(false);
+        setIsModalOpen(true);
+        return;
+      }
+    } catch (err) {
+      // If error or exam not taken / status false, proceed with upload resume flow
+    }
+
+    // Exam status is false or not yet taken -> open ResumeUploadModal
     setShowResumeModal(true);
   };
 
@@ -1615,19 +1681,27 @@ const JobViewPage: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           jobDesignation={applyselectedJob.jobDesignation}
           companyName={applyselectedJob.companyName}
-          jobId={selectedJob?.id || ""}
+          jobId={applyselectedJob.jobId || selectedJob?.id || ""}
           userId={userId || ""}
         />
       )}
 
-      {showResumeModal && selectedJob && (
+      {showResumeModal && (selectedJob || applyselectedJob) && (
         <ResumeUploadModal
           open={showResumeModal}
           onClose={() => setShowResumeModal(false)}
+          onExamAlreadyPassed={() => {
+            setShowResumeModal(false);
+            setIsModalOpen(true);
+          }}
           userId={userId || ""}
-          jobId={selectedJob.id}
-          jobDesignation={selectedJob.jobDesignation}
-          companyName={selectedJob.companyName}
+          jobId={selectedJob?.id || applyselectedJob?.jobId || ""}
+          jobDesignation={
+            selectedJob?.jobDesignation || applyselectedJob?.jobDesignation || ""
+          }
+          companyName={
+            selectedJob?.companyName || applyselectedJob?.companyName || ""
+          }
         />
       )}
     </div>

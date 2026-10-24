@@ -285,7 +285,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/appliedjobs",
-          label: "Job Applications",
+          label: "My Job Applications",
           icon: <FaRegCheckCircle size={16} />,
         },
         // {

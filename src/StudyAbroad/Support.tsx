@@ -3,15 +3,9 @@ import {
   MessageCircle,
   Phone,
   Mail,
-  Clock,
-  Calendar,
-  Users,
-  BookOpen,
-  Heart,
   Star,
   ChevronRight,
   Send,
-  CheckCircle,
 } from "lucide-react";
 import { message } from "antd";
 import BASE_URL from "../Config";
@@ -21,7 +15,6 @@ interface SupportProps {
 }
 
 const Support: React.FC<SupportProps> = ({ onNavigate }) => {
-  const [activeSupport, setActiveSupport] = useState("counselor");
   const [consultationForm, setConsultationForm] = useState({
     fullName: "",
     email: "",
@@ -34,37 +27,9 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
     studyLevel: "",
     message: "",
   });
-
-  const supportTypes = [
-    // {
-    //   id: 'counselor',
-    //   title: 'Counselor Support',
-    //   icon: MessageCircle,
-    //   description: 'Get expert guidance from experienced counselors',
-    //   color: 'from-violet-500 to-purple-500'
-    // },
-    {
-      id: "academic",
-      title: "Academic Help",
-      icon: BookOpen,
-      description: "Subject tutoring and study assistance",
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      id: "career",
-      title: "Career Guidance",
-      icon: Users,
-      description: "Professional development and career planning",
-      color: "from-green-500 to-emerald-500",
-    },
-    {
-      id: "wellness",
-      title: "Mental Wellness",
-      icon: Heart,
-      description: "Mental health support and wellness resources",
-      color: "from-pink-500 to-rose-500",
-    },
-  ];
+  const contactMessage =
+    "Hi, I’m interested in studying abroad and would like to book a counselling session. Could you please assist me?";
+  const emailSubject = "Study Abroad Counselling";
 
   const handleFormSubmit = async () => {
     const requiredFields = [
@@ -145,64 +110,64 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
   };
 
   const renderCounselorSupport = () => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
-          <MessageCircle className="w-6 h-6 text-white" />
+    <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm md:p-4">
+      <div className="mb-4 flex items-center space-x-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-violet-500 to-purple-500">
+          <MessageCircle className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h4 className="text-xl font-bold text-gray-900">
+          <h4 className="text-lg font-bold text-gray-900">
             Schedule a Consultation
           </h4>
-          <p className="text-gray-600 text-sm">
+          <p className="text-xs text-gray-600">
             Book a session with our experienced counselors
           </p>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Full Name *
             </label>
             <input
               type="text"
               value={consultationForm.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="Enter your full name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Email *
             </label>
             <input
               type="email"
               value={consultationForm.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="your.email@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Phone *
             </label>
             <input
               type="tel"
               value={consultationForm.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="+1 (555) 000-0000"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Preferred Country *
             </label>
             <input
@@ -211,13 +176,13 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
               onChange={(e) =>
                 handleInputChange("preferredCountry", e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="Country of study"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Preferred Intake *
             </label>
             <input
@@ -226,13 +191,13 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
               onChange={(e) =>
                 handleInputChange("preferredIntake", e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. Fall 2024"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Current Qualification *
             </label>
             <input
@@ -241,26 +206,26 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
               onChange={(e) =>
                 handleInputChange("currentQualification", e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. Graduation"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Study Level *
             </label>
             <input
               type="text"
               value={consultationForm.studyLevel}
               onChange={(e) => handleInputChange("studyLevel", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. Master's"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Preferred Date *
             </label>
             <input
@@ -269,12 +234,12 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
               onChange={(e) =>
                 handleInputChange("preferredDate", e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Preferred Time *
             </label>
             <input
@@ -283,29 +248,29 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
               onChange={(e) =>
                 handleInputChange("preferredTime", e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. 10:00 AM"
             />
           </div>
 
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-gray-700">
               Message
             </label>
             <textarea
               value={consultationForm.message}
               onChange={(e) => handleInputChange("message", e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors resize-none"
+              rows={3}
+              className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-500"
               placeholder="Any additional information or questions?"
             />
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-1">
           <button
             onClick={handleFormSubmit}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 px-6 py-3 text-white font-medium transition-all duration-300 hover:from-violet-600 hover:to-purple-600"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:from-violet-600 hover:to-purple-600"
           >
             <Send className="w-4 h-4" />
             Submit Request
@@ -315,127 +280,65 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
     </div>
   );
 
-  const renderOtherSupport = (type: any) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
-      <div
-        className={`w-16 h-16 bg-gradient-to-r ${type.color} rounded-full flex items-center justify-center mx-auto mb-4`}
-      >
-        <type.icon className="w-8 h-8 text-white" />
-      </div>
-      <h4 className="text-xl font-bold text-gray-900 mb-2">{type.title}</h4>
-      <p className="text-gray-600 mb-6">{type.description}</p>
-      <div className="space-y-3">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h6 className="font-medium text-gray-900 text-sm mb-2">
-            Coming Soon
-          </h6>
-          <p className="text-gray-600 text-xs">
-            We're working on bringing you the best {type.title.toLowerCase()}{" "}
-            experience.
-          </p>
-        </div>
-        {/* <button className={`w-full bg-gradient-to-r ${type.color} text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all duration-300 font-medium`}>
-          Get Notified
-        </button> */}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-6 p-4 md:p-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-        <div className="text-center mb-6">
-          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            Student{" "}
-            <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-              Support
-            </span>
-          </h3>
-          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-            We're here to help you succeed. Choose from our comprehensive
-            support services designed for your academic and personal growth.
-          </p>
-        </div>
-
-        {/* Support Type Selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {supportTypes.map((type) => {
-            const IconComponent = type.icon;
-            return (
-              <div
-                key={type.id}
-                onClick={() => setActiveSupport(type.id)}
-                className={`relative p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                  activeSupport === type.id
-                    ? "bg-gradient-to-r from-violet-50 to-purple-50 border-2 border-violet-200 transform scale-105"
-                    : "bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 bg-gradient-to-r ${type.color} rounded-xl flex items-center justify-center mb-3`}
-                >
-                  <IconComponent className="w-5 h-5 text-white" />
-                </div>
-                <h4 className="font-bold text-gray-900 mb-1 text-sm md:text-base">
-                  {type.title}
-                </h4>
-                <p className="text-gray-600 text-xs md:text-sm leading-relaxed">
-                  {type.description}
-                </p>
-                {activeSupport === type.id && (
-                  <div className="absolute top-3 right-3">
-                    <CheckCircle className="w-4 h-4 text-violet-500" />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+    <div className="mx-auto max-w-7xl space-y-4 p-4 md:space-y-6 md:p-6">
+      <div className="grid grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-3">
         {/* Left Column - Main Support Content */}
         <div className="lg:col-span-2">
-          {activeSupport === "counselor"
-            ? renderCounselorSupport()
-            : renderOtherSupport(
-                supportTypes.find((t) => t.id === activeSupport),
-              )}
+          {renderCounselorSupport()}
         </div>
 
         {/* Right Column - Sidebar */}
         <div className="space-y-4 md:space-y-6">
-          {/* Contact Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-            <h5 className="font-bold text-gray-900 mb-4 flex items-center">
-              <Phone className="w-4 h-4 mr-2" />
-              Emergency Contact
-            </h5>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                <Phone className="w-4 h-4 text-red-600 flex-shrink-0" />
-                <div className="min-w-0">
-                  <div className="font-medium text-red-900 text-sm">
-                    +90 89196 36330
-                  </div>
-                  <div className="text-xs text-red-700">
-                    Available on WhatsApp
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                <div className="min-w-0">
-                  <div className="font-medium text-blue-900 text-sm break-all">
-                    studyabroad@askoxy.ai
-                  </div>
-                  <div className="text-xs text-blue-700">General inquiries</div>
-                </div>
-              </div>
+          {/* Emergency Contact */}
+          <section
+            aria-labelledby="emergency-contact-heading"
+            className="overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm"
+          >
+            <div className="border-b border-red-100 bg-red-50 p-4 md:p-5">
+              <h5
+                id="emergency-contact-heading"
+                className="flex items-center gap-2 font-bold text-red-900"
+              >
+                <Phone className="h-5 w-5 shrink-0 text-red-600" />
+                Quick Connect
+              </h5>
             </div>
-          </div>
+            <div className="space-y-3 p-4 md:p-5">
+              <a
+                href={`https://wa.me/918919636330?text=${encodeURIComponent(contactMessage)}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Contact Study Abroad support on WhatsApp at +91 89196 36330"
+                className="flex min-w-0 items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 transition-colors hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                <MessageCircle className="h-5 w-5 shrink-0 text-red-600" />
+                <span className="min-w-0">
+                  <span className="block break-words font-semibold text-red-900">
+                    +91 89196 36330
+                  </span>
+                  <span className="block text-xs text-red-700">
+                    Tap to chat on WhatsApp
+                  </span>
+                </span>
+              </a>
+              <a
+                href={`mailto:studyabroad@askoxy.ai?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(contactMessage)}`}
+                aria-label="Email Study Abroad support at studyabroad@askoxy.ai"
+                className="flex min-w-0 items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <Mail className="h-5 w-5 shrink-0 text-blue-600" />
+                <span className="min-w-0">
+                  <span className="block break-all font-semibold text-blue-900">
+                    studyabroad@askoxy.ai
+                  </span>
+                  <span className="block text-xs text-blue-700">
+                    Tap to email our team
+                  </span>
+                </span>
+              </a>
+            </div>
+          </section>
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
