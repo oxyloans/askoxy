@@ -1,0 +1,1150 @@
+export interface ProviderDataPolicy {
+  training: boolean;
+  retainsPrompts: boolean;
+  retentionDays?: number;
+  termsOfServiceURL?: string;
+  privacyPolicyURL?: string;
+  requiresUserIDs?: boolean;
+}
+
+export interface ProviderServiceStatus {
+  hasChatCompletions: boolean;
+  hasCompletions: boolean;
+  isAbortable: boolean;
+  moderationRequired: boolean;
+  byokEnabled: boolean;
+  datacenters?: string[];
+  statusPageUrl?: string | null;
+  pricingStrategy?: string;
+}
+
+export interface ProviderMetadata {
+  name: string;
+  displayName: string;
+  slug: string;
+  headquarters?: string;
+  countryFlag?: string;
+  countryName?: string;
+  statusPageUrl?: string | null;
+  iconUrl?: string;
+  serviceStatus?: ProviderServiceStatus;
+  dataPolicy?: ProviderDataPolicy;
+}
+
+export const PROVIDERS_REGISTRY: Record<string, ProviderMetadata> = {
+  openai: {
+    name: "OpenAI",
+    displayName: "OpenAI",
+    slug: "openai",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.openai.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openai.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: true,
+      byokEnabled: true,
+      datacenters: ["US"],
+      statusPageUrl: "https://status.openai.com/",
+      pricingStrategy: "openai_responses",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://openai.com/policies/row-terms-of-use/",
+      privacyPolicyURL: "https://openai.com/policies/privacy-policy/",
+    },
+  },
+  anthropic: {
+    name: "Anthropic",
+    displayName: "Anthropic",
+    slug: "anthropic",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.anthropic.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/claude-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: true,
+      byokEnabled: true,
+      datacenters: ["US"],
+      statusPageUrl: "https://status.anthropic.com/",
+      pricingStrategy: "anthropic",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://www.anthropic.com/legal/commercial-terms",
+      privacyPolicyURL: "https://www.anthropic.com/legal/privacy",
+    },
+  },
+  deepseek: {
+    name: "DeepSeek",
+    displayName: "DeepSeek",
+    slug: "deepseek",
+    headquarters: "CN",
+    countryFlag: "🇨🇳",
+    countryName: "China",
+    statusPageUrl: "https://status.deepseek.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/deepseek-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.deepseek.com/",
+      pricingStrategy: "deepseek",
+    },
+    dataPolicy: {
+      training: true,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://chat.deepseek.com/downloads/DeepSeek%20Terms%20of%20Use.html",
+      privacyPolicyURL: "https://chat.deepseek.com/downloads/DeepSeek%20Privacy%20Policy.html",
+    },
+  },
+  google: {
+    name: "Google",
+    displayName: "Google Vertex & AI Studio",
+    slug: "google",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.cloud.google.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/gemini-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.cloud.google.com/",
+      pricingStrategy: "gemini",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://cloud.google.com/terms/",
+      privacyPolicyURL: "https://cloud.google.com/terms/cloud-privacy-notice",
+    },
+  },
+  meta: {
+    name: "Meta",
+    displayName: "Meta",
+    slug: "meta",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: null,
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/meta-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: true,
+      byokEnabled: true,
+      pricingStrategy: "meta_responses",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://ai.developer.meta.com/legal/terms-of-service",
+      privacyPolicyURL: "https://www.facebook.com/privacy/policy/",
+    },
+  },
+  mistralai: {
+    name: "Mistral",
+    displayName: "Mistral AI",
+    slug: "mistral",
+    headquarters: "FR",
+    countryFlag: "🇫🇷",
+    countryName: "France",
+    statusPageUrl: "https://status.mistral.ai/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/mistral-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.mistral.ai/",
+      pricingStrategy: "mistral",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://mistral.ai/terms/#terms-of-use",
+      privacyPolicyURL: "https://mistral.ai/terms/#privacy-policy",
+    },
+  },
+  mistral: {
+    name: "Mistral",
+    displayName: "Mistral AI",
+    slug: "mistral",
+    headquarters: "FR",
+    countryFlag: "🇫🇷",
+    countryName: "France",
+    statusPageUrl: "https://status.mistral.ai/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/mistral-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.mistral.ai/",
+      pricingStrategy: "mistral",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://mistral.ai/terms/#terms-of-use",
+      privacyPolicyURL: "https://mistral.ai/terms/#privacy-policy",
+    },
+  },
+  xai: {
+    name: "xAI",
+    displayName: "xAI (Grok)",
+    slug: "xai",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.x.ai/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/grok.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.x.ai/",
+      pricingStrategy: "xai_responses",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://x.ai/legal/terms-of-service-enterprise",
+      privacyPolicyURL: "https://x.ai/legal/privacy-policy",
+    },
+  },
+  qwen: {
+    name: "Alibaba Cloud / Qwen",
+    displayName: "Qwen (Alibaba)",
+    slug: "alibaba",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: "https://status.alibabacloud.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/qwen-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["SG", "CN"],
+      statusPageUrl: "https://status.alibabacloud.com/",
+      pricingStrategy: "alibaba",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-product-terms-of-service-v-3-8-0",
+      privacyPolicyURL: "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-privacy-policy",
+    },
+  },
+  alibaba: {
+    name: "Alibaba",
+    displayName: "Alibaba Cloud",
+    slug: "alibaba",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: "https://status.alibabacloud.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/qwen-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["SG", "CN"],
+      statusPageUrl: "https://status.alibabacloud.com/",
+      pricingStrategy: "alibaba",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-product-terms-of-service-v-3-8-0",
+      privacyPolicyURL: "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-privacy-policy",
+    },
+  },
+  groq: {
+    name: "Groq",
+    displayName: "Groq LPU",
+    slug: "groq",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.groq.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/groq.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.groq.com/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://groq.com/terms-of-use/",
+      privacyPolicyURL: "https://groq.com/privacy-policy/",
+    },
+  },
+  cerebras: {
+    name: "Cerebras",
+    displayName: "Cerebras CS-3",
+    slug: "cerebras",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.cerebras.ai/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://cerebras.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.cerebras.ai/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://www.cerebras.ai/terms-of-service",
+      privacyPolicyURL: "https://www.cerebras.ai/privacy-policy",
+    },
+  },
+  cohere: {
+    name: "Cohere",
+    displayName: "Cohere",
+    slug: "cohere",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.cohere.ai/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/cohere-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: true,
+      byokEnabled: true,
+      statusPageUrl: "https://status.cohere.ai/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://cohere.com/terms-of-use",
+      privacyPolicyURL: "https://cohere.com/privacy",
+    },
+  },
+  moonshotai: {
+    name: "Moonshot AI",
+    displayName: "Moonshot AI (Kimi)",
+    slug: "moonshotai",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: null,
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/kimi-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["SG"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://platform.moonshot.ai/docs/agreement/modeluse",
+      privacyPolicyURL: "https://platform.moonshot.ai/docs/agreement/userprivacy",
+    },
+  },
+  "z-ai": {
+    name: "Z.ai",
+    displayName: "Z.ai (Zhipu / GLM)",
+    slug: "z-ai",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: null,
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["SG"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://chat.z.ai/legal-agreement/terms-of-service",
+      privacyPolicyURL: "https://chat.z.ai/legal-agreement/privacy-policy",
+    },
+  },
+  minimax: {
+    name: "MiniMax",
+    displayName: "MiniMax (Hailuo)",
+    slug: "minimax",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: null,
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/minimax-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["US"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://www.minimax.io/platform/protocol/terms-of-service",
+      privacyPolicyURL: "https://www.minimax.io/platform/protocol/privacy-policy",
+    },
+  },
+  stepfun: {
+    name: "StepFun",
+    displayName: "StepFun (Step)",
+    slug: "stepfun",
+    headquarters: "CN",
+    countryFlag: "🇨🇳",
+    countryName: "China",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://platform.stepfun.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://platform.stepfun.ai/docs/en/agreement/userservice",
+    },
+  },
+  nvidia: {
+    name: "NVIDIA",
+    displayName: "NVIDIA NIM",
+    slug: "nvidia",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: null,
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/nvidia-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["US"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: true,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf",
+      privacyPolicyURL: "https://www.nvidia.com/en-us/about-nvidia/privacy-policy/",
+    },
+  },
+  tencent: {
+    name: "Tencent",
+    displayName: "Tencent Cloud (Hunyuan)",
+    slug: "tencent",
+    headquarters: "CN",
+    countryFlag: "🇨🇳",
+    countryName: "China",
+    statusPageUrl: "https://status.tencentcloud.com",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.tencentcloud.com&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["SG"],
+      statusPageUrl: "https://status.tencentcloud.com",
+      pricingStrategy: "openai_extended",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://www.tencentcloud.com/en/document/product/301/78869",
+      privacyPolicyURL: "https://www.tencentcloud.com/en/document/product/1300/78952",
+    },
+  },
+  xiaomi: {
+    name: "Xiaomi",
+    displayName: "Xiaomi (MiMo)",
+    slug: "xiaomi",
+    headquarters: "CN",
+    countryFlag: "🇨🇳",
+    countryName: "China",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.mi.com&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["SG", "NL"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      retentionDays: 30,
+      termsOfServiceURL: "https://platform.xiaomimimo.com/#/docs/terms/user-agreement",
+      privacyPolicyURL: "https://platform.xiaomimimo.com/#/docs/terms/privacy-policy",
+    },
+  },
+  together: {
+    name: "Together",
+    displayName: "Together AI",
+    slug: "together",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.together.ai/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/together.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.together.ai/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://www.together.ai/terms-of-service",
+      privacyPolicyURL: "https://www.together.ai/privacy",
+    },
+  },
+  perplexity: {
+    name: "Perplexity",
+    displayName: "Perplexity AI",
+    slug: "perplexity",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.perplexity.ai/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/perplexity-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.perplexity.ai/",
+      pricingStrategy: "perplexity",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://www.perplexity.ai/hub/legal/perplexity-api-terms-of-service",
+      privacyPolicyURL: "https://www.perplexity.ai/hub/legal/privacy-policy",
+    },
+  },
+  nebius: {
+    name: "Nebius",
+    displayName: "Nebius Token Factory",
+    slug: "nebius",
+    headquarters: "NL",
+    countryFlag: "🇳🇱",
+    countryName: "Netherlands",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://docs.nebius.com&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://docs.nebius.com/legal/studio/terms-of-use/",
+      privacyPolicyURL: "https://docs.nebius.com/legal/studio/privacy/",
+    },
+  },
+  sambanova: {
+    name: "SambaNova",
+    displayName: "SambaNova Systems",
+    slug: "sambanova",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.sambanova.ai/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://sambanova.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.sambanova.ai/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://sambanova.ai/terms-and-conditions",
+      privacyPolicyURL: "https://sambanova.ai/privacy-policy",
+    },
+  },
+  upstage: {
+    name: "Upstage",
+    displayName: "Upstage (Solar)",
+    slug: "upstage",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://upstage.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://www.upstage.ai/terms-of-service",
+      privacyPolicyURL: "https://www.upstage.ai/privacy-policy",
+    },
+  },
+  seed: {
+    name: "Seed",
+    displayName: "ByteDance (Seed / Doubao)",
+    slug: "seed",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://seed.bytedance.com&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: false,
+      pricingStrategy: "byteplus",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://docs.byteplus.com/en/docs/legal/docs-terms-of-service",
+      privacyPolicyURL: "https://docs.byteplus.com/en/docs/legal/docs-privacy-policy",
+    },
+  },
+  novita: {
+    name: "Novita",
+    displayName: "NovitaAI",
+    slug: "novita",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.novita.ai/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://novita.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.novita.ai/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://novita.ai/legal/terms-of-service",
+      privacyPolicyURL: "https://novita.ai/legal/privacy-policy",
+    },
+  },
+  fireworks: {
+    name: "Fireworks",
+    displayName: "Fireworks AI",
+    slug: "fireworks",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.fireworks.ai/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://fireworks.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.fireworks.ai/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://fireworks.ai/terms-of-service",
+      privacyPolicyURL: "https://fireworks.ai/privacy-policy",
+    },
+  },
+  baseten: {
+    name: "BaseTen",
+    displayName: "Baseten",
+    slug: "baseten",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.baseten.co/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://baseten.co&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.baseten.co/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://www.baseten.co/terms-and-conditions",
+      privacyPolicyURL: "https://www.baseten.co/privacy-policy",
+    },
+  },
+  crusoe: {
+    name: "Crusoe",
+    displayName: "Crusoe Cloud",
+    slug: "crusoe",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.crusoecloud.com/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.crusoe.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: true,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.crusoecloud.com/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://legal.crusoe.ai/open-router#managed-inference-tos-open-router",
+      privacyPolicyURL: "https://legal.crusoe.ai/open-router#cloud-privacy-policy",
+    },
+  },
+  modal: {
+    name: "Modal",
+    displayName: "Modal Labs",
+    slug: "modal",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.modal.com/",
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://modal.com&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      statusPageUrl: "https://status.modal.com/",
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://modal.com/legal/terms",
+      privacyPolicyURL: "https://modal.com/legal/privacy-policy",
+    },
+  },
+  siliconflow: {
+    name: "SiliconFlow",
+    displayName: "SiliconFlow",
+    slug: "siliconflow",
+    headquarters: "SG",
+    countryFlag: "🇸🇬",
+    countryName: "Singapore",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://siliconflow.cn&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["US"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://docs.siliconflow.com/en/legals/terms-of-service",
+      privacyPolicyURL: "https://docs.siliconflow.com/en/legals/privacy-policy",
+    },
+  },
+  venice: {
+    name: "Venice",
+    displayName: "Venice AI",
+    slug: "venice",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: null,
+    iconUrl: "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://venice.ai&size=256",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      datacenters: ["US"],
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://venice.ai/legal/tos",
+      privacyPolicyURL: "https://venice.ai/legal/privacy-policy",
+    },
+  },
+  microsoft: {
+    name: "Microsoft",
+    displayName: "Microsoft (Phi)",
+    slug: "microsoft",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://azure.status.microsoft.com/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/microsoft-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: false,
+      moderationRequired: true,
+      byokEnabled: true,
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: true,
+      termsOfServiceURL: "https://www.microsoft.com/legal/terms-of-use",
+      privacyPolicyURL: "https://privacy.microsoft.com/privacystatement",
+    },
+  },
+  amazon: {
+    name: "Amazon",
+    displayName: "Amazon Bedrock (Nova)",
+    slug: "amazon",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://health.aws.amazon.com/health/status",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/aws-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      pricingStrategy: "bedrock",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://aws.amazon.com/service-terms/",
+      privacyPolicyURL: "https://aws.amazon.com/privacy/",
+    },
+  },
+  huggingface: {
+    name: "Hugging Face",
+    displayName: "Hugging Face",
+    slug: "huggingface",
+    headquarters: "US",
+    countryFlag: "🇺🇸",
+    countryName: "United States",
+    statusPageUrl: "https://status.huggingface.co/",
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/huggingface-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://huggingface.co/terms-of-service",
+      privacyPolicyURL: "https://huggingface.co/privacy",
+    },
+  },
+  "01-ai": {
+    name: "01.AI",
+    displayName: "01.AI (Yi)",
+    slug: "01-ai",
+    headquarters: "CN",
+    countryFlag: "🇨🇳",
+    countryName: "China",
+    statusPageUrl: null,
+    iconUrl: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/yi-color.svg",
+    serviceStatus: {
+      hasChatCompletions: true,
+      hasCompletions: false,
+      isAbortable: true,
+      moderationRequired: false,
+      byokEnabled: true,
+      pricingStrategy: "openai_chat_completions",
+    },
+    dataPolicy: {
+      training: false,
+      retainsPrompts: false,
+      termsOfServiceURL: "https://01.ai",
+      privacyPolicyURL: "https://01.ai",
+    },
+  },
+};
+
+// Aliases mapping common permutations to the primary slug
+const SLUG_ALIASES: Record<string, string> = {
+  "meta-llama": "meta",
+  llama: "meta",
+  "google-deepmind": "google",
+  "google-ai-studio": "google",
+  "google-vertex": "google",
+  gemini: "google",
+  deepmind: "google",
+  glm: "z-ai",
+  zhipuai: "z-ai",
+  zhipu: "z-ai",
+  moonshot: "moonshotai",
+  kimi: "moonshotai",
+  "bytedance-seed": "seed",
+  bytedance: "seed",
+  doubao: "seed",
+  "x-ai": "xai",
+  grok: "xai",
+  clarifai: "arcee-ai",
+  "claude-on-aws": "anthropic",
+  "01-ai": "01-ai",
+  "01ai": "01-ai",
+  yi: "01-ai",
+  huggingfaceh4: "huggingface",
+  hf: "huggingface",
+  microsoft: "microsoft",
+  msft: "microsoft",
+  amazon: "amazon",
+  aws: "amazon",
+};
+
+export const PROVIDER_BRAND_COLORS: Record<string, string> = {
+  openai: "#10a37f",
+  anthropic: "#d97757",
+  google: "#4285f4",
+  "google-deepmind": "#4285f4",
+  deepseek: "#1e88e5",
+  meta: "#0668e1",
+  "meta-llama": "#0668e1",
+  mistral: "#f97316",
+  mistralai: "#f97316",
+  "x-ai": "#111827",
+  xai: "#111827",
+  qwen: "#6366f1",
+  cohere: "#39594d",
+  groq: "#f55036",
+  moonshot: "#0284c7",
+  moonshotai: "#0284c7",
+  "z-ai": "#2563eb",
+  zhipuai: "#2563eb",
+  glm: "#2563eb",
+  minimax: "#e11d48",
+  together: "#7c3aed",
+  nvidia: "#76b900",
+  amazon: "#ff9900",
+  microsoft: "#00a4ef",
+  perplexity: "#22b8cf",
+  huggingface: "#ffcc4d",
+  "01-ai": "#2563eb",
+};
+
+export const VERIFIED_ORIGINAL_ICONS: Record<string, string> = {
+  gemini: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/gemini-color.svg",
+  google: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/gemini-color.svg",
+  "google-deepmind": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/gemini-color.svg",
+  deepmind: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/gemini-color.svg",
+
+  claude: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/claude-color.svg",
+  anthropic: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/claude-color.svg",
+
+  openai: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openai.svg",
+  gpt: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openai.svg",
+  chatgpt: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openai.svg",
+
+  llama: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/meta-color.svg",
+  meta: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/meta-color.svg",
+  "meta-llama": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/meta-color.svg",
+
+  deepseek: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/deepseek-color.svg",
+
+  mistral: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/mistral-color.svg",
+  mistralai: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/mistral-color.svg",
+  codestral: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/mistral-color.svg",
+  mixtral: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/mistral-color.svg",
+
+  qwen: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/qwen-color.svg",
+  alibaba: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/qwen-color.svg",
+
+  grok: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/grok.svg",
+  xai: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/grok.svg",
+  "x-ai": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/grok.svg",
+
+  cohere: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/cohere-color.svg",
+  command: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/cohere-color.svg",
+
+  perplexity: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/perplexity-color.svg",
+  sonar: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/perplexity-color.svg",
+
+  minimax: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/minimax-color.svg",
+  hailuo: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/minimax-color.svg",
+
+  moonshot: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/kimi-color.svg",
+  moonshotai: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/kimi-color.svg",
+  kimi: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/kimi-color.svg",
+
+  "z-ai": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu-color.svg",
+  zhipu: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu-color.svg",
+  zhipuai: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu-color.svg",
+  glm: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu-color.svg",
+
+  nvidia: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/nvidia-color.svg",
+  nemotron: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/nvidia-color.svg",
+
+  microsoft: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/microsoft-color.svg",
+  phi: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/microsoft-color.svg",
+
+  amazon: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/aws-color.svg",
+  aws: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/aws-color.svg",
+  nova: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/aws-color.svg",
+
+  groq: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/groq.svg",
+  together: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/together.svg",
+  huggingface: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/huggingface-color.svg",
+  huggingfaceh4: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/huggingface-color.svg",
+
+  "01-ai": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/yi-color.svg",
+  "01ai": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/yi-color.svg",
+  yi: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/yi-color.svg",
+  cloudflare: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/cloudflare.svg",
+};
+
+export function getModelIconUrl(providerOrAuthor: string, modelSlug?: string): string {
+  const author = (providerOrAuthor || "").toLowerCase().trim();
+  const model = (modelSlug || "").toLowerCase().trim();
+  const full = `${author} ${model}`;
+
+  // 1. Model-specific detection (highest priority so Google Gemini gets Gemini icon, not generic Google)
+  if (full.includes("gemini")) return VERIFIED_ORIGINAL_ICONS.gemini;
+  if (full.includes("claude")) return VERIFIED_ORIGINAL_ICONS.claude;
+  if (full.includes("gpt") || full.includes("o1-") || full.includes("o3-") || full.includes("o4-") || full.includes("chatgpt")) return VERIFIED_ORIGINAL_ICONS.openai;
+  if (full.includes("llama")) return VERIFIED_ORIGINAL_ICONS.llama;
+  if (full.includes("deepseek")) return VERIFIED_ORIGINAL_ICONS.deepseek;
+  if (full.includes("mistral") || full.includes("codestral") || full.includes("mixtral") || full.includes("ministral") || full.includes("pixtral")) return VERIFIED_ORIGINAL_ICONS.mistral;
+  if (full.includes("qwen") || full.includes("qwq")) return VERIFIED_ORIGINAL_ICONS.qwen;
+  if (full.includes("grok")) return VERIFIED_ORIGINAL_ICONS.grok;
+  if (full.includes("kimi") || full.includes("moonshot")) return VERIFIED_ORIGINAL_ICONS.kimi;
+  if (full.includes("glm") || full.includes("zhipu")) return VERIFIED_ORIGINAL_ICONS.glm;
+  if (full.includes("minimax") || full.includes("hailuo")) return VERIFIED_ORIGINAL_ICONS.minimax;
+  if (full.includes("sonar") || full.includes("perplexity")) return VERIFIED_ORIGINAL_ICONS.perplexity;
+  if (full.includes("command")) return VERIFIED_ORIGINAL_ICONS.cohere;
+  if (full.includes("nemotron")) return VERIFIED_ORIGINAL_ICONS.nvidia;
+  if (full.includes("phi-") || full.includes("phi3") || full.includes("phi4")) return VERIFIED_ORIGINAL_ICONS.phi;
+  if (full.includes("nova-") || full.includes("amazon-nova")) return VERIFIED_ORIGINAL_ICONS.nova;
+  if (full.includes("yi-") || full.includes("01-ai")) return VERIFIED_ORIGINAL_ICONS["01-ai"];
+
+  // 2. Direct match in verified original icons
+  if (VERIFIED_ORIGINAL_ICONS[author]) return VERIFIED_ORIGINAL_ICONS[author];
+  if (model && VERIFIED_ORIGINAL_ICONS[model]) return VERIFIED_ORIGINAL_ICONS[model];
+
+  // 3. Provider Registry iconUrl
+  const pInfo = getProviderInfo(author) || (model ? getProviderInfo(model) : null);
+  if (pInfo?.iconUrl) return pInfo.iconUrl;
+
+  // 4. Clean domain fallback
+  const domain = (author.includes(".") ? `https://${author}` : `https://${author}.com`);
+  return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(domain)}&size=256`;
+}
+
+export function getProviderInfo(authorOrSlug: string): ProviderMetadata | null {
+  if (!authorOrSlug) return null;
+  const raw = authorOrSlug.toLowerCase().trim();
+  const direct = PROVIDERS_REGISTRY[raw];
+  if (direct) return direct;
+
+  const alias = SLUG_ALIASES[raw];
+  if (alias && PROVIDERS_REGISTRY[alias]) return PROVIDERS_REGISTRY[alias];
+
+  // Try substring match
+  for (const key of Object.keys(PROVIDERS_REGISTRY)) {
+    if (raw.includes(key) || key.includes(raw)) {
+      return PROVIDERS_REGISTRY[key];
+    }
+  }
+
+  return null;
+}

@@ -1,6 +1,6 @@
 // src/components/ResourceNavBar.tsx
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { RESOURCE_CATEGORIES } from "../data/resourceLinks";
 
 const ALL_CATEGORIES = [...RESOURCE_CATEGORIES, { id: "no-life-without-wife", label: "No Life Without Wife", links: [] }];
@@ -40,7 +40,6 @@ export default function ResourceNavBar() {
   const [platformsAnchorCenter, setPlatformsAnchorCenter] = useState<number | null>(null);
   const [platformsPanelLeft, setPlatformsPanelLeft] = useState<number | null>(null);
   const platformsPanelRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const location = useLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -207,20 +206,37 @@ export default function ResourceNavBar() {
           <div className="p-3">
             {activeCategory.links.length > 0 ? (
               <div className={`grid grid-cols-1 ${gridCols} gap-1`}>
-                {activeCategory.links.map((link) => (
-                  <button
-                    key={link.id}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => link.url.startsWith("/") ? navigate(link.url) : navigate(`/resources/${activeCategory.id}/${link.id}`)}
-                    className="focus-ring w-64 max-w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-royal/5"
-                  >
-                    <div className="text-sm font-medium text-royal">{link.name}</div>
-                    {link.description && (
-                      <div className="text-xs text-ink-faint mt-0.5">{link.description}</div>
-                    )}
-                  </button>
-                ))}
+                {activeCategory.links.map((link) => {
+                  const isExternal = link.url.startsWith("http");
+                  const href = isExternal ? link.url : link.url.startsWith("/") ? link.url : `/resources/${activeCategory.id}/${link.id}`;
+                  return isExternal ? (
+                    <a
+                      key={link.id}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      role="menuitem"
+                      className="focus-ring w-64 max-w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-royal/5 block"
+                    >
+                      <div className="text-sm font-medium text-royal">{link.name}</div>
+                      {link.description && (
+                        <div className="text-xs text-ink-faint mt-0.5">{link.description}</div>
+                      )}
+                    </a>
+                  ) : (
+                    <Link
+                      key={link.id}
+                      to={href}
+                      role="menuitem"
+                      className="focus-ring w-64 max-w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-royal/5 block"
+                    >
+                      <div className="text-sm font-medium text-royal">{link.name}</div>
+                      {link.description && (
+                        <div className="text-xs text-ink-faint mt-0.5">{link.description}</div>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="w-64 rounded-lg border border-dashed border-ink/15 bg-ink/[0.02] px-3 py-4 text-center">

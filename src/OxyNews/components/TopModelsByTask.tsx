@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import BASE_URL from "../../Config";
-import TvrkBanner from "./TvrkBanner";
+import { getProviderInfo, getModelIconUrl } from "../lib/providerData";
 
 // ── API ──────────────────────────────────────────────────────────────────────
 const API_URL = `${BASE_URL}/marketing-service/campgin/rankings/task-spend`;
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// ── Totally Different Vibrant Macro Category Colors ──────────────────────────
 const COLORS: Record<string, string> = {
-  general: "#ff8244", agent: "#7c6bef", code: "#3cb371", data: "#0088ff",
+  general: "#6366f1", // Royal Indigo (was #ff8244)
+  agent: "#ec4899",   // Vibrant Rose / Pink (was #7c6bef)
+  code: "#0d9488",    // Teal Jade (was #3cb371)
+  data: "#f59e0b",    // Radiant Amber Gold (was #0088ff)
 };
 
 const NAMES: Record<string, string> = {
@@ -25,6 +28,126 @@ const NAMES: Record<string, string> = {
   "code:frontend_ui": "Frontend & UI", "code:repo_scan": "Repo Scanning",
   "code:devops_config": "DevOps Config", "code:sql_database": "SQL & Databases",
   "data:extraction": "Data Extraction", "data:transformation": "Data Transformation",
+};
+
+// ── Distinct Vibrant Colors for Every Individual Task Tile ──────────────────
+const TASK_COLORS: Record<string, string> = {
+  // General Category Tasks
+  classification_tagging: "#f43f5e",   // Rose Crimson
+  content_writing: "#ea580c",          // Sunset Tangerine
+  roleplay_fiction: "#8b5cf6",         // Vivid Purple
+  qa_knowledge: "#2563eb",             // Royal Blue
+  conversational_reply: "#10b981",     // Emerald Mint
+  research_report: "#06b6d4",          // Bright Cyan
+  customer_support: "#14b8a6",         // Vivid Teal
+  summarization: "#eab308",            // Amber Gold
+  security_audit: "#dc2626",           // Crimson Red
+  math: "#4f46e5",                     // Deep Indigo
+  finance_trading: "#059669",          // Forest Green
+  translation: "#a855f7",              // Purple Orchid
+  devops: "#64748b",                   // Slate Steel
+
+  // Agent Category Tasks
+  "agent:workflow_execution": "#7c3aed", // Royal Violet
+  "agent:multi_step_planning": "#3b82f6", // Sky Blue
+  "agent:tool_dispatch": "#0d9488",      // Dark Jade
+  "agent:web_search": "#0284c7",         // Ocean Blue
+  "agent:memory_extraction": "#d946ef",  // Radiant Fuchsia
+
+  // Code Category Tasks
+  "code:general_impl": "#10b981",        // Bright Green
+  "code:debugging": "#e11d48",           // Coral Red
+  "code:file_read_write": "#f59e0b",     // Warm Amber
+  "code:review_security": "#ef4444",     // Vivid Red
+  "code:shell_execution": "#6366f1",     // Royal Indigo
+  "code:frontend_ui": "#8b5cf6",         // Lavender Purple
+  "code:repo_scan": "#06b6d4",           // Cyan
+  "code:devops_config": "#475569",       // Dark Slate
+  "code:sql_database": "#1d4ed8",        // Deep Navy
+
+  // Data Category Tasks
+  "data:extraction": "#ec4899",          // Hot Pink
+  "data:transformation": "#9333ea",      // Deep Violet
+};
+
+// Fallback diverse palette for dynamically discovered tasks
+const DIVERSE_PALETTE = [
+  "#6366f1", "#ec4899", "#10b981", "#f59e0b",
+  "#3b82f6", "#8b5cf6", "#14b8a6", "#ea580c",
+  "#06b6d4", "#d946ef", "#84cc16", "#ef4444",
+  "#0284c7", "#a855f7", "#059669", "#f43f5e",
+];
+
+function getTileColor(tag: string, catKey: string, index: number): string {
+  if (TASK_COLORS[tag]) return TASK_COLORS[tag];
+  return DIVERSE_PALETTE[index % DIVERSE_PALETTE.length] || COLORS[catKey] || "#6366f1";
+}
+
+// Provider brand colors for high-contrast badges & fallback letters
+const PROVIDER_BRAND_COLORS: Record<string, string> = {
+  openai: "#10a37f",
+  anthropic: "#d97757",
+  google: "#4285f4",
+  "google-deepmind": "#4285f4",
+  deepseek: "#1e88e5",
+  meta: "#0668e1",
+  "meta-llama": "#0668e1",
+  mistral: "#f97316",
+  mistralai: "#f97316",
+  "x-ai": "#111827",
+  xai: "#111827",
+  qwen: "#6366f1",
+  cohere: "#39594d",
+  groq: "#f55036",
+  moonshot: "#0284c7",
+  moonshotai: "#0284c7",
+  "z-ai": "#2563eb",
+  zhipuai: "#2563eb",
+  glm: "#2563eb",
+  minimax: "#e11d48",
+  together: "#7c3aed",
+  nvidia: "#76b900",
+  amazon: "#ff9900",
+  microsoft: "#00a4ef",
+  perplexity: "#22b8cf",
+};
+
+const PROVIDER_DOMAINS: Record<string, string> = {
+  openai: "https://openai.com",
+  anthropic: "https://anthropic.com",
+  deepseek: "https://deepseek.com",
+  google: "https://google.com",
+  "google-deepmind": "https://deepmind.google",
+  "meta-llama": "https://meta.com",
+  meta: "https://meta.com",
+  "x-ai": "https://x.ai",
+  xai: "https://x.ai",
+  mistralai: "https://mistral.ai",
+  mistral: "https://mistral.ai",
+  qwen: "https://qwenlm.ai",
+  cohere: "https://cohere.com",
+  nvidia: "https://nvidia.com",
+  moonshotai: "https://moonshot.cn",
+  moonshot: "https://moonshot.cn",
+  "z-ai": "https://zhipuai.cn",
+  zhipuai: "https://zhipuai.cn",
+  glm: "https://zhipuai.cn",
+  minimax: "https://minimaxi.com",
+  microsoft: "https://microsoft.com",
+  amazon: "https://aws.amazon.com",
+  perplexity: "https://perplexity.ai",
+  groq: "https://groq.com",
+  together: "https://together.ai",
+  "01-ai": "https://01.ai",
+  nousresearch: "https://nousresearch.com",
+  huggingface: "https://huggingface.co",
+  huggingfaceh4: "https://huggingface.co",
+  databricks: "https://databricks.com",
+  liquid: "https://liquid.ai",
+  inflection: "https://inflection.ai",
+  ai21: "https://ai21.com",
+  allenai: "https://allenai.org",
+  writer: "https://writer.com",
 };
 
 // Exact known mappings where provider slug ≠ icon filename
@@ -60,10 +183,8 @@ const LOGO_OVERRIDES: Record<string, string> = {
   "writer": "Writer",
 };
 
-function getLogoUrl(provider: string): string {
-  const name = LOGO_OVERRIDES[provider] ??
-    provider.replace(/-/g, "").replace(/\b\w/g, c => c.toUpperCase());
-  return `https://openrouter.ai/images/icons/${name}.svg`;
+function getLogoUrl(provider: string, model?: string): string {
+  return getModelIconUrl(provider, model);
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -242,22 +363,36 @@ function buildTiles(cats: Category[], W: number, H: number): Tile[] {
 }
 
 
-// ProviderLogo is only used in Tooltip (SVG context)
-function ProviderLogo({ provider, size, offsetX = 0, offsetY = 0 }: { provider: string; size: number; offsetX?: number; offsetY?: number }) {
+// ProviderLogo is used in SVG tiles and Tooltip
+function ProviderLogo({ provider, model, size, offsetX = 0, offsetY = 0 }: { provider: string; model?: string; size: number; offsetX?: number; offsetY?: number }) {
   const [failed, setFailed] = useState(false);
+  const p = (provider || "").toLowerCase().trim();
+  const brandColor = PROVIDER_BRAND_COLORS[p] || "#6366f1";
 
   if (failed) {
     return (
-      <text x={offsetX + size / 2} y={offsetY + size / 2 + size * 0.2} textAnchor="middle" fontSize={size * 0.52} fontWeight="bold" fill="#64748b">
-        {provider[0]?.toUpperCase()}
-      </text>
+      <g>
+        <rect x={offsetX} y={offsetY} width={size} height={size} rx={size * 0.22} fill={brandColor} />
+        <text
+          x={offsetX + size / 2}
+          y={offsetY + size / 2 + size * 0.18}
+          textAnchor="middle"
+          fontSize={size * 0.52}
+          fontWeight="800"
+          fill="#ffffff"
+        >
+          {provider[0]?.toUpperCase()}
+        </text>
+      </g>
     );
   }
   return (
     <image
-      href={getLogoUrl(provider)}
-      x={offsetX + size * 0.1} y={offsetY + size * 0.1}
-      width={size * 0.8} height={size * 0.8}
+      href={getLogoUrl(provider, model)}
+      x={offsetX + size * 0.08}
+      y={offsetY + size * 0.08}
+      width={size * 0.84}
+      height={size * 0.84}
       preserveAspectRatio="xMidYMid meet"
       onError={() => setFailed(true)}
     />
@@ -265,18 +400,35 @@ function ProviderLogo({ provider, size, offsetX = 0, offsetY = 0 }: { provider: 
 }
 
 // ── ProviderIcon (HTML img with fallback) ────────────────────────────────────
-function ProviderIcon({ provider, size }: { provider: string; size: number }) {
+function ProviderIcon({ provider, model, size }: { provider: string; model?: string; size: number }) {
   const [failed, setFailed] = useState(false);
+  const p = (provider || "").toLowerCase().trim();
+  const brandColor = PROVIDER_BRAND_COLORS[p] || "#6366f1";
+
   if (failed) {
     return (
-      <span style={{ fontSize: size * 0.6, fontWeight: 700, color: "#64748b", lineHeight: 1 }}>
+      <span
+        style={{
+          width: size,
+          height: size,
+          borderRadius: 4,
+          background: brandColor,
+          color: "#ffffff",
+          fontSize: size * 0.55,
+          fontWeight: 800,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          lineHeight: 1,
+        }}
+      >
         {provider[0]?.toUpperCase()}
       </span>
     );
   }
   return (
     <img
-      src={getLogoUrl(provider)}
+      src={getLogoUrl(provider, model)}
       alt={provider}
       width={size}
       height={size}
@@ -345,7 +497,7 @@ function Tooltip({ data, containerRef }: { data: TooltipData; containerRef: Reac
           <div key={m.id || i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 8, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
             <span style={{ color: "#64748b", fontSize: 11, fontWeight: 800, width: 14, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
             <span style={{ width: 22, height: 22, borderRadius: 6, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-              <ProviderIcon provider={m.provider} size={15} />
+              <ProviderIcon provider={m.provider} model={m.rawModel} size={15} />
             </span>
             <span style={{ flex: 1, color: "#0f172a", fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {m.rawModel || m.name || m.id || "Model"}
@@ -484,9 +636,6 @@ export default function TopModelsByTask() {
                 Each task's leading models, ranked by share of {metric === "spend" ? "spend" : "tokens"}
               </p>
             </div>
-
-            {/* TVRK Brochure Banner */}
-            <TvrkBanner className="my-1 shrink-0" />
           </div>
 
           <div style={{ display: "flex", gap: 6 }}>
@@ -531,7 +680,7 @@ export default function TopModelsByTask() {
               const x0 = x + GAP, y0 = y + GAP, x1 = x + w - GAP, y1 = y + h - GAP;
               const tw = x1 - x0, th = y1 - y0;
               if (tw < 2 || th < 2) return null;
-              const color = shade(cat.color, i);
+              const color = getTileColor(task.tag, cat.key, i);
               const big = tw >= 70 && th >= 44;
               const sz = big ? 24 : (tw >= 34 && th >= 30 ? 18 : 12);
               const showBadge = tw >= 14 && th >= 14;
@@ -539,6 +688,7 @@ export default function TopModelsByTask() {
               const bx = big ? x0 + 8 : x0 + (tw - sz) / 2;
               const by = big ? y0 + 8 : y0 + (th - sz) / 2;
               const provider = task.models[0]?.provider ?? "";
+              const topModel = task.models[0]?.rawModel ?? "";
 
               return (
                 <g key={idx}
@@ -546,15 +696,16 @@ export default function TopModelsByTask() {
                   style={{ cursor: "pointer" }}
                   aria-label={`${task.name}: ${task.value.toFixed(1)}% of total`}
                 >
-                  <rect x={x0} y={y0} width={tw} height={th} fill={color} rx={3} />
+                  <title>{`${task.name}: ${task.value.toFixed(1)}% share (${cat.label})`}</title>
+                  <rect x={x0} y={y0} width={tw} height={th} fill={color} rx={4} />
                   {showBadge && (
                     <>
                       <clipPath id={`clip-${idx}`}>
-                        <rect x={bx} y={by} width={sz} height={sz} rx={sz * 0.2} />
+                        <rect x={bx} y={by} width={sz} height={sz} rx={sz * 0.22} />
                       </clipPath>
-                      <rect x={bx} y={by} width={sz} height={sz} fill="rgba(255,255,255,0.95)" rx={sz * 0.2} />
+                      <rect x={bx} y={by} width={sz} height={sz} fill="#ffffff" stroke="rgba(0,0,0,0.15)" strokeWidth="0.8" rx={sz * 0.22} />
                       <g clipPath={`url(#clip-${idx})`}>
-                        <ProviderLogo provider={provider} size={sz} offsetX={bx} offsetY={by} />
+                        <ProviderLogo provider={provider} model={topModel} size={sz} offsetX={bx} offsetY={by} />
                       </g>
                     </>
                   )}
@@ -571,13 +722,24 @@ export default function TopModelsByTask() {
                     const maxLines = Math.max(1, Math.floor((th - 48) / 17));
                     const shown = lines.slice(0, maxLines);
                     if (maxLines < lines.length) shown[shown.length - 1] = shown[shown.length - 1].slice(0, maxChars - 1) + "…";
-                    return shown.map((line, li) => (
-                      <text key={li} x={x0 + 8} y={y0 + 40 + li * 17}
-                        fill="#ffffff" fontSize={13} fontWeight="800" fontFamily="system-ui, -apple-system, sans-serif"
-                        style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)", letterSpacing: "0.01em" }}>
-                        {line}
-                      </text>
-                    ));
+                    return (
+                      <>
+                        {shown.map((line, li) => (
+                          <text key={li} x={x0 + 8} y={y0 + 40 + li * 17}
+                            fill="#ffffff" fontSize={13} fontWeight="800" fontFamily="system-ui, -apple-system, sans-serif"
+                            style={{ textShadow: "0 1px 3px rgba(0,0,0,0.75)", letterSpacing: "0.01em" }}>
+                            {line}
+                          </text>
+                        ))}
+                        {th >= 76 && tw >= 90 && (
+                          <text x={x0 + 8} y={y0 + 40 + shown.length * 17}
+                            fill="rgba(255,255,255,0.92)" fontSize={11} fontWeight="700" fontFamily="system-ui, -apple-system, sans-serif"
+                            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+                            {task.value.toFixed(1)}% share
+                          </text>
+                        )}
+                      </>
+                    );
                   })()}
                 </g>
               );
@@ -621,33 +783,41 @@ export default function TopModelsByTask() {
                     </tr>
                   </thead>
                   <tbody>
-                    {cat.tasks.map((task, ti) => (
-                      <tr key={task.tag} style={{ background: ti % 2 === 0 ? "#fff" : "#fafbfc", transition: "background 0.1s" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = cat.color + "0d")}
-                        onMouseLeave={e => (e.currentTarget.style.background = ti % 2 === 0 ? "#fff" : "#fafbfc")}
-                      >
-                        <td style={{ padding: "9px 12px", fontWeight: 700, color: "#0f172a", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{task.name}</td>
-                        <td style={{ padding: "9px 12px", textAlign: "center", borderBottom: "1px solid #f1f5f9" }}>
-                          <span style={{ background: cat.color + "18", color: cat.color, fontWeight: 700, fontSize: 10, borderRadius: 20, padding: "2px 8px", border: `1px solid ${cat.color}33` }}>{task.value.toFixed(1)}%</span>
-                        </td>
-                        {[0, 1, 2].map(mi => {
-                          const m = task.models[mi];
-                          return (
-                            <td key={mi} style={{ padding: "9px 12px", borderBottom: "1px solid #f1f5f9" }}>
-                              {m ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                                  <span style={{ width: 22, height: 22, borderRadius: 6, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-                                      <ProviderIcon provider={m.provider} size={15} />
-                                    </span>
-                                  <span style={{ color: "#0f172a", fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{m.name}</span>
-                                  <span style={{ color: cat.color, fontWeight: 800, flexShrink: 0, fontSize: 12 }}>{m.share.toFixed(1)}%</span>
-                                </div>
-                              ) : <span style={{ color: "#cbd5e1" }}>—</span>}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                    {cat.tasks.map((task, ti) => {
+                      const tColor = getTileColor(task.tag, cat.key, ti);
+                      return (
+                        <tr key={task.tag} style={{ background: ti % 2 === 0 ? "#fff" : "#fafbfc", transition: "background 0.1s" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = tColor + "12")}
+                          onMouseLeave={e => (e.currentTarget.style.background = ti % 2 === 0 ? "#fff" : "#fafbfc")}
+                        >
+                          <td style={{ padding: "9px 12px", fontWeight: 700, color: "#0f172a", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ width: 9, height: 9, borderRadius: "50%", background: tColor, flexShrink: 0, boxShadow: `0 0 0 2px ${tColor}26` }} />
+                              <span>{task.name}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: "9px 12px", textAlign: "center", borderBottom: "1px solid #f1f5f9" }}>
+                            <span style={{ background: tColor + "18", color: tColor, fontWeight: 700, fontSize: 10, borderRadius: 20, padding: "2px 8px", border: `1px solid ${tColor}33` }}>{task.value.toFixed(1)}%</span>
+                          </td>
+                          {[0, 1, 2].map(mi => {
+                            const m = task.models[mi];
+                            return (
+                              <td key={mi} style={{ padding: "9px 12px", borderBottom: "1px solid #f1f5f9" }}>
+                                {m ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                                    <span style={{ width: 22, height: 22, borderRadius: 6, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
+                                        <ProviderIcon provider={m.provider} model={m.rawModel} size={15} />
+                                      </span>
+                                    <span style={{ color: "#0f172a", fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{m.name}</span>
+                                    <span style={{ color: tColor, fontWeight: 800, flexShrink: 0, fontSize: 12 }}>{m.share.toFixed(1)}%</span>
+                                  </div>
+                                ) : <span style={{ color: "#cbd5e1" }}>—</span>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -657,71 +827,75 @@ export default function TopModelsByTask() {
       </div>
 
       {/* ── Modal for Selected Task Models ── */}
-      {selectedTask && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "rgba(15, 23, 42, 0.45)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-          onClick={() => setSelectedTask(null)}
-        >
+      {selectedTask && (() => {
+        const tColor = getTileColor(selectedTask.task.tag, selectedTask.cat.key, 0);
+        return (
           <div
             style={{
-              background: "#ffffff",
-              borderRadius: 16,
-              padding: "22px 24px",
-              width: "100%",
-              maxWidth: 440,
-              boxShadow: "0 24px 60px -12px rgba(15, 23, 42, 0.35)",
-              border: "1px solid #cbd5e1",
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              background: "rgba(15, 23, 42, 0.45)",
+              backdropFilter: "blur(4px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={() => setSelectedTask(null)}
           >
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid #f1f5f9" }}>
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 800, background: selectedTask.cat.color + "18", color: selectedTask.cat.color, padding: "3px 10px", borderRadius: 12, border: `1px solid ${selectedTask.cat.color}33` }}>
-                  {selectedTask.cat.label} • {selectedTask.task.value.toFixed(1)}% Share
-                </span>
-                <h3 style={{ margin: "6px 0 0", fontSize: 18, fontWeight: 800, color: "#0f172a" }}>
-                  {selectedTask.task.name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedTask(null)}
-                style={{ border: "none", background: "#f1f5f9", borderRadius: "50%", width: 30, height: 30, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", fontWeight: 700, fontSize: 14 }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, color: "#64748b" }}>
-              All Models ({selectedTask.task.models.length}) — Scroll to inspect:
-            </p>
-
-            <div style={{ maxHeight: 300, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 4 }}>
-              {selectedTask.task.models.map((m, i) => (
-                <div key={m.id || i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: 12, fontWeight: 800, width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
-                  <span style={{ width: 26, height: 26, borderRadius: 8, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-                    <ProviderIcon provider={m.provider} size={18} />
+            <div
+              style={{
+                background: "#ffffff",
+                borderRadius: 16,
+                padding: "22px 24px",
+                width: "100%",
+                maxWidth: 440,
+                boxShadow: "0 24px 60px -12px rgba(15, 23, 42, 0.35)",
+                border: `1.5px solid ${tColor}40`,
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid #f1f5f9" }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 800, background: tColor + "18", color: tColor, padding: "3px 10px", borderRadius: 12, border: `1px solid ${tColor}33` }}>
+                    {selectedTask.cat.label} • {selectedTask.task.value.toFixed(1)}% Share
                   </span>
-                  <span style={{ flex: 1, color: "#0f172a", fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {m.rawModel || m.name || m.id}
-                  </span>
-                  <span style={{ fontWeight: 800, color: "#7c3aed", flexShrink: 0, fontSize: 13 }}>{m.share.toFixed(1)}%</span>
+                  <h3 style={{ margin: "6px 0 0", fontSize: 18, fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: tColor, flexShrink: 0 }} />
+                    {selectedTask.task.name}
+                  </h3>
                 </div>
-              ))}
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  style={{ border: "none", background: "#f1f5f9", borderRadius: "50%", width: 30, height: 30, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", fontWeight: 700, fontSize: 14 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, color: "#64748b" }}>
+                All Models ({selectedTask.task.models.length}) — Scroll to inspect:
+              </p>
+
+              <div style={{ maxHeight: 300, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 4 }}>
+                {selectedTask.task.models.map((m, i) => (
+                  <div key={m.id || i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                    <span style={{ color: "#64748b", fontSize: 12, fontWeight: 800, width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
+                    <span style={{ width: 26, height: 26, borderRadius: 8, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
+                      <ProviderIcon provider={m.provider} model={m.rawModel} size={18} />
+                    </span>
+                    <span style={{ flex: 1, color: "#0f172a", fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {m.rawModel || m.name || m.id}
+                    </span>
+                    <span style={{ fontWeight: 800, color: tColor, flexShrink: 0, fontSize: 13 }}>{m.share.toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

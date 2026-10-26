@@ -10,10 +10,32 @@ import VoiceLoginPage from "./VoiceLoginPage";
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
+  const checkAuth = () => {
+    const userId =
+      localStorage.getItem("userId") || sessionStorage.getItem("userId");
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("accessToken") ||
+      sessionStorage.getItem("token");
+    return Boolean(userId && token);
+  };
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => checkAuth());
 
   useEffect(() => {
     sessionStorage.removeItem("primaryType");
     sessionStorage.removeItem("fromAISTore");
+
+    const updateAuth = () => {
+      setIsLoggedIn(checkAuth());
+    };
+
+    updateAuth();
+    window.addEventListener("storage", updateAuth);
+    return () => {
+      window.removeEventListener("storage", updateAuth);
+    };
   }, []);
 
   const getPostAuthPath = () => {
@@ -36,20 +58,16 @@ const Header: React.FC = () => {
   };
 
   const handleSignIn1 = () => {
-    const userId = localStorage.getItem("userId");
-    const accessToken = localStorage.getItem("accessToken");
-    const redirectPath = getPostAuthPath();
+    const isAuthed = checkAuth();
 
-    // Preserve the page that opened the authentication flow. Both the login
-    // and registration pages use this value after authentication succeeds.
-    sessionStorage.setItem("redirectPath", redirectPath);
-
-    if (userId && accessToken) {
+    if (isAuthed) {
       toast.success("Welcome back!");
-      navigate(redirectPath);
+      navigate("/main/dashboard/home");
       return;
     }
 
+    const redirectPath = getPostAuthPath();
+    sessionStorage.setItem("redirectPath", redirectPath);
     navigate("/whatsapplogin");
   };
 
@@ -70,20 +88,31 @@ const Header: React.FC = () => {
               Voice Assistant
             </button> */}
 
-            <button
-              className="sign-in-btn"
-              aria-label="Sign In"
-              onClick={handleSignIn1}
-              type="button"
-            >
-              <img
-                src={SignInIcon}
-                alt="Sign In"
-                className="sign-in-icon"
-                draggable={false}
-              />
-              <span>Sign In</span>
-            </button>
+            {isLoggedIn ? (
+              <button
+                className="sign-in-btn"
+                aria-label="Dashboard"
+                onClick={handleSignIn1}
+                type="button"
+              >
+                <span>Dashboard</span>
+              </button>
+            ) : (
+              <button
+                className="sign-in-btn"
+                aria-label="Sign In"
+                onClick={handleSignIn1}
+                type="button"
+              >
+                <img
+                  src={SignInIcon}
+                  alt="Sign In"
+                  className="sign-in-icon"
+                  draggable={false}
+                />
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </div>
       </header>

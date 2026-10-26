@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Sparkles, Mic, ShoppingCart, X, Search, Menu } from "lucide-react";
+import { Sparkles, Mic, ShoppingCart, X, Search, Menu, LogOut } from "lucide-react";
 import { FaUserCircle } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import { CartContext } from "../until/CartContext";
@@ -9,6 +10,8 @@ import SearchBar from "../kart/SearchBar";
 import BASE_URL from "../Config";
 import customerApi from "../utils/axiosInstances";
 import VoiceWindow from "./VoiceWindow";
+import { store } from "../store";
+import { logout } from "../store/authSlice";
 
 interface HeaderProps {
   cartCount?: number;
@@ -133,6 +136,29 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
         replace: location.pathname === "/main/search-main",
       });
     }
+  };
+
+  const handleSignout = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be signed out of your account.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, sign out!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const entryPoint = localStorage.getItem("entryPoint") || "/";
+        // Clear Redux auth state and customer auth cookies as well as Web Storage.
+        // Otherwise customerApi can keep sending the previous user's token.
+        store.dispatch(logout());
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem("entryPoint", entryPoint);
+        navigate(entryPoint);
+      }
+    });
   };
 
   return (
@@ -356,6 +382,15 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   {count > 99 ? "99+" : count}
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={handleSignout}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-red-300"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <LogOut size={22} />
             </button>
           </div>
         </div>

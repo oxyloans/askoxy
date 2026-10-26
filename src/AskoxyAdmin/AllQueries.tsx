@@ -373,6 +373,7 @@ const AllQueries: React.FC = () => {
               <Option value="FREESAMPLE">RICE QUERIES</Option>
               <Option value="BLOGS">BLOG QUERIES</Option>
               <Option value="SERVICES">SERVICES QUERIES</Option>
+              <option value="JOURNEYS">LEAGUE JOURNEYS QUERIES</option>
               {/* <Option value="LAUNCHAGENTS">AGENT QUERIES</Option> */}
 
               {/* <Option value="STUDYABROAD">STUDY ABROAD</Option>

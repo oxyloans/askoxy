@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { customerApi } from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 import { ColumnsType } from "antd/es/table";
@@ -81,6 +81,21 @@ interface PreviewFile {
 
 const TicketHistoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const paramOffer =
+    searchParams.get("offer") ||
+    searchParams.get("askOxyOffer") ||
+    searchParams.get("askOxyOffersFilter");
+  const locationState = location.state as
+    | { askOxyOffer?: string; askOxyOffersFilter?: string }
+    | undefined;
+  const initialOffer =
+    paramOffer ||
+    locationState?.askOxyOffersFilter ||
+    locationState?.askOxyOffer ||
+    "FREESAMPLE";
 
   const storedUserId = localStorage.getItem("userId") || "";
   const storedProfileData = localStorage.getItem("profileData") || "";
@@ -94,7 +109,7 @@ const TicketHistoryPage: React.FC = () => {
 
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus>("PENDING");
   const [askOxyOffersFilter, setAskOxyOffersFilter] =
-    useState<string>("FREESAMPLE");
+    useState<string>(initialOffer);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -123,6 +138,27 @@ const TicketHistoryPage: React.FC = () => {
   }, [storedProfileData]);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const offer =
+      params.get("offer") ||
+      params.get("askOxyOffer") ||
+      params.get("askOxyOffersFilter") ||
+      (
+        location.state as
+          | { askOxyOffer?: string; askOxyOffersFilter?: string }
+          | undefined
+      )?.askOxyOffersFilter ||
+      (
+        location.state as
+          | { askOxyOffer?: string; askOxyOffersFilter?: string }
+          | undefined
+      )?.askOxyOffer;
+    if (offer && offer !== askOxyOffersFilter) {
+      setAskOxyOffersFilter(offer);
+    }
+  }, [location.search, location.state]);
+
+  useEffect(() => {
     fetchTickets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStatus, askOxyOffersFilter]);
@@ -137,7 +173,7 @@ const TicketHistoryPage: React.FC = () => {
         {
           askOxyOfers:
             askOxyOffersFilter ||
-            "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,LAUNCHAGENTS,BLOGS,SERVICES,STUDYABROAD,FREESAMPLE",
+            "FREERUDRAKSHA,FREEAI,JOURNEYS,ROTARIAN,WEAREHIRING,LEGALSERVICES,LAUNCHAGENTS,BLOGS,SERVICES,STUDYABROAD,FREESAMPLE",
           userId: storedUserId,
           projectType: "ASKOXY",
           queryStatus: selectedStatus,
@@ -501,7 +537,7 @@ const TicketHistoryPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+    <div className="flex flex-col min-h-screen bg-white">
       <div className="flex-1 px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-4 sm:mb-6">
@@ -552,7 +588,7 @@ const TicketHistoryPage: React.FC = () => {
           </div>
 
           <Card
-            className="shadow-sm border border-slate-100 rounded-2xl"
+            className="shadow-sm border border-slate-50 rounded-md max-w-7xl"
             bodyStyle={{ padding: 0 }}
           >
             <div className="px-4 py-4 sm:px-6 sm:py-4 border-b border-slate-100 bg-slate-50/60">
@@ -560,7 +596,7 @@ const TicketHistoryPage: React.FC = () => {
                 <Col xs={24} md={8}>
                   <div className="flex items-center gap-2 mb-1">
                     <FaFilter className="text-slate-400" />
-                    <span className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+                    <span className="text-xs  tracking-wide text-slate-500 font-semibold">
                       Filter by Status
                     </span>
                   </div>
@@ -580,13 +616,13 @@ const TicketHistoryPage: React.FC = () => {
 
                 <Col xs={24} md={8}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
-                      Filter by Offer
+                    <span className="text-xs  tracking-wide text-slate-500 font-semibold">
+                      Filter by Query Type
                     </span>
                   </div>
 
                   <Select
-                    placeholder="Filter by Offer"
+                    placeholder="Filter by Query Type"
                     value={askOxyOffersFilter}
                     onChange={(value) => setAskOxyOffersFilter(value)}
                     className="w-full mt-1"
@@ -596,6 +632,7 @@ const TicketHistoryPage: React.FC = () => {
                     <Option value="BLOGS">BLOG QUERIES</Option>
                     <Option value="SERVICES">SERVICES QUERIES</Option>
                     <Option value="WEAREHIRING">JOB QUERIES</Option>
+                    <Option value="JOURNEYS">LEAGUE JOURNEYS QUERIES</Option>
                   </Select>
                 </Col>
 

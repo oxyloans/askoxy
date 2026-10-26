@@ -17,6 +17,7 @@ type CampaignWithId = Campaign & {
   campaignStatus?: boolean;
   campainInputType?: string;
   addServiceType?: string | null;
+  journeyName?: string | null;
   imageUrls?: Array<{
     imageId?: string;
     imageUrl?: string;
@@ -42,12 +43,19 @@ const LeagueJourneysPage: React.FC = () => {
         const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
         const json = await res.json();
         const mapped: CampaignWithId[] = [];
-        if (json.status && Array.isArray(json.data)) {
-          json.data.forEach((journey: any) => {
+        const journeyList = Array.isArray(json.data) ? json.data : (json.status && Array.isArray(json.data) ? json.data : []);
+        if (Array.isArray(journeyList)) {
+          journeyList.forEach((journey: any) => {
             (journey.campaigns || []).forEach((c: any) => {
               const campaignId = String(c.campaignId || "").trim();
               if (campaignId) {
-                mapped.push({ ...c, id: campaignId, campaignId } as CampaignWithId);
+                mapped.push({
+                  ...c,
+                  id: campaignId,
+                  campaignId,
+                  journeyName: journey.journeyName || c.journeyName,
+                  addServiceType: c.addServiceType || "LEAGUEJOURNEYS",
+                } as CampaignWithId);
               }
             });
           });
@@ -122,7 +130,9 @@ const LeagueJourneysPage: React.FC = () => {
     navigate(detailPath, {
       state: {
         campaignId: campaign.campaignId,
-        addServiceType: "LEAGUEJOURNEYS",
+        addServiceType: campaign.addServiceType || "LEAGUEJOURNEYS",
+        campaign,
+        journeyName: campaign.journeyName,
         from: "/main/dashboard/leaguejourneys",
       },
     });

@@ -100,7 +100,9 @@ const CampaignDetails: React.FC = () => {
   const isHiringCampaign = campaign?.addServiceType === "WEAREHIRING";
 
   const isJourney =
-    String(campaign?.addServiceType || "").toUpperCase() === "LEAGUEJOURNEYS";
+    String(
+      campaign?.addServiceType || routeState.addServiceType || "",
+    ).toUpperCase() === "LEAGUEJOURNEYS";
 
   const journeyCampaign = campaign as JourneyAwareCampaign | null;
   const routeCampaign = routeState.campaign || null;
@@ -202,25 +204,49 @@ const CampaignDetails: React.FC = () => {
           (c) => c.campaignId?.slice(-4) === campaignId,
         );
 
-        // If not found in main campaigns, search journey campaigns
+        // If not found in main campaigns, search journey campaigns or route state
         if (!foundCampaign) {
-          try {
-            const BASE_URL = (await import("../Config")).default;
-            const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
-            const json = await res.json();
-            if (json.status && Array.isArray(json.data)) {
-              for (const journey of json.data) {
-                const match = (journey.campaigns || []).find(
-                  (c: any) => c.campaignId?.slice(-4) === campaignId
-                );
-                if (match) {
-                  foundCampaign = { ...match, addServiceType: "LEAGUEJOURNEYS" };
-                  break;
+          if (routeState.campaign) {
+            foundCampaign = {
+              ...routeState.campaign,
+              addServiceType:
+                routeState.campaign.addServiceType ||
+                routeState.addServiceType ||
+                "LEAGUEJOURNEYS",
+            };
+          } else {
+            try {
+              const BASE_URL = (await import("../Config")).default;
+              const res = await fetch(
+                `${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`,
+              );
+              const json = await res.json();
+              const journeyList = Array.isArray(json.data)
+                ? json.data
+                : json.status && Array.isArray(json.data)
+                  ? json.data
+                  : [];
+              if (Array.isArray(journeyList)) {
+                for (const journey of journeyList) {
+                  const match = (journey.campaigns || []).find(
+                    (c: any) =>
+                      c.campaignId?.slice(-4) === campaignId ||
+                      c.campaignId === campaignId,
+                  );
+                  if (match) {
+                    foundCampaign = {
+                      ...match,
+                      journeyName: journey.journeyName || match.journeyName,
+                      addServiceType:
+                        match.addServiceType || "LEAGUEJOURNEYS",
+                    };
+                    break;
+                  }
                 }
               }
+            } catch (e) {
+              console.error("Error searching journey campaigns:", e);
             }
-          } catch (e) {
-            console.error("Error searching journey campaigns:", e);
           }
         }
 
@@ -364,11 +390,18 @@ const CampaignDetails: React.FC = () => {
     }
 
     try {
+      const isLeagueJourney =
+        String(
+          campaign?.addServiceType || routeState.addServiceType || "",
+        ).toUpperCase() === "LEAGUEJOURNEYS";
+
+      const offerType = isLeagueJourney ? "JOURNEYS" : "SERVICES";
+
       const success = await submitWriteToUsQuery(
         email || "",
         finalMobileNumber, // ✅ no error now
         comments.trim(),
-        "SERVICES",
+        offerType,
         userId || "",
       );
 

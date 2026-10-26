@@ -16,6 +16,7 @@ interface FormErrors {
   query: string;
   documentId: string;
   userEmail?: string;
+  askOxyOffer?: string;
 }
 
 interface LocationState {
@@ -27,7 +28,6 @@ interface LocationState {
   fromTicketHistory?: boolean;
   askOxyOffer?: string;
 }
-
 
 const CustomAlert: React.FC<{
   isOpen: boolean;
@@ -41,7 +41,8 @@ const CustomAlert: React.FC<{
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         <h3 className="text-lg font-semibold mb-2">Complete Your Profile</h3>
         <p className="text-gray-600 mb-6">
-          Please complete your profile before proceeding. Ensure your first name is entered.
+          Please complete your profile before proceeding. Ensure your first name
+          is entered.
         </p>
         <div className="flex justify-end gap-3">
           <button
@@ -74,13 +75,13 @@ const WriteToUs: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({
     query: "",
     documentId: "",
+    askOxyOffer: "",
   });
   const [showProfileAlert, setShowProfileAlert] = useState(false);
   const [showOrderInfo, setShowOrderInfo] = useState(false);
   const [orderInfo, setOrderInfo] = useState({ orderId: "", orderNewId: "" });
   const [isLoading, setIsLoading] = useState(false);
-  // Which offer this query belongs to (default FREESAMPLE)
-const [askOxyOffer, setAskOxyOffer] = useState<string>("FREESAMPLE");
+  const [askOxyOffer, setAskOxyOffer] = useState<string>("");
 
   const [profileComplete, setProfileComplete] = useState(true);
 
@@ -106,17 +107,17 @@ const [askOxyOffer, setAskOxyOffer] = useState<string>("FREESAMPLE");
   const fetchProfileData = async () => {
     try {
       setIsLoading(true);
-      const customerId = localStorage.getItem('userId');
+      const customerId = localStorage.getItem("userId");
 
       const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails`,
-        { params: { customerId } }
+        { params: { customerId } },
       );
 
       const data = response.data;
 
       // Update form data with profile information
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
         userFirstName: data.firstName || "",
         userEmail: data.email || "",
@@ -143,13 +144,11 @@ const [askOxyOffer, setAskOxyOffer] = useState<string>("FREESAMPLE");
     const fromOrdersPage = locationState.fromOrdersPage === true;
     const fromTicketHistory = locationState.fromTicketHistory === true;
 
-if (fromTicketHistory && locationState.askOxyOffer) {
-  // Coming from TicketHistory with a selected offer (FREEAI, etc.)
-  setAskOxyOffer(locationState.askOxyOffer);
-} else {
-  // Default when user opens WriteToUs directly
-  setAskOxyOffer("FREESAMPLE");
-}
+    if (locationState.askOxyOffer) {
+      setAskOxyOffer(locationState.askOxyOffer);
+    } else {
+      setAskOxyOffer("");
+    }
     if (!fromOrdersPage) {
       localStorage.removeItem("selectedOrderId");
       localStorage.removeItem("selectedOrderNewId");
@@ -205,13 +204,16 @@ if (fromTicketHistory && locationState.askOxyOffer) {
 
     try {
       const response = await customerApi.get(
-        `${BASE_URL}/user-service/write/getQuery/${id}`
+        `${BASE_URL}/user-service/write/getQuery/${id}`,
       );
       if (response.data) {
         setFormData((prev) => ({
           ...prev,
           query: response.data.query || "",
         }));
+        if (response.data.askOxyOfers) {
+          setAskOxyOffer(response.data.askOxyOfers);
+        }
       }
     } catch (error) {
       console.error("Error fetching query:", error);
@@ -219,13 +221,22 @@ if (fromTicketHistory && locationState.askOxyOffer) {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = { query: "", documentId: "" };
+    const newErrors: FormErrors = {
+      query: "",
+      documentId: "",
+      askOxyOffer: "",
+    };
     let isValid = true;
 
     // Check if profile is complete first
     if (!profileComplete) {
       setShowProfileAlert(true);
       return false;
+    }
+
+    if (!askOxyOffer || !askOxyOffer.trim()) {
+      newErrors.askOxyOffer = "Please select what your query is regarding";
+      isValid = false;
     }
 
     if (!formData.query.trim()) {
@@ -243,7 +254,7 @@ if (fromTicketHistory && locationState.askOxyOffer) {
   };
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
 
@@ -260,10 +271,10 @@ if (fromTicketHistory && locationState.askOxyOffer) {
   };
 
   const handleFileupload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    
+
     if (!file) return;
 
     const formData = new FormData();
@@ -281,11 +292,11 @@ if (fromTicketHistory && locationState.askOxyOffer) {
           headers: { "Content-Type": undefined },
           onUploadProgress: (progressEvent) => {
             const progress = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 100)
+              (progressEvent.loaded * 100) / (progressEvent.total || 100),
             );
             setUploadProgress(progress);
           },
-        }
+        },
       );
 
       // Track file upload
@@ -294,7 +305,7 @@ if (fromTicketHistory && locationState.askOxyOffer) {
           file_type: file.type,
           file_size: file.size,
           file_name: file.name,
-          content_type: "support_attachment"
+          content_type: "support_attachment",
         });
       }
 
@@ -337,7 +348,7 @@ if (fromTicketHistory && locationState.askOxyOffer) {
 
     const data = {
       adminDocumentId: "",
-      askOxyOfers: askOxyOffer || "FREESAMPLE",
+      askOxyOfers: askOxyOffer,
 
       comments: finalQuery,
       email: formData.userEmail,
@@ -363,9 +374,10 @@ if (fromTicketHistory && locationState.askOxyOffer) {
         window.gtag("event", "submit_support_query", {
           has_attachment: !!formData.documentId,
           related_to_order: showOrderInfo,
-          query_length: finalQuery.length
+          query_length: finalQuery.length,
         });
       }
+      const submittedOffer = askOxyOffer;
       setFormData({
         query: "",
         documentName: "",
@@ -374,12 +386,23 @@ if (fromTicketHistory && locationState.askOxyOffer) {
         userFirstName: formData.userFirstName,
         whatsappNumber: formData.whatsappNumber,
       });
+      setAskOxyOffer("");
       showNotification("Query submitted successfully!", "success");
 
       localStorage.removeItem("selectedOrderId");
       localStorage.removeItem("selectedOrderNewId");
 
-      navigate("/main/tickethistory");
+      navigate(
+        submittedOffer
+          ? `/main/tickethistory?offer=${encodeURIComponent(submittedOffer)}`
+          : "/main/tickethistory",
+        {
+          state: {
+            askOxyOffer: submittedOffer,
+            askOxyOffersFilter: submittedOffer,
+          },
+        }
+      );
     } catch (error) {
       console.error("Error submitting query", error);
       showNotification("Failed to submit query. Please try again.", "error");
@@ -390,8 +413,9 @@ if (fromTicketHistory && locationState.askOxyOffer) {
 
   const showNotification = (message: string, type: "success" | "error") => {
     const notificationElement = document.createElement("div");
-    notificationElement.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type === "success" ? "bg-green-500" : "bg-red-500"
-      } text-white transform transition-transform duration-300 ease-in-out`;
+    notificationElement.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
+      type === "success" ? "bg-green-500" : "bg-red-500"
+    } text-white transform transition-transform duration-300 ease-in-out`;
     notificationElement.textContent = message;
     document.body.appendChild(notificationElement);
     setTimeout(() => {
@@ -428,7 +452,19 @@ if (fromTicketHistory && locationState.askOxyOffer) {
                 </div>
               </div>
               <button
-                onClick={() => navigate("/main/tickethistory")}
+                onClick={() =>
+                  navigate(
+                    askOxyOffer
+                      ? `/main/tickethistory?offer=${encodeURIComponent(askOxyOffer)}`
+                      : "/main/tickethistory",
+                    {
+                      state: {
+                        askOxyOffer,
+                        askOxyOffersFilter: askOxyOffer,
+                      },
+                    }
+                  )
+                }
                 className="group flex items-center gap-2 bg-purple-50 text-purple-700 px-6 py-3 rounded-half hover:bg-purple-100 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <FiMessageSquare className="w-5 h-5" />
@@ -523,8 +559,62 @@ if (fromTicketHistory && locationState.askOxyOffer) {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <label
+                    htmlFor="askOxyOffer"
+                    className="text-sm font-semibold text-gray-700"
+                  >
+                    Query Regarding *
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="askOxyOffer"
+                      name="askOxyOffer"
+                      value={askOxyOffer}
+                      onChange={(e) => {
+                        setAskOxyOffer(e.target.value);
+                        if (errors.askOxyOffer) {
+                          setErrors((prev) => ({ ...prev, askOxyOffer: "" }));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-gray-50 font-medium cursor-pointer ${
+                        !askOxyOffer ? "text-gray-400" : "text-gray-800"
+                      } ${
+                        errors.askOxyOffer
+                          ? "border-red-500"
+                          : "border-gray-200"
+                      }`}
+                      required
+                    >
+                      <option value="" disabled>
+                        Select query type...
+                      </option>
+                      <option value="FREESAMPLE">Rice Inquiries</option>
+                      <option value="SERVICES">Service Inquiries</option>
+                      <option value="BLOGS">Blog Inquiries</option>
+                      <option value="WEAREHIRING">Job Inquiries</option>
+                      <option value="JOURNEYS" >League journeys Inquiries </option>
+                      {askOxyOffer &&
+                        ![
+                          "FREESAMPLE",
+                          "SERVICES",
+                          "BLOGS",
+                          "WEAREHIRING",
+                          "JOURNEYS"
+                        ].includes(askOxyOffer) && (
+                          <option value={askOxyOffer} className="text-gray-800">
+                            {askOxyOffer}
+                          </option>
+                        )}
+                    </select>
+                  </div>
+                  {errors.askOxyOffer && (
+                    <p className="text-sm text-red-500">{errors.askOxyOffer}</p>
+                  )}
+                </div>
+
                 {id === undefined && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-semibold text-gray-700">
                       Attachment (Optional)
                     </label>

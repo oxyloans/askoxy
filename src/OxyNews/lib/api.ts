@@ -12,8 +12,21 @@ import type {
   RbiCampaignResponse,
   IrdaiCampaignResponse,
 } from "../types";
-const BASE_URL1 = `${BASE_URL}/ai-automation`;
-const LOCAL_BASE = "http://localhost:9041/api/ai-automation";
+import { CODING_AGENTS_DATA, CodingAgentModel } from "../data/codingAgentsData";
+
+export interface RawRankingsItem {
+  date: string;
+  model_permaslug: string;
+  variant: string;
+  variant_permaslug: string;
+  total_completion_tokens: number;
+  total_prompt_tokens: number;
+  count: number;
+  total_usage: number;
+  change: number | null;
+  rankingMetricValue: number;
+}
+export const BASE_URL1 = `${BASE_URL}/ai-automation`;
 const CAMPAIGN_BASE = "http://65.0.147.157:9229/api";
 
 const getAccessToken = (): string | null =>
@@ -192,4 +205,35 @@ export const api = {
 
   getChatHistory: (id: string) =>
     request<ChatMessage[]>(`/paperclip/${id}/chat/history`),
+
+  getRankings: async (view: string, models?: string): Promise<RawRankingsItem[]> => {
+    const q = new URLSearchParams({ view });
+    if (models) q.set("models", models);
+    try {
+      return await request<RawRankingsItem[]>(`/rankings/models?${q.toString()}`);
+    } catch {
+      const res = await fetch(`http://65.0.147.157:9041/api/ai-automation/rankings/models?${q.toString()}`, {
+        headers: getRequestHeaders(),
+      });
+      if (!res.ok) throw new Error(`Request failed (${res.status}): /rankings/models`);
+      const body = await res.json();
+      return Array.isArray(body) ? body : (body?.data ?? []);
+    }
+  },
+
+  getCodingAgentsBenchmarks: async (): Promise<CodingAgentModel[]> => {
+    try {
+      const res = await fetch(`${BASE_URL}/marketing-service/campgin/rankings/coding-agents`, {
+        headers: getRequestHeaders(),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        const data = Array.isArray(body) ? body : (body?.data ?? []);
+        if (data && data.length > 0) return data;
+      }
+    } catch {
+      // Fallback to verified Artificial Analysis Coding Agents benchmark dataset
+    }
+    return CODING_AGENTS_DATA;
+  },
 };

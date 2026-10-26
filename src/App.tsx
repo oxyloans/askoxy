@@ -1070,7 +1070,7 @@ const App: React.FC = () => {
             {isLoggedIn && isDashboardHomeRoute && (
               <>
                 <FloatingCallButton />
-                <FloatingGiftOffersButton />
+                {/* <FloatingGiftOffersButton /> */}
               </>
             )}
             <Routes>

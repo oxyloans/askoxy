@@ -356,7 +356,7 @@ const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
     if (task.userId === BYSAI_USER_ID) {
       return true; // Always allow updates for BYSAI_USER_ID
     }
-    return isSameDay && isBeforeNinePM;
+    return  isBeforeNinePM;
   };
   const selectTask = (task: Task) => {
     setSelectedTask(task);
