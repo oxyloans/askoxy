@@ -271,8 +271,8 @@ const Whiteboardtheme: React.FC = () => {
           }}
         />
 
-        <div className="relative z-10 mx-auto max-w-[1540px] px-3 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-8 md:px-8 lg:px-10 lg:pb-7 lg:pt-8 xl:px-12">
-          <div className="mx-auto w-full max-w-[1440px]">
+        <div className="relative z-10 mx-auto max-w-8xl px-3 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-8 md:px-8 lg:px-10 lg:pb-7 lg:pt-8 xl:px-12">
+          <div className="mx-auto w-full max-w-8xl">
             <div className="relative mx-auto mb-5 max-w-[1320px] text-center sm:mb-6 md:mb-0">
               <motion.h5 className="mx-auto max-w-[1320px] text-center text-[26px] leading-[1.12] tracking-[-0.04em] sm:text-[38px] md:text-[48px] lg:text-[58px] xl:text-[64px]">
                 <span className="block font-normal text-[#5E5E5E]">
@@ -539,31 +539,6 @@ const Whiteboardtheme: React.FC = () => {
           </div>
         </div>
       </section>
-
-      <div
-        className="fixed bottom-4 right-1 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:right-2 md:right-4"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <button
-          onClick={() => {
-            setModalActionType("hiring");
-            setIsWalkInModalOpen(true);
-          }}
-          className=" transition-transform duration-300 hover:scale-105 active:scale-95"
-          aria-label="We are hiring"
-          title="We are hiring"
-          type="button"
-        >
-          <img
-            src={ASK_OXY_ICON_URL}
-            alt="We are hiring"
-            className="h-12 w-auto select-none sm:h-14 md:h-16 lg:h-20"
-            draggable={false}
-            loading="lazy"
-            decoding="async"
-          />
-        </button>
-      </div>
 
       <WalkInInterviewStepsModal
         isOpen={isWalkInModalOpen}

@@ -1255,8 +1255,8 @@ const EmployeeProfilePage: React.FC = () => {
                                 <ThunderboltOutlined className="text-lg" />
                               </div>
                               <div>
-                                <h4 className="m-0 text-sm font-bold text-slate-900">Skills &amp; AI Tools</h4>
-                                <p className="m-0 text-xs text-slate-500">Platforms, tech stack &amp; AI tools</p>
+                                <h4 className="m-0 text-sm font-bold text-slate-900">Work &amp; AI Tools</h4>
+                                <p className="m-0 text-xs text-slate-500">Platforms &amp; AI tools</p>
                               </div>
                             </div>
                             <Button
@@ -1903,7 +1903,7 @@ const EmployeeProfilePage: React.FC = () => {
                 label: (
                   <span className="inline-flex items-center gap-2 whitespace-nowrap">
                     <ThunderboltOutlined />
-                    Skills &amp; AI Tools
+                    Work &amp; AI Tools
                   </span>
                 ),
                 children: (
@@ -1912,7 +1912,7 @@ const EmployeeProfilePage: React.FC = () => {
                       <div className={sectionHeadingClass}>
                         <div id="work-information-title" className="flex items-center gap-2 text-sm font-bold text-slate-900">
                           <ThunderboltOutlined className="text-[#008cba]" />
-                          <span>Work &amp; Skills Information</span>
+                          <span>Work &amp; AI Tools</span>
                         </div>
                       </div>
 

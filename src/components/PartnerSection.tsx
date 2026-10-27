@@ -4,22 +4,19 @@ import { Link } from "react-router-dom";
 const PartnerSection: React.FC = () => {
   return (
     <section className="relative w-full bg-white py-6 sm:py-8 lg:py-10">
-      <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
+      <div className="mx-auto w-full max-w-8xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
         <div
           className="
             relative
             overflow-hidden
             rounded-[22px]
             border
-            border-[#cfc4ea]/70
-            bg-gradient-to-r
-            from-[#ddd6f4]
-            via-[#cbbde7]
-            to-[#b8a6d7]
-            shadow-[0_16px_45px_rgba(63,46,110,0.13)]
+            border-slate-200/90
+            bg-white
+            shadow-[0_12px_40px_rgba(0,0,0,0.06)]
           "
         >
-          {/* Background Decorations */}
+          {/* Background Ambient Glows */}
           <div
             className="
               pointer-events-none
@@ -29,7 +26,7 @@ const PartnerSection: React.FC = () => {
               h-[230px]
               w-[230px]
               rounded-full
-              bg-white/25
+              bg-slate-100/70
               blur-3xl
             "
           />
@@ -43,7 +40,7 @@ const PartnerSection: React.FC = () => {
               h-[250px]
               w-[250px]
               rounded-full
-              bg-violet-500/10
+              bg-violet-100/40
               blur-3xl
             "
           />
@@ -118,7 +115,7 @@ const PartnerSection: React.FC = () => {
                   font-black
                   leading-[1.04]
                   tracking-[-0.04em]
-                  text-[#211849]
+                  text-slate-900
                   sm:text-[36px]
                   md:text-[40px]
                   lg:text-[46px]
@@ -151,7 +148,7 @@ const PartnerSection: React.FC = () => {
                   text-[14px]
                   font-medium
                   leading-6
-                  text-[#504766]
+                  text-slate-600
                   sm:text-[15px]
                   sm:leading-7
                   md:mx-0
@@ -182,14 +179,13 @@ const PartnerSection: React.FC = () => {
                       items-center
                       rounded-full
                       border
-                      border-white/60
-                      bg-white/55
+                      border-slate-200
+                      bg-slate-50
                       px-5
                       py-2
                       text-xs
                       font-bold
-                      text-[#352960]
-                      backdrop-blur-md
+                      text-slate-700
                       sm:text-sm
                     "
                   >

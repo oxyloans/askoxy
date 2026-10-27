@@ -13,9 +13,13 @@ import Header1 from "../components/Header";
 import Footer from "../components/Footer";
 import Loader from "../components/Loader";
 
-import { message } from "antd";
+import { message, Pagination } from "antd";
 import VideoImage from "../assets/img/Videothumb.png";
-import { fetchCampaigns, Campaign } from "../components/servicesapi";
+import {
+  fetchCampaigns,
+  fetchCampaignsByInputType,
+  Campaign,
+} from "../components/servicesapi";
 import BASE_URL, { resolveAskoxyUrl, uploadurlwithId } from "../Config";
 
 interface DashboardItem {
@@ -32,12 +36,23 @@ type CampaignWithId = Campaign & {
   addServiceType?: string | null; // may come as undefined/null
 };
 
-type TabKey = "SERVICES" | "WE_ARE_HIRING" | "LEAGUE_JOURNEYS";
+type TabKey = "SERVICES" | "PRODUCTS" | "WE_ARE_HIRING" | "LEAGUE_JOURNEYS";
 
 const ServicesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [campaigns, setCampaigns] = useState<CampaignWithId[]>([]);
   const [journeyCampaigns, setJourneyCampaigns] = useState<CampaignWithId[]>([]);
+
+  // Separate paginated state for Services and Products
+  const [serviceCampaigns, setServiceCampaigns] = useState<CampaignWithId[]>([]);
+  const [serviceTotal, setServiceTotal] = useState<number>(0);
+  const [servicePage, setServicePage] = useState<number>(1);
+  const [servicePageSize] = useState<number>(12);
+
+  const [productCampaigns, setProductCampaigns] = useState<CampaignWithId[]>([]);
+  const [productTotal, setProductTotal] = useState<number>(0);
+  const [productPage, setProductPage] = useState<number>(1);
+  const [productPageSize] = useState<number>(12);
 
   const [activeTab, setActiveTab] = useState<TabKey>("SERVICES");
   const [loading, setLoading] = useState(false);
@@ -67,26 +82,85 @@ const ServicesPage: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const requestedTab = params.get("tab");
 
-    if (requestedTab === "LEAGUE_JOURNEYS") {
+  /* if (requestedTab === "LEAGUE_JOURNEYS") {
       setActiveTab("LEAGUE_JOURNEYS");
-    } else if (requestedTab === "WE_ARE_HIRING") {
+    } else */ if (requestedTab === "WE_ARE_HIRING") {
       setActiveTab("WE_ARE_HIRING");
+    } else if (requestedTab === "PRODUCTS") {
+      setActiveTab("PRODUCTS");
     }
   }, [location.search]);
+
+  const isExcludedFromServices = (addServiceType?: string | null) => {
+    const val = String(addServiceType || "").trim().toUpperCase();
+    return val === "LEAGUEJOURNEYS" || val === "WEAREHIRING";
+  };
+
+  const loadServiceCampaigns = async (page: number = 1) => {
+    try {
+      const res = await fetchCampaignsByInputType(
+        "SERVICE",
+        page - 1,
+        servicePageSize
+      );
+      const items: CampaignWithId[] = res.content
+        .filter((c: any) => !isExcludedFromServices(c?.addServiceType))
+        .map((campaign: any) => ({
+          ...campaign,
+          id: campaign.campaignId || campaign.id,
+          addServiceType: campaign?.addServiceType ?? null,
+        }));
+      setServiceCampaigns(items);
+      setServiceTotal(
+        items.length < res.content.length ? items.length : res.totalElements
+      );
+      setServicePage(page);
+    } catch (err) {
+      console.error("Error loading service campaigns:", err);
+    }
+  };
+
+  const loadProductCampaigns = async (page: number = 1) => {
+    try {
+      const res = await fetchCampaignsByInputType(
+        "PRODUCT",
+        page - 1,
+        productPageSize
+      );
+      const items: CampaignWithId[] = res.content.map((campaign: any) => ({
+        ...campaign,
+        id: campaign.campaignId || campaign.id,
+        addServiceType: campaign?.addServiceType ?? null,
+      }));
+      setProductProductCampaigns(items);
+      setProductTotal(res.totalElements);
+      setProductPage(page);
+    } catch (err) {
+      console.error("Error loading product campaigns:", err);
+    }
+  };
+
+  const setProductProductCampaigns = setProductCampaigns;
 
   useEffect(() => {
     const loadCampaigns = async () => {
       setLoading(true);
       try {
-        const data = await fetchCampaigns();
-        const campaignsWithIds: CampaignWithId[] = data.map(
-          (campaign: any) => ({
-            ...campaign,
-            id: campaign.campaignId,
-            addServiceType: campaign?.addServiceType ?? null,
-          }),
-        );
-        setCampaigns(campaignsWithIds);
+        await Promise.all([
+          loadServiceCampaigns(1),
+          loadProductCampaigns(1),
+          (async () => {
+            const data = await fetchCampaigns();
+            const campaignsWithIds: CampaignWithId[] = data.map(
+              (campaign: any) => ({
+                ...campaign,
+                id: campaign.campaignId,
+                addServiceType: campaign?.addServiceType ?? null,
+              }),
+            );
+            setCampaigns(campaignsWithIds);
+          })(),
+        ]);
       } catch (err) {
         console.error("Error loading campaigns:", err);
       } finally {
@@ -95,6 +169,8 @@ const ServicesPage: React.FC = () => {
     };
     loadCampaigns();
 
+    // League journeys commented out per request
+    /*
     const loadJourneys = async () => {
       try {
         const res = await fetch(`${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`);
@@ -116,6 +192,7 @@ const ServicesPage: React.FC = () => {
     };
 
     loadJourneys();
+    */
   }, []);
 
   const services: DashboardItem[] = useMemo(
@@ -240,21 +317,6 @@ const ServicesPage: React.FC = () => {
     navigate("/main/dashboard/offer-letter-samples");
   };
 
-  /** Split campaigns by addServiceType */
-  const serviceCampaigns = useMemo(
-    () =>
-      campaigns.filter(
-        (c) =>
-          c.campaignStatus !== false &&
-          (c as any).campainInputType !== "BLOG" &&
-          (c.addServiceType === null ||
-            c.addServiceType === undefined ||
-            c.addServiceType === "" ||
-            c.addServiceType === "SERVICES"),
-      ),
-    [campaigns],
-  );
-
   const hiringCampaigns = useMemo(
     () =>
       campaigns.filter(
@@ -286,9 +348,26 @@ const ServicesPage: React.FC = () => {
   const filteredServiceCampaigns = useMemo(
     () =>
       serviceCampaigns.filter(
-        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description),
+        (c: any) =>
+          c.campaignStatus !== false &&
+          !isExcludedFromServices(c.addServiceType) &&
+          (matchQuery(c.campaignType) ||
+            matchQuery(c.description) ||
+            matchQuery(c.campaignDescription)),
       ),
     [serviceCampaigns, searchQuery],
+  );
+
+  const filteredProductCampaigns = useMemo(
+    () =>
+      productCampaigns.filter(
+        (c: any) =>
+          c.campaignStatus !== false &&
+          (matchQuery(c.campaignType) ||
+            matchQuery(c.description) ||
+            matchQuery(c.campaignDescription)),
+      ),
+    [productCampaigns, searchQuery],
   );
 
   const filteredHiringCampaigns = useMemo(
@@ -346,15 +425,20 @@ const ServicesPage: React.FC = () => {
                 }
               />
               <TabButton
+                k="PRODUCTS"
+                label="Products"
+                count={productTotal}
+              />
+              <TabButton
                 k="WE_ARE_HIRING"
                 label="We Are Hiring"
                 count={filteredHiringCampaigns.length}
               />
-              <TabButton
+              {/* <TabButton
                 k="LEAGUE_JOURNEYS"
                 label="League Journeys"
                 count={filteredLeagueJourneyCampaigns.length}
-              />
+              /> */}
             </div>
 
             <div className="relative w-full md:w-[360px] lg:w-[420px]">
@@ -431,6 +515,60 @@ const ServicesPage: React.FC = () => {
                       </h3>
                     </div>
                   ))}
+
+                  {serviceTotal > servicePageSize && (
+                    <div className="col-span-full flex justify-center py-4">
+                      <Pagination
+                        current={servicePage}
+                        pageSize={servicePageSize}
+                        total={serviceTotal}
+                        showSizeChanger={false}
+                        onChange={(p) => loadServiceCampaigns(p)}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeTab === "PRODUCTS" && (
+                <>
+                  {filteredProductCampaigns.length === 0 && (
+                    <div className="col-span-full text-center text-gray-500 py-8">
+                      No products yet.
+                    </div>
+                  )}
+                  {filteredProductCampaigns.map((campaign: any) => (
+                    <div
+                      key={campaign.campaignId}
+                      className="group cursor-pointer flex flex-col items-center text-center"
+                      onClick={() => handleCampaignClick(campaign)}
+                    >
+                      <div className="mb-2">
+                        {campaign.imageUrls?.[0]?.imageUrl && (
+                          <img
+                            src={campaign.imageUrls[0].imageUrl}
+                            alt={campaign.campaignType}
+                            className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
+                          />
+                        )}
+                      </div>
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        {campaign.campaignType}
+                      </h3>
+                    </div>
+                  ))}
+
+                  {productTotal > productPageSize && (
+                    <div className="col-span-full flex justify-center py-4">
+                      <Pagination
+                        current={productPage}
+                        pageSize={productPageSize}
+                        total={productTotal}
+                        showSizeChanger={false}
+                        onChange={(p) => loadProductCampaigns(p)}
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
@@ -464,7 +602,7 @@ const ServicesPage: React.FC = () => {
                 </>
               )}
 
-              {activeTab === "LEAGUE_JOURNEYS" && (
+              {/* {activeTab === "LEAGUE_JOURNEYS" && (
                 <>
                   {filteredLeagueJourneyCampaigns.length === 0 && (
                     <div className="col-span-full text-center text-gray-500 py-8">
@@ -492,7 +630,7 @@ const ServicesPage: React.FC = () => {
                     </div>
                   ))}
                 </>
-              )}
+              )} */}
             </div>
           )}
 

@@ -629,16 +629,15 @@ if (primaryType === "AGENT") {
       if (err.response?.status === 401) {
         setError(
           err.response?.data?.message ||
-          err.response?.data?.error ||
-          "Unauthorized: Invalid or missing access token. Please log in again."
+          err.response?.data?.error 
         );
         handleAuthError(err, navigate);
       } else if (err.response?.status === 409) {
         setShowSuccessPopup(false);
         setError(
           err.response?.data?.message ||
-          err.response?.data?.error ||
-          "This phone number is already registered. Please login to continue."
+          err.response?.data?.error
+        
         );
 
         const loginUrl =
@@ -650,8 +649,7 @@ if (primaryType === "AGENT") {
       } else {
         setError(
           err.response?.data?.message ||
-          err.response?.data?.error ||
-          "An error occurred. Please try again later."
+          err.response?.data?.error 
         );
       }
     } finally {

@@ -74,7 +74,7 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="header">
-        <div className="header-inner">
+        <div className="header-inner max-w-8xl mx-auto">
           <div className="logo" onClick={() => navigate("/")}>
             <img src={Logo} alt="ASKOXY.AI" draggable={false} />
           </div>

@@ -198,6 +198,12 @@ const Sidebar: React.FC = () => {
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
           {
+            title: "Student Registrations",
+            icon: <FaGraduationCap className="text-cyan-400" />,
+            link: "/admin/student-registrations",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
             title: "FD Bucket Data",
             icon: <FaDatabase className="text-emerald-500" />,
             link: "/admin/fd-bucket-data",

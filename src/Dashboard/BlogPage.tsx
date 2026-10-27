@@ -1,7 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  fetchCampaigns,
   fetchAllGames,
   Campaign,
 } from "../components/servicesapi";
@@ -22,13 +21,17 @@ const Footer = React.lazy(() => import("../components/Footer"));
 
 type TabKey = "ALL" | "MY" | "GAMES" | "ADD";
 
+const BLOGS_API_URL =
+  `${BASE_URL}/marketing-service/campgin/campaigns-by-input-type`;
+
 const BlogsPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [totalBlogs, setTotalBlogs] = useState(0);
   const [myBlogs, setMyBlogs] = useState<Campaign[]>([]);
   const [games, setGames] = useState<Campaign[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(9);
+  const [pageSize] = useState(12);
   const [isLoading, setIsLoading] = useState(true);
   const [isMyBlogsLoading, setIsMyBlogsLoading] = useState(false);
 
@@ -52,6 +55,56 @@ const BlogsPage: React.FC = () => {
     localStorage.getItem("user_id") ||
     "";
 
+  const loadBlogs = async (page: number = 1) => {
+    setIsLoading(true);
+    try {
+      const pageNo = Math.max(0, page - 1);
+      const res = await axios.get(BLOGS_API_URL, {
+        params: {
+          inputType: "BLOG",
+          pageNo,
+          pageSize: 12,
+        },
+      });
+
+      const responseData = res.data;
+      const contentList = Array.isArray(responseData?.content)
+        ? responseData.content
+        : Array.isArray(responseData?.data)
+          ? responseData.data
+          : Array.isArray(responseData)
+            ? responseData
+            : [];
+
+      const normalized = contentList.map((c: any, index: number) => ({
+        ...c,
+        id: c.id || c.campaignId || "",
+        campaignId: c.campaignId || c.id || "",
+        imageUrls:
+          Array.isArray(c.imageUrls) && c.imageUrls.length > 0
+            ? c.imageUrls
+            : Array.isArray(c.images) && c.images.length > 0
+              ? c.images
+              : c.imageUrl
+                ? [{ imageUrl: c.imageUrl, status: true }]
+                : [],
+        __originalIndex: index,
+      }));
+
+      setCampaigns(normalized as Campaign[]);
+      const total =
+        typeof responseData?.totalElements === "number"
+          ? responseData.totalElements
+          : normalized.length;
+      setTotalBlogs(total);
+    } catch (err) {
+      console.error("Error loading blogs:", err);
+      message.error("Unable to load blogs. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loadMyBlogs = async () => {
     if (!userId) {
       setMyBlogs([]);
@@ -63,8 +116,9 @@ const BlogsPage: React.FC = () => {
         "https://meta.oxyloans.com/api/marketing-service/campgin/getOnlyAllCampaignDetails",
         { params: { createdPersonId: userId } },
       );
-      const responseData = data?.data ?? data;
+      const responseData = data?.content ?? data?.data ?? data;
       const list = Array.isArray(responseData) ? responseData : [];
+
       const normalized = list.map((c: any, index: number) => ({
         ...c,
         campaignId: c.campaignId || c.id || "",
@@ -95,27 +149,9 @@ const BlogsPage: React.FC = () => {
     }
   };
 
-  const loadAllBlogsAndGames = async () => {
-    setIsLoading(true);
+  const loadGames = async () => {
     try {
-      const [campaignList, gameList] = await Promise.all([
-        fetchCampaigns(),
-        fetchAllGames(),
-      ]);
-
-      const normalizedCampaigns = (campaignList as any[]).map(
-        (c: any, index: number) => ({
-          ...c,
-          id: c.id || c.campaignId,
-          imageUrls: Array.isArray(c.imageUrls)
-            ? c.imageUrls
-            : c.imageUrl
-              ? [{ imageUrl: c.imageUrl, status: true }]
-              : [],
-          __originalIndex: index,
-        }),
-      );
-
+      const gameList = await fetchAllGames();
       const normalizedGames = (gameList as any[]).map(
         (c: any, index: number) => ({
           ...c,
@@ -128,19 +164,21 @@ const BlogsPage: React.FC = () => {
           __originalIndex: index,
         }),
       );
-
-      setCampaigns(normalizedCampaigns as Campaign[]);
       setGames(normalizedGames as Campaign[]);
     } catch (err) {
-      console.error("Error loading data:", err);
-    } finally {
-      setIsLoading(false);
+      console.error("Error loading games:", err);
     }
   };
 
   useEffect(() => {
-    loadAllBlogsAndGames();
+    loadGames();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "ALL") {
+      loadBlogs(currentPage);
+    }
+  }, [activeTab, currentPage]);
 
   const slugify = (text: string) =>
     (text || "")
@@ -271,14 +309,6 @@ const BlogsPage: React.FC = () => {
     });
   };
 
-  const blogCampaigns = useMemo(() => {
-    const filteredCampaigns = (campaigns as any[]).filter(
-      (c: any) => c.campaignStatus === true && c.campainInputType === "BLOG",
-    );
-
-    return sortNewestFirst(filteredCampaigns);
-  }, [campaigns]);
-
   const gamesCampaigns = useMemo(() => {
     return (games as any[])
       .filter((c: any) => c.campaignStatus === true)
@@ -295,20 +325,22 @@ const BlogsPage: React.FC = () => {
       });
   }, [games]);
 
-  // myBlogs is now from its own API call (state), not filtered from all campaigns
-
   const visibleList = useMemo(() => {
-    let list: Campaign[] = [];
-    if (activeTab === "MY") list = myBlogs;
-    else if (activeTab === "GAMES") list = gamesCampaigns;
-    else list = blogCampaigns;
-    const startIndex = (currentPage - 1) * pageSize;
-    return list.slice(startIndex, startIndex + pageSize);
+    if (activeTab === "MY") {
+      const startIndex = (currentPage - 1) * pageSize;
+      return myBlogs.slice(startIndex, startIndex + pageSize);
+    }
+    if (activeTab === "GAMES") {
+      const startIndex = (currentPage - 1) * pageSize;
+      return gamesCampaigns.slice(startIndex, startIndex + pageSize);
+    }
+    // activeTab === "ALL": already paginated by server to 12 items
+    return campaigns;
   }, [
     activeTab,
     myBlogs,
     gamesCampaigns,
-    blogCampaigns,
+    campaigns,
     currentPage,
     pageSize,
   ]);
@@ -316,8 +348,8 @@ const BlogsPage: React.FC = () => {
   const totalItems = useMemo(() => {
     if (activeTab === "MY") return myBlogs.length;
     if (activeTab === "GAMES") return gamesCampaigns.length;
-    return blogCampaigns.length;
-  }, [activeTab, myBlogs.length, gamesCampaigns.length, blogCampaigns.length]);
+    return totalBlogs;
+  }, [activeTab, myBlogs.length, gamesCampaigns.length, totalBlogs]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -372,6 +404,7 @@ const BlogsPage: React.FC = () => {
           if (response.status === 200) {
             message.success("Status updated successfully.");
             loadMyBlogs();
+            loadBlogs(currentPage);
           } else {
             message.error("Failed to update status.");
           }
@@ -511,9 +544,7 @@ const BlogsPage: React.FC = () => {
         message.success("Blog updated successfully.");
         setEditModalVisible(false);
         setEditFileList([]);
-        // loadAllBlogsAndGames first so fetchCampaigns returns updated imageUrls array,
-        // then loadMyBlogs so My Blogs tab also reflects the new image
-        await loadAllBlogsAndGames();
+        await loadBlogs(currentPage);
         await loadMyBlogs();
       } else {
         message.error("Failed to update blog.");

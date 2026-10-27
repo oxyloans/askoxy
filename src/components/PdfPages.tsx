@@ -30,7 +30,7 @@ const PdfPages = () => {
       </div>
 
       {/* Presentation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full max-w-5xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full max-w-8xl mx-auto">
         {/* Unstoppable Pink Funding */}
         <div
           className="relative group cursor-pointer rounded-xl overflow-hidden shadow-lg transform transition duration-300 hover:scale-105"

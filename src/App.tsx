@@ -470,6 +470,9 @@ const SuperAdminComments = lazy(
 const TestimonialsPage = lazy(() => import("./Dashboard/TestimoinalsOXY"));
 const RiceComparison = lazy(() => import("./components/SteanRiceVsRawRice"));
 const RegisteredUser = lazy(() => import("./AskoxyAdmin/RegisteredUser"));
+const StudentRegistrations = lazy(
+  () => import("./AskoxyAdmin/StudentRegistrations"),
+);
 const RamMohanDarisaAgents = lazy(
   () => import("./AskoxyAdmin/RamMohanDarisaAgents"),
 );
@@ -734,7 +737,25 @@ const AccentureServices = lazy(
 const CommunityPage = lazy(
   () => import("./components/community/CommunityPage"),
 );
+const OxyVisitLogin = lazy(() => import("./oxyvisit/src/Auth/LoginandRegister"));
+const OxyVisitRegister = lazy(() => import("./oxyvisit/src/Auth/Register"));
+const OxyVisitUnauthorized = lazy(() => import("./oxyvisit/src/pages/Unauthorized"));
+const OxyVisitDashboardLayout = lazy(() => import("./oxyvisit/src/layouts/DashboardLayout"));
+const OxyVisitCategoriesManagement = lazy(() => import("./oxyvisit/src/pages/admin/CategoriesManagement"));
+const OxyVisitVisitsManagement = lazy(() => import("./oxyvisit/src/pages/admin/VisitsManagement"));
+const OxyVisitUserDashboard = lazy(() => import("./oxyvisit/src/pages/user/UserDashboard"));
+const OxyVisitUserCategories = lazy(() => import("./oxyvisit/src/pages/user/UserCategories"));
+const OxyVisitUserVisits = lazy(() => import("./oxyvisit/src/pages/user/UserVisits"));
+const OxyVisitUserAllVisits = lazy(() => import("./oxyvisit/src/pages/user/UserAllVisits"));
+const OxyVisitProtectedRoute = lazy(() => import("./oxyvisit/src/utils/ProtectedRoute"));
 
+const OxyVisitDashboardIndex: React.FC = () => {
+  const primaryType = localStorage.getItem("primaryType") || localStorage.getItem("admin_primaryType");
+  if (primaryType === "HELPDESKADMIN" || primaryType === "HELPDESKSUPERADMIN") {
+    return <Navigate to="/oxyvisit/dashboard/categories" replace />;
+  }
+  return <OxyVisitUserDashboard />;
+};
 const VoiceAdminDashboard = lazy(() => import("./AIvoicesupport/Dashboard"));
 const VoiceAdminInbound = lazy(() => import("./AIvoicesupport/InboundCalls"));
 const VoiceAdminOutbound = lazy(() => import("./AIvoicesupport/OutboundCalls"));
@@ -1319,7 +1340,27 @@ const App: React.FC = () => {
               {/* ===================================================== */}
               <Route path="/whatsapplogin" element={<WhatsappLogin />} />
               <Route path="/whatsappregister" element={<WhatsappRegister />} />
+<Route path="/oxyvisit" element={<OxyVisitLogin />} />
+              <Route path="/oxyvisit/login" element={<Navigate to="/oxyvisit" replace />} />
+              <Route path="/oxyvisit/register" element={<OxyVisitRegister />} />
+              <Route path="/oxyvisit/unauthorized" element={<OxyVisitUnauthorized />} />
 
+              <Route
+                path="/oxyvisit/dashboard"
+                element={
+                  <OxyVisitProtectedRoute allowedRoles={["EMPLOYEE", "HELPDESKADMIN", "HELPDESKSUPERADMIN"]}>
+                    <OxyVisitDashboardLayout />
+                  </OxyVisitProtectedRoute>
+                }
+              >
+                <Route index element={<OxyVisitDashboardIndex />} />
+                <Route path="categories" element={<OxyVisitCategoriesManagement />} />
+                <Route path="visits" element={<OxyVisitVisitsManagement />} />
+                <Route path="visits/:categoryId" element={<OxyVisitVisitsManagement />} />
+                <Route path="user-categories" element={<OxyVisitUserCategories />} />
+                <Route path="user-visits/:categoryId" element={<OxyVisitUserVisits />} />
+                <Route path="user-all-visits" element={<OxyVisitUserAllVisits />} />
+              </Route>
               <Route path="/partner" element={<OxyLoansOverviewPage />} />
               {/* ===================================================== */}
               {/* ✅ OTHER PUBLIC ROUTES */}
@@ -2248,6 +2289,10 @@ const App: React.FC = () => {
               <Route path="/admin" element={<AdminSidebar />}>
                 <Route path="dashboard" element={<Admin />} />
                 <Route path="registeredUsers" element={<RegisteredUser />} />
+                <Route
+                  path="student-registrations"
+                  element={<StudentRegistrations />}
+                />
                 <Route path="allqueries" element={<AllQueries />} />
                 <Route
                   path="allcampaignsdetails"

@@ -49,7 +49,7 @@ const RadhAISection: React.FC = () => {
 
   return (
     <section className="relative overflow-hidden bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-8xl">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -181,6 +181,71 @@ const extractArray = (data: any): any[] => {
   return [];
 };
 
+export interface PaginatedCampaignResponse {
+  content: Campaign[];
+  totalElements: number;
+  totalPages: number;
+  pageSize: number;
+  pageNumber: number;
+}
+
+export const fetchCampaignsByInputType = async (
+  inputType: "PRODUCT" | "SERVICE" | "BLOG" | string,
+  pageNo: number = 0,
+  pageSize: number = 10
+): Promise<PaginatedCampaignResponse> => {
+  try {
+    const { data } = await axiosInstance.get(
+      `${BASE_URL}/marketing-service/campgin/campaigns-by-input-type`,
+      {
+        params: {
+          inputType,
+          pageNo,
+          pageSize,
+        },
+      }
+    );
+    const content = extractArray(data?.content ?? data?.data ?? data).map(normalizeCampaign);
+    return {
+      content,
+      totalElements: typeof data?.totalElements === "number" ? data.totalElements : content.length,
+      totalPages: typeof data?.totalPages === "number" ? data.totalPages : 1,
+      pageSize: typeof data?.size === "number" ? data.size : pageSize,
+      pageNumber: typeof data?.number === "number" ? data.number : pageNo,
+    };
+  } catch (error) {
+    console.error(`fetchCampaignsByInputType (${inputType}) error:`, error);
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      pageSize,
+      pageNumber: pageNo,
+    };
+  }
+};
+
+export const fetchServiceCampaigns = async (
+  pageNo: number = 0,
+  pageSize: number = 10
+): Promise<PaginatedCampaignResponse> => {
+  return fetchCampaignsByInputType("SERVICE", pageNo, pageSize);
+};
+
+export const fetchProductCampaigns = async (
+  pageNo: number = 0,
+  pageSize: number = 10
+): Promise<PaginatedCampaignResponse> => {
+  return fetchCampaignsByInputType("PRODUCT", pageNo, pageSize);
+};
+
+export const fetchBlogCampaigns = async (
+  pageNo: number = 0,
+  pageSize: number = 10
+): Promise<PaginatedCampaignResponse> => {
+  return fetchCampaignsByInputType("BLOG", pageNo, pageSize);
+};
+
 export const fetchCampaigns = async (): Promise<Campaign[]> => {
   try {
     const { data } = await axiosInstance.get(

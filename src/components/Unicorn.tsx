@@ -145,7 +145,7 @@ export default function UnicornGrid() {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-6 lg:p-8 z-10">
+        <div className="flex justify-between items-center p-4 sm:p-6 lg:p-8 z-10 max-w-8xl mx-auto w-full">
           <div className="text-yellow-400">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-wider">ASKOXY.AI</h1>
             <p className="text-xs sm:text-sm lg:text-base text-yellow-300 font-medium">AI-Z Marketplace</p>
@@ -157,7 +157,7 @@ export default function UnicornGrid() {
         </div>
 
         {/* Main Content Container */}
-        <div className="flex-1 flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-16 py-4 sm:py-8 gap-6 sm:gap-8 lg:gap-16">
+        <div className="flex-1 flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-16 py-4 sm:py-8 gap-6 sm:gap-8 lg:gap-16 max-w-8xl mx-auto w-full">
           
           {/* Left Side: Text Content */}
           <div className="flex-1 text-center lg:text-left max-w-2xl">
@@ -219,7 +219,7 @@ export default function UnicornGrid() {
 
         {/* Bottom Services Section */}
         <div className="px-4 sm:px-6 lg:px-16 pb-6 sm:pb-8">
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl max-w-7xl mx-auto">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl max-w-8xl mx-auto">
             
             {/* Services Grid - Horizontal Scrollable */}
             <div className="relative">

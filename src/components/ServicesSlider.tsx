@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-import { fetchCampaigns, fetchAllGames, Campaign } from "./servicesapi";
+import {
+  fetchCampaignsByInputType,
+  fetchCampaigns,
+  Campaign,
+} from "./servicesapi";
 import BASE_URL, {
   uploadurlwithId,
   askoxyImgUrl,
@@ -46,15 +50,86 @@ interface Job {
   updatedAt: number;
 }
 
+function ImageWithFallback({
+  src,
+  alt,
+  title,
+  imgClassName,
+  wrapperClassName,
+}: {
+  src?: string | null;
+  alt?: string;
+  title?: string;
+  imgClassName?: string;
+  wrapperClassName?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  const pickBg = (key = "") => {
+    const colors = [
+      "bg-sky-600",
+      "bg-emerald-600",
+      "bg-violet-600",
+      "bg-rose-600",
+      "bg-teal-600",
+      "bg-indigo-600",
+      "bg-slate-600",
+    ];
+    let h = 0;
+    for (let i = 0; i < key.length; i++) {
+      h = (h << 5) - h + key.charCodeAt(i);
+      h |= 0;
+    }
+    return colors[Math.abs(h) % colors.length];
+  };
+
+  const makeInitials = (text = "") =>
+    (text || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join("");
+
+  if (!src || failed) {
+    const bg = pickBg(title || alt || "default");
+    return (
+      <div
+        className={`flex h-full w-full items-center justify-center p-2 text-center text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-white ${bg} ${
+          wrapperClassName || ""
+        }`}
+      >
+        {makeInitials(title || alt) || "?"}
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line jsx-a11y/img-redundant-alt
+    <img
+      src={src}
+      alt={alt || "image"}
+      className={imgClassName}
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 const ServicesSlider: React.FC = () => {
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllBlogs, setShowAllBlogs] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [campaignsLoading, setCampaignsLoading] = useState(true);
+  const [blogsLoading, setBlogsLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(true);
-  const [campaignsError, setCampaignsError] = useState("");
+  const [blogsError, setBlogsError] = useState("");
   const [jobsError, setJobsError] = useState("");
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [blogs, setBlogs] = useState<Campaign[]>([]);
+  const [serviceCampaigns, setServiceCampaigns] = useState<Campaign[]>([]);
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
@@ -83,10 +158,10 @@ const ServicesSlider: React.FC = () => {
     const timestamp = getTimestamp(value);
     return timestamp
       ? new Date(timestamp).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
       : "";
   };
 
@@ -104,107 +179,41 @@ const ServicesSlider: React.FC = () => {
       typeof campaign.imageUrls?.[0] === "string"
         ? campaign.imageUrls?.[0]
         : campaign.imageUrls?.[0]?.imageUrl ||
-        campaign.imageUrl ||
-        campaign.images?.[0]?.imageUrl ||
-        "";
+          campaign.imageUrl ||
+          campaign.images?.[0]?.imageUrl ||
+          "";
     if (!firstImage) return "";
     const clean = firstImage.trim();
     if (/^https?:\/\//i.test(clean)) {
       return clean;
     }
-    return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
+    const base = uploadurlwithId.replace(/\/+$/, "");
+    const path = clean.replace(/^\/+/, "");
+    return `${base}/${path}`;
   };
 
-  function ImageWithFallback({
-    src,
-    alt,
-    title,
-    imgClassName,
-    wrapperClassName,
-  }: {
-    src?: string | null;
-    alt?: string;
-    title?: string;
-    imgClassName?: string;
-    wrapperClassName?: string;
-  }) {
-    const [failed, setFailed] = useState(false);
-
-    const pickBg = (key = "") => {
-      const colors = [
-        "bg-sky-600",
-        "bg-emerald-600",
-        "bg-violet-600",
-        "bg-rose-600",
-        "bg-teal-600",
-        "bg-indigo-600",
-        "bg-slate-600",
-      ];
-      let h = 0;
-      for (let i = 0; i < key.length; i++) {
-        h = (h << 5) - h + key.charCodeAt(i);
-        h |= 0;
-      }
-      return colors[Math.abs(h) % colors.length];
-    };
-
-    const makeInitials = (text = "") =>
-      (text || "")
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((w) => w.charAt(0).toUpperCase())
-        .join("");
-
-    if (!src || failed) {
-      const bg = pickBg(title || alt || "default");
-      return (
-        <div
-          className={`flex h-full w-full items-center justify-center p-5 text-center text-4xl sm:text-5xl font-extrabold uppercase tracking-wider text-white ${bg} ${wrapperClassName || ""
-            }`}
-        >
-          {makeInitials(title || alt) || "?"}
-        </div>
-      );
-    }
-
-    return (
-      // eslint-disable-next-line jsx-a11y/img-redundant-alt
-      <img
-        src={src}
-        alt={alt || "image"}
-        className={imgClassName}
-        loading="lazy"
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-  const getCampaignFirstImage1 = (campaign: Campaign) => {
-    const firstImage =
-      typeof campaign.imageUrls?.[0] === "string"
-        ? campaign.imageUrls?.[0]
-        : campaign.imageUrls?.[0]?.imageUrl ||
-        campaign.imageUrl ||
-        campaign.images?.[0]?.imageUrl ||
-        "";
-    if (!firstImage) return "";
-    const clean = firstImage.trim();
-    if (/^https?:\/\//i.test(clean)) {
-      return clean;
-    }
-    return `${clean.replace(/^\//, "")}`;
+  const getJobCompanyLogo = (logo?: string) => {
+    if (!logo) return "";
+    const clean = logo.trim();
+    if (/^https?:\/\//i.test(clean)) return clean;
+    const base = uploadurlwithId.replace(/\/+$/, "");
+    const path = clean.replace(/^\/+/, "");
+    return `${base}/${path}`;
   };
+
   const fetchJobs = async () => {
     try {
       setJobsLoading(true);
       setJobsError("");
+      const headers: Record<string, string> = {};
+      if (accessToken) {
+        headers.authorization = `Bearer ${accessToken}`;
+      }
       const response = await fetch(
         `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
         {
           method: "GET",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
+          headers,
         },
       );
 
@@ -213,11 +222,18 @@ const ServicesSlider: React.FC = () => {
       }
 
       const jobsData = await response.json();
-      if (Array.isArray(jobsData)) {
-        setJobs(jobsData);
-      } else {
-        setJobs([]);
-      }
+      const rawList = Array.isArray(jobsData)
+        ? jobsData
+        : Array.isArray(jobsData?.data)
+        ? jobsData.data
+        : Array.isArray(jobsData?.content)
+        ? jobsData.content
+        : [];
+
+      const activeJobs = rawList.filter(
+        (job: Job) => job && job.jobStatus !== false,
+      );
+      setJobs(activeJobs);
     } catch (error) {
       console.error("Error fetching jobs:", error);
       setJobsError("Failed to load jobs. Please try again later.");
@@ -329,22 +345,6 @@ const ServicesSlider: React.FC = () => {
     },
   ];
 
-  const blogCampaigns = campaigns
-    .filter(
-      (campaign) =>
-        campaign.campaignStatus !== false &&
-        campaign.campainInputType === "BLOG",
-    )
-    .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
-
-  const nonBlogCampaigns = campaigns
-    .filter(
-      (campaign) =>
-        campaign.campaignStatus !== false &&
-        campaign.campainInputType !== "BLOG",
-    )
-    .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
-
   const [journeyItems, setJourneyItems] = useState<{ journeyId: string; journeyName: string; campaign: Campaign }[]>([]);
   const [journeysLoading, setJourneysLoading] = useState(true);
 
@@ -364,51 +364,37 @@ const ServicesSlider: React.FC = () => {
 
   const displayedLeagueJourneys = leagueJourneyCampaigns.slice(0, 4);
 
-  const displayedBlogs = showAllBlogs
-    ? blogCampaigns
-    : blogCampaigns.slice(0, 4);
-  const displayedJobs = Array.isArray(jobs)
-    ? showAllJobs
-      ? [...jobs].sort(
-        (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
-      )
-      : [...jobs]
-        .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt))
-        .slice(0, 5)
-    : [];
+  const displayedBlogs = useMemo(() => {
+    return showAllBlogs ? blogs : blogs.slice(0, 4);
+  }, [blogs, showAllBlogs]);
 
-  const serviceCampaignsOnly = campaigns.filter(
-    (c) =>
-      c.campaignStatus !== false &&
-      c.campainInputType === "SERVICE" &&
-      (c.addServiceType === null ||
-        c.addServiceType === undefined ||
-        c.addServiceType === "" ||
-        c.addServiceType === "SERVICES"),
-  );
+  const displayedJobs = useMemo(() => {
+    if (!Array.isArray(jobs)) return [];
+    const sorted = [...jobs].sort(
+      (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
+    );
+    return showAllJobs ? sorted : sorted.slice(0, 5);
+  }, [jobs, showAllJobs]);
 
-  const allServices = showAllServices
-    ? [
-      ...services,
-      ...nonBlogCampaigns
-        .filter(
-          (campaign) =>
-            campaign.campainInputType === "SERVICE" &&
-            (campaign.addServiceType === null ||
-              campaign.addServiceType === undefined ||
-              campaign.addServiceType === "" ||
-              campaign.addServiceType === "SERVICES") &&
-            getCampaignTitle(campaign).trim() !==
-            "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
-        )
-        .map((campaign) => ({
-          image: getCampaignFirstImage(campaign),
-          title: getCampaignTitle(campaign),
-          path: "",
-          campaign,
-        })),
-    ]
-    : services.slice(0, 4);
+  const allServices = useMemo(() => {
+    return showAllServices
+      ? [
+          ...services,
+          ...serviceCampaigns
+            .filter(
+              (campaign) =>
+                getCampaignTitle(campaign).trim() !==
+                "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
+            )
+            .map((campaign) => ({
+              image: getCampaignFirstImage(campaign),
+              title: getCampaignTitle(campaign),
+              path: "",
+              campaign,
+            })),
+        ]
+      : services.slice(0, 4);
+  }, [showAllServices, serviceCampaigns]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 800);
@@ -416,42 +402,43 @@ const ServicesSlider: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadCampaigns = async () => {
+    const loadBlogs = async () => {
       try {
-        setCampaignsLoading(true);
-        setCampaignsError("");
-        const [normalCampaigns, gameCampaigns] = await Promise.all([
-          fetchCampaigns(),
-          fetchAllGames(),
-        ]);
-        const merged = [...normalCampaigns, ...gameCampaigns];
-        const uniqueMap = new Map<string, Campaign>();
-
-        merged.forEach((campaign) => {
-          const id = getCampaignId(campaign);
-          if (!id) return;
-
-          uniqueMap.set(id, {
-            ...campaign,
-            id,
-            campaignType:
-              campaign.campaignType || campaign.campaignTitle || "Blog",
-            campaignTitle:
-              campaign.campaignTitle || campaign.campaignType || "Blog",
-          });
-        });
-
-        setCampaigns(Array.from(uniqueMap.values()));
+        setBlogsLoading(true);
+        setBlogsError("");
+        const res = await fetchCampaignsByInputType("BLOG", 0, 10);
+        const list = (res?.content || []).filter(
+          (c) => c.campaignStatus !== false,
+        );
+        setBlogs(list);
       } catch (err) {
-        console.error("Error loading campaigns:", err);
-        setCampaignsError("Failed to load blogs. Please try again later.");
-        setCampaigns([]);
+        console.error("Error loading blogs:", err);
+        setBlogsError("Failed to load blogs. Please try again later.");
+        setBlogs([]);
       } finally {
-        setCampaignsLoading(false);
+        setBlogsLoading(false);
       }
     };
 
-    loadCampaigns();
+    const loadServices = async () => {
+      try {
+        const res = await fetchCampaignsByInputType("SERVICE", 0, 20);
+        const list = (res?.content || []).filter(
+          (c) =>
+            c.campaignStatus !== false &&
+            (c.addServiceType === null ||
+              c.addServiceType === undefined ||
+              c.addServiceType === "" ||
+              c.addServiceType === "SERVICES"),
+        );
+        setServiceCampaigns(list);
+      } catch (err) {
+        console.error("Error loading service campaigns:", err);
+      }
+    };
+
+    loadBlogs();
+    loadServices();
     fetchJobs();
     fetchFreelancers();
 
@@ -590,14 +577,15 @@ const ServicesSlider: React.FC = () => {
 
   return (
     <section className="py-10 min-h-screen px-4 sm:px-6 lg:px-8 bg-white">
-      <div className="relative">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div className="text-center sm:text-left flex-1">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+      <div className="max-w-8xl mx-auto w-full">
+        <div className="relative max-w-8xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div className="text-center sm:text-left flex-1">
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] leading-tight">
                 Our <span className="text-[#A855F7]">Journeys</span>
               </h2>
@@ -724,7 +712,7 @@ const ServicesSlider: React.FC = () => {
       </div>
       <hr className="p-2 mt-12" />
 
-      <div className="relative">
+      <div className="relative max-w-8xl mx-auto">
         {/* <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full " />
         <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full" /> */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -758,17 +746,17 @@ const ServicesSlider: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {[1, 2, 3, 4].map((i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3, delay: i * 0.1 }}
-                className="h-56 p-4"
+                className="p-4"
               >
                 <div className="animate-pulse">
-                  <div className="w-full h-36 bg-gray-200 rounded-lg mb-3"></div>
+                  <div className="w-full h-48 sm:h-52 md:h-56 bg-gray-200 rounded-lg mb-3"></div>
                   <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
                 </div>
               </motion.div>
@@ -776,7 +764,7 @@ const ServicesSlider: React.FC = () => {
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -790,30 +778,25 @@ const ServicesSlider: React.FC = () => {
                 className="group flex cursor-pointer flex-col overflow-hidden p-4 transition-all duration-300 hover:-translate-y-1"
                 onClick={() => handleServiceClick(service)}
               >
-                <div className="mx-auto mb-3 flex h-28 w-[80%] items-center justify-center overflow-hidden sm:h-28 lg:h-28">
+                <div className="mx-auto mb-3 flex h-48 w-full items-center justify-center overflow-hidden sm:h-52 md:h-56">
                   <ImageWithFallback
                     src={service.image}
                     alt={service.title}
                     title={service.title}
-                    imgClassName="h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110"
+                    imgClassName="h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-105"
                     wrapperClassName="w-full h-full"
                   />
                 </div>
                 <h3 className="line-clamp-2 text-center text-sm font-medium text-gray-800 transition-colors duration-300 group-hover:text-[#7C3AED] sm:text-base">
                   {service.title}
                 </h3>
-                {/* {"campaign" in service && service.campaign?.createdAt && (
-                  <span className="mt-2 text-[11px] font-medium text-slate-400">
-                    {formatPublishedDate(service.campaign.createdAt)}
-                  </span>
-                )} */}
               </motion.div>
             ))}
           </motion.div>
         )}
 
         {!showAllServices &&
-          allServices.length < services.length + serviceCampaignsOnly.length && (
+          allServices.length < services.length + serviceCampaigns.length && (
             <div className="mt-6 text-center">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -830,7 +813,7 @@ const ServicesSlider: React.FC = () => {
 
       <hr className="p-2 mt-12" />
 
-      <div className="relative ">
+      <div className="relative max-w-8xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left flex-1">
             <motion.div
@@ -845,7 +828,7 @@ const ServicesSlider: React.FC = () => {
             </motion.div>
           </div>
 
-          {blogCampaigns.length > 3 && (
+          {blogs.length > 3 && (
             <motion.button
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -861,7 +844,7 @@ const ServicesSlider: React.FC = () => {
           )}
         </div>
 
-        {campaignsLoading ? (
+        {blogsLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <motion.div
@@ -879,9 +862,9 @@ const ServicesSlider: React.FC = () => {
               </motion.div>
             ))}
           </div>
-        ) : campaignsError ? (
+        ) : blogsError ? (
           <div className="text-center py-12">
-            <p className="text-red-500 text-lg mb-4">{campaignsError}</p>
+            <p className="text-red-500 text-lg mb-4">{blogsError}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
@@ -889,7 +872,7 @@ const ServicesSlider: React.FC = () => {
               Retry
             </button>
           </div>
-        ) : blogCampaigns.length > 0 ? (
+        ) : blogs.length > 0 ? (
           <>
             <motion.div
               className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
@@ -971,7 +954,7 @@ const ServicesSlider: React.FC = () => {
               })}
             </motion.div>
 
-            {!showAllBlogs && displayedBlogs.length < blogCampaigns.length && (
+            {!showAllBlogs && displayedBlogs.length < blogs.length && (
               <div className="mt-8 text-center">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -996,7 +979,7 @@ const ServicesSlider: React.FC = () => {
 
       <hr className="p-2 mt-12" />
 
-      <div className="relative">
+      <div className="relative max-w-8xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left flex-1">
             <motion.div
@@ -1076,9 +1059,7 @@ const ServicesSlider: React.FC = () => {
               ];
               const bgColor =
                 lightBackgroundColors[index % lightBackgroundColors.length];
-              const companyLogo = job.companyLogo
-                ? `${uploadurlwithId}${job.companyLogo}`
-                : "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+              const companyLogo = getJobCompanyLogo(job.companyLogo);
               const postedDate = formatPublishedDate(job.createdAt);
 
               return (
@@ -1093,15 +1074,12 @@ const ServicesSlider: React.FC = () => {
                 >
                   <div className="flex justify-center pb-4 pt-6">
                     <div className="flex h-16 w-[102px] items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
-                      <img
+                      <ImageWithFallback
                         src={companyLogo}
-                        className="h-16 w-32 object-contain transition-transform duration-300 ease-out group-hover:scale-110"
                         alt={job.companyName || "Company Logo"}
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
-                        }}
+                        title={job.companyName || "Company"}
+                        imgClassName="h-16 w-32 object-contain transition-transform duration-300 ease-out group-hover:scale-110"
+                        wrapperClassName="w-full h-full rounded-lg text-base font-bold"
                       />
                     </div>
                   </div>
@@ -1163,8 +1141,9 @@ const ServicesSlider: React.FC = () => {
       </div>
 
       <hr className="p-2 mt-12" />
-    </section>
-  );
+    </div>
+  </section>
+);
 };
 
 export default ServicesSlider;

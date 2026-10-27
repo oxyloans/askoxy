@@ -13,6 +13,7 @@ import {
   Tabs,
   Image,
   Select,
+  Pagination,
 } from "antd";
 
 import BASE_URL from "../Config";
@@ -119,6 +120,27 @@ const getJourneyId = (campaign?: Campaign | null) =>
 const AllCampaignsDetails: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Paginated state for Services (inputType = SERVICE)
+  const [serviceCampaigns, setServiceCampaigns] = useState<Campaign[]>([]);
+  const [serviceTotal, setServiceTotal] = useState<number>(0);
+  const [servicePage, setServicePage] = useState<number>(1);
+  const [servicePageSize, setServicePageSize] = useState<number>(10);
+  const [serviceLoading, setServiceLoading] = useState<boolean>(false);
+
+  // Paginated state for Products (inputType = PRODUCT)
+  const [productCampaigns, setProductCampaigns] = useState<Campaign[]>([]);
+  const [productTotal, setProductTotal] = useState<number>(0);
+  const [productPage, setProductPage] = useState<number>(1);
+  const [productPageSize, setProductPageSize] = useState<number>(10);
+  const [productLoading, setProductLoading] = useState<boolean>(false);
+
+  // Paginated state for Blogs (inputType = BLOG)
+  const [blogCampaigns, setBlogCampaigns] = useState<Campaign[]>([]);
+  const [blogTotal, setBlogTotal] = useState<number>(0);
+  const [blogPage, setBlogPage] = useState<number>(1);
+  const [blogPageSize, setBlogPageSize] = useState<number>(10);
+  const [blogLoading, setBlogLoading] = useState<boolean>(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [currentCampaign, setCurrentCampaign] = useState<Campaign | null>(null);
   const [fileList, setFileList] = useState<Image[]>([]);
@@ -205,14 +227,19 @@ const AllCampaignsDetails: React.FC = () => {
 
   useEffect(() => {
     fetchCampaigns();
+    fetchServiceCampaigns(1, 10);
+    fetchProductCampaigns(1, 10);
+    fetchBlogCampaigns(1, 10);
     fetchJourneys();
     fetchAllJourneyCampaigns();
   }, []);
 
   useEffect(() => {
     const reopenId = localStorage.getItem("reopenPublishModal");
-    if (reopenId && campaigns.length > 0) {
-      const matched = campaigns.find((c) => c.campaignId === reopenId);
+    if (reopenId && (campaigns.length > 0 || blogCampaigns.length > 0)) {
+      const matched =
+        blogCampaigns.find((c) => c.campaignId === reopenId) ||
+        campaigns.find((c) => c.campaignId === reopenId);
       if (matched) {
         setCurrentBlogCampaign(matched);
         setSocialMediaCaption(matched.socialMediaCaption || "");
@@ -220,11 +247,134 @@ const AllCampaignsDetails: React.FC = () => {
       }
       localStorage.removeItem("reopenPublishModal"); // ✅ Clear after use
     }
-  }, [campaigns]);
+  }, [campaigns, blogCampaigns]);
 
   useEffect(() => {
     console.log(fileList);
   }, [formData, fileList]);
+
+  const fetchServiceCampaigns = async (
+    page: number = servicePage,
+    size: number = servicePageSize
+  ) => {
+    setServiceLoading(true);
+    try {
+      const pageNo = Math.max(0, page - 1);
+      const response = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/campaigns-by-input-type`,
+        {
+          params: {
+            inputType: "SERVICE",
+            pageNo,
+            pageSize: size,
+          },
+          headers: { accept: "*/*" },
+        }
+      );
+      const resData = response.data;
+      const contentList = getArrayFromResponse<Campaign>(
+        resData?.content ?? resData?.data ?? resData
+      )
+        .map(normalizeCampaign)
+        .filter((c) => c.campaignStatus !== null);
+
+      setServiceCampaigns(contentList);
+      setServiceTotal(
+        typeof resData?.totalElements === "number"
+          ? resData.totalElements
+          : contentList.length
+      );
+      setServicePage(page);
+      setServicePageSize(size);
+    } catch (error) {
+      console.error("Error fetching service campaigns:", error);
+      message.error("Failed to load service campaigns.");
+    } finally {
+      setServiceLoading(false);
+    }
+  };
+
+  const fetchProductCampaigns = async (
+    page: number = productPage,
+    size: number = productPageSize
+  ) => {
+    setProductLoading(true);
+    try {
+      const pageNo = Math.max(0, page - 1);
+      const response = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/campaigns-by-input-type`,
+        {
+          params: {
+            inputType: "PRODUCT",
+            pageNo,
+            pageSize: size,
+          },
+          headers: { accept: "*/*" },
+        }
+      );
+      const resData = response.data;
+      const contentList = getArrayFromResponse<Campaign>(
+        resData?.content ?? resData?.data ?? resData
+      )
+        .map(normalizeCampaign)
+        .filter((c) => c.campaignStatus !== null);
+
+      setProductCampaigns(contentList);
+      setProductTotal(
+        typeof resData?.totalElements === "number"
+          ? resData.totalElements
+          : contentList.length
+      );
+      setProductPage(page);
+      setProductPageSize(size);
+    } catch (error) {
+      console.error("Error fetching product campaigns:", error);
+      message.error("Failed to load product campaigns.");
+    } finally {
+      setProductLoading(false);
+    }
+  };
+
+  const fetchBlogCampaigns = async (
+    page: number = blogPage,
+    size: number = blogPageSize
+  ) => {
+    setBlogLoading(true);
+    try {
+      const pageNo = Math.max(0, page - 1);
+      const response = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/campaigns-by-input-type`,
+        {
+          params: {
+            inputType: "BLOG",
+            pageNo,
+            pageSize: size,
+          },
+          headers: { accept: "*/*" },
+        }
+      );
+      const resData = response.data;
+      const contentList = getArrayFromResponse<Campaign>(
+        resData?.content ?? resData?.data ?? resData
+      )
+        .map(normalizeCampaign)
+        .filter((c) => c.campaignStatus !== null);
+
+      setBlogCampaigns(contentList);
+      setBlogTotal(
+        typeof resData?.totalElements === "number"
+          ? resData.totalElements
+          : contentList.length
+      );
+      setBlogPage(page);
+      setBlogPageSize(size);
+    } catch (error) {
+      console.error("Error fetching blog campaigns:", error);
+      message.error("Failed to load blog campaigns.");
+    } finally {
+      setBlogLoading(false);
+    }
+  };
 
   const fetchCampaigns = async () => {
     setLoading(true);
@@ -314,6 +464,9 @@ const AllCampaignsDetails: React.FC = () => {
 
   const refreshCampaignData = async () => {
     await fetchCampaigns();
+    await fetchServiceCampaigns(servicePage, servicePageSize);
+    await fetchProductCampaigns(productPage, productPageSize);
+    await fetchBlogCampaigns(blogPage, blogPageSize);
     await fetchAllJourneyCampaigns();
     if (selectedJourneyId !== "ALL") {
       await fetchCampaignsByJourneyId(selectedJourneyId);
@@ -1002,15 +1155,6 @@ const AllCampaignsDetails: React.FC = () => {
   const displayedJourneyCampaigns =
     selectedJourneyId === "ALL" ? leagueJourneysCampaigns : journeyCampaigns;
   const specialTypes = new Set(["WEAREHIRING", "LEAGUEJOURNEYS"]);
-  const serviceCampaigns = campaigns.filter(
-    (c) => c.campainInputType === "SERVICE" && !specialTypes.has(c.addServiceType || "")
-  );
-  const productCampaigns = campaigns.filter(
-    (c) => c.campainInputType === "PRODUCT" && !specialTypes.has(c.addServiceType || "")
-  );
-  const blogCampaigns = campaigns.filter(
-    (c) => c.campainInputType === "BLOG" && !specialTypes.has(c.addServiceType || "")
-  );
 
   // 🔍 Filter campaigns based on search query
   const filterBySearch = (campaigns: Campaign[]): Campaign[] => {
@@ -1085,6 +1229,56 @@ const AllCampaignsDetails: React.FC = () => {
     </div>
   );
 
+  const renderPaginatedTable = (
+    data: Campaign[],
+    type: string,
+    currentPage: number,
+    pageSize: number,
+    total: number,
+    loadingState: boolean,
+    onPageChange: (page: number, size: number) => void,
+    isBlog: boolean = false
+  ) => {
+    const displayedData = filterBySearch(data);
+    return (
+      <>
+        {renderMobileCards(displayedData, isBlog)}
+        {total > 0 && (
+          <div className="mt-4 flex justify-end md:hidden">
+            <Pagination
+              current={currentPage}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger={false}
+              size="small"
+              onChange={(page, size) => onPageChange(page, size || pageSize)}
+            />
+          </div>
+        )}
+        <div className="hidden md:block">
+          <Table
+            columns={getColumns(type, isBlog)}
+            dataSource={displayedData}
+            rowKey={(record) => record.campaignId}
+            loading={loadingState}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: total,
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50", "100"],
+              showTotal: (tot, range) => `${range[0]}-${range[1]} of ${tot} records`,
+              onChange: (page, size) => onPageChange(page, size || pageSize),
+            }}
+            size="middle"
+            className="campaign-responsive-table"
+            scroll={{ x: 1300 }}
+          />
+        </div>
+      </>
+    );
+  };
+
   const renderTable = (data: Campaign[], type: string, isBlog: boolean = false) => (
     <>
       {renderMobileCards(data, isBlog)}
@@ -1135,9 +1329,58 @@ const AllCampaignsDetails: React.FC = () => {
               }}
               items={[
                 { key: "wearehiring", label: `Hiring (${weAreHiringCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(weAreHiringCampaigns), "Hiring")}</div> },
-                { key: "service", label: `Services (${serviceCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(serviceCampaigns), "Service")}</div> },
-                { key: "product", label: `Products (${productCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(productCampaigns), "Product")}</div> },
-                { key: "blog", label: `Blogs (${blogCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(blogCampaigns), "Blog", true)}</div> },
+                {
+                  key: "service",
+                  label: `Services (${serviceTotal})`,
+                  children: (
+                    <div className="p-3 sm:p-4">
+                      {renderPaginatedTable(
+                        serviceCampaigns,
+                        "Service",
+                        servicePage,
+                        servicePageSize,
+                        serviceTotal,
+                        serviceLoading,
+                        (page, size) => fetchServiceCampaigns(page, size)
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "product",
+                  label: `Products (${productTotal})`,
+                  children: (
+                    <div className="p-3 sm:p-4">
+                      {renderPaginatedTable(
+                        productCampaigns,
+                        "Product",
+                        productPage,
+                        productPageSize,
+                        productTotal,
+                        productLoading,
+                        (page, size) => fetchProductCampaigns(page, size)
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "blog",
+                  label: `Blogs (${blogTotal})`,
+                  children: (
+                    <div className="p-3 sm:p-4">
+                      {renderPaginatedTable(
+                        blogCampaigns,
+                        "Blog",
+                        blogPage,
+                        blogPageSize,
+                        blogTotal,
+                        blogLoading,
+                        (page, size) => fetchBlogCampaigns(page, size),
+                        true
+                      )}
+                    </div>
+                  ),
+                },
                 {
                   key: "leaguejourneys",
                   label: `Journeys (${leagueJourneysCampaigns.length})`,

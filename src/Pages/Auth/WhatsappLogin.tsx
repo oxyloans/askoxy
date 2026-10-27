@@ -553,8 +553,7 @@ const WhatsappLogin: React.FC = () => {
       const error = err as AxiosError<any>;
       const msg =
         error.response?.data?.message ||
-        error.response?.data?.error ||
-        "An error occurred. Please try again later.";
+        error.response?.data?.error 
       if (
         msg === "User already registered with this Mobile Number, please log in."
       ) {
@@ -719,8 +718,8 @@ const WhatsappLogin: React.FC = () => {
 
       setOtpError(
         error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Invalid OTP. Please try again.",
+        error.response?.data?.error
+       ,
       );
 
       setShowSuccessPopup(false);
@@ -786,8 +785,7 @@ const WhatsappLogin: React.FC = () => {
         const error = err as AxiosError<any>;
         setError(
           error.response?.data?.message ||
-          error.response?.data?.error ||
-          "An error occurred. Please try again later.",
+          error.response?.data?.error 
         );
       } finally {
         setIsLoading(false);

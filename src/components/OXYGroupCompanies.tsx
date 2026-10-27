@@ -87,7 +87,7 @@ const OXYGroupCompanies: React.FC = () => {
 
       {/* Outer wrapper — soft fade mask on both edges */}
       <div
-        className="oxy-marquee-outer relative w-full"
+        className="oxy-marquee-outer relative w-full max-w-8xl mx-auto"
         style={{
           maskImage:
             "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
