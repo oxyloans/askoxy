@@ -753,53 +753,36 @@ const MyRotaryServices: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* Poster Launch Event - Enhanced */}
-          <div className="mt-4 sm:mt-6 rounded-2xl sm:rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden">
-            <div className="p-3 sm:p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
-                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
-                      Poster Launch Event
-                    </h3>
-                    <p className="text-xs text-gray-600 mt-0.5">
-                      22 Feb 2026 • Rotary Leadership Training
-                    </p>
-                  </div>
-                </div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold">
-                  <Clock className="h-3 w-3" />
-                  Event Highlights
+          {/* Poster Launch Event — text left, original event photo right */}
+          <section className="mt-4 sm:mt-6 overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-white shadow-xl" aria-labelledby="poster-launch-heading">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-stretch">
+              {/* LEFT: Launch announcement replaces the unavailable first photo */}
+              <div className="flex flex-col justify-center px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12 bg-gradient-to-br from-amber-50 via-white to-orange-50">
+                <span className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700">
+                  <Star className="h-4 w-4" /> Event Highlights
                 </span>
+                <h3 id="poster-launch-heading" className="mt-5 text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight text-gray-900">
+                  Poster Launch Event
+                </h3>
+                <p className="mt-4 text-base sm:text-lg font-bold text-amber-700">
+                  22 February 2026
+                </p>
+                <p className="mt-2 text-sm sm:text-base leading-relaxed text-gray-600">
+                  Poster launched at Rotary Leadership Training, RI District 3150.
+                </p>
               </div>
-            </div>
 
-            <div className="p-3 sm:p-4 lg:p-5 bg-gradient-to-b from-gray-50/50 to-white">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="group relative overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                  <img
-                    src="https://i.ibb.co/CpnDjvm0/pl1.png"
-                    alt="Poster Launch Photo 1"
-                    className="w-full h-auto object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                  <img
-                    src="https://i.ibb.co/bMTVvMyn/pl2.png"
-                    alt="Poster Launch Photo 2"
-                    className="w-full h-auto object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+              {/* RIGHT: Keep the working second photo unchanged */}
+              <div className="min-w-0 bg-gray-100 p-3 sm:p-4">
+                <img
+                  src="https://i.ibb.co/bMTVvMyn/pl2.png"
+                  alt="Rotary Leadership Training poster launch event on 22 February 2026"
+                  className="block h-auto w-full rounded-xl object-contain md:h-full md:max-h-[440px]"
+                  loading="lazy"
+                />
               </div>
             </div>
-          </div>
+          </section>
         </motion.section>
 
         {/* ENHANCED HERO SECTION - Fully Responsive */}

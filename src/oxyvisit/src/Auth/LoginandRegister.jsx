@@ -3,8 +3,14 @@ import { Form, Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 import { useOxyNavigate } from "../utils/navigation";
+import { setCurrentUser } from "../utils/user";
 import BASE_URL, { MOCK_AUTH } from "../core/config/Config";
+
+export const ADMIN_ROLES = ["HELPDESKADMIN", "HELPDESKSUPERADMIN"];
+export const USER_ROLES = ["OXYVISIT"];
+export const VALID_OXYVISIT_ROLES = ["OXYVISIT", "HELPDESKADMIN", "HELPDESKSUPERADMIN"];
 
 function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -15,6 +21,25 @@ function AdminLogin() {
   const { navigate, getPath } = useOxyNavigate();
 
   useEffect(() => {
+    const token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("accessToken");
+    const primaryType = (
+      localStorage.getItem("primaryType") ||
+      localStorage.getItem("admin_primaryType") ||
+      ""
+    ).toUpperCase().trim();
+
+    if (token && VALID_OXYVISIT_ROLES.includes(primaryType)) {
+      if (ADMIN_ROLES.includes(primaryType)) {
+        navigate("/oxyvisit/dashboard/categories");
+      } else if (primaryType === "OXYVISIT") {
+        navigate("/oxyvisit/dashboard");
+      }
+      return;
+    }
+
     const savedEmail = localStorage.getItem("savedEmail");
     if (savedEmail) {
       setEmail(savedEmail);
@@ -54,16 +79,23 @@ function AdminLogin() {
         console.log("Using mock authentication...");
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        let mockType = "EMPLOYEE";
-        if (email.includes("super")) {
+        let mockType = "OXYVISIT";
+        const emailLower = email.toLowerCase();
+        if (emailLower.includes("super")) {
           mockType = "HELPDESKSUPERADMIN";
-        } else if (email.includes("admin")) {
+        } else if (emailLower.includes("admin")) {
           mockType = "HELPDESKADMIN";
         }
 
         const validUuid = "2ef5a341-2378-4b5d-a6fc-d5102e947db0";
-        localStorage.setItem("token", "mock-access-token-" + Date.now());
-        localStorage.setItem("refreshToken", "mock-refresh-token-" + Date.now());
+        const mockToken = "mock-access-token-" + Date.now();
+        const mockRefresh = "mock-refresh-token-" + Date.now();
+
+        localStorage.setItem("token", mockToken);
+        localStorage.setItem("accessToken", mockToken);
+        sessionStorage.setItem("accessToken", mockToken);
+        localStorage.setItem("refreshToken", mockRefresh);
+        sessionStorage.setItem("refreshToken", mockRefresh);
         localStorage.setItem("primaryType", mockType);
         localStorage.setItem("userId", validUuid);
         localStorage.setItem("userName", email.split("@")[0] || "User");
@@ -94,55 +126,109 @@ function AdminLogin() {
         );
 
         if (response.data?.status === "Login Successful") {
+          const rawType = (response.data.primaryType || "").toUpperCase().trim();
+
+          // Reject login if primaryType is not an authorized OxyVisit role
+          if (!VALID_OXYVISIT_ROLES.includes(rawType)) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("accessToken");
+            sessionStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            sessionStorage.removeItem("refreshToken");
+            localStorage.removeItem("primaryType");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("userName");
+
+            const displayRole = response.data.primaryType ? response.data.primaryType : "unauthorized role";
+            const deniedMsg = `Your account role (${displayRole}) is not authorized for OxyVisits. Only OXYVISIT accounts can access the user portal.`;
+            setError(`Access denied: ${deniedMsg}`);
+            triggerShakeAnimation();
+            Swal.fire({
+              icon: "error",
+              title: "Access Denied",
+              text: deniedMsg,
+            });
+            return;
+          }
+
           const token = response.data.accessToken || response.data.token;
           const refreshToken = response.data.refreshToken || response.data.refreshToke;
-          const rawType = response.data.primaryType;
-          const effectiveType = (rawType === "HELPDESKSUPERADMIN" || rawType === "HELPDESKADMIN") ? rawType : "EMPLOYEE";
+          const effectiveType = rawType;
           const validUuid = response.data.id || response.data.userId || "2ef5a341-2378-4b5d-a6fc-d5102e947db0";
-          const name = response.data.name || response.data.userName || email.split("@")[0];
+          const rawName =
+            response.data.name ||
+            response.data.userName ||
+            response.data.firstName ||
+            (response.data.userFirstName && response.data.userLastName
+              ? `${response.data.userFirstName} ${response.data.userLastName}`
+              : response.data.userFirstName || "");
+          const name = rawName || localStorage.getItem("userName") || email.split("@")[0];
 
           localStorage.setItem("token", token);
-          if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+          localStorage.setItem("accessToken", token);
+          sessionStorage.setItem("accessToken", token);
+          if (refreshToken) {
+            localStorage.setItem("refreshToken", refreshToken);
+            sessionStorage.setItem("refreshToken", refreshToken);
+          }
           localStorage.setItem("primaryType", effectiveType);
           localStorage.setItem("userId", validUuid);
           localStorage.setItem("userName", name);
+          sessionStorage.setItem("userName", name);
+          sessionStorage.setItem("Name", name);
           localStorage.setItem("lastLogin", new Date().toISOString());
           localStorage.setItem("savedEmail", email.trim());
+          setCurrentUser({
+            id: validUuid,
+            userId: validUuid,
+            name: name,
+            userName: name,
+            primaryType: effectiveType,
+            email: email.trim(),
+          });
 
+          Swal.fire({
+            icon: "success",
+            title: "Login Successful!",
+            text: `Welcome to OxyVisits, ${name}! Redirecting to dashboard...`,
+            timer: 1500,
+            showConfirmButton: false,
+          });
           message.success("Login successful! Redirecting...", 1.5);
+
           setTimeout(() => {
-            if (effectiveType === "HELPDESKSUPERADMIN" || effectiveType === "HELPDESKADMIN") {
+            if (ADMIN_ROLES.includes(effectiveType)) {
               navigate("/oxyvisit/dashboard/categories");
-            } else {
+            } else if (effectiveType === "OXYVISIT") {
               navigate("/oxyvisit/dashboard");
             }
           }, 800);
         } else {
-          setError(response.data?.errorMessage || "Invalid credentials. Please try again.");
+          const errMsg = response.data?.errorMessage || response.data?.status || response.data?.message || "Invalid email or password. Please try again.";
+          setError(errMsg);
           triggerShakeAnimation();
+          Swal.fire({
+            icon: "error",
+            title: "Login Failed",
+            text: errMsg,
+          });
         }
       }
     } catch (error) {
       console.log("Error in login:", error);
-      if (!MOCK_AUTH) {
-        const errorMsg = error.response?.data?.status || error.response?.data?.message || "Authentication failed.";
-        setError(errorMsg);
-        triggerShakeAnimation();
-      } else {
-        const validUuid = "2ef5a341-2378-4b5d-a6fc-d5102e947db0";
-        localStorage.setItem("token", "fallback-mock-token-" + Date.now());
-        localStorage.setItem("refreshToken", "fallback-refresh-token-" + Date.now());
-        localStorage.setItem("primaryType", "EMPLOYEE");
-        localStorage.setItem("userId", validUuid);
-        localStorage.setItem("userName", email.split("@")[0] || "User");
-        localStorage.setItem("lastLogin", new Date().toISOString());
-        localStorage.setItem("savedEmail", email.trim());
-        
-        message.success("Login successful! Redirecting...", 1.5);
-        setTimeout(() => {
-          navigate("/oxyvisit/dashboard");
-        }, 800);
-      }
+      const errorMsg =
+        error.response?.data?.errorMessage ||
+        error.response?.data?.message ||
+        error.response?.data?.status ||
+        error.response?.data?.error ||
+        "Authentication failed. Please check your credentials and try again.";
+      setError(errorMsg);
+      triggerShakeAnimation();
+      Swal.fire({
+        icon: "error",
+        title: "Login Error",
+        text: errorMsg,
+      });
     } finally {
       setLoading(false);
     }

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Coins,
   Copy,
   Sparkles,
   
   Info,
-  SendHorizonal,
+  SendHorizontal,
   ExternalLink,
   Check,
   X,
@@ -15,22 +14,17 @@ import {
   History,
   ChevronDown,
   ChevronUp,
-  Menu,
   Plus,
   Minus,
   HelpCircle,
   Gift,
   Users,
   Zap,
-  Target,
   ArrowRight,
   Star,
 } from "lucide-react";
 import BASE_URL from "../Config";
-import BMVICON from "../assets/img/bmvlogo.png";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import axiosInstance from "../utils/axiosInstance";
 
 
@@ -47,6 +41,145 @@ interface Transfer {
 }
 
 
+
+// Transfer form kept outside MyCrypto to preserve focus while users type.
+interface TransferModalProps {
+  balance: number;
+  senderMobile: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const validateMobile = (value: string, senderMobile: string): string => {
+  if (!value) return "Enter the recipient's mobile number.";
+  if (!/^[6-9]\d{9}$/.test(value)) return "Enter a valid 10-digit mobile number.";
+  if (value === senderMobile.replace(/\D/g, "").slice(-10))
+    return "You cannot transfer coins to yourself.";
+  return "";
+};
+
+const transferErrorMessage = (error: unknown): string => {
+  const e = error as {
+    code?: string;
+    response?: { status?: number; data?: { error?: string; message?: string } };
+  };
+  const status = e.response?.status;
+  const raw = `${e.response?.data?.error || ""} ${e.response?.data?.message || ""}`.toLowerCase();
+  if (/not registered|not found|does not exist|invalid recipient|user not exist/.test(raw))
+    return "This mobile number is not registered.";
+  if (/insufficient|low balance|not enough/.test(raw))
+    return "Not enough BMVCOINS. Enter a smaller amount.";
+  if (/same mobile|self transfer|yourself/.test(raw))
+    return "You cannot transfer coins to yourself.";
+  if (/invalid amount|minimum amount/.test(raw))
+    return "Enter a valid transfer amount.";
+  if (status === 404) return "This mobile number is not registered.";
+  if (status === 401 || status === 403) return "Your session has expired. Please log in again.";
+  if (status === 400 || status === 422) return "Please check the mobile number and amount.";
+  if (status === 429) return "Too many requests. Please try again shortly.";
+  if (e.code === "ECONNABORTED" || e.code === "ERR_NETWORK" || !e.response)
+    return "Transfer status is uncertain. Check your history before retrying.";
+  return "Transfer could not be completed. Please try again.";
+};
+
+const TransferModal: React.FC<TransferModalProps> = ({ balance, senderMobile, onClose, onSuccess }) => {
+  const [mobile, setMobile] = useState("");
+  const [amount, setAmount] = useState("");
+  const [touched, setTouched] = useState({ mobile: false, amount: false });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const submitted = useRef(false);
+
+  const mobileError = validateMobile(mobile, senderMobile);
+  const numericAmount = Number(amount);
+  const amountError = !amount
+    ? "Enter the amount to transfer."
+    : !/^\d+(?:\.\d{1,2})?$/.test(amount) || !Number.isFinite(numericAmount) || numericAmount <= 0
+    ? "Enter a valid amount greater than zero."
+    : numericAmount > balance
+    ? "Not enough BMVCOINS. Enter a smaller amount."
+    : "";
+  const valid = !mobileError && !amountError;
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTouched({ mobile: true, amount: true });
+    setError("");
+    if (!valid || loading || submitted.current) return;
+    submitted.current = true;
+    setLoading(true);
+    try {
+      await axiosInstance.post(`${BASE_URL}/user-service/assetTransfer`, {
+        from_mobile: senderMobile,
+        to_mobile: mobile,
+        amount: amount,
+      }, { timeout: 20000 });
+      setSuccess(true);
+      onSuccess();
+    } catch (err) {
+      setError(transferErrorMessage(err));
+    } finally {
+      submitted.current = false;
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="transfer-title" className="w-full max-w-md max-h-[95dvh] sm:max-h-[90dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="shrink-0 rounded-xl bg-purple-100 p-2.5"><SendHorizontal className="h-5 w-5 text-purple-700" /></span>
+            <h2 id="transfer-title" className="text-lg sm:text-xl font-bold text-gray-900">Transfer BMVCOINS</h2>
+          </div>
+          <button type="button" onClick={onClose} disabled={loading} aria-label="Close transfer window" className="shrink-0 rounded-full p-2 hover:bg-gray-100 disabled:opacity-50"><X className="h-5 w-5" /></button>
+        </div>
+        {success ? (
+          <div role="status" className="space-y-4 text-center py-5">
+            <Check className="h-12 w-12 mx-auto rounded-full bg-green-100 p-2 text-green-700" />
+            <h3 className="text-xl font-bold text-green-700">Transfer successful!</h3>
+            <p className="text-sm text-gray-700">{amount} BMVCOINS sent to {mobile}.</p>
+            <button type="button" onClick={onClose} className="w-full rounded-xl bg-purple-700 py-3 text-white font-semibold">Done</button>
+          </div>
+        ) : (
+          <form onSubmit={submit} noValidate className="space-y-4">
+            <div>
+              <label htmlFor="recipientMobile" className="mb-1.5 block text-sm font-semibold text-gray-700">Recipient mobile number</label>
+              <input id="recipientMobile" type="tel" inputMode="numeric" autoComplete="off" enterKeyHint="next"
+                value={mobile} maxLength={10} placeholder="10-digit mobile number"
+                onChange={(e) => { setMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setError(""); }}
+                onBlur={() => setTouched((prev) => ({ ...prev, mobile: true }))}
+                aria-invalid={touched.mobile && !!mobileError} aria-describedby="mobile-feedback"
+                className={`block w-full min-w-0 rounded-xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-purple-200 ${touched.mobile && mobileError ? "border-red-500" : "border-gray-300 focus:border-purple-500"}`} />
+              <p id="mobile-feedback" aria-live="polite" className={`mt-1 text-xs ${touched.mobile && mobileError ? "text-red-600" : mobile.length === 10 && !mobileError ? "text-green-700" : "text-gray-500"}`}>
+                {touched.mobile && mobileError ? mobileError : mobile.length === 10 && !mobileError ? "Mobile number format is valid." : "Enter a registered Indian mobile number."}
+              </p>
+            </div>
+            <div>
+              <div className="mb-1.5 flex flex-wrap justify-between gap-1 text-sm">
+                <label htmlFor="transferAmount" className="font-semibold text-gray-700">Amount</label>
+                <span className="text-gray-500">Available: {balance.toLocaleString("en-IN")} BMVCOINS</span>
+              </div>
+              <input id="transferAmount" type="text" inputMode="decimal" value={amount} placeholder="Enter coins"
+                onChange={(e) => { setAmount(e.target.value.replace(/[^\d.]/g, "").slice(0, 16)); setError(""); }}
+                onBlur={() => setTouched((prev) => ({ ...prev, amount: true }))}
+                aria-invalid={touched.amount && !!amountError} aria-describedby="amount-feedback"
+                className={`block w-full min-w-0 rounded-xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-purple-200 ${touched.amount && amountError ? "border-red-500" : "border-gray-300 focus:border-purple-500"}`} />
+              {touched.amount && amountError && <p id="amount-feedback" role="alert" className="mt-1 text-xs text-red-600">{amountError}</p>}
+            </div>
+            <p className="rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600">Transfers cannot be reversed. Confirm the recipient's number before sending.</p>
+            {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700">{error}</div>}
+            <button type="submit" disabled={loading || !valid} className="w-full min-h-12 rounded-xl bg-purple-700 px-4 py-3 font-semibold text-white transition hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading ? "Processing..." : "Transfer BMVCOINS"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const MyCrypto: React.FC = () => {
   // Basic state variables
   const [multichainId, setMultichainId] = useState("");
@@ -58,12 +191,12 @@ const MyCrypto: React.FC = () => {
   const [showBmvModal, setShowBmvModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showTransfersModal, setShowTransfersModal] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [shouldFetchTransfers, setShouldFetchTransfers] = useState(false);
   const [showFaqModal, setShowFaqModal] = useState(false);
 
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [transfersLoading, setTransfersLoading] = useState(false);
   const [transfersError, setTransfersError] = useState<string | null>(null);
 
@@ -78,25 +211,8 @@ const MyCrypto: React.FC = () => {
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
   // Refs
-  const mobileInputRef = useRef<HTMLInputElement>(null);
-  const amountInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const transferModalRef = useRef<HTMLDivElement>(null);
   const transfersInitialized = useRef(false);
-
-  // Transfer state
-  const [transferStatus, setTransferStatus] = useState({
-    loading: false,
-    success: false,
-    error: null as string | null,
-  });
-
-  const [transferDetails, setTransferDetails] = useState({
-    recipientMobile: "",
-    amount: "",
-  });
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 const formatIST = (dateString?: string) => {
   if (!dateString) return "—";
@@ -183,23 +299,16 @@ const formatIST = (dateString?: string) => {
         closeTransfersModal();
       }
 
-      if (
-        showTransferModal &&
-        transferModalRef.current &&
-        !transferModalRef.current.contains(event.target as Node)
-      ) {
-        setShowTransferModal(false);
-      }
     };
 
-    if (showTransfersModal || showTransferModal) {
+    if (showTransfersModal) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showTransfersModal, showTransferModal]);
+  }, [showTransfersModal]);
 
   // Fetch user data on mount
   useEffect(() => {
@@ -240,6 +349,7 @@ useEffect(() => {
   const fetchUserData = async () => {
     try {
       setIsLoading(true);
+      setProfileError(null);
       const userId = localStorage.getItem("userId");
       if (!userId) {
         throw new Error("User ID not found in local storage");
@@ -257,10 +367,7 @@ useEffect(() => {
     } catch (error: any) {
       console.error("Error fetching user data:", error);
       if (isMounted.current) {
-        alert(
-          "Failed to load profile: " +
-            (error.response?.data?.message || error.message)
-        );
+        setProfileError("Unable to load your wallet. Please try again.");
       }
     } finally {
       if (isMounted.current) {
@@ -292,7 +399,7 @@ useEffect(() => {
 
       const response = await axiosInstance.get(`${BASE_URL}/user-service/bmvhistory`, {
         params: { mobileNumber: userMobileNumber },
-        timeout: 1000,
+        timeout: 15000,
         validateStatus: (status: number) =>
           (status >= 200 && status < 300) || status === 204,
       });
@@ -316,17 +423,14 @@ useEffect(() => {
         if (error.code === "ECONNABORTED") {
           setTransfersError("Request timed out. Please try again.");
         } else if (error.response?.status === 404) {
-          setTransfersError("No transfers found");
+          setTransfers([]);
+          setTransfersError(null);
         } else if (error.response?.status === 400) {
-          setTransfersError("Invalid request. Please check your mobile number.");
+          setTransfersError("Unable to load transactions. Please try again.");
         } else if (error.response?.status >= 500) {
           setTransfersError("Server error. Please try again later.");
         } else {
-          setTransfersError(
-            error.response?.data?.message ||
-              error.message ||
-              "Failed to fetch transfer history"
-          );
+          setTransfersError("Unable to load transactions. Please try again.");
         }
       }
     } finally {
@@ -383,103 +487,6 @@ useEffect(() => {
         }, 2000);
       } catch (err) {
         console.error("Failed to copy:", err);
-      }
-    }
-  };
-
-  const handleTransferSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const recipientMobile = mobileInputRef.current?.value || "";
-    const transferAmount = amountInputRef.current?.value || "";
-
-    if (!recipientMobile || !transferAmount) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error: "Please fill in all fields",
-      });
-      return;
-    }
-
-    if (recipientMobile.length !== 10 || !/^\d{10}$/.test(recipientMobile)) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error: "Please enter a valid 10-digit mobile number",
-      });
-      return;
-    }
-
-    const amount = parseFloat(transferAmount);
-    if (isNaN(amount) || amount <= 0 || amount > bmvCoin) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error: `Please enter a valid amount between 1 and ${bmvCoin}`,
-      });
-      return;
-    }
-
-    try {
-      setTransferStatus({ loading: true, success: false, error: null });
-
-      await axiosInstance.post(`${BASE_URL}/user-service/assetTransfer`, {
-        from_mobile: userMobileNumber,
-        to_mobile: recipientMobile,
-        amount: transferAmount,
-      });
-
-      if (isMounted.current) {
-        setTransferDetails({
-          recipientMobile: recipientMobile,
-          amount: transferAmount,
-        });
-
-        setTransferStatus({ loading: false, success: true, error: null });
-        fetchUserData();
-
-        setTimeout(() => {
-          if (isMounted.current) {
-            if (mobileInputRef.current) mobileInputRef.current.value = "";
-            if (amountInputRef.current) amountInputRef.current.value = "";
-            setShowTransferModal(false);
-            setTransferStatus({ loading: false, success: false, error: null });
-            setShouldFetchTransfers(true);
-          }
-        }, 2000);
-      }
-    } catch (error: any) {
-      console.error("Transfer error:", error);
-
-      if (isMounted.current) {
-        if (error.response?.status === 400) {
-          setTransferStatus({
-            loading: false,
-            success: false,
-            error: "Invalid transfer request. Please check recipient details.",
-          });
-        } else if (error.response?.status === 404) {
-          setTransferStatus({
-            loading: false,
-            success: false,
-            error: "Recipient not found. Please verify the mobile number.",
-          });
-        } else if (error.response?.status >= 500) {
-          setTransferStatus({
-            loading: false,
-            success: false,
-            error: "Server error. Please try again later.",
-          });
-        } else {
-          setTransferStatus({
-            loading: false,
-            success: false,
-            error:
-              error.response?.data?.message ||
-              "Transfer failed. Please try again.",
-          });
-        }
       }
     }
   };
@@ -655,141 +662,6 @@ useEffect(() => {
             Got it! Let's Start Earning
           </button>
         </div>
-      </div>
-    </div>
-  );
-
-  // TransferModal Component
-  const TransferModal = () => (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div
-        ref={transferModalRef}
-        className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md relative overflow-y-auto max-h-[90vh] "
-      >
-        <button
-          onClick={() => setShowTransferModal(false)}
-          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center 
-                    bg-white hover:bg-gray-100 rounded-full transition-colors z-50
-                    shadow-lg border border-gray-200"
-          aria-label="Close modal"
-        >
-          <X size={18} strokeWidth={2.5} className="text-gray-700" />
-        </button>
-
-        <div className="flex items-center gap-4 mb-6">
-          <div className="p-3 rounded-full bg-purple-100">
-            <SendHorizonal className="h-7 w-7 text-purple-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800">Transfer BMVCOINS</h2>
-        </div>
-
-        {transferStatus.success ? (
-          <div className="text-center py-4">
-            <div className="mx-auto w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-5">
-              <Check className="h-7 w-7 text-green-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-green-600 mb-3">
-              Transfer Successful!
-            </h3>
-            <p className="text-gray-700 mb-5">
-              You have successfully transferred {transferDetails.amount}{" "}
-              BMVCOINS to {transferDetails.recipientMobile}.
-            </p>
-            <div className="bg-gray-50 p-4 rounded-xl mb-5">
-              <p className="text-gray-500 mb-1">Updated Balance:</p>
-              <p className="text-3xl font-bold text-purple-700">
-                {bmvCoin} BMVCOINS
-              </p>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleTransferSubmit}>
-            <div className="space-y-5">
-              <div>
-                <label
-                  htmlFor="recipientMobile"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Recipient Mobile Number
-                </label>
-                <input
-                  ref={mobileInputRef}
-                  type="text"
-                  id="recipientMobile"
-                  placeholder="Enter 10-digit mobile number"
-                  className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700"
-                  maxLength={10}
-                  pattern="\d{10}"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="amount"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Amount to Transfer
-                </label>
-                <div className="relative">
-                  <input
-                    ref={amountInputRef}
-                    type="number"
-                    id="amount"
-                    placeholder="Enter amount"
-                    min="1"
-                    max={bmvCoin}
-                    className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700"
-                  />
-                  <div className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                    BMVCOINS
-                  </div>
-                </div>
-                <p className="text-gray-500 text-sm mt-2">
-                  Available: <span className="font-medium">{bmvCoin} BMVCOINS</span>
-                </p>
-              </div>
-
-              {transferStatus.error && (
-                <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-600">
-                  {transferStatus.error}
-                </div>
-              )}
-
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-gray-500 text-sm mb-2 font-medium">Important:</p>
-                <ul className="space-y-2 text-gray-600 text-sm">
-                  <li className="flex items-start gap-2">
-                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mt-0.5 flex-shrink-0">
-                      •
-                    </span>
-                    <span>All transfers are final and cannot be reversed.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mt-0.5 flex-shrink-0">
-                      •
-                    </span>
-                    <span>The recipient must be a registered user.</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full p-3.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
-                disabled={transferStatus.loading}
-              >
-                {transferStatus.loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Processing...
-                  </span>
-                ) : (
-                  "Transfer BMVCOINS"
-                )}
-              </button>
-            </div>
-          </form>
-        )}
       </div>
     </div>
   );
@@ -1052,7 +924,13 @@ useEffect(() => {
     return (
     <>
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 min-w-0">
+        {profileError && (
+          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <span>{profileError}</span>
+            <button type="button" onClick={() => void fetchUserData()} className="font-semibold underline">Retry</button>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* BMVCOINS Card */}
           <div className="lg:col-span-3">
@@ -1098,9 +976,10 @@ useEffect(() => {
                   </button>
                   <button
                     onClick={() => setShowTransferModal(true)}
-                    className="px-5 py-3 bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                    disabled={isLoading || !!profileError || !userMobileNumber || bmvCoin <= 0}
+                    className="px-5 py-3 bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <SendHorizonal className="h-5 w-5" />
+                    <SendHorizontal className="h-5 w-5" />
                     <span>Transfer</span>
                   </button>
                 </div>
@@ -1244,7 +1123,7 @@ useEffect(() => {
       return (
         <div
           key={index}
-          className="flex items-center justify-between p-4 border border-gray-200 rounded-2xl hover:shadow-sm transition-shadow"
+          className="flex items-center justify-between gap-3 p-3 sm:p-4 border border-gray-200 rounded-2xl hover:shadow-sm transition-shadow min-w-0"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className={`p-2.5 rounded-xl ${meta.iconBg}`}>
@@ -1283,7 +1162,17 @@ useEffect(() => {
 
      {/* Modals */}
       {showBmvModal && <BMVInfoModal />}
-      {showTransferModal && <TransferModal />}
+      {showTransferModal && (
+        <TransferModal
+          balance={bmvCoin}
+          senderMobile={userMobileNumber}
+          onClose={() => setShowTransferModal(false)}
+          onSuccess={() => {
+            void fetchUserData();
+            void fetchTransfers();
+          }}
+        />
+      )}
       {showTransfersModal && <TransfersModal />}
       {showFaqModal && <FAQModal />}
     </>

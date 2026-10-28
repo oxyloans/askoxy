@@ -24,9 +24,17 @@ const UserAllVisits = () => {
   }, []);
 
   useEffect(() => {
+    if (!searchText.trim()) {
+      setFilteredVisits(visits);
+      return;
+    }
+    const query = searchText.toLowerCase().trim();
     const filtered = visits.filter(visit =>
-      visit.categoryName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      visit.name?.toLowerCase().includes(searchText.toLowerCase())
+      visit.categoryName?.toLowerCase().includes(query) ||
+      visit.name?.toLowerCase().includes(query) ||
+      visit.location?.toLowerCase().includes(query) ||
+      visit.contactNumber?.includes(query) ||
+      (visit.createdAt || visit.createdDate || '').toLowerCase().includes(query)
     );
     setFilteredVisits(filtered);
   }, [searchText, visits]);
@@ -186,7 +194,7 @@ const UserAllVisits = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             size="large"
-            style={{ maxWidth: '400px' }}
+            className="w-full sm:max-w-md"
           />
         </div>
         {loading ? (
@@ -243,6 +251,7 @@ const UserAllVisits = () => {
           </Button>
         ]}
         width={600}
+        style={{ maxWidth: '95vw', top: 20 }}
       >
         <div style={{ padding: '20px 0', fontSize: '15px', lineHeight: '1.6' }}>
           {selectedDescription}

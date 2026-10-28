@@ -99,11 +99,18 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.sign-in-icon {
+.sign-in-icon,
+.dashboard-icon {
   width: 24px;
   height: 24px;
   object-fit: contain;
   flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dashboard-icon {
+  color: #f5b400;
 }
 
 @media (max-width: 992px) {
@@ -129,7 +136,8 @@
     border-radius: 16px;
   }
 
-  .sign-in-icon {
+  .sign-in-icon,
+  .dashboard-icon {
     width: 20px;
     height: 20px;
   }
@@ -156,58 +164,76 @@
   }
 
   .sign-in-btn {
-    padding: 9px 13px;
+    padding: 8px 14px;
     font-size: 14px;
-    border-radius: 13px;
+    gap: 6px;
+    border-radius: 14px;
   }
 
-  .sign-in-icon {
-    width: 17px;
-    height: 17px;
+  .sign-in-icon,
+  .dashboard-icon {
+    width: 18px;
+    height: 18px;
   }
 }
 
 @media (max-width: 480px) {
   .header-inner {
-    height: 62px;
-    padding: 0 10px;
+    height: 60px;
+    padding: 0 12px;
   }
 
   .logo img {
     height: 34px;
-    max-width: 125px;
+    max-width: 130px;
   }
 
   .voice-assistant-btn {
-    padding: 8px 9px;
+    padding: 7px 10px;
     font-size: 12px;
-    border-radius: 11px;
+    border-radius: 10px;
   }
 
   .sign-in-btn {
-    padding: 8px 10px;
+    padding: 7px 12px;
     font-size: 13px;
-    gap: 5px;
-    border-radius: 11px;
+    gap: 6px;
+    border-radius: 12px;
   }
 
-  .sign-in-icon {
-    width: 15px;
-    height: 15px;
+  .sign-in-icon,
+  .dashboard-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 
 @media (max-width: 360px) {
-  .voice-assistant-btn {
-    font-size: 11px;
-    padding: 7px 8px;
+  .header-inner {
+    height: 54px;
+    padding: 0 8px;
   }
 
-  .sign-in-btn span {
-    display: none;
+  .logo img {
+    height: 28px;
+    max-width: 110px;
+  }
+
+  .voice-assistant-btn {
+    font-size: 11px;
+    padding: 6px 8px;
   }
 
   .sign-in-btn {
-    padding: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 5px;
+    border-radius: 10px;
+  }
+
+  .sign-in-icon,
+  .dashboard-icon {
+    width: 14px;
+    height: 14px;
   }
 }

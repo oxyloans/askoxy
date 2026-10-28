@@ -76,10 +76,15 @@ const CategoriesManagement = () => {
       setErrors({});
       fetchCategories();
     } catch (error) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to create category';
+      const errorMessage =
+        error.response?.data?.errorMessage ||
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.status ||
+        'Failed to create category. Please try again.';
       Swal.fire({
         icon: 'error',
-        title: 'Error',
+        title: 'Error Creating Category',
         text: errorMessage,
       });
     }
@@ -90,16 +95,22 @@ const CategoriesManagement = () => {
       await axios.patch(`${API_BASE}/categories/toggle/${id}`);
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: `Category ${currentStatus ? 'deactivated' : 'activated'}`,
+        title: 'Status Updated',
+        text: `Category ${currentStatus ? 'deactivated' : 'activated'} successfully`,
         timer: 2000,
+        showConfirmButton: false,
       });
       fetchCategories();
     } catch (error) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to toggle category status';
+      const errorMessage =
+        error.response?.data?.errorMessage ||
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.status ||
+        'Failed to toggle category status. Please try again.';
       Swal.fire({
         icon: 'error',
-        title: 'Error',
+        title: 'Status Update Error',
         text: errorMessage,
       });
     }
@@ -218,6 +229,8 @@ const CategoriesManagement = () => {
           setErrors({});
         }}
         footer={null}
+        width={500}
+        style={{ maxWidth: '95vw', top: 20 }}
       >
         <Form layout="vertical">
           <Form.Item

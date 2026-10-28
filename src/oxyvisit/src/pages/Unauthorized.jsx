@@ -4,19 +4,34 @@ import { useOxyNavigate } from '../utils/navigation';
 
 const Unauthorized = () => {
   const { navigate } = useOxyNavigate();
-  const token = localStorage.getItem('token');
-  const primaryType = localStorage.getItem('primaryType');
+  const token =
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('accessToken');
+  const primaryType =
+    localStorage.getItem('primaryType') ||
+    localStorage.getItem('admin_primaryType');
 
   const handleDashboard = () => {
-    if (primaryType === 'HELPDESKADMIN' || primaryType === 'HELPDESKSUPERADMIN') {
-      navigate('/dashboard/categories');
+    const pType = (primaryType || '').toUpperCase().trim();
+    if (pType === 'HELPDESKADMIN' || pType === 'HELPDESKSUPERADMIN') {
+      navigate('/oxyvisit/dashboard/categories');
+    } else if (pType === 'OXYVISIT') {
+      navigate('/oxyvisit/dashboard');
     } else {
-      navigate('/dashboard');
+      handleLogout();
     }
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('refreshToken');
+    localStorage.removeItem('primaryType');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
     navigate('/oxyvisit');
   };
 

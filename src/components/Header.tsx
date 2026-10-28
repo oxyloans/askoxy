@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import VoiceLoginPage from "./VoiceLoginPage";
+import { LayoutDashboard } from "lucide-react";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -90,11 +91,17 @@ const Header: React.FC = () => {
 
             {isLoggedIn ? (
               <button
-                className="sign-in-btn"
+                className="sign-in-btn dashboard-btn"
                 aria-label="Dashboard"
                 onClick={handleSignIn1}
                 type="button"
               >
+                <LayoutDashboard
+                  className="sign-in-icon dashboard-icon"
+                  size={20}
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                />
                 <span>Dashboard</span>
               </button>
             ) : (

@@ -1,5 +1,11 @@
 import BASE_URL from "../../Config";
-import { getCustomerAccessToken } from "../../utils/cookieUtils";
+import {
+  getCustomerAccessToken,
+  getAdminAccessToken,
+  getPartnerAccessToken,
+  getEmployeeAccessToken,
+  getFreelanceAccessToken,
+} from "../../utils/cookieUtils";
 import type {
   ApiResponse,
   CategoryCount,
@@ -29,19 +35,32 @@ export interface RawRankingsItem {
 export const BASE_URL1 = `${BASE_URL}/ai-automation`;
 const CAMPAIGN_BASE = "http://65.0.147.157:9229/api";
 
-const getAccessToken = (): string | null =>
-  getCustomerAccessToken() || localStorage.getItem("accessToken");
+export const getAccessToken = (): string | null =>
+  getCustomerAccessToken() ||
+  localStorage.getItem("accessToken") ||
+  sessionStorage.getItem("accessToken") ||
+  localStorage.getItem("token") ||
+  sessionStorage.getItem("token") ||
+  sessionStorage.getItem("taskAccessToken") ||
+  getAdminAccessToken() ||
+  getPartnerAccessToken() ||
+  getEmployeeAccessToken() ||
+  getFreelanceAccessToken();
 
-const getRequestHeaders = (headers?: HeadersInit): Headers => {
+export const getRequestHeaders = (
+  headers?: HeadersInit,
+  explicitToken?: string | null
+): Headers => {
   const requestHeaders = new Headers(headers);
-  const accessToken = getAccessToken();
+  const accessToken = explicitToken || getAccessToken();
 
   if (!requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json");
   }
 
-  if (accessToken) {
-    requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+  if (accessToken && !requestHeaders.has("Authorization")) {
+    const cleanToken = accessToken.replace(/^Bearer\s+/i, "").trim();
+    requestHeaders.set("Authorization", `Bearer ${cleanToken}`);
   }
 
   return requestHeaders;
@@ -206,14 +225,17 @@ export const api = {
   getChatHistory: (id: string) =>
     request<ChatMessage[]>(`/paperclip/${id}/chat/history`),
 
-  getRankings: async (view: string, models?: string): Promise<RawRankingsItem[]> => {
+  getRankings: async (view: string, models?: string, token?: string): Promise<RawRankingsItem[]> => {
     const q = new URLSearchParams({ view });
     if (models) q.set("models", models);
+    const headers = getRequestHeaders(undefined, token);
     try {
-      return await request<RawRankingsItem[]>(`/rankings/models?${q.toString()}`);
+      return await request<RawRankingsItem[]>(`/rankings/models?${q.toString()}`, {
+        headers,
+      });
     } catch {
-      const res = await fetch(`http://65.0.147.157:9041/api/ai-automation/rankings/models?${q.toString()}`, {
-        headers: getRequestHeaders(),
+      const res = await fetch(`${BASE_URL}/ai-automation/rankings/models?${q.toString()}`, {
+        headers,
       });
       if (!res.ok) throw new Error(`Request failed (${res.status}): /rankings/models`);
       const body = await res.json();

@@ -1,16 +1,30 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { Link, Navigate, Route, Routes, useParams, useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../../Config";
-import { getProviderInfo, getModelIconUrl } from "../lib/providerData";
+import { getModelIconUrl } from "../lib/providerData";
+import { useModelCatalog, resolveModel, perMillion, fmtContext, fmtDate } from "../lib/openrouterCatalog";
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ROUTES  (mount once in your router)
+
+     <Route path="/rankings/*" element={<RankingsRoutes />} />
+
+     /rankings                          -> treemap + tables  (TopModelsByTask)
+     /rankings/anthropic                -> provider page: all its models
+     /rankings/anthropic/claude-opus-5.5 -> model page: where it ranks
+
+   TopModelsByTask can still be embedded in any other page; its links point to
+   basePath (default "/rankings").
+──────────────────────────────────────────────────────────────────────────── */
 
 // ── API ──────────────────────────────────────────────────────────────────────
 const API_URL = `${BASE_URL}/marketing-service/campgin/rankings/task-spend`;
 
-// ── Totally Different Vibrant Macro Category Colors ──────────────────────────
 const COLORS: Record<string, string> = {
-  general: "#6366f1", // Royal Indigo (was #ff8244)
-  agent: "#ec4899",   // Vibrant Rose / Pink (was #7c6bef)
-  code: "#0d9488",    // Teal Jade (was #3cb371)
-  data: "#f59e0b",    // Radiant Amber Gold (was #0088ff)
+  general: "#6366f1",
+  agent: "#ec4899",
+  code: "#0d9488",
+  data: "#f59e0b",
 };
 
 const NAMES: Record<string, string> = {
@@ -30,47 +44,38 @@ const NAMES: Record<string, string> = {
   "data:extraction": "Data Extraction", "data:transformation": "Data Transformation",
 };
 
-// ── Distinct Vibrant Colors for Every Individual Task Tile ──────────────────
 const TASK_COLORS: Record<string, string> = {
-  // General Category Tasks
-  classification_tagging: "#f43f5e",   // Rose Crimson
-  content_writing: "#ea580c",          // Sunset Tangerine
-  roleplay_fiction: "#8b5cf6",         // Vivid Purple
-  qa_knowledge: "#2563eb",             // Royal Blue
-  conversational_reply: "#10b981",     // Emerald Mint
-  research_report: "#06b6d4",          // Bright Cyan
-  customer_support: "#14b8a6",         // Vivid Teal
-  summarization: "#eab308",            // Amber Gold
-  security_audit: "#dc2626",           // Crimson Red
-  math: "#4f46e5",                     // Deep Indigo
-  finance_trading: "#059669",          // Forest Green
-  translation: "#a855f7",              // Purple Orchid
-  devops: "#64748b",                   // Slate Steel
-
-  // Agent Category Tasks
-  "agent:workflow_execution": "#7c3aed", // Royal Violet
-  "agent:multi_step_planning": "#3b82f6", // Sky Blue
-  "agent:tool_dispatch": "#0d9488",      // Dark Jade
-  "agent:web_search": "#0284c7",         // Ocean Blue
-  "agent:memory_extraction": "#d946ef",  // Radiant Fuchsia
-
-  // Code Category Tasks
-  "code:general_impl": "#10b981",        // Bright Green
-  "code:debugging": "#e11d48",           // Coral Red
-  "code:file_read_write": "#f59e0b",     // Warm Amber
-  "code:review_security": "#ef4444",     // Vivid Red
-  "code:shell_execution": "#6366f1",     // Royal Indigo
-  "code:frontend_ui": "#8b5cf6",         // Lavender Purple
-  "code:repo_scan": "#06b6d4",           // Cyan
-  "code:devops_config": "#475569",       // Dark Slate
-  "code:sql_database": "#1d4ed8",        // Deep Navy
-
-  // Data Category Tasks
-  "data:extraction": "#ec4899",          // Hot Pink
-  "data:transformation": "#9333ea",      // Deep Violet
+  classification_tagging: "#f43f5e",
+  content_writing: "#ea580c",
+  roleplay_fiction: "#8b5cf6",
+  qa_knowledge: "#2563eb",
+  conversational_reply: "#10b981",
+  research_report: "#06b6d4",
+  customer_support: "#14b8a6",
+  summarization: "#eab308",
+  security_audit: "#dc2626",
+  math: "#4f46e5",
+  finance_trading: "#059669",
+  translation: "#a855f7",
+  devops: "#64748b",
+  "agent:workflow_execution": "#7c3aed",
+  "agent:multi_step_planning": "#3b82f6",
+  "agent:tool_dispatch": "#0d9488",
+  "agent:web_search": "#0284c7",
+  "agent:memory_extraction": "#d946ef",
+  "code:general_impl": "#10b981",
+  "code:debugging": "#e11d48",
+  "code:file_read_write": "#f59e0b",
+  "code:review_security": "#ef4444",
+  "code:shell_execution": "#6366f1",
+  "code:frontend_ui": "#8b5cf6",
+  "code:repo_scan": "#06b6d4",
+  "code:devops_config": "#475569",
+  "code:sql_database": "#1d4ed8",
+  "data:extraction": "#ec4899",
+  "data:transformation": "#9333ea",
 };
 
-// Fallback diverse palette for dynamically discovered tasks
 const DIVERSE_PALETTE = [
   "#6366f1", "#ec4899", "#10b981", "#f59e0b",
   "#3b82f6", "#8b5cf6", "#14b8a6", "#ea580c",
@@ -83,104 +88,13 @@ function getTileColor(tag: string, catKey: string, index: number): string {
   return DIVERSE_PALETTE[index % DIVERSE_PALETTE.length] || COLORS[catKey] || "#6366f1";
 }
 
-// Provider brand colors for high-contrast badges & fallback letters
 const PROVIDER_BRAND_COLORS: Record<string, string> = {
-  openai: "#10a37f",
-  anthropic: "#d97757",
-  google: "#4285f4",
-  "google-deepmind": "#4285f4",
-  deepseek: "#1e88e5",
-  meta: "#0668e1",
-  "meta-llama": "#0668e1",
-  mistral: "#f97316",
-  mistralai: "#f97316",
-  "x-ai": "#111827",
-  xai: "#111827",
-  qwen: "#6366f1",
-  cohere: "#39594d",
-  groq: "#f55036",
-  moonshot: "#0284c7",
-  moonshotai: "#0284c7",
-  "z-ai": "#2563eb",
-  zhipuai: "#2563eb",
-  glm: "#2563eb",
-  minimax: "#e11d48",
-  together: "#7c3aed",
-  nvidia: "#76b900",
-  amazon: "#ff9900",
-  microsoft: "#00a4ef",
-  perplexity: "#22b8cf",
-};
-
-const PROVIDER_DOMAINS: Record<string, string> = {
-  openai: "https://openai.com",
-  anthropic: "https://anthropic.com",
-  deepseek: "https://deepseek.com",
-  google: "https://google.com",
-  "google-deepmind": "https://deepmind.google",
-  "meta-llama": "https://meta.com",
-  meta: "https://meta.com",
-  "x-ai": "https://x.ai",
-  xai: "https://x.ai",
-  mistralai: "https://mistral.ai",
-  mistral: "https://mistral.ai",
-  qwen: "https://qwenlm.ai",
-  cohere: "https://cohere.com",
-  nvidia: "https://nvidia.com",
-  moonshotai: "https://moonshot.cn",
-  moonshot: "https://moonshot.cn",
-  "z-ai": "https://zhipuai.cn",
-  zhipuai: "https://zhipuai.cn",
-  glm: "https://zhipuai.cn",
-  minimax: "https://minimaxi.com",
-  microsoft: "https://microsoft.com",
-  amazon: "https://aws.amazon.com",
-  perplexity: "https://perplexity.ai",
-  groq: "https://groq.com",
-  together: "https://together.ai",
-  "01-ai": "https://01.ai",
-  nousresearch: "https://nousresearch.com",
-  huggingface: "https://huggingface.co",
-  huggingfaceh4: "https://huggingface.co",
-  databricks: "https://databricks.com",
-  liquid: "https://liquid.ai",
-  inflection: "https://inflection.ai",
-  ai21: "https://ai21.com",
-  allenai: "https://allenai.org",
-  writer: "https://writer.com",
-};
-
-// Exact known mappings where provider slug ≠ icon filename
-const LOGO_OVERRIDES: Record<string, string> = {
-  openai: "OpenAI",
-  google: "GoogleGemini",
-  anthropic: "Anthropic",
-  deepseek: "DeepSeek",
-  "x-ai": "xAI",
-  moonshotai: "Moonshot",
-  "z-ai": "ZhipuAI",
-  mistralai: "Mistral",
-  "01-ai": "01AI",
-  nousresearch: "NousResearch",
-  together: "Together",
-  meta: "Meta",
-  cohere: "Cohere",
-  nvidia: "Nvidia",
-  qwen: "Qwen",
-  amazon: "Amazon",
-  microsoft: "Microsoft",
-  perplexity: "Perplexity",
-  groq: "Groq",
-  "google-deepmind": "GoogleGemini",
-  "huggingfaceh4": "HuggingFace",
-  "sao10k": "Sao10K",
-  "cognitivecomputations": "CognitiveComputations",
-  "liquid": "Liquid",
-  "inflection": "Inflection",
-  "ai21": "AI21",
-  "allenai": "AllenAI",
-  "databricks": "Databricks",
-  "writer": "Writer",
+  openai: "#10a37f", anthropic: "#d97757", google: "#4285f4", "google-deepmind": "#4285f4",
+  deepseek: "#1e88e5", meta: "#0668e1", "meta-llama": "#0668e1", mistral: "#f97316",
+  mistralai: "#f97316", "x-ai": "#111827", xai: "#111827", qwen: "#6366f1", cohere: "#39594d",
+  groq: "#f55036", moonshot: "#0284c7", moonshotai: "#0284c7", "z-ai": "#2563eb",
+  zhipuai: "#2563eb", glm: "#2563eb", minimax: "#e11d48", together: "#7c3aed",
+  nvidia: "#76b900", amazon: "#ff9900", microsoft: "#00a4ef", perplexity: "#22b8cf",
 };
 
 function getLogoUrl(provider: string, model?: string): string {
@@ -194,7 +108,7 @@ interface ApiCategory { key: string; label: string; spendShare: number }
 interface ApiSection { windowDays: number; macroCategories: ApiCategory[]; tasks: ApiTask[] }
 interface ApiResponse { data: { spend: ApiSection; tokens: ApiSection } }
 
-interface TaskModel { id: string; name: string; rawModel: string; share: number; provider: string }
+interface TaskModel { id: string; name: string; rawModel: string; share: number; provider: string; deltaPp?: number }
 interface Task { tag: string; name: string; value: number; models: TaskModel[] }
 interface Category { key: string; label: string; share: number; color: string; tasks: Task[] }
 
@@ -202,6 +116,8 @@ interface Tile {
   task: Task; cat: Category; i: number;
   x: number; y: number; w: number; h: number;
 }
+
+type Metric = "spend" | "tokens";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function pretty(s: string) {
@@ -229,34 +145,32 @@ function modelName(mid: string) {
   return formatted || pretty(mid);
 }
 
-function shade(hex: string, i: number): string {
-  const h = hex.replace("#", "");
-  let r = parseInt(h.slice(0, 2), 16) / 255;
-  let g = parseInt(h.slice(2, 4), 16) / 255;
-  let b = parseInt(h.slice(4, 6), 16) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let hh = 0, l = (max + min) / 2, s = 0;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (max === r) hh = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-    else if (max === g) hh = ((b - r) / d + 2) / 6;
-    else hh = ((r - g) / d + 4) / 6;
-  }
-  const factor = i === 0 ? 1 : i % 3 === 1 ? 0.9 : 0.95;
-  l = Math.min(1, l * factor);
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p2 = 2 * l - q;
-  function hue2rgb(t: number) {
-    if (t < 0) t += 1; if (t > 1) t -= 1;
-    if (t < 1 / 6) return p2 + (q - p2) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p2 + (q - p2) * (2 / 3 - t) * 6;
-    return p2;
-  }
-  r = hue2rgb(hh + 1 / 3); g = hue2rgb(hh); b = hue2rgb(hh - 1 / 3);
-  return "#" + [r, g, b].map(c => Math.round(c * 255).toString(16).padStart(2, "0")).join("");
+function normSlug(s: string): string {
+  if (!s) return "";
+  const rest = s.includes("/") ? s.split("/").slice(1).join("/") : s;
+  return rest
+    .toLowerCase()
+    .trim()
+    .replace(/-\d{8}$/, "")
+    .replace(/:free$/, "")
+    .replace(/[._]/g, "-");
 }
+
+// URL pieces: "anthropic/claude-opus-5.5-20260921" -> provider "anthropic", slug "claude-opus-5.5"
+function slugOf(raw: string): string {
+  const rest = raw.includes("/") ? raw.split("/").slice(1).join("/") : raw;
+  return rest.replace(/-\d{8}$/, "").replace(/:free$/, "");
+}
+const providerHref = (base: string, p: string) => `${base}/${encodeURIComponent(p)}`;
+const modelHref = (base: string, m: { provider: string; rawModel: string }) =>
+  `${base}/${encodeURIComponent(m.provider)}/${slugOf(m.rawModel)}`;
+
+const linkStyle: React.CSSProperties = {
+  color: "inherit",
+  textDecoration: "underline",
+  textDecorationColor: "#cbd5e1",
+  textUnderlineOffset: 2,
+};
 
 // ── Squarify ─────────────────────────────────────────────────────────────────
 interface Rect { x: number; y: number; dx: number; dy: number }
@@ -289,7 +203,7 @@ function squarify(sizes: number[], x: number, y: number, W: number, H: number): 
     }
     const rowSum = row.reduce((a, b) => a + b, 0);
     const rowH = rowSum / w;
-    const vertical = cw >= ch; // FIX: was `cw <= ch` (inverted)
+    const vertical = cw >= ch;
     let pos = vertical ? cy : cx;
     for (const r of row) {
       const len = (r / rowSum) * w;
@@ -309,24 +223,24 @@ function squarify(sizes: number[], x: number, y: number, W: number, H: number): 
 }
 
 // ── Transform ────────────────────────────────────────────────────────────────
-function transform(resp: ApiResponse, metric: "spend" | "tokens"): Category[] {
-  if (!resp || !resp.data || !resp.data[metric]) return [];
-  const sec = resp.data[metric];
+function transform(resp: ApiResponse | null, metric: Metric): Category[] {
+  const sec = (resp?.data?.[metric] || (resp as any)?.[metric]) as ApiSection | undefined;
+  if (!sec) return [];
   const cats = [...(sec.macroCategories || [])].sort((a, b) => b.spendShare - a.spendShare);
   return cats.map(cat => ({
     key: cat.key,
     label: cat.label || pretty(cat.key),
     share: cat.spendShare > 1 ? cat.spendShare : cat.spendShare * 100,
     color: COLORS[cat.key] ?? "#888",
-    tasks: [...(sec.tasks || []).filter(t => t.macroCategory === cat.key)]
+    tasks: [...(sec.tasks || [])].filter((t: ApiTask) => t.macroCategory === cat.key)
       .sort((a, b) => b.spendShareOfTotal - a.spendShareOfTotal)
-      .map(t => ({
+      .map((t: ApiTask) => ({
         tag: t.tag,
         name: taskName(t.tag),
         value: t.spendShareOfTotal > 1 ? t.spendShareOfTotal : t.spendShareOfTotal * 100,
         models: [...(t.models || [])]
           .sort((a, b) => b.share - a.share)
-          .map(m => {
+          .map((m: ApiModel) => {
             const rawModel = m.model || (m as any).name || (m as any).id || "Unknown";
             const provider = rawModel.includes("/")
               ? rawModel.split("/")[0]
@@ -334,13 +248,38 @@ function transform(resp: ApiResponse, metric: "spend" | "tokens"): Category[] {
             return {
               id: rawModel,
               rawModel: rawModel,
-              name: rawModel,
+              name: modelName(rawModel),
               share: m.share > 1 ? m.share : m.share * 100,
               provider: provider,
+              deltaPp: typeof m.deltaPp === "number" ? m.deltaPp : undefined,
             };
           }),
       })),
   }));
+}
+
+// ── Shared data hook (one fetch, cached across pages) ────────────────────────
+let rankingsCache: Promise<ApiResponse> | null = null;
+function loadRankings(): Promise<ApiResponse> {
+  if (!rankingsCache) {
+    rankingsCache = fetch(API_URL)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .catch(e => { rankingsCache = null; throw e; });
+  }
+  return rankingsCache;
+}
+
+function useRankings() {
+  const [data, setData] = useState<ApiResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    loadRankings()
+      .then(j => { if (live) setData(j); })
+      .catch(e => { if (live) setError(e.message || "Failed to load"); });
+    return () => { live = false; };
+  }, []);
+  return { data, error, loading: !data && !error };
 }
 
 // ── Layout ───────────────────────────────────────────────────────────────────
@@ -362,8 +301,7 @@ function buildTiles(cats: Category[], W: number, H: number): Tile[] {
   return tiles;
 }
 
-
-// ProviderLogo is used in SVG tiles and Tooltip
+// ── Logos ────────────────────────────────────────────────────────────────────
 function ProviderLogo({ provider, model, size, offsetX = 0, offsetY = 0 }: { provider: string; model?: string; size: number; offsetX?: number; offsetY?: number }) {
   const [failed, setFailed] = useState(false);
   const p = (provider || "").toLowerCase().trim();
@@ -399,7 +337,6 @@ function ProviderLogo({ provider, model, size, offsetX = 0, offsetY = 0 }: { pro
   );
 }
 
-// ── ProviderIcon (HTML img with fallback) ────────────────────────────────────
 function ProviderIcon({ provider, model, size }: { provider: string; model?: string; size: number }) {
   const [failed, setFailed] = useState(false);
   const p = (provider || "").toLowerCase().trim();
@@ -409,17 +346,9 @@ function ProviderIcon({ provider, model, size }: { provider: string; model?: str
     return (
       <span
         style={{
-          width: size,
-          height: size,
-          borderRadius: 4,
-          background: brandColor,
-          color: "#ffffff",
-          fontSize: size * 0.55,
-          fontWeight: 800,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          lineHeight: 1,
+          width: size, height: size, borderRadius: 4, background: brandColor, color: "#ffffff",
+          fontSize: size * 0.55, fontWeight: 800, display: "inline-flex",
+          alignItems: "center", justifyContent: "center", lineHeight: 1,
         }}
       >
         {provider[0]?.toUpperCase()}
@@ -438,93 +367,451 @@ function ProviderIcon({ provider, model, size }: { provider: string; model?: str
   );
 }
 
-// ── Tooltip ───────────────────────────────────────────────────────────────────
-interface TooltipData { task: Task; cat: Category; mx: number; my: number }
+function IconBox({ provider, model, box, icon }: { provider: string; model?: string; box: number; icon: number }) {
+  return (
+    <span style={{ width: box, height: box, borderRadius: box * 0.27, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
+      <ProviderIcon provider={provider} model={model} size={icon} />
+    </span>
+  );
+}
 
-function Tooltip({ data, containerRef }: { data: TooltipData; containerRef: React.RefObject<HTMLDivElement> }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ left: 0, top: 0 });
+function Delta({ v }: { v?: number }) {
+  if (v === undefined || v === null) return null;
+  const up = v >= 0;
+  return (
+    <span style={{ color: up ? "#059669" : "#dc2626", fontWeight: 700, fontSize: 11, whiteSpace: "nowrap" }}>
+      {up ? "↗ +" : "↘ "}{v.toFixed(1)}
+    </span>
+  );
+}
+
+function matchModelItem(
+  item: { rawModel: string; provider?: string },
+  pLower: string,
+  mSlug: string,
+  isStrictProvider: boolean,
+  exactOnly: boolean = false
+): boolean {
+  const itemProvider = (item.provider || "").toLowerCase().trim().replace(/[._]/g, "-");
+  const p = (pLower || "").toLowerCase().trim().replace(/[._]/g, "-");
+  const itemRaw = (item.rawModel || "").toLowerCase().trim();
+  const rawTarget = (mSlug || "").toLowerCase().trim();
+  const targetSlug = normSlug(mSlug);
+  const itemSlug = normSlug(item.rawModel);
+
+  if (isStrictProvider && p && p !== "rankings" && p !== "task-rankings") {
+    const providerMatch = itemProvider === p || itemProvider.includes(p) || p.includes(itemProvider);
+    if (!providerMatch) return false;
+  }
+
+  // 1. Exact matches:
+  // e.g. claude-opus-5.5 matches claude-opus-5.5-20260921 (both normalize to claude-opus-5-5)
+  if (itemSlug && targetSlug && itemSlug === targetSlug) return true;
+  if (rawTarget && itemRaw === rawTarget) return true;
+  if (rawTarget && itemRaw.endsWith("/" + rawTarget)) return true;
+
+  if (exactOnly) return false;
+
+  // 2. Loose prefix fallback only when exactOnly is false (min 4 chars to avoid false collisions)
+  if (targetSlug.length >= 4 && itemSlug.length >= 4) {
+    if (itemSlug.startsWith(targetSlug + "-") || targetSlug.startsWith(itemSlug + "-")) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// ── Routes entry ─────────────────────────────────────────────────────────────
+export function RankingsRoutes({ basePath = "/rankings" }: { basePath?: string }) {
+  return (
+    <Routes>
+      <Route index element={<div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 40px" }}><TopModelsByTask basePath={basePath} /></div>} />
+      <Route path=":provider/:model" element={<ModelRankPage basePath={basePath} />} />
+      <Route path=":provider/*" element={<ModelRankPage basePath={basePath} />} />
+      <Route path=":provider" element={<ProviderRankPage basePath={basePath} />} />
+      <Route path="*" element={<ModelRankPage basePath={basePath} />} />
+    </Routes>
+  );
+}
+
+// ── Page chrome ──────────────────────────────────────────────────────────────
+const pageWrap: React.CSSProperties = { maxWidth: 960, margin: "0 auto", padding: "24px 20px 48px", color: "#0f172a", fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" };
+const cardStyle: React.CSSProperties = { borderRadius: 16, border: "1px solid #e2e8f0", background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", overflow: "hidden" };
+const thStyle: React.CSSProperties = { padding: "8px 12px", textAlign: "left", color: "#64748b", fontWeight: 700, fontSize: 11, borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap", background: "#f8fafc" };
+const tdStyle: React.CSSProperties = { padding: "10px 12px", borderBottom: "1px solid #f1f5f9", fontSize: 13 };
+
+function PageState({ loading, error, base, children }: { loading: boolean; error: string | null; base: string; children: React.ReactNode }) {
+  if (loading) return <div style={pageWrap}><p style={{ color: "#64748b" }}>Loading…</p></div>;
+  if (error) return <div style={pageWrap}><p style={{ color: "#64748b" }}>Could not load rankings: {error}</p><Link to={base} style={linkStyle}>← Back to rankings</Link></div>;
+  return <>{children}</>;
+}
+
+// ── Model page ───────────────────────────────────────────────────────────────
+export function ModelRankPage({ basePath = "/rankings" }: { basePath?: string }) {
+  const params = useParams<{ provider?: string; model?: string; "*"?: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract from path segments and params
+  const pathParts = (location.pathname || "").split("/").filter(Boolean);
+  const rIdx = pathParts.findIndex(p => p.toLowerCase() === "rankings" || p.toLowerCase() === "task-rankings");
+
+  let urlProvider = "";
+  let urlModel = "";
+
+  if (rIdx !== -1 && pathParts.length > rIdx + 1) {
+    urlProvider = pathParts[rIdx + 1];
+    if (pathParts.length > rIdx + 2) {
+      urlModel = pathParts.slice(rIdx + 2).join("/");
+    }
+  } else if (pathParts.length >= 2) {
+    urlProvider = pathParts[pathParts.length - 2];
+    urlModel = pathParts[pathParts.length - 1];
+  }
+
+  if (urlProvider && (urlProvider.toLowerCase() === "rankings" || urlProvider.toLowerCase() === "task-rankings")) {
+    urlProvider = "";
+  }
+
+  let pParam = params.provider;
+  if (pParam && (pParam.toLowerCase() === "rankings" || pParam.toLowerCase() === "task-rankings")) {
+    pParam = undefined;
+  }
+
+  let mParam = params.model;
+  if (!mParam && params["*"]) {
+    const starParts = params["*"].split("/").filter(Boolean);
+    if (starParts.length >= 2 && !pParam && !urlProvider) {
+      pParam = starParts[0];
+      mParam = starParts.slice(1).join("/");
+    } else {
+      mParam = starParts.pop() || "";
+    }
+  }
+
+  const rawProvider = (pParam || urlProvider || "").trim();
+  const rawModel = (mParam || urlModel || "").trim();
+
+  const provider = decodeURIComponent(rawProvider);
+  const cleanModel = decodeURIComponent(rawModel);
+  const slug = slugOf(cleanModel).trim();
+  const providerLower = provider.toLowerCase();
+  const matchSlug = slug.toLowerCase();
+
+  const { data, error, loading } = useRankings();
+  const [metric, setMetric] = useState<Metric>("spend");
+  const { catalog } = useModelCatalog();
 
   useEffect(() => {
-    if (!ref.current || !containerRef.current) return;
-    const cRect = containerRef.current.getBoundingClientRect();
-    const tRect = ref.current.getBoundingClientRect();
-    let left = data.mx - cRect.left + 12;
-    let top = data.my - cRect.top + 12;
-    if (left + tRect.width > cRect.width - 8) left = data.mx - cRect.left - tRect.width - 12;
-    if (top + tRect.height > cRect.height - 8) top = data.my - cRect.top - tRect.height - 12;
-    setPos({ left: Math.round(Math.max(4, left)), top: Math.round(Math.max(4, top)) });
-  }, [data, containerRef]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
-  const models = data.task.models;
+  const catsSpend = useMemo(() => transform(data, "spend"), [data]);
+  const catsTokens = useMemo(() => transform(data, "tokens"), [data]);
+
+  // If spend doesn't have matches but tokens does, auto-switch to tokens
+  const activeMetric = useMemo<Metric>(() => {
+    const hasSpendStrict = catsSpend.some(c => c.tasks.some(t => t.models.some(m => matchModelItem(m, providerLower, matchSlug, true, true))));
+    if (hasSpendStrict) return "spend";
+
+    const hasTokensStrict = catsTokens.some(c => c.tasks.some(t => t.models.some(m => matchModelItem(m, providerLower, matchSlug, true, true))));
+    if (hasTokensStrict) return "tokens";
+
+    // Relaxed (without provider constraint)
+    const hasSpendRelaxed = catsSpend.some(c => c.tasks.some(t => t.models.some(m => matchModelItem(m, providerLower, matchSlug, false, true))));
+    if (hasSpendRelaxed) return "spend";
+
+    const hasTokensRelaxed = catsTokens.some(c => c.tasks.some(t => t.models.some(m => matchModelItem(m, providerLower, matchSlug, false, true))));
+    if (hasTokensRelaxed) return "tokens";
+
+    return metric;
+  }, [catsSpend, catsTokens, metric, providerLower, matchSlug]);
+
+  const cats = activeMetric === "spend" ? catsSpend : catsTokens;
+
+  const rows = useMemo(() => {
+    const out: { cat: Category; task: Task; model: TaskModel; rank: number }[] = [];
+
+    // Stage 1: Strict provider + EXACT slug match
+    cats.forEach(cat => cat.tasks.forEach(task => task.models.forEach((model, i) => {
+      if (matchModelItem(model, providerLower, matchSlug, true, true)) {
+        out.push({ cat, task, model, rank: i + 1 });
+      }
+    })));
+
+    // Stage 2: Relaxed provider + EXACT slug match (only if stage 1 was empty)
+    if (out.length === 0) {
+      cats.forEach(cat => cat.tasks.forEach(task => task.models.forEach((model, i) => {
+        if (matchModelItem(model, providerLower, matchSlug, false, true)) {
+          out.push({ cat, task, model, rank: i + 1 });
+        }
+      })));
+    }
+
+    // Stage 3: Strict provider + loose prefix match (only if still empty)
+    if (out.length === 0) {
+      cats.forEach(cat => cat.tasks.forEach(task => task.models.forEach((model, i) => {
+        if (matchModelItem(model, providerLower, matchSlug, true, false)) {
+          out.push({ cat, task, model, rank: i + 1 });
+        }
+      })));
+    }
+
+    // Stage 4: Relaxed provider + loose prefix match (last resort)
+    if (out.length === 0) {
+      cats.forEach(cat => cat.tasks.forEach(task => task.models.forEach((model, i) => {
+        if (matchModelItem(model, providerLower, matchSlug, false, false)) {
+          out.push({ cat, task, model, rank: i + 1 });
+        }
+      })));
+    }
+
+    return out.sort((a, b) => a.rank - b.rank || b.task.value - a.task.value);
+  }, [cats, providerLower, matchSlug]);
+
+  const realProvider = rows[0]?.model.provider || provider;
+  const displaySlug = rows[0] ? slugOf(rows[0].model.rawModel) : slug;
+
+  // Related model in OpenRouter's catalog
+  const info = catalog && (rows[0] ? resolveModel(catalog, rows[0].model.rawModel) : resolveModel(catalog, `${realProvider}/${matchSlug}`));
 
   return (
-    <div
-      ref={ref}
-      style={{
-        position: "absolute",
-        left: pos.left,
-        top: pos.top,
-        zIndex: 60,
-        background: "#ffffff",
-        borderRadius: 14,
-        padding: "14px 16px",
-        border: "1px solid #cbd5e1",
-        boxShadow: "0 12px 36px -4px rgba(15, 23, 42, 0.22), 0 4px 12px -2px rgba(15, 23, 42, 0.1)",
-        minWidth: 260,
-        maxWidth: 350,
-        pointerEvents: "none",
-        fontSize: 12,
-        color: "#0f172a",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        WebkitFontSmoothing: "antialiased",
-        MozOsxFontSmoothing: "grayscale",
-        textRendering: "optimizeLegibility",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 4, paddingBottom: 6, borderBottom: "1px solid #f1f5f9" }}>
-        <p style={{ fontWeight: 800, color: "#0f172a", fontSize: 14, margin: 0, lineHeight: 1.2 }}>{data.task.name}</p>
-        <span style={{ fontSize: 10, fontWeight: 800, background: data.cat.color + "18", color: data.cat.color, padding: "2px 8px", borderRadius: 12, border: `1px solid ${data.cat.color}33`, whiteSpace: "nowrap" }}>
-          {data.task.value.toFixed(1)}%
-        </span>
-      </div>
-      <p style={{ color: "#475569", marginBottom: 8, fontSize: 11, fontWeight: 600 }}>
-        Category: <span style={{ color: data.cat.color, fontWeight: 800 }}>{data.cat.label}</span>
-      </p>
+    <PageState loading={loading} error={error} base={basePath}>
+      <div style={pageWrap}>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate(basePath);
+            }
+          }}
+          style={{ ...linkStyle, background: "none", border: "none", padding: "6px 0", cursor: "pointer", textDecoration: "none", color: "#64748b", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600 }}
+        >
+          ← Top models by task
+        </button>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 210, overflowY: "auto", paddingRight: 2 }}>
-        {models.map((m, i) => (
-          <div key={m.id || i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 8, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-            <span style={{ color: "#64748b", fontSize: 11, fontWeight: 800, width: 14, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
-            <span style={{ width: 22, height: 22, borderRadius: 6, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-              <ProviderIcon provider={m.provider} model={m.rawModel} size={15} />
-            </span>
-            <span style={{ flex: 1, color: "#0f172a", fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {m.rawModel || m.name || m.id || "Model"}
-            </span>
-            <span style={{ fontWeight: 800, color: "#7c3aed", flexShrink: 0, fontSize: 12 }}>{m.share.toFixed(1)}%</span>
+        {rows.length === 0 ? (
+          <div style={{ marginTop: 24, padding: "24px 20px", borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff" }}>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a" }}>This model is not in the current rankings.</p>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Model requested: {realProvider ? `${realProvider}/` : ""}{slug}</p>
+            <div style={{ marginTop: 16 }}>
+              <Link to={realProvider ? providerHref(basePath, realProvider) : basePath} style={{ ...linkStyle, fontSize: 13, color: "#7c3aed", fontWeight: 700 }}>
+                {realProvider ? `View all ${pretty(realProvider)} models →` : "← Back to rankings"}
+              </Link>
+            </div>
           </div>
-        ))}
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16 }}>
+              <IconBox provider={realProvider} model={rows[0].model.rawModel} box={48} icon={32} />
+              <div>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>{info?.name ?? modelName(rows[0].model.rawModel)}</h1>
+                <p style={{ margin: "2px 0 0", fontSize: 13, color: "#64748b" }}>
+                  <Link to={providerHref(basePath, realProvider)} style={linkStyle}>{realProvider}</Link>/{displaySlug}
+                </p>
+              </div>
+            </div>
+
+            {info?.description && (
+              <p style={{ margin: "16px 0 0", maxWidth: 720, fontSize: 14, lineHeight: 1.55, color: "#334155" }}>{info.description}</p>
+            )}
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "18px 0" }}>
+              {[
+                [`#1 in ${rows.filter(r => r.rank === 1).length}`, "tasks"],
+                [`${rows.length}`, "tasks ranked"],
+                ...(info ? [
+                  [`${perMillion(info.pricing?.prompt)} / ${perMillion(info.pricing?.completion)}`, "in / out per 1M tokens"],
+                  [fmtContext(info.context_length), "context"],
+                  [fmtDate(info.created), "released"],
+                ] : []),
+              ].map(([a, b]) => (
+                <div key={b} style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px", background: "#fff" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>{a}</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{b}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={cardStyle}>
+              <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 15 }}>Why it is ranked where it is</p>
+                  <p style={{ margin: "3px 0 0", fontSize: 11, color: "#94a3b8" }}>Share of {activeMetric} within each task. This shows adoption, not accuracy.</p>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {(["spend", "tokens"] as const).map(m => {
+                    const active = activeMetric === m;
+                    return (
+                      <button key={m} onClick={() => setMetric(m)}
+                        style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: active ? "#fff" : "#64748b", border: `1px solid ${active ? "#7c3aed" : "#e2e8f0"}`, borderRadius: 8, padding: "4px 10px", background: active ? "#7c3aed" : "#f8fafc", cursor: "pointer", transition: "all 0.15s" }}>
+                        {m === "spend" ? "Spend" : "Tokens"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Task</th>
+                      <th style={thStyle}>Category</th>
+                      <th style={{ ...thStyle, textAlign: "center" }}>Rank</th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>Share</th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>Change</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map(({ cat, task, model, rank }, i) => {
+                      const c = getTileColor(task.tag, cat.key, i);
+                      return (
+                        <tr key={task.tag}>
+                          <td style={{ ...tdStyle, fontWeight: 700 }}>
+                            <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: c, marginRight: 8 }} />
+                            {task.name}
+                          </td>
+                          <td style={{ ...tdStyle, color: cat.color, fontWeight: 700 }}>{cat.label}</td>
+                          <td style={{ ...tdStyle, textAlign: "center", fontWeight: 800 }}>#{rank}</td>
+                          <td style={{ ...tdStyle, textAlign: "right", fontWeight: 800 }}>{model.share.toFixed(1)}%</td>
+                          <td style={{ ...tdStyle, textAlign: "right" }}><Delta v={model.deltaPp} /></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      <p style={{ margin: "8px 0 0", color: "#7c3aed", fontSize: 10, fontWeight: 700, textAlign: "center", background: "#f5f3ff", padding: "4px 8px", borderRadius: 6, border: "1px stroke #ddd6fe" }}>
-        💡 Click tile to open & scroll full list
-      </p>
-    </div>
+    </PageState>
+  );
+}
+
+// ── Provider page ────────────────────────────────────────────────────────────
+export function ProviderRankPage({ basePath = "/rankings" }: { basePath?: string }) {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const pathParts = (location.pathname || "").split("/").filter(Boolean);
+  const rIdx = pathParts.findIndex(p => p.toLowerCase() === "rankings" || p.toLowerCase() === "task-rankings");
+  let urlProvider = "";
+  if (rIdx !== -1 && pathParts.length > rIdx + 1) {
+    urlProvider = pathParts[rIdx + 1];
+  } else if (pathParts.length >= 1) {
+    urlProvider = pathParts[pathParts.length - 1];
+  }
+
+  if (urlProvider && (urlProvider.toLowerCase() === "rankings" || urlProvider.toLowerCase() === "task-rankings")) {
+    urlProvider = "";
+  }
+
+  let pParam = params.provider;
+  if (pParam && (pParam.toLowerCase() === "rankings" || pParam.toLowerCase() === "task-rankings")) {
+    pParam = undefined;
+  }
+
+  const provider = decodeURIComponent(pParam || urlProvider || "").trim();
+  const providerLower = provider.toLowerCase();
+  const { data, error, loading } = useRankings();
+  const catsSpend = useMemo(() => transform(data, "spend"), [data]);
+  const catsTokens = useMemo(() => transform(data, "tokens"), [data]);
+  const allCats = useMemo(() => [...catsSpend, ...catsTokens], [catsSpend, catsTokens]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const models = useMemo(() => {
+    const map = new Map<string, { slug: string; raw: string; name: string; provider: string; tasks: number; firsts: number }>();
+    allCats.forEach(cat => cat.tasks.forEach(task => task.models.forEach((m, i) => {
+      const mP = (m.provider || "").toLowerCase().trim().replace(/[._]/g, "-");
+      const p = (providerLower || "").trim().replace(/[._]/g, "-");
+      if (!p || mP === p || mP.includes(p) || p.includes(mP)) {
+        const slug = slugOf(m.rawModel);
+        const cur = map.get(slug) ?? { slug, raw: m.rawModel, name: m.name, provider: m.provider, tasks: 0, firsts: 0 };
+        cur.tasks += 1;
+        if (i === 0) cur.firsts += 1;
+        map.set(slug, cur);
+      }
+    })));
+    return Array.from(map.values()).sort((a, b) => b.firsts - a.firsts || b.tasks - a.tasks);
+  }, [allCats, providerLower]);
+
+  const realProvider = models[0]?.provider || provider;
+
+  return (
+    <PageState loading={loading} error={error} base={basePath}>
+      <div style={pageWrap}>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate(basePath);
+            }
+          }}
+          style={{ ...linkStyle, background: "none", border: "none", padding: "6px 0", cursor: "pointer", textDecoration: "none", color: "#64748b", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600 }}
+        >
+          ← Top models by task
+        </button>
+        {models.length === 0 ? (
+          <div style={{ marginTop: 24, padding: "24px 20px", borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff" }}>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a" }}>No models from provider "{provider}" found.</p>
+            <div style={{ marginTop: 16 }}>
+              <Link to={basePath} style={{ ...linkStyle, fontSize: 13, color: "#7c3aed", fontWeight: 700 }}>
+                ← View all rankings
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16 }}>
+              <IconBox provider={realProvider} model={models[0].raw} box={48} icon={32} />
+              <div>
+                <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>{pretty(realProvider)}</h1>
+                <p style={{ margin: "2px 0 0", fontSize: 13, color: "#64748b" }}>{models.length} {models.length === 1 ? "model" : "models"} in the rankings</p>
+              </div>
+            </div>
+
+            <div style={{ ...cardStyle, marginTop: 20 }}>
+              <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9" }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 15 }}>All models</p>
+              </div>
+              {models.map(m => (
+                <Link
+                  key={m.slug}
+                  to={modelHref(basePath, { provider: m.provider || realProvider, rawModel: m.raw })}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid #f1f5f9", color: "#0f172a", textDecoration: "none" }}
+                >
+                  <IconBox provider={m.provider || realProvider} model={m.raw} box={30} icon={20} />
+                  <span style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{modelName(m.raw)}</span>
+                  <span style={{ fontSize: 12, color: "#64748b" }}>#1 in {m.firsts} {m.firsts === 1 ? "task" : "tasks"} · ranked in {m.tasks} {m.tasks === 1 ? "task" : "tasks"}</span>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </PageState>
   );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function TopModelsByTask() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [metric, setMetric] = useState<"spend" | "tokens">("spend");
-  const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
+export default function TopModelsByTask({ basePath = "/rankings" }: { basePath?: string }) {
+  const { data: rawData, error: loadError, loading } = useRankings();
+  const [metric, setMetric] = useState<Metric>("spend");
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [selectedTask, setSelectedTask] = useState<{ task: Task; cat: Category } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [rawData, setRawData] = useState<ApiResponse | null>(null);
 
   function calcSize(width: number) {
     const h = width < 700 ? width * 1.2 : Math.min(800, Math.max(360, width * 0.38));
@@ -539,7 +826,7 @@ export default function TopModelsByTask() {
     return { w: 800, h: 400 };
   });
 
-  // ResizeObserver on outerRef — always mounted
+  // outerRef only exists after loading finishes, so re-attach when `loading` changes
   useEffect(() => {
     const el = outerRef.current;
     if (!el) return;
@@ -551,39 +838,13 @@ export default function TopModelsByTask() {
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [loading]);
 
-  // Fetch
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch(API_URL, { signal: ctrl.signal })
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then((json: any) => {
-        setRawData(json);
-        const cats = transform(json, metric);
-        setCategories(cats);
-    setActiveKeys(new Set(cats.map((c: Category) => c.key)));
-      })
-      .catch(e => { if (e.name !== "AbortError") setError(e.message); })
-      .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
-    return () => ctrl.abort();
-  }, []); // eslint-disable-line
-
-  // Re-transform when metric changes
-  useEffect(() => {
-    if (!rawData) return;
-    const cats = transform(rawData, metric);
-    setCategories(cats);
-    setActiveKeys(prev => {
-      const keys = new Set(cats.map(c => c.key));
-      const kept = Array.from(prev).filter(k => keys.has(k));
-      return new Set(kept.length ? kept : Array.from(keys));
-    });
-  }, [metric, rawData]);
+  const categories = useMemo(() => transform(rawData, metric), [rawData, metric]);
 
   const filteredCats = useMemo(
-    () => categories.filter(c => activeKeys.has(c.key)),
-    [categories, activeKeys]
+    () => categories.filter(c => !hidden.has(c.key)),
+    [categories, hidden]
   );
 
   const tiles = useMemo(
@@ -592,13 +853,13 @@ export default function TopModelsByTask() {
   );
 
   const toggleCat = useCallback((key: string) => {
-    setActiveKeys(prev => {
+    setHidden(prev => {
       const next = new Set(Array.from(prev));
-      if (next.has(key)) { if (next.size > 1) next.delete(key); }
-      else next.add(key);
+      if (next.has(key)) next.delete(key);
+      else if (categories.length - next.size > 1) next.add(key);
       return next;
     });
-  }, []);
+  }, [categories]);
 
   const GAP = 1.5;
 
@@ -610,9 +871,9 @@ export default function TopModelsByTask() {
     </div>
   );
 
-  if (error || !categories.length) return (
+  if (loadError || !categories.length) return (
     <div style={{ borderRadius: 16, border: "1px solid #e2e8f0", background: "#fff", padding: 24, textAlign: "center", color: "#94a3b8", fontSize: 12, marginTop: 32 }}>
-      Task chart unavailable{error ? `: ${error}` : ""}
+      Task chart unavailable{loadError ? `: ${loadError}` : ""}
     </div>
   );
 
@@ -621,7 +882,6 @@ export default function TopModelsByTask() {
 
       {/* ── CARD 1: Treemap ── */}
       <div style={{ borderRadius: 16, border: "1px solid #e2e8f0", background: "#fff", overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}>
-        {/* Header */}
         <div style={{ padding: "18px 20px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", borderBottom: "1px solid #f1f5f9" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", flex: 1 }}>
             <div>
@@ -651,10 +911,9 @@ export default function TopModelsByTask() {
           </div>
         </div>
 
-        {/* Legend chips */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "12px 20px" }}>
           {categories.map(cat => {
-            const on = activeKeys.has(cat.key);
+            const on = !hidden.has(cat.key);
             return (
               <button key={cat.key} onClick={() => toggleCat(cat.key)}
                 style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, border: `1.5px solid ${on ? cat.color : "#e2e8f0"}`, background: on ? cat.color + "18" : "#f8fafc", cursor: "pointer", fontSize: 11, fontWeight: 600, color: on ? cat.color : "#94a3b8", transition: "all 0.15s" }}>
@@ -665,7 +924,6 @@ export default function TopModelsByTask() {
           })}
         </div>
 
-        {/* Treemap SVG */}
         <div ref={containerRef} style={{ position: "relative", width: "100%", boxSizing: "border-box", lineHeight: 0 }}>
           <svg
             ref={svgRef}
@@ -763,14 +1021,12 @@ export default function TopModelsByTask() {
         <div style={{ padding: "16px 20px 20px" }}>
           {filteredCats.map(cat => (
             <div key={cat.key} style={{ marginBottom: 28 }}>
-              {/* Category header */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, paddingBottom: 8, borderBottom: `2px solid ${cat.color}33` }}>
                 <span style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, flexShrink: 0 }} />
                 <span style={{ color: cat.color, fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.08em" }}>{cat.label}</span>
                 <span style={{ color: "#94a3b8", fontSize: 11 }}>{cat.share.toFixed(1)}% of total</span>
               </div>
 
-              {/* Table */}
               <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e2e8f0" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
@@ -805,10 +1061,12 @@ export default function TopModelsByTask() {
                               <td key={mi} style={{ padding: "9px 12px", borderBottom: "1px solid #f1f5f9" }}>
                                 {m ? (
                                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                                    <span style={{ width: 22, height: 22, borderRadius: 6, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-                                        <ProviderIcon provider={m.provider} model={m.rawModel} size={15} />
-                                      </span>
-                                    <span style={{ color: "#0f172a", fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{m.name}</span>
+                                    <Link to={providerHref(basePath, m.provider)} title={`All ${m.provider} models`} style={{ display: "flex" }}>
+                                      <IconBox provider={m.provider} model={m.rawModel} box={22} icon={15} />
+                                    </Link>
+                                    <Link to={modelHref(basePath, m)} style={{ ...linkStyle, fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+                                      {m.name}
+                                    </Link>
                                     <span style={{ color: tColor, fontWeight: 800, flexShrink: 0, fontSize: 12 }}>{m.share.toFixed(1)}%</span>
                                   </div>
                                 ) : <span style={{ color: "#cbd5e1" }}>—</span>}
@@ -832,27 +1090,16 @@ export default function TopModelsByTask() {
         return (
           <div
             style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 9999,
-              background: "rgba(15, 23, 42, 0.45)",
-              backdropFilter: "blur(4px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 16,
+              position: "fixed", inset: 0, zIndex: 9999,
+              background: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
             }}
             onClick={() => setSelectedTask(null)}
           >
             <div
               style={{
-                background: "#ffffff",
-                borderRadius: 16,
-                padding: "22px 24px",
-                width: "100%",
-                maxWidth: 440,
-                boxShadow: "0 24px 60px -12px rgba(15, 23, 42, 0.35)",
-                border: `1.5px solid ${tColor}40`,
+                background: "#ffffff", borderRadius: 16, padding: "22px 24px", width: "100%", maxWidth: 440,
+                boxShadow: "0 24px 60px -12px rgba(15, 23, 42, 0.35)", border: `1.5px solid ${tColor}40`,
               }}
               onClick={e => e.stopPropagation()}
             >
@@ -875,20 +1122,26 @@ export default function TopModelsByTask() {
               </div>
 
               <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, color: "#64748b" }}>
-                All Models ({selectedTask.task.models.length}) — Scroll to inspect:
+                All Models ({selectedTask.task.models.length}) — click a model or provider for details:
               </p>
 
               <div style={{ maxHeight: 300, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 4 }}>
                 {selectedTask.task.models.map((m, i) => (
                   <div key={m.id || i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                     <span style={{ color: "#64748b", fontSize: 12, fontWeight: 800, width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
-                    <span style={{ width: 26, height: 26, borderRadius: 8, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-                      <ProviderIcon provider={m.provider} model={m.rawModel} size={18} />
-                    </span>
-                    <span style={{ flex: 1, color: "#0f172a", fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {m.rawModel || m.name || m.id}
-                    </span>
-                    <span style={{ fontWeight: 800, color: tColor, flexShrink: 0, fontSize: 13 }}>{m.share.toFixed(1)}%</span>
+                    <IconBox provider={m.provider} model={m.rawModel} box={26} icon={18} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Link to={modelHref(basePath, m)} onClick={() => setSelectedTask(null)} style={{ ...linkStyle, display: "block", fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {m.name || m.rawModel || m.id}
+                      </Link>
+                      <Link to={providerHref(basePath, m.provider)} onClick={() => setSelectedTask(null)} style={{ ...linkStyle, color: "#64748b", fontSize: 11 }}>
+                        by {m.provider}
+                      </Link>
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div style={{ fontWeight: 800, color: tColor, fontSize: 13 }}>{m.share.toFixed(1)}%</div>
+                      <Delta v={m.deltaPp} />
+                    </div>
                   </div>
                 ))}
               </div>

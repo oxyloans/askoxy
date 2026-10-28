@@ -1,8 +1,8 @@
 import React, { useState, ChangeEvent, FormEvent, FC } from "react";
 import { customerApi } from "../utils/axiosInstance";
-import axios from "axios";
 import * as XLSX from "xlsx";
 import { Modal } from "antd";
+import { AlertCircle } from "lucide-react";
 import BASE_URL from "../Config";
 
 const API_URL = `${BASE_URL}/user-service/excelInvite`;
@@ -16,6 +16,15 @@ interface FormValues {
   mailDispalyName: string;
   sampleEmail: string;
   userId: string;
+}
+
+interface FormErrors {
+  file?: string;
+  inviteType?: string;
+  mailSubject?: string;
+  message?: string;
+  mailDispalyName?: string;
+  sampleEmail?: string;
 }
 
 const BulkInvite: FC = () => {
@@ -43,6 +52,59 @@ They’ve also introduced new AI-driven features that make the platform even mor
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [apiError, setApiError] = useState<string>("");
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // 1. File validation
+    if (!file) {
+      newErrors.file = "Please upload an Excel (.xlsx) file";
+    } else {
+      const ext = file.name.toLowerCase().split(".").pop();
+      if (ext !== "xlsx") {
+        newErrors.file = "Only .xlsx files are supported";
+      }
+    }
+
+    // 2. Invite Type
+    if (!formValues.inviteType) {
+      newErrors.inviteType = "Please select an invite type";
+    }
+
+    // 3. Mail Subject
+    if (!formValues.mailSubject.trim()) {
+      newErrors.mailSubject = "Mail subject is required";
+    } else if (formValues.mailSubject.trim().length < 3) {
+      newErrors.mailSubject = "Subject must be at least 3 characters";
+    }
+
+    // 4. Message
+    if (!formValues.message.trim()) {
+      newErrors.message = "Message content is required";
+    } else if (formValues.message.trim().length < 10) {
+      newErrors.message = "Message must be at least 10 characters";
+    }
+
+    // 5. Display Name
+    if (!formValues.mailDispalyName.trim()) {
+      newErrors.mailDispalyName = "Display name is required";
+    }
+
+    // 6. Sample Email (only if sample mail selected)
+    if (formValues.inviteType === "sample") {
+      const email = formValues.sampleEmail.trim();
+      if (!email) {
+        newErrors.sampleEmail = "Sample email address is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        newErrors.sampleEmail = "Please enter a valid email address (e.g. name@example.com)";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -53,6 +115,25 @@ They’ve also introduced new AI-driven features that make the platform even mor
       ...prev,
       [name]: value,
     }));
+
+    // Clear error for the current field as user types/selects
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+
+    if (name === "inviteType" && value !== "sample" && errors.sampleEmail) {
+      setErrors((prev) => ({
+        ...prev,
+        sampleEmail: undefined,
+      }));
+    }
+
+    if (apiError) {
+      setApiError("");
+    }
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -61,12 +142,10 @@ They’ve also introduced new AI-driven features that make the platform even mor
     if (selectedFile) {
       const fileExtension = selectedFile.name.toLowerCase().split(".").pop();
       if (fileExtension !== "xlsx") {
-        Modal.error({
-          title: "Invalid File Format",
-          content:
-            "Please upload only .xlsx files. Other Excel formats (.xls) are not supported.",
-          centered: true,
-        });
+        setErrors((prev) => ({
+          ...prev,
+          file: "Please upload only .xlsx files. Other formats (.xls, .csv) are not supported.",
+        }));
         e.target.value = ""; // Clear the input
         setFile(null);
         return;
@@ -74,6 +153,14 @@ They’ve also introduced new AI-driven features that make the platform even mor
     }
 
     setFile(selectedFile);
+    // Clear file error if a valid file is chosen
+    setErrors((prev) => ({
+      ...prev,
+      file: undefined,
+    }));
+    if (apiError) {
+      setApiError("");
+    }
   };
 
   const downloadSampleExcel = () => {
@@ -98,13 +185,9 @@ They’ve also introduced new AI-driven features that make the platform even mor
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setApiError("");
 
-    if (!file) {
-      Modal.error({
-        title: "Error",
-        content: "Please upload an Excel file.",
-        centered: true,
-      });
+    if (!validateForm()) {
       return;
     }
 
@@ -112,7 +195,9 @@ They’ve also introduced new AI-driven features that make the platform even mor
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("multiPart", file);
+      if (file) {
+        formData.append("multiPart", file);
+      }
 
       Object.entries(formValues).forEach(([key, value]) => {
         formData.append(key, value);
@@ -130,25 +215,20 @@ They’ve also introduced new AI-driven features that make the platform even mor
         content: "Bulk invite sent successfully.",
         centered: true,
       });
+      setErrors({});
     } catch (err: any) {
       console.error("Bulk invite error:", err);
 
-      if (err.response) {
-        const msg =
-          err.response.data?.message ||
-          `Request failed with status ${err.response.status}`;
-        Modal.error({
-          title: "Error",
-          content: msg,
-          centered: true,
-        });
-      } else {
-        Modal.error({
-          title: "Error",
-          content: "Request failed. Please try again.",
-          centered: true,
-        });
+      let msg = "Request failed. Please try again.";
+      if (err.response?.data?.message) {
+        msg = err.response.data.message;
+      } else if (err.response?.status) {
+        msg = `Request failed with status ${err.response.status}`;
+      } else if (err.message) {
+        msg = err.message;
       }
+
+      setApiError(msg);
     } finally {
       setLoading(false);
     }
@@ -240,34 +320,55 @@ They’ve also introduced new AI-driven features that make the platform even mor
             {/* File */}
             <div>
               <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
-                 Excel File <span className="text-red-500">*</span>
+                Excel File <span className="text-red-500">*</span>
               </label>
               <input
                 type="file"
                 accept=".xlsx"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer focus:outline-none focus:ring-2 rounded-lg border p-1 transition-colors ${
+                  errors.file
+                    ? "border-red-400 bg-red-50/20 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Only .xlsx files are supported
-              </p>
+              {errors.file ? (
+                <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{errors.file}</span>
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  Only .xlsx files are supported
+                </p>
+              )}
             </div>
 
             {/* Invite Type */}
             <div>
               <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
-                 Invite Type <span className="text-red-500">*</span>
+                Invite Type <span className="text-red-500">*</span>
               </label>
               <select
                 name="inviteType"
                 value={formValues.inviteType}
                 onChange={handleChange}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className={`block w-full rounded-lg border px-3 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 focus:outline-none focus:ring-2 transition-colors ${
+                  errors.inviteType
+                    ? "border-red-400 bg-red-50/20 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
               >
                 <option value="">Select Type</option>
-                <option value="sample"> Sample Mail</option>
-                <option value="nonsample"> Non Sample Mail</option>
+                <option value="sample">Sample Mail</option>
+                <option value="nonsample">Non Sample Mail</option>
               </select>
+              {errors.inviteType && (
+                <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{errors.inviteType}</span>
+                </p>
+              )}
             </div>
 
             {/* Subject */}
@@ -280,9 +381,19 @@ They’ve also introduced new AI-driven features that make the platform even mor
                 name="mailSubject"
                 value={formValues.mailSubject}
                 onChange={handleChange}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className={`block w-full rounded-lg border px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 transition-colors ${
+                  errors.mailSubject
+                    ? "border-red-400 bg-red-50/20 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 placeholder="Enter email subject..."
               />
+              {errors.mailSubject && (
+                <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{errors.mailSubject}</span>
+                </p>
+              )}
             </div>
 
             {/* Message */}
@@ -295,29 +406,50 @@ They’ve also introduced new AI-driven features that make the platform even mor
                 value={formValues.message}
                 rows={4}
                 onChange={handleChange}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-vertical"
+                className={`block w-full rounded-lg border px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 transition-colors resize-vertical ${
+                  errors.message
+                    ? "border-red-400 bg-red-50/20 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 placeholder="Enter your message..."
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Use{" "}
-                <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{`{Referral_Link}`}</code>{" "}
-                to include user's referral link
-              </p>
+              {errors.message ? (
+                <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{errors.message}</span>
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  Use{" "}
+                  <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{`{Referral_Link}`}</code>{" "}
+                  to include user's referral link
+                </p>
+              )}
             </div>
 
             {/* Display Name */}
             <div>
               <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
-                 Mail Display Name <span className="text-red-500">*</span>
+                Mail Display Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 name="mailDispalyName"
                 value={formValues.mailDispalyName}
                 onChange={handleChange}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className={`block w-full rounded-lg border px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 transition-colors ${
+                  errors.mailDispalyName
+                    ? "border-red-400 bg-red-50/20 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 placeholder="Enter display name..."
               />
+              {errors.mailDispalyName && (
+                <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{errors.mailDispalyName}</span>
+                </p>
+              )}
             </div>
 
             {/* Sample Email */}
@@ -331,9 +463,30 @@ They’ve also introduced new AI-driven features that make the platform even mor
                   name="sampleEmail"
                   value={formValues.sampleEmail}
                   onChange={handleChange}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className={`block w-full rounded-lg border px-3 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 transition-colors ${
+                    errors.sampleEmail
+                      ? "border-red-400 bg-red-50/20 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                  }`}
                   placeholder="Enter sample email address..."
                 />
+                {errors.sampleEmail && (
+                  <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                    <span>{errors.sampleEmail}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* API / Submission Error Banner */}
+            {apiError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3.5 text-red-700 text-sm flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-red-800">Unable to Send Invitations</p>
+                  <p className="mt-0.5 text-xs sm:text-sm text-red-600 leading-relaxed">{apiError}</p>
+                </div>
               </div>
             )}
 

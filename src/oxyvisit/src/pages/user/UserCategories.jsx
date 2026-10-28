@@ -4,6 +4,7 @@ import { PlusOutlined, EyeOutlined, UploadOutlined, EnvironmentOutlined, ArrowLe
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useOxyNavigate } from '../../utils/navigation';
+import { getCurrentUser } from '../../utils/user';
 import BASE_URL from '../../core/config/Config';
 const API_BASE = `${BASE_URL}/ai-service`;
 
@@ -14,6 +15,7 @@ const UserCategories = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    userName: '',
     location: '',
     contactNumber: '',
     description: '',
@@ -22,7 +24,9 @@ const UserCategories = () => {
   });
   const [errors, setErrors] = useState({});
   const { navigate } = useOxyNavigate();
-  const userId = localStorage.getItem('userId');
+
+  const getUserId = () => getCurrentUser().id;
+  const getUserName = () => getCurrentUser().name;
 
   useEffect(() => {
     fetchCategories();
@@ -92,13 +96,18 @@ const UserCategories = () => {
     if (!validateForm()) return;
 
     try {
+      const user = getCurrentUser();
+      const resolvedUserId = user.id;
+      const resolvedUserName = user.name || user.userName || '';
+
       const data = new FormData();
       data.append('categoryId', selectedCategory.id);
       data.append('contactNumber', formData.contactNumber);
       data.append('description', formData.description);
       data.append('location', formData.location);
       data.append('name', formData.name);
-      data.append('userId', userId);
+      data.append('userId', resolvedUserId);
+      data.append('userName', resolvedUserName);
       if (formData.webLink) data.append('webLink', formData.webLink);
       if (formData.image) data.append('image', formData.image);
 
@@ -109,19 +118,25 @@ const UserCategories = () => {
       
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Visit added successfully',
+        title: 'Visit Added!',
+        text: 'Your visit has been recorded successfully.',
         timer: 2000,
+        showConfirmButton: false,
       });
       setModalVisible(false);
       setSelectedCategory(null);
-      setFormData({ name: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+      setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
       setErrors({});
     } catch (error) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to add visit';
+      const errorMessage =
+        error.response?.data?.errorMessage ||
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.status ||
+        'Failed to add visit. Please try again.';
       Swal.fire({
         icon: 'error',
-        title: 'Error',
+        title: 'Error Adding Visit',
         text: errorMessage,
       });
     }
@@ -169,6 +184,16 @@ const UserCategories = () => {
                       icon={<PlusOutlined />}
                       onClick={() => {
                         setSelectedCategory(category);
+                        setFormData({
+                          name: '',
+                          userName: getUserName(),
+                          location: '',
+                          contactNumber: '',
+                          description: '',
+                          webLink: '',
+                          image: null
+                        });
+                        setErrors({});
                         setModalVisible(true);
                       }}
                       style={{ backgroundColor: '#1ab394', borderColor: '#1ab394', flex: 1 }}
@@ -208,11 +233,12 @@ const UserCategories = () => {
         onCancel={() => {
           setModalVisible(false);
           setSelectedCategory(null);
-          setFormData({ name: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+          setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
           setErrors({});
         }}
         footer={null}
         width={600}
+        style={{ maxWidth: '95vw', top: 20 }}
       >
         <Form layout="vertical">
           <Row gutter={16}>

@@ -494,33 +494,101 @@ const ProfilePage = () => {
     setValidationErrors((prev) => ({ ...prev, [field]: error }));
   };
 
+  const validateAddressField = (
+    field: "flatNo" | "landmark" | "address" | "pincode",
+    value: string,
+  ): string => {
+    const trimmed = (value || "").trim();
+    switch (field) {
+      case "flatNo":
+        if (!trimmed) return "House or flat number is required";
+        if (trimmed.length > 50) return "Maximum 50 characters allowed";
+        if (!/[a-zA-Z0-9]/.test(trimmed)) {
+          return "Please enter a valid house number";
+        }
+        return "";
+
+      case "landmark":
+        if (!trimmed) return "Landmark is required";
+        if (trimmed.length < 3) return "Minimum 3 characters required";
+        if (trimmed.length > 80) return "Maximum 80 characters allowed";
+        if (!/[a-zA-Z]/.test(trimmed) || /^(.)\1{3,}$/i.test(trimmed)) {
+          return "Please enter a valid landmark";
+        }
+        return "";
+
+      case "address":
+        if (!trimmed) return "Address is required";
+        if (trimmed.length < 10) return "Minimum 10 characters required";
+        if (trimmed.length > 250) return "Maximum 250 characters allowed";
+        if (!/[a-zA-Z]{2,}/.test(trimmed) || /^(.)\1{4,}$/i.test(trimmed)) {
+          return "Please enter a valid address";
+        }
+        return "";
+
+      case "pincode": {
+        if (!trimmed) return "PIN code is required";
+        if (!/^\d+$/.test(trimmed)) return "Numbers only";
+        if (trimmed.length !== 6) return "Must be 6 digits";
+        if (trimmed.startsWith("0")) return "Cannot start with 0";
+        if (/^(\d)\1{5}$/.test(trimmed)) return "Invalid PIN code";
+        const invalidPincodes = ["123456", "654321", "112233", "012345", "987654"];
+        if (invalidPincodes.includes(trimmed)) return "Please enter a valid PIN code";
+        return "";
+      }
+
+      default:
+        return "";
+    }
+  };
+
   const validateAddressForm = () => {
     const errors = {
-      flatNo: "",
-      landmark: "",
-      address: "",
-      pincode: "",
+      flatNo: validateAddressField("flatNo", addressFormData.flatNo || ""),
+      landmark: validateAddressField("landmark", addressFormData.landmark || ""),
+      address: validateAddressField("address", addressFormData.address || ""),
+      pincode: validateAddressField("pincode", addressFormData.pincode || ""),
     };
 
-    if (!addressFormData.flatNo?.trim())
-      errors.flatNo = "Flat/House number is required";
+    setAddressFormErrors(errors);
+    return !Object.values(errors).some((error) => Boolean(error));
+  };
 
-    if (!addressFormData.landmark?.trim())
-      errors.landmark = "Landmark is required";
-
-    if (!addressFormData.address?.trim())
-      errors.address = "Address is required";
-
-    if (!addressFormData.pincode?.trim()) {
-      errors.pincode = "PIN code is required";
-    } else if (!/^\d{6}$/.test(addressFormData.pincode)) {
-      errors.pincode = "Please enter a valid 6-digit PIN code";
-    } else if (/^0+$/.test(addressFormData.pincode)) {
-      errors.pincode = "PIN code cannot be all zeros";
+  const handleAddressInputChange = (
+    field: "flatNo" | "landmark" | "address" | "pincode",
+    value: string,
+  ) => {
+    let sanitizedValue = value;
+    if (field === "pincode") {
+      sanitizedValue = value.replace(/\D/g, "").slice(0, 6);
     }
 
-    setAddressFormErrors(errors);
-    return !Object.values(errors).some((error) => error);
+    setAddressFormData((prev) => ({
+      ...prev,
+      [field]: sanitizedValue,
+    }));
+
+    if (field === "landmark" || field === "address" || field === "pincode") {
+      clearDetectedCoordinates();
+    }
+
+    if (addressFormErrors[field]) {
+      const fieldError = validateAddressField(field, sanitizedValue);
+      setAddressFormErrors((prev) => ({
+        ...prev,
+        [field]: fieldError,
+      }));
+    }
+  };
+
+  const handleAddressInputBlur = (
+    field: "flatNo" | "landmark" | "address" | "pincode",
+  ) => {
+    const fieldError = validateAddressField(field, addressFormData[field] || "");
+    setAddressFormErrors((prev) => ({
+      ...prev,
+      [field]: fieldError,
+    }));
   };
 
   const handleSaveProfile = async () => {
@@ -586,11 +654,16 @@ const ProfilePage = () => {
       setError("");
       setSuccessMessage("");
 
-      const fullAddress = `${addressFormData.flatNo}, ${addressFormData.landmark}, ${addressFormData.address}, ${addressFormData.pincode}`;
+      const cleanFlatNo = (addressFormData.flatNo || "").trim();
+      const cleanLandmark = (addressFormData.landmark || "").trim();
+      const cleanAddress = (addressFormData.address || "").trim();
+      const cleanPincode = (addressFormData.pincode || "").trim();
+
+      const fullAddress = `${cleanFlatNo}, ${cleanLandmark}, ${cleanAddress}, ${cleanPincode}`;
       const coordinates = detectedCoordinates || (await getCoordinates(fullAddress));
 
       if (!coordinates) {
-        setError("Unable to find location coordinates");
+        setError("Unable to find location coordinates for this address. Please verify your address or pin code.");
         return;
       }
 
@@ -604,10 +677,10 @@ const ProfilePage = () => {
       const data = {
         userId: customerId,
         id: editingAddressId,
-        flatNo: addressFormData.flatNo,
-        landMark: addressFormData.landmark,
-        address: addressFormData.address,
-        pincode: addressFormData.pincode,
+        flatNo: cleanFlatNo,
+        landMark: cleanLandmark,
+        address: cleanAddress,
+        pincode: cleanPincode,
         addressType: addressFormData.addressType,
         latitude: coordinates.lat.toString(),
         longitude: coordinates.lng.toString(),
@@ -1348,7 +1421,7 @@ const ProfilePage = () => {
                     >
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
                             Flat / House / Door No <span className="text-red-500">*</span>
                           </label>
 
@@ -1356,108 +1429,153 @@ const ProfilePage = () => {
                             type="text"
                             value={addressFormData.flatNo}
                             onChange={(e) =>
-                              setAddressFormData({
-                                ...addressFormData,
-                                flatNo: e.target.value,
-                              })
+                              handleAddressInputChange("flatNo", e.target.value)
                             }
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            onBlur={() => handleAddressInputBlur("flatNo")}
+                            className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:ring-2 ${
+                              addressFormErrors.flatNo
+                                ? "border-red-500 focus:ring-red-400 bg-red-50/20"
+                                : "border-gray-300 focus:ring-purple-500"
+                            }`}
                             placeholder="e.g. Flat 402, House No 12-3, Door No 5"
                           />
 
-                          {addressFormErrors.flatNo && (
-                            <p className="mt-1 text-sm text-red-600 font-medium">
-                              {addressFormErrors.flatNo}
+                          {addressFormErrors.flatNo ? (
+                            <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                              <span>{addressFormErrors.flatNo}</span>
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-xs text-gray-400">
+                              House, flat, or building number
                             </p>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Landmark
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            Landmark <span className="text-red-500">*</span>
                           </label>
 
                           <input
                             type="text"
                             value={addressFormData.landmark}
-                            onChange={(e) => {
-                              setAddressFormData({
-                                ...addressFormData,
-                                landmark: e.target.value,
-                              });
-                              clearDetectedCoordinates();
-                            }}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                            placeholder="Enter landmark"
+                            onChange={(e) =>
+                              handleAddressInputChange("landmark", e.target.value)
+                            }
+                            onBlur={() => handleAddressInputBlur("landmark")}
+                            maxLength={80}
+                            className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:ring-2 ${
+                              addressFormErrors.landmark
+                                ? "border-red-500 focus:ring-red-400 bg-red-50/20"
+                                : "border-gray-300 focus:ring-purple-500"
+                            }`}
+                            placeholder="e.g. Near Metro Station, Opp City Mall"
                           />
 
-                          {addressFormErrors.landmark && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {addressFormErrors.landmark}
+                          {addressFormErrors.landmark ? (
+                            <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                              <span>{addressFormErrors.landmark}</span>
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-xs text-gray-400">
+                              Nearby landmark to assist delivery partner
                             </p>
                           )}
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Complete Address
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-sm font-semibold text-gray-700">
+                            Complete Address <span className="text-red-500">*</span>
+                          </label>
+                          <span
+                            className={`text-xs ${
+                              addressFormData.address.length > 250
+                                ? "text-red-600 font-semibold"
+                                : "text-gray-400"
+                            }`}
+                          >
+                            {addressFormData.address.length}/250
+                          </span>
+                        </div>
 
                         <textarea
                           value={addressFormData.address}
-                          onChange={(e) => {
-                            setAddressFormData({
-                              ...addressFormData,
-                              address: e.target.value,
-                            });
-                            clearDetectedCoordinates();
-                          }}
+                          onChange={(e) =>
+                            handleAddressInputChange("address", e.target.value)
+                          }
+                          onBlur={() => handleAddressInputBlur("address")}
                           rows={3}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
-                          placeholder="Enter complete address"
+                          maxLength={250}
+                          className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:ring-2 resize-none ${
+                            addressFormErrors.address
+                              ? "border-red-500 focus:ring-red-400 bg-red-50/20"
+                              : "border-gray-300 focus:ring-purple-500"
+                          }`}
+                          placeholder="e.g. Road No 10, Green Valley, Banjara Hills, Hyderabad"
                         />
 
-                        {addressFormErrors.address && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {addressFormErrors.address}
+                        {addressFormErrors.address ? (
+                          <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                            <span>{addressFormErrors.address}</span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs text-gray-400">
+                            Street, road, colony, or locality details
                           </p>
                         )}
                       </div>
 
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            PIN Code
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            PIN Code <span className="text-red-500">*</span>
                           </label>
 
-                          <input
-                            type="text"
-                            value={addressFormData.pincode}
-                            onChange={(e) => {
-                              setAddressFormData({
-                                ...addressFormData,
-                                pincode: e.target.value
-                                  .replace(/\D/g, "")
-                                  .slice(0, 6),
-                              });
-                              clearDetectedCoordinates();
-                            }}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                            placeholder="Enter 6-digit PIN code"
-                            maxLength={6}
-                          />
+                          <div className="relative">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={addressFormData.pincode}
+                              onChange={(e) =>
+                                handleAddressInputChange("pincode", e.target.value)
+                              }
+                              onBlur={() => handleAddressInputBlur("pincode")}
+                              className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:ring-2 tracking-widest font-mono text-base ${
+                                addressFormErrors.pincode
+                                  ? "border-red-500 focus:ring-red-400 bg-red-50/20"
+                                  : "border-gray-300 focus:ring-purple-500"
+                              }`}
+                              placeholder="e.g. 500081"
+                              maxLength={6}
+                            />
+                            {addressFormData.pincode.length === 6 && !addressFormErrors.pincode && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <Check className="h-4 w-4 text-green-600" />
+                              </div>
+                            )}
+                          </div>
 
-                          {addressFormErrors.pincode && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {addressFormErrors.pincode}
+                          {addressFormErrors.pincode ? (
+                            <p className="mt-1.5 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1.5">
+                              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                              <span>{addressFormErrors.pincode}</span>
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-xs text-gray-400">
+                              6-digit postal code
                             </p>
                           )}
                         </div>
 
                         <div>
                           <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                            Address Type
+                            Address Type <span className="text-red-500">*</span>
                           </label>
 
                           <div className="grid grid-cols-3 gap-2.5">

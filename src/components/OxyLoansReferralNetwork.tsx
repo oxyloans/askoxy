@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
   Avatar,
   Button,
@@ -13,6 +14,7 @@ import {
   Typography,
   theme,
 } from "antd";
+
 import {
   CheckCircleFilled,
   DownOutlined,
@@ -24,67 +26,99 @@ import {
   UpOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
+
 import Swal from "sweetalert2";
+
 import BASE_URL from "../Config";
+
 import customerApi from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
+
 const API_BASE = `${BASE_URL.replace(/\/$/, "")}/user-service`;
 
 type ReferralRoleStatus = {
   clicked?: boolean;
+
   registered?: boolean;
+
   loginCount?: number;
+
   activity?: unknown;
 };
 
 type ReferralNode = {
   userId?: string;
+
   askoxyUserId?: string;
+
   name?: string;
+
   email?: string;
+
   mobileNumber?: string;
+
   referralStatus?: string;
+
   referralRole?: "BORROWER" | "LENDER" | "PARTNER" | string;
+
   askOxyRegistered?: boolean;
+
   oxyloans?: {
     borrower?: ReferralRoleStatus;
+
     lender?: ReferralRoleStatus;
+
     partner?: ReferralRoleStatus;
   };
+
   child?: ReferralNode | ReferralNode[];
+
   children?: ReferralNode | ReferralNode[];
 };
 
 type ApiEnvelope<T> = {
   success: boolean;
+
   message?: string;
+
   data: T;
 };
-
-const NAME_PATTERN = /^[A-Za-z][A-Za-z .'-]{1,49}$/;
-const MOBILE_PATTERN = /^[6-9]\d{9}$/;
 
 const roleMeta = {
   lender: {
     label: "Lender",
+
     icon: <WalletOutlined />,
+
     accent: "#6D28D9",
+
     soft: "#F5F3FF",
+
     border: "#EDE9FE",
   },
+
   borrower: {
     label: "Borrower",
+
     icon: <UserOutlined />,
+
     accent: "#2563EB",
+
     soft: "#EFF6FF",
+
     border: "#DBEAFE",
   },
+
   partner: {
     label: "Partner",
+
     icon: <TeamOutlined />,
+
     accent: "#0F766E",
+
     soft: "#F0FDFA",
+
     border: "#CCFBF1",
   },
 } as const;
@@ -92,6 +126,7 @@ const roleMeta = {
 const readJson = (key: string) => {
   try {
     const value = localStorage.getItem(key);
+
     return value ? JSON.parse(value) : null;
   } catch {
     return null;
@@ -100,10 +135,12 @@ const readJson = (key: string) => {
 
 const getUserId = () => {
   const direct = localStorage.getItem("userId")?.trim();
+
   if (direct) return direct;
 
   for (const key of ["user", "auth", "authData", "loginData"]) {
     const value = readJson(key);
+
     const id =
       value?.userId ||
       value?.data?.userId ||
@@ -133,18 +170,25 @@ const getApiMessage = (error: unknown): string => {
 
 const showToast = (
   icon: "success" | "warning" | "error",
+
   title: string,
 ) => {
   if (!title) return;
 
   Swal.mixin({
     toast: true,
+
     position: "top-end",
+
     showConfirmButton: false,
+
     timer: 3000,
+
     timerProgressBar: true,
+
     didOpen: (toastEl) => {
       toastEl.onmouseenter = Swal.stopTimer;
+
       toastEl.onmouseleave = Swal.resumeTimer;
     },
   }).fire({ icon, title });
@@ -154,12 +198,13 @@ const toNodeList = (value: unknown): ReferralNode[] => {
   if (!value) return [];
 
   if (Array.isArray(value)) {
-    return value.filter(
-      (item): item is ReferralNode => Boolean(item && typeof item === "object"),
+    return value.filter((item): item is ReferralNode =>
+      Boolean(item && typeof item === "object"),
     );
   }
 
   if (typeof value === "object") return [value as ReferralNode];
+
   return [];
 };
 
@@ -181,6 +226,7 @@ const getChildNodes = (
 
 const getDisplayName = (node: ReferralNode, isRoot = false) => {
   if (node.name?.trim()) return node.name.trim();
+
   return isRoot ? "You" : "Referral User";
 };
 
@@ -190,13 +236,19 @@ const getReferralRoleLabel = (role?: string) => {
   const normalized = role.trim().toUpperCase();
 
   if (normalized === "LENDER") return "Lender";
+
   if (normalized === "BORROWER") return "Borrower";
+
   if (normalized === "PARTNER") return "Partner";
 
   return role
+
     .toLowerCase()
-    .replace(/(^|\s|_)([a-z])/g, (_, separator, letter) =>
-      `${separator === "_" ? " " : separator}${letter.toUpperCase()}`,
+
+    .replace(
+      /(^|\s|_)([a-z])/g,
+      (_, separator, letter) =>
+        `${separator === "_" ? " " : separator}${letter.toUpperCase()}`,
     );
 };
 
@@ -204,6 +256,7 @@ const collectRootNodes = (
   data: ReferralNode | ReferralNode[] | null,
 ): ReferralNode[] => {
   if (!data) return [];
+
   return Array.isArray(data) ? data : [data];
 };
 
@@ -215,6 +268,7 @@ const getReferralState = (node: ReferralNode) => {
   }
 
   if (raw) return node.referralStatus || "Invited";
+
   return "Invited";
 };
 
@@ -223,9 +277,11 @@ const countDirectReferrals = (roots: ReferralNode[]) =>
 
 const RoleStatus = ({
   role,
+
   item,
 }: {
   role: keyof typeof roleMeta;
+
   item?: ReferralRoleStatus;
 }) => {
   const meta = roleMeta[role];
@@ -241,6 +297,7 @@ const RoleStatus = ({
       className="min-w-0 rounded-lg border px-2 py-1.5 sm:px-2.5 sm:py-2"
       style={{
         backgroundColor: meta.soft,
+
         borderColor: meta.border,
       }}
     >
@@ -249,6 +306,7 @@ const RoleStatus = ({
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-xs"
           style={{
             color: meta.accent,
+
             border: `1px solid ${meta.border}`,
           }}
         >
@@ -291,6 +349,7 @@ const RootCard = ({ node }: { node: ReferralNode }) => {
     <div className="overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-[0_6px_20px_rgba(109,40,217,0.07)]">
       <div className="flex items-center gap-2 border-b border-violet-100 bg-violet-50/80 px-3 py-2.5 sm:px-4">
         <LinkOutlined className="text-violet-700" />
+
         <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-violet-700">
           Your Profile
         </span>
@@ -316,6 +375,7 @@ const RootCard = ({ node }: { node: ReferralNode }) => {
           {node.mobileNumber && (
             <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
               <PhoneOutlined className="text-[11px]" />
+
               <span>{node.mobileNumber}</span>
             </div>
           )}
@@ -333,13 +393,17 @@ const RootCard = ({ node }: { node: ReferralNode }) => {
 
 const ReferralCard = ({
   node,
+
   index,
 }: {
   node: ReferralNode;
+
   index: number;
 }) => {
   const displayName = getDisplayName(node);
+
   const referralState = getReferralState(node);
+
   const referredAs = getReferralRoleLabel(node.referralRole);
 
   return (
@@ -365,6 +429,7 @@ const ReferralCard = ({
                   {node.mobileNumber && (
                     <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 sm:text-xs">
                       <PhoneOutlined className="text-[10px]" />
+
                       {node.mobileNumber}
                     </span>
                   )}
@@ -392,6 +457,7 @@ const ReferralCard = ({
                 <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500 sm:text-[11px]">
                   Referred as
                 </span>
+
                 <span className="rounded-md bg-violet-700 px-2.5 py-1 text-[11px] font-bold text-white sm:text-xs">
                   {referredAs}
                 </span>
@@ -400,7 +466,9 @@ const ReferralCard = ({
 
             <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
               <RoleStatus role="lender" item={node.oxyloans?.lender} />
+
               <RoleStatus role="borrower" item={node.oxyloans?.borrower} />
+
               <RoleStatus role="partner" item={node.oxyloans?.partner} />
             </div>
           </div>
@@ -412,6 +480,7 @@ const ReferralCard = ({
 
 const ReferralBranch = ({ node }: { node: ReferralNode }) => {
   const children = getChildNodes(node);
+
   const [showReferrals, setShowReferrals] = useState(true);
 
   return (
@@ -432,8 +501,10 @@ const ReferralBranch = ({ node }: { node: ReferralNode }) => {
                 <div className="text-[13px] font-bold text-slate-800 sm:text-sm">
                   Direct Referrals
                 </div>
+
                 <div className="text-[10px] text-slate-400 sm:text-[11px]">
-                  {children.length} referral{children.length === 1 ? "" : "s"} in your network
+                  {children.length} referral{children.length === 1 ? "" : "s"}{" "}
+                  in your network
                 </div>
               </div>
             </div>
@@ -445,7 +516,9 @@ const ReferralBranch = ({ node }: { node: ReferralNode }) => {
               onClick={() => setShowReferrals((value) => !value)}
               className="!flex !h-9 !w-full !items-center !justify-center !rounded-xl !border !border-slate-200 !bg-white !px-3 !text-[11px] !font-semibold !text-slate-600 hover:!border-violet-200 hover:!bg-violet-50 hover:!text-violet-700 sm:!w-auto"
             >
-              {showReferrals ? "Hide Referrals" : `Show Referrals (${children.length})`}
+              {showReferrals
+                ? "Hide Referrals"
+                : `Show Referrals (${children.length})`}
             </Button>
           </div>
 
@@ -479,6 +552,52 @@ const ReferralBranch = ({ node }: { node: ReferralNode }) => {
   );
 };
 
+type ReferralFormValues = {
+  referralName: string;
+  mobileNumber: string;
+  role: "BORROWER" | "LENDER" | "PARTNER";
+};
+
+const cleanReferralName = (value: string): string =>
+  value
+    .replace(/[^A-Za-z .'-]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .slice(0, 50);
+
+const validateReferralName = (value: unknown): string | null => {
+  const name = String(value ?? "").trim();
+  if (!name) return "Referral name is required.";
+  if (name.length < 2) return "Name must contain at least 2 letters.";
+  if (name.length > 50) return "Name must not exceed 50 characters.";
+  if (!/^[A-Za-z]/.test(name)) return "Name must start with a letter.";
+  if (!/^[A-Za-z .'-]+$/.test(name))
+    return "Name can contain letters only (with spaces, dots, apostrophes or hyphens).";
+  if ((name.match(/[A-Za-z]/g) || []).length < 2)
+    return "Enter at least 2 letters in the name.";
+  if (!/[A-Za-z]$/.test(name)) return "Name must end with a letter.";
+  return null;
+};
+
+const validateReferralMobile = (value: unknown): string | null => {
+  const mobile = String(value ?? "").trim();
+  if (!mobile) return "Mobile number is required.";
+  if (!/^\d{10}$/.test(mobile)) return "Enter a 10-digit mobile number.";
+  if (!/^[6-9]/.test(mobile))
+    return "Mobile number must start with 6, 7, 8 or 9.";
+  if (/^(\d)\1{9}$/.test(mobile))
+    return "Enter a valid mobile number, not repeated digits.";
+  const ownNumbers = ["mobileNumber", "whatsappNumber"]
+    .map((key) =>
+      String(localStorage.getItem(key) || "")
+        .replace(/\D/g, "")
+        .slice(-10),
+    )
+    .filter(Boolean);
+  if (ownNumbers.includes(mobile))
+    return "You cannot refer your own mobile number.";
+  return null;
+};
+
 const OxyloansAddReferralNetwork = ({
   openModal,
   onClose,
@@ -488,48 +607,53 @@ const OxyloansAddReferralNetwork = ({
   onClose: () => void;
   onAdded: () => void;
 }) => {
-  const [form] = Form.useForm<{
-    referralName: string;
-    mobileNumber: string;
-    role: "BORROWER" | "LENDER" | "PARTNER";
-  }>();
-
+  const [form] = Form.useForm<ReferralFormValues>();
   const [submitting, setSubmitting] = useState(false);
 
-  const resetForm = () => {
-    form.resetFields();
-  };
+  const resetForm = () => form.resetFields();
 
-  const handleAddReferral = async (values: {
-    referralName: string;
-    mobileNumber: string;
-    role: "BORROWER" | "LENDER" | "PARTNER";
-  }) => {
+  const handleAddReferral = async (values: ReferralFormValues) => {
+    if (submitting) return;
+    const refereeName = String(values.referralName || "")
+      .trim()
+      .replace(/\s+/g, " ");
+    const refereeMobileNumber = String(values.mobileNumber || "").trim();
+    const nameError = validateReferralName(refereeName);
+    const mobileError = validateReferralMobile(refereeMobileNumber);
+    const validRoles = ["LENDER", "BORROWER", "PARTNER"];
+    if (nameError || mobileError || !validRoles.includes(values.role)) {
+      await form.validateFields().catch(() => undefined);
+      showToast(
+        "warning",
+        nameError || mobileError || "Please select a referral role.",
+      );
+      return;
+    }
+
     setSubmitting(true);
-
     try {
       const response = await customerApi.post(`${API_BASE}/referrals`, {
-        refereeMobileNumber: values.mobileNumber.trim(),
-        refereeName: values.referralName.trim(),
+        refereeMobileNumber,
+        refereeName,
         role: values.role,
       });
-
       const payload = response.data as ApiEnvelope<unknown>;
-
       if (payload?.success === false) {
-        const message = payload?.message || "";
-        if (message) showToast("error", message);
+        showToast(
+          "error",
+          payload?.message || "Could not add referral. Please try again.",
+        );
         return;
       }
-
-      if (payload?.message) showToast("success", payload.message);
-
+      showToast("success", payload?.message || "Referral added successfully.");
       resetForm();
       onClose();
       onAdded();
     } catch (error) {
-      const message = getApiMessage(error);
-      if (message) showToast("error", message);
+      showToast(
+        "error",
+        getApiMessage(error) || "Unable to add referral. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -549,13 +673,16 @@ const OxyloansAddReferralNetwork = ({
       }
       open={openModal}
       onCancel={() => {
-        resetForm();
-        onClose();
+        if (!submitting) {
+          resetForm();
+          onClose();
+        }
       }}
       afterClose={resetForm}
       destroyOnClose
       centered
       width={480}
+      className="oxy-referral-modal"
       styles={{
         header: { paddingBottom: 10 },
         body: { paddingTop: 4 },
@@ -569,6 +696,7 @@ const OxyloansAddReferralNetwork = ({
       onOk={() => form.submit()}
       okButtonProps={{
         icon: <UserAddOutlined />,
+        disabled: submitting,
         className: "!h-10 !rounded-xl !font-semibold",
       }}
       cancelButtonProps={{
@@ -577,84 +705,70 @@ const OxyloansAddReferralNetwork = ({
       }}
     >
       <style>{`
-        .referral-toast-only-form .ant-form-item-explain {
-          display: none !important;
-        }
-
         @media (max-width: 575px) {
-          .ant-modal {
-            max-width: calc(100vw - 20px) !important;
-            margin: 10px auto !important;
-          }
-
-          .ant-modal-content {
-            border-radius: 18px !important;
-            padding: 16px !important;
-          }
-
-          .ant-modal-footer {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-          }
-
-          .ant-modal-footer .ant-btn {
-            margin-inline-start: 0 !important;
-            width: 100%;
-          }
+          .oxy-referral-modal.ant-modal { max-width: calc(100vw - 20px) !important; margin: 10px auto !important; }
+          .oxy-referral-modal .ant-modal-content { border-radius: 18px !important; padding: 16px !important; }
+          .oxy-referral-modal .ant-modal-footer { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+          .oxy-referral-modal .ant-modal-footer .ant-btn { margin-inline-start: 0 !important; width: 100%; }
         }
       `}</style>
-
-      <Form
+      <Form<ReferralFormValues>
         form={form}
         layout="vertical"
-        className="referral-toast-only-form"
         initialValues={{ role: "LENDER" }}
         onFinish={handleAddReferral}
         onFinishFailed={({ errorFields }) => {
-          const message = errorFields[0]?.errors?.[0];
-          if (message) showToast("warning", message);
+          const first = errorFields[0];
+          if (first?.errors?.[0]) showToast("warning", first.errors[0]);
         }}
+        validateTrigger={["onChange", "onBlur"]}
         autoComplete="off"
         requiredMark={false}
+        className="oxy-referral-form"
       >
         <Form.Item
-          label="Referral Name"
+          label={
+            <span>
+              Referral Name <span className="text-red-500">*</span>
+            </span>
+          }
           name="referralName"
-          validateTrigger="onSubmit"
+          hasFeedback
           rules={[
-            { required: true, message: "Please enter the referral name." },
-            { whitespace: true, message: "Please enter the referral name." },
-            { min: 2, message: "Name must be at least 2 characters." },
             {
-              max: 50,
-              message: "Name cannot be longer than 50 characters.",
-            },
-            {
-              pattern: NAME_PATTERN,
-              message:
-                "Use letters only. Spaces, dots, apostrophes, and hyphens are allowed.",
+              validator: async (_, value) => {
+                const error = validateReferralName(value);
+                if (error) throw new Error(error);
+              },
             },
           ]}
+          getValueFromEvent={(event) =>
+            cleanReferralName(String(event?.target?.value || ""))
+          }
         >
           <Input
             size="large"
             placeholder="Enter full name"
             maxLength={50}
+            autoComplete="name"
             className="!rounded-xl"
+            aria-label="Referral name"
           />
         </Form.Item>
-
         <Form.Item
-          label="Mobile Number"
+          label={
+            <span>
+              Mobile Number <span className="text-red-500">*</span>
+            </span>
+          }
           name="mobileNumber"
-          validateTrigger="onSubmit"
+          hasFeedback
           rules={[
-            { required: true, message: "Please enter a mobile number." },
             {
-              pattern: MOBILE_PATTERN,
-              message:
-                "Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.",
+              validator: async (_, value) => {
+                const error = validateReferralMobile(value);
+                if (error) throw new Error(error);
+              },
             },
           ]}
           getValueFromEvent={(event) =>
@@ -669,20 +783,20 @@ const OxyloansAddReferralNetwork = ({
             addonBefore="+91"
             maxLength={10}
             inputMode="numeric"
-            autoComplete="tel"
+            autoComplete="tel-national"
             className="!rounded-xl"
+            aria-label="Mobile number"
           />
         </Form.Item>
-
         <Form.Item
-          label="Referral Role"
+          label={
+            <span>
+              Referral Role <span className="text-red-500">*</span>
+            </span>
+          }
           name="role"
-          validateTrigger="onSubmit"
           rules={[
-            {
-              required: true,
-              message: "Please select a referral role.",
-            },
+            { required: true, message: "Please select a referral role." },
           ]}
         >
           <Select
@@ -705,7 +819,9 @@ const OxyLoansReferralNetwork: React.FC = () => {
   const askoxyUserId = useMemo(() => getUserId(), []);
 
   const [data, setData] = useState<ReferralNode | ReferralNode[] | null>(null);
+
   const [loading, setLoading] = useState(true);
+
   const [openModal, setOpenModal] = useState(false);
 
   const loadNetwork = useCallback(
@@ -714,10 +830,13 @@ const OxyLoansReferralNetwork: React.FC = () => {
         if (!options?.silent) {
           showToast(
             "error",
+
             "We could not find your AskOxy user ID. Please sign in again.",
           );
         }
+
         setLoading(false);
+
         return;
       }
 
@@ -734,19 +853,24 @@ const OxyLoansReferralNetwork: React.FC = () => {
 
         if (payload?.success === false) {
           const message = payload?.message || "";
+
           if (message) showToast("error", message);
+
           setData(null);
+
           return;
         }
 
         setData(payload?.data || null);
       } catch (error) {
         const message = getApiMessage(error);
+
         if (message) showToast("error", message);
       } finally {
         setLoading(false);
       }
     },
+
     [askoxyUserId],
   );
 
@@ -755,18 +879,24 @@ const OxyLoansReferralNetwork: React.FC = () => {
   }, [loadNetwork]);
 
   const roots = useMemo(() => collectRootNodes(data), [data]);
+
   const totalReferrals = useMemo(() => countDirectReferrals(roots), [roots]);
 
   return (
     <ConfigProvider
       theme={{
         algorithm: theme.defaultAlgorithm,
+
         token: {
           colorPrimary: "#6D28D9",
+
           borderRadius: 12,
+
           borderRadiusLG: 18,
+
           colorBgLayout: "#F8FAFC",
         },
+
         components: {
           Button: {
             primaryShadow: "none",
@@ -817,6 +947,7 @@ const OxyLoansReferralNetwork: React.FC = () => {
               <div className="flex min-h-[260px] items-center justify-center">
                 <div className="text-center">
                   <Spin />
+
                   <div className="mt-3 text-xs text-slate-400 sm:text-sm">
                     Loading your referral network...
                   </div>
@@ -831,6 +962,7 @@ const OxyLoansReferralNetwork: React.FC = () => {
                       <div className="font-semibold text-slate-700">
                         No referrals yet
                       </div>
+
                       <div className="mt-1 text-xs text-slate-400">
                         Add your first referral to start building your network.
                       </div>

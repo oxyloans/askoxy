@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Spin, Table, Image, Button, Input, Modal } from 'antd';
+import { Card, Row, Col, Statistic, Spin, Table, Image, Button, Input, Modal, Tag } from 'antd';
 import { CheckCircleOutlined, AppstoreOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useOxyNavigate } from '../../utils/navigation';
+import { getCurrentUser } from '../../utils/user';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import jsPDF from 'jspdf';
@@ -10,6 +11,30 @@ import BASE_URL from '../../core/config/Config';
 
 const API_BASE = `${BASE_URL}/ai-service`;
 
+const isToday = (dateVal) => {
+  if (!dateVal) return false;
+  try {
+    const d = new Date(dateVal);
+    if (!isNaN(d.getTime())) {
+      const now = new Date();
+      if (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      ) {
+        return true;
+      }
+    }
+    const str = String(dateVal);
+    const now = new Date();
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayISO = now.toISOString().slice(0, 10);
+    return str.startsWith(todayLocal) || str.startsWith(todayISO);
+  } catch {
+    return false;
+  }
+};
+
 const UserDashboard = () => {
   const { navigate } = useOxyNavigate();
   const [loading, setLoading] = useState(true);
@@ -17,46 +42,44 @@ const UserDashboard = () => {
   const [userVisits, setUserVisits] = useState([]);
   const [filteredVisits, setFilteredVisits] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [filterTodayOnly, setFilterTodayOnly] = useState(false);
   const [descriptionModalVisible, setDescriptionModalVisible] = useState(false);
   const [selectedDescription, setSelectedDescription] = useState('');
-  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     fetchStats();
   }, []);
 
   useEffect(() => {
-    const filtered = userVisits.filter(visit =>
-      visit.categoryName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      visit.name?.toLowerCase().includes(searchText.toLowerCase())
-    );
+    let filtered = userVisits;
+
+    if (filterTodayOnly) {
+      filtered = filtered.filter(visit => isToday(visit.createdAt || visit.createdDate));
+    }
+
+    if (searchText.trim()) {
+      const query = searchText.toLowerCase().trim();
+      filtered = filtered.filter(visit =>
+        visit.categoryName?.toLowerCase().includes(query) ||
+        visit.name?.toLowerCase().includes(query) ||
+        visit.location?.toLowerCase().includes(query) ||
+        visit.contactNumber?.includes(query) ||
+        (visit.createdAt || visit.createdDate || '').toLowerCase().includes(query)
+      );
+    }
+
     setFilteredVisits(filtered);
-    
-    // Update stats based on filtered visits
-    const uniqueCategories = new Set(filtered.map(v => v.categoryId)).size;
-    const today = new Date().toISOString().split('T')[0];
-    const todayCount = filtered.filter(visit => {
-      const dateField = visit.createdAt || visit.createdDate;
-      if (!dateField) return false;
-      const visitDate = dateField.split(' ')[0];
-      return visitDate === today;
-    }).length;
-    
-    setStats({
-      categories: uniqueCategories,
-      visits: filtered.length,
-      todayVisits: todayCount
-    });
-  }, [searchText, userVisits]);
+  }, [searchText, filterTodayOnly, userVisits]);
 
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const userId = localStorage.getItem('userId');
-      const isValidUuid = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      const user = getCurrentUser();
+      const currentUserId = user.id || localStorage.getItem('userId');
+      const isValidUuid = typeof currentUserId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserId);
       
       const categoriesUrl = `${API_BASE}/categories`;
-      const visitsUrl = isValidUuid ? `${API_BASE}/visits?userId=${userId}` : `${API_BASE}/visits`;
+      const visitsUrl = isValidUuid ? `${API_BASE}/visits?userId=${currentUserId}` : `${API_BASE}/visits`;
       
       const categoriesRes = await axios.get(categoriesUrl);
       const visitsRes = await axios.get(visitsUrl);
@@ -64,19 +87,12 @@ const UserDashboard = () => {
       const catList = Array.isArray(categoriesRes.data) ? categoriesRes.data : [];
       let visitList = Array.isArray(visitsRes.data) ? visitsRes.data : [];
 
-      if (!isValidUuid && userId && visitList.some(v => v.userId === userId)) {
-        visitList = visitList.filter(v => v.userId === userId);
+      if (!isValidUuid && currentUserId && visitList.some(v => v.userId === currentUserId)) {
+        visitList = visitList.filter(v => v.userId === currentUserId);
       }
 
       const activeCategories = catList.filter(cat => cat.active).length;
-      const today = new Date().toISOString().split('T')[0];
-      
-      const todayVisits = visitList.filter(visit => {
-        const dateField = visit.createdAt || visit.createdDate;
-        if (!dateField) return false;
-        const visitDate = dateField.split(' ')[0];
-        return visitDate === today;
-      }).length;
+      const todayVisits = visitList.filter(visit => isToday(visit.createdAt || visit.createdDate)).length;
       
       if (visitList.length > 0 && visitList[0].userName) {
         localStorage.setItem('userName', visitList[0].userName);
@@ -94,21 +110,17 @@ const UserDashboard = () => {
 
   const downloadTodayReport = async () => {
     try {
-      const isValidUuid = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-      const url = isValidUuid ? `${API_BASE}/visits?userId=${userId}` : `${API_BASE}/visits`;
+      const user = getCurrentUser();
+      const currentUserId = user.id || localStorage.getItem('userId');
+      const isValidUuid = typeof currentUserId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserId);
+      const url = isValidUuid ? `${API_BASE}/visits?userId=${currentUserId}` : `${API_BASE}/visits`;
       const response = await fetch(url);
 
       const visits = await response.json();
+      const list = Array.isArray(visits) ? visits : (visits?.data || []);
 
       // filter today visits
-      const today = new Date().toISOString().split('T')[0];
-
-      const todayVisits = visits.filter(visit => {
-        const dateField = visit.createdAt || visit.createdDate;
-        if (!dateField) return false;
-        const visitDate = dateField.split(' ')[0];
-        return visitDate === today;
-      });
+      const todayVisits = list.filter(visit => isToday(visit.createdAt || visit.createdDate));
 
       if (todayVisits.length === 0) {
         Swal.fire({
@@ -119,11 +131,14 @@ const UserDashboard = () => {
         return;
       }
 
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
       const doc = new jsPDF('l', 'mm', 'a4');
 
-      const employeeName = todayVisits.length
+      const userName = (todayVisits.length && todayVisits[0].userName)
         ? todayVisits[0].userName
-        : 'Employee';
+        : (localStorage.getItem('userName') || 'User');
 
       // Header
       doc.setFontSize(24);
@@ -132,8 +147,8 @@ const UserDashboard = () => {
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Employee: ${employeeName}`, 14, 32);
-      doc.text(`Date: ${new Date(today).toLocaleDateString()}`, 14, 40);
+      doc.text(`User: ${userName}`, 14, 32);
+      doc.text(`Date: ${now.toLocaleDateString()}`, 14, 40);
       doc.text(`Today's Visits: ${todayVisits.length}`, 14, 48);
 
       // Table data
@@ -221,7 +236,7 @@ const UserDashboard = () => {
         );
       }
 
-      doc.save(`Today_Report_${employeeName}_${today}.pdf`);
+      doc.save(`Today_Report_${userName}_${today}.pdf`);
 
       Swal.fire({
         icon: 'success',
@@ -352,7 +367,7 @@ const UserDashboard = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Employee Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">User Dashboard</h1>
       <Row gutter={16}>
         <Col xs={24} sm={12} lg={8}>
           <Card hoverable onClick={() => navigate('/dashboard/user-categories')} style={{ cursor: 'pointer' }}>
@@ -377,14 +392,17 @@ const UserDashboard = () => {
         <Col xs={24} sm={12} lg={8}>
           <Card 
             hoverable
-            onClick={() => {
-              const today = new Date().toISOString().split('T')[0];
-              setSearchText(today);
+            onClick={() => setFilterTodayOnly((prev) => !prev)}
+            style={{ 
+              cursor: 'pointer',
+              borderColor: filterTodayOnly ? '#ff6b6b' : undefined,
+              backgroundColor: filterTodayOnly ? '#fff5f5' : undefined,
+              boxShadow: filterTodayOnly ? '0 0 0 2px rgba(255, 107, 107, 0.25)' : undefined,
+              transition: 'all 0.3s ease'
             }}
-            style={{ cursor: 'pointer' }}
           >
             <Statistic
-              title="Today's Visits (Click to filter)"
+              title={filterTodayOnly ? "Today's Visits (Filter Active - Click to clear)" : "Today's Visits (Click to filter)"}
               value={stats.todayVisits}
               prefix={<CheckCircleOutlined />}
               valueStyle={{ color: '#ff6b6b' }}
@@ -394,14 +412,14 @@ const UserDashboard = () => {
       </Row>
 
       <Card className="mt-6 rounded-xl">
-        <div className="mb-4 flex justify-between items-center">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
           <Input
-            placeholder="Search by category or visit name..."
+            placeholder="Search by category, visit name, location..."
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             size="large"
-            style={{ maxWidth: '400px' }}
+            className="w-full sm:max-w-md"
           />
           <Button
             type="primary"
@@ -409,11 +427,33 @@ const UserDashboard = () => {
             onClick={downloadTodayReport}
             style={{ backgroundColor: '#10b981', borderColor: '#10b981' }}
             size="large"
+            className="w-full sm:w-auto"
           >
             Download Today's Report
           </Button>
         </div>
-        <h2 className="text-xl font-bold mb-4">My Visits</h2>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">
+              {filterTodayOnly ? "Today's Visits" : "My Visits"}
+            </h2>
+            {filterTodayOnly && (
+              <Tag 
+                color="red" 
+                closable 
+                onClose={() => setFilterTodayOnly(false)}
+                style={{ cursor: 'pointer', fontSize: '12px', padding: '2px 8px' }}
+              >
+                Showing Today Only (Click × to show all)
+              </Tag>
+            )}
+          </div>
+          {filterTodayOnly && (
+            <Button size="small" onClick={() => setFilterTodayOnly(false)}>
+              Show All Visits
+            </Button>
+          )}
+        </div>
         <Table
           columns={columns}
           dataSource={filteredVisits}
@@ -448,6 +488,7 @@ const UserDashboard = () => {
           </Button>
         ]}
         width={600}
+        style={{ maxWidth: '95vw', top: 20 }}
       >
         <div style={{ padding: '20px 0', fontSize: '15px', lineHeight: '1.6' }}>
           {selectedDescription}

@@ -23,7 +23,6 @@ import {
   MessageCircle,
   AlertCircle,
   Loader2,
-  Trash2,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Maximize2,
@@ -708,40 +707,6 @@ const ItemDisplayPage = () => {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
-      }));
-    }
-  };
-
-  const handleRemoveItem = async (itemId: string) => {
-    setLoadingItems((prev) => ({
-      ...prev,
-      items: { ...prev.items, [itemId]: true },
-    }));
-
-    try {
-      const cartItemToRemove = cartData.find(
-        (item) => item.itemId === itemId && item.status === "ADD",
-      );
-
-      if (!cartItemToRemove) {
-        message.error("Item not found in cart");
-        return;
-      }
-
-      await customerApi.patch(`${BASE_URL}/cart-service/cart/minusCartItem`, {
-        customerId,
-        itemId,
-      });
-
-      message.success("Item removed from cart successfully.");
-      await fetchCartData("");
-    } catch (error) {
-      console.error("Error removing item:", error);
-      message.error("Error removing item from cart");
-    } finally {
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [itemId]: false },
       }));
     }
   };
@@ -1771,20 +1736,6 @@ const ItemDisplayPage = () => {
                                 )}
                               </button>
                             </div>
-                            <button
-                              onClick={() =>
-                                handleRemoveItem(itemDetails.itemId)
-                              }
-                              disabled={loadingItems.items[itemDetails.itemId]}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Remove from cart"
-                            >
-                              {loadingItems.items[itemDetails.itemId] ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
-                              )}
-                            </button>
                           </div>
                         ) : (
                           <button

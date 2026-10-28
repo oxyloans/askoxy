@@ -36,11 +36,14 @@ const DEFAULT_COUNTRY_CODE = "+91";
 
 const handleAuthError = (err: any, navigate: any) => {
   if (err.response?.status === 401) {
-    if (!sessionStorage.getItem("redirectPath")) {
-      sessionStorage.setItem(
-        "redirectPath",
-        window.location.pathname + window.location.search
-      );
+    const current = window.location.pathname + window.location.search;
+    const isAuthPage =
+      current.includes("whatsapplogin") || current.includes("whatsappregister");
+    const isRoot = current === "/" || current === "";
+    const existing = sessionStorage.getItem("redirectPath");
+
+    if ((!existing || existing.trim() === "" || existing === "/") && !isAuthPage && !isRoot) {
+      sessionStorage.setItem("redirectPath", current);
     }
 
     const primaryType =
@@ -65,11 +68,14 @@ const handleAuthError = (err: any, navigate: any) => {
 };
 
 const handleLoginRedirect = (navigate: any, redirectPath?: string) => {
-  if (!sessionStorage.getItem("redirectPath")) {
-    sessionStorage.setItem(
-      "redirectPath",
-      redirectPath || window.location.pathname
-    );
+  const target = redirectPath || window.location.pathname;
+  if (
+    target &&
+    target !== "/" &&
+    !target.includes("whatsapplogin") &&
+    !target.includes("whatsappregister")
+  ) {
+    sessionStorage.setItem("redirectPath", target);
   }
 
   const primaryType =
@@ -738,9 +744,11 @@ if (primaryType === "AGENT") {
         // customerApi reads Redux first, then the customer access cookie.
         setCustomerAccessToken(response.data.accessToken);
         store.dispatch(updateAccessToken(response.data.accessToken));
-        if (response.data.refreshToken) {
-          setRefreshToken(response.data.refreshToken);
-          store.dispatch(updateRefreshToken(response.data.refreshToken));
+        const returnedRefreshToken =
+          response.data.refreshToken || response.data.mobileOtpSession;
+        if (returnedRefreshToken) {
+          setRefreshToken(returnedRefreshToken);
+          store.dispatch(updateRefreshToken(returnedRefreshToken));
         }
 
         localStorage.setItem("userId", response.data.userId);
@@ -763,9 +771,17 @@ if (primaryType === "AGENT") {
           setMessage("Registration Successful");
 
           setTimeout(() => {
+            const rawRedirect =
+              sessionStorage.getItem("redirectPath") || location.state?.from;
+            const isValidRedirect =
+              rawRedirect &&
+              rawRedirect.trim() !== "" &&
+              rawRedirect !== "/" &&
+              !rawRedirect.includes("whatsapplogin") &&
+              !rawRedirect.includes("whatsappregister");
+
             const redirectPath =
-              sessionStorage.getItem("redirectPath") ||
-              location.state?.from ||
+              (isValidRedirect ? rawRedirect : null) ||
               (sessionStorage.getItem("fromAISTore") === "true"
                 ? "/bharath-aistore"
                 : sessionStorage.getItem("fromStudyAbroad") === "true"

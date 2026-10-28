@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useOxyNavigate } from '../utils/navigation';
+import { setCurrentUser } from '../utils/user';
 import BASE_URL from '../core/config/Config';
 
 function Register() {
@@ -21,37 +22,113 @@ function Register() {
 
 
   const handleEmailSubmit = async () => {
-    if (!email) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter your email' });
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Email Required',
+        text: 'Please enter your email address to continue.',
+      });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Invalid Email',
+        text: 'Please enter a valid email address (e.g. name@example.com).',
+      });
       return;
     }
     setLoading(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}/user-service/userEmailPassword`, { email });
-      setIsEmailSubmitted(true);
-      setEmailOtpSession(response.data.emailOtpSession);
-      setSalt(response.data.salt);
-      Swal.fire({ icon: 'success', title: 'Success', text: 'OTP has been sent to your email', timer: 2000 });
+      const response = await axios.post(`${BASE_URL}/user-service/userEmailPassword`, { email: cleanEmail });
+
+      // Check if backend returned an error in a 200 response
+      if (response.data?.errorMessage) {
+        const msg = response.data.errorMessage;
+        const isExists = msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exist');
+        Swal.fire({
+          icon: isExists ? 'info' : 'error',
+          title: isExists ? 'Account Already Exists' : 'Registration Failed',
+          text: msg,
+          confirmButtonText: isExists ? 'Go to Login' : 'OK',
+          showCancelButton: isExists,
+          cancelButtonText: 'Try Another Email',
+        }).then((result) => {
+          if (isExists && result.isConfirmed) {
+            localStorage.setItem('savedEmail', cleanEmail);
+            navigate('/oxyvisit');
+          }
+        });
+        return;
+      }
+
+      if (response.data?.emailOtpSession) {
+        setIsEmailSubmitted(true);
+        setEmailOtpSession(response.data.emailOtpSession);
+        setSalt(response.data.salt || '');
+        Swal.fire({
+          icon: 'success',
+          title: 'OTP Sent Successfully!',
+          text: `A 6-digit OTP has been sent to ${cleanEmail}. Please enter it below.`,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      } else {
+        const errorText = response.data?.status || response.data?.message || 'Unable to generate verification OTP. Please try again.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Could Not Send OTP',
+          text: errorText,
+        });
+      }
     } catch (err) {
-      const errorMessage = axios.isAxiosError(err) && (err.response?.data?.error || err.response?.data?.message) || 'Network error. Please try again later.';
-      Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
+      const errorMsg =
+        err.response?.data?.errorMessage ||
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.response?.data?.status ||
+        (err.message?.includes('Network Error') ? 'Network error. Please check your internet connection.' : 'Unable to reach server. Please try again later.');
+
+      const isExists = errorMsg.toLowerCase().includes('already') || errorMsg.toLowerCase().includes('exist');
+      Swal.fire({
+        icon: isExists ? 'info' : 'error',
+        title: isExists ? 'Account Already Exists' : 'Error Sending OTP',
+        text: errorMsg,
+        confirmButtonText: isExists ? 'Go to Login' : 'OK',
+        showCancelButton: isExists,
+        cancelButtonText: 'Try Another Email',
+      }).then((result) => {
+        if (isExists && result.isConfirmed) {
+          localStorage.setItem('savedEmail', cleanEmail);
+          navigate('/oxyvisit');
+        }
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmitOtp = async () => {
-    if (!emailOtp) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter the OTP' });
+    const cleanOtp = emailOtp.trim();
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+
+    if (!cleanOtp) {
+      Swal.fire({ icon: 'warning', title: 'OTP Required', text: 'Please enter the 6-digit OTP sent to your email.' });
       return;
     }
-    if (!name) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter your name' });
+    if (!cleanName) {
+      Swal.fire({ icon: 'warning', title: 'Name Required', text: 'Please enter your full name.' });
       return;
     }
     if (!password) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter the password' });
+      Swal.fire({ icon: 'warning', title: 'Password Required', text: 'Please create a password for your account.' });
+      return;
+    }
+    if (password.length < 8) {
+      Swal.fire({ icon: 'warning', title: 'Password Too Short', text: 'Password must be at least 8 characters long.' });
       return;
     }
 
@@ -59,22 +136,70 @@ function Register() {
 
     try {
       const response = await axios.post(`${BASE_URL}/user-service/userEmailPassword`, {
-        email,
-        emailOtp,
+        email: cleanEmail,
+        emailOtp: cleanOtp,
         emailOtpSession,
         password,
-        primaryType: 'EMPLOYEE',
+        primaryType: 'OXYVISIT',
         salt,
-        name,
+        name: cleanName,
       });
 
-      if (response.data.userId !== null) {
-        Swal.fire({ icon: 'success', title: 'Success', text: 'Registration successful!', timer: 2000 });
-        setTimeout(() => navigate('/login'), 2000);
+      if (response.data?.errorMessage) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Verification Failed',
+          text: response.data.errorMessage,
+        });
+        return;
+      }
+
+      const isSuccess =
+        (response.data?.userId !== null && response.data?.userId !== undefined) ||
+        response.data?.status === 'Registration Successful' ||
+        response.data?.status === 'Success';
+
+      if (isSuccess) {
+        localStorage.setItem("savedEmail", cleanEmail);
+        localStorage.setItem("userName", cleanName);
+        sessionStorage.setItem("userName", cleanName);
+        sessionStorage.setItem("Name", cleanName);
+        setCurrentUser({
+          id: response.data?.userId || '',
+          userId: response.data?.userId || '',
+          name: cleanName,
+          userName: cleanName,
+          primaryType: 'OXYVISIT',
+          email: cleanEmail,
+        });
+        Swal.fire({
+          icon: 'success',
+          title: 'Registration Successful!',
+          text: 'Welcome to OxyVisits! Your account has been created. Redirecting to login...',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        setTimeout(() => navigate('/oxyvisit'), 2000);
+      } else {
+        const errorText = response.data?.status || response.data?.message || 'OTP verification failed. Please check your OTP and try again.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Registration Failed',
+          text: errorText,
+        });
       }
     } catch (err) {
-      const errorMessage = axios.isAxiosError(err) && (err.response?.data?.error || err.response?.data?.message) || 'OTP verification failed';
-      Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
+      const errorMessage =
+        err.response?.data?.errorMessage ||
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.response?.data?.status ||
+        'OTP verification failed. Please verify your OTP and try again.';
+      Swal.fire({
+        icon: 'error',
+        title: 'Verification Error',
+        text: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -123,7 +248,24 @@ function Register() {
               </>
             ) : (
               <>
-                <Form.Item label={<span className="text-gray-700 font-medium text-sm">Email Address</span>} required>
+                <Form.Item
+                  label={
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-gray-700 font-medium text-sm">Email Address</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEmailSubmitted(false);
+                          setEmailOtp('');
+                        }}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer underline ml-4"
+                      >
+                        Change Email
+                      </button>
+                    </div>
+                  }
+                  required
+                >
                   <Input
                     prefix={<MailOutlined className="text-gray-400" />}
                     type="email"

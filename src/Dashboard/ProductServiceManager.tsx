@@ -192,7 +192,111 @@ const isValidLinkedInUrl = (value: string): boolean => {
   }
 };
 
+const GST_REGEX =
+  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i;
 
+/**
+ * Detects junk or dummy entries such as:
+ * - "...", "......", "----", "***", ".,.,."
+ * - Repetitive single character (e.g. "aaaaa", "11111")
+ * - Strings with no alphanumeric characters
+ */
+const isDummyText = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+
+  // Contains no alphanumeric characters at all (e.g. "...", "---", "***", "!@#$%")
+  if (!/[a-zA-Z0-9]/.test(trimmed)) return true;
+
+  // Single character repeated 3 or more times (e.g. "...", "---", "aaa", "111")
+  const compact = trimmed.replace(/\s+/g, "");
+  if (/^(.)\1{2,}$/.test(compact)) return true;
+
+  // Only special characters or punctuation
+  if (/^[.\-_,*~`'":;/\\|!@#$%^&()+=<>?{}[\] ]+$/.test(trimmed)) return true;
+
+  return false;
+};
+
+const isValidTextContent = (value: string, minLen = 2, minLetters = 2): boolean => {
+  const trimmed = value.trim();
+  if (trimmed.length < minLen) return false;
+  if (isDummyText(trimmed)) return false;
+  const letters = (trimmed.match(/[a-zA-Z]/g) || []).length;
+  return letters >= minLetters;
+};
+
+const validateCompanyName = (name: string): string | undefined => {
+  const trimmed = name.trim();
+  if (!trimmed) return "Company name is required";
+  if (trimmed.length < 2) return "Company name must be at least 2 characters";
+  if (!isValidTextContent(trimmed, 2, 2)) return "Enter a valid company name (at least 2 letters)";
+  return undefined;
+};
+
+const validateCompanyLocation = (loc: string): string | undefined => {
+  const trimmed = loc.trim();
+  if (!trimmed) return "Location is required";
+  if (trimmed.length < 3) return "Location must be at least 3 characters";
+  if (!isValidTextContent(trimmed, 3, 2)) return "Enter a valid location or address (e.g. Hyderabad, Telangana)";
+  return undefined;
+};
+
+const validateCompanyGst = (gst: string): string | undefined => {
+  const trimmed = gst.trim();
+  if (!trimmed) return "GST number is required";
+  if (!GST_REGEX.test(trimmed)) return "Enter a valid 15-character GSTIN (e.g. 22AAAAA0000A1Z5)";
+  return undefined;
+};
+
+const validateCompanyDescription = (desc: string): string | undefined => {
+  const trimmed = desc.trim();
+  if (!trimmed) return "Company description is required";
+  if (trimmed.length < 20) return "Description must be at least 20 characters";
+  if (!isValidTextContent(trimmed, 20, 15) || trimmed.split(/\s+/).filter(Boolean).length < 3)
+    return "Please provide a meaningful company description";
+  return undefined;
+};
+
+const validateProductName = (name: string): string | undefined => {
+  const trimmed = name.trim();
+  if (!trimmed) return "Product name is required";
+  if (trimmed.length < 2) return "Product name must be at least 2 characters";
+  if (!isValidTextContent(trimmed, 2, 2)) return "Enter a valid product name (at least 2 letters)";
+  return undefined;
+};
+
+const validateServiceName = (name: string): string | undefined => {
+  const trimmed = name.trim();
+  if (!trimmed) return "Service name is required";
+  if (trimmed.length < 2) return "Service name must be at least 2 characters";
+  if (!isValidTextContent(trimmed, 2, 2)) return "Enter a valid service name (at least 2 letters)";
+  return undefined;
+};
+
+const validateServiceLocation = (loc: string): string | undefined => {
+  const trimmed = loc.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length < 2 || isDummyText(trimmed) || !isValidTextContent(trimmed, 2, 2))
+    return "Enter a valid service location or city";
+  return undefined;
+};
+
+const validateOptionalDescription = (desc: string): string | undefined => {
+  const trimmed = desc.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length < 10) return "Description must be at least 10 characters";
+  if (!isValidTextContent(trimmed, 10, 8)) return "Please provide a meaningful description";
+  return undefined;
+};
+
+const validateOptionalKeyFeatures = (features: string): string | undefined => {
+  const trimmed = features.trim();
+  if (!trimmed) return undefined;
+  if (isDummyText(trimmed) || (trimmed.match(/[a-zA-Z]/g) || []).length < 3)
+    return "Enter valid key features or leave empty";
+  return undefined;
+};
 
 const emptyProduct = (): ProductEntry => ({
   id: uid(),
@@ -333,12 +437,13 @@ function buildServicePayload(entry: ServiceEntry, memberId: string) {
   };
 }
 
-function buildCompanyPayload(entry: CompanyEntry, userId: string) {
+function buildCompanyPayload(entry: CompanyEntry, userId: string, companyId?: string) {
   const now = new Date().toISOString();
+  const id = entry.id?.trim() || companyId?.trim();
   return {
     companyDescription: entry.companyDescription.trim(),
     companyName: entry.companyName.trim(),
-    ...(isUUID(entry.id) ? { id: entry.id } : {}),
+    ...(id ? { id } : {}),
     createdAt: now,
     gstDocumentUrl: entry.gstDocumentUrl.trim(),
     gstNumber: entry.gstNumber.trim(),
@@ -353,15 +458,7 @@ function buildCompanyPayload(entry: CompanyEntry, userId: string) {
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  File upload                                                        */
-/* ------------------------------------------------------------------ */
 
-/**
- * Uploads a file (image or document) for the given member and returns the
- * hosted file URL, which is then stored back into the relevant *Url field
- * on the product/service entry.
- */
 async function uploadMemberFile(
   file: File,
   userId: string,
@@ -410,9 +507,62 @@ async function uploadMemberFile(
 }
 
 interface SaveResponse {
-  status: boolean;
-  message: string;
-  data?: { id: string;[key: string]: unknown };
+  status?: boolean | string;
+  message?: string;
+  error?: string;
+  data?: { id?: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === "object") {
+    const err = error as {
+      response?: {
+        data?: Record<string, unknown> | string;
+        status?: number;
+      };
+      message?: string;
+    };
+    const resData = err.response?.data;
+    if (resData) {
+      if (typeof resData === "string" && resData.trim()) {
+        try {
+          const parsed = JSON.parse(resData);
+          if (parsed && typeof parsed === "object") {
+            const msg =
+              parsed.message ||
+              parsed.msg ||
+              parsed.error ||
+              parsed.errorMessage ||
+              parsed.description ||
+              (parsed.data && typeof parsed.data === "object" && parsed.data.message);
+            if (typeof msg === "string" && msg.trim()) return msg.trim();
+          }
+        } catch {
+          return resData.trim();
+        }
+      }
+      if (typeof resData === "object" && resData !== null) {
+        const msg =
+          resData.message ||
+          resData.msg ||
+          resData.error ||
+          resData.errorMessage ||
+          resData.description ||
+          (resData.data && typeof resData.data === "object" && (resData.data as Record<string, unknown>).message);
+        if (typeof msg === "string" && msg.trim()) {
+          return msg.trim();
+        }
+      }
+    }
+    if (typeof err.message === "string" && err.message.trim() && !err.message.includes("status code")) {
+      return err.message.trim();
+    }
+  }
+  if (error instanceof Error && error.message && !error.message.includes("status code")) {
+    return error.message;
+  }
+  return fallback;
 }
 
 async function saveEntry(
@@ -420,36 +570,76 @@ async function saveEntry(
     | ReturnType<typeof buildProductPayload>
     | ReturnType<typeof buildServicePayload>,
 ): Promise<{ message: string; savedId: string }> {
-  const res = await customerApi.post(
-    `${BASE_URL}/marketing-service/campgin/save-update-member-products-services`,
-    payload,
-    { headers: { "Content-Type": "application/json", accept: "*/*" } },
-  );
-  const json = res.data as SaveResponse | null | undefined;
-
-  if (!json || json.status === false) {
-    throw new Error(
-      json?.message ||
-      `${payload.membersType === "PRODUCT" ? "Product" : "Service"} save failed`,
+  try {
+    const res = await customerApi.post(
+      `${BASE_URL}/marketing-service/campgin/save-update-member-products-services`,
+      payload,
+      { headers: { "Content-Type": "application/json", accept: "*/*" } },
     );
+    const json = res.data as SaveResponse | null | undefined;
+    const isSuccess =
+      Boolean(json) &&
+      (json?.status === true ||
+        String(json?.status).toLowerCase() === "true" ||
+        String(json?.status).toLowerCase() === "success");
+
+    if (!isSuccess) {
+      const errMsg =
+        (typeof json?.message === "string" && json.message.trim()) ||
+        (typeof json?.error === "string" && json.error.trim()) ||
+        `${payload.membersType === "PRODUCT" ? "Product" : "Service"} save failed`;
+      throw new Error(errMsg);
+    }
+
+    let savedId = "";
+    if (json?.data && typeof json.data === "object" && "id" in json.data) {
+      const rawId = (json.data as { id?: unknown }).id;
+      if (rawId !== undefined && rawId !== null) {
+        savedId = String(rawId);
+      }
+    }
+
+    return {
+      message: (typeof json?.message === "string" && json.message) || "Saved successfully.",
+      savedId,
+    };
+  } catch (error: unknown) {
+    const fallback = `${payload.membersType === "PRODUCT" ? "Product" : "Service"} save failed`;
+    const message = extractErrorMessage(error, fallback);
+    throw new Error(message);
   }
-  return {
-    message: json.message || "Saved successfully.",
-    savedId: (json.data?.id as string) || "",
-  };
 }
 
-async function saveCompany(entry: CompanyEntry, userId: string): Promise<string> {
-  const res = await customerApi.post(
-    `${BASE_URL}/marketing-service/campgin/add-update-company`,
-    buildCompanyPayload(entry, userId),
-    { headers: { "Content-Type": "application/json", accept: "*/*" } },
-  );
-  const json = res.data as SaveResponse | null | undefined;
-  if (!json || json.status === false) {
-    throw new Error(json?.message || "Company save failed");
+async function saveCompany(
+  entry: CompanyEntry,
+  userId: string,
+  companyId?: string,
+): Promise<string> {
+  try {
+    const res = await customerApi.post(
+      `${BASE_URL}/marketing-service/campgin/add-update-company`,
+      buildCompanyPayload(entry, userId, companyId),
+      { headers: { "Content-Type": "application/json", accept: "*/*" } },
+    );
+    const json = res.data as SaveResponse | null | undefined;
+    const isSuccess =
+      Boolean(json) &&
+      (json?.status === true ||
+        String(json?.status).toLowerCase() === "true" ||
+        String(json?.status).toLowerCase() === "success");
+
+    if (!isSuccess) {
+      const errMsg =
+        (typeof json?.message === "string" && json.message.trim()) ||
+        (typeof json?.error === "string" && json.error.trim()) ||
+        "Company save failed";
+      throw new Error(errMsg);
+    }
+    return (typeof json?.message === "string" && json.message) || "Company saved successfully.";
+  } catch (error: unknown) {
+    const message = extractErrorMessage(error, "Company save failed");
+    throw new Error(message);
   }
-  return json.message || "Company saved successfully.";
 }
 
 /* ------------------------------------------------------------------ */
@@ -498,7 +688,7 @@ const TextField: React.FC<{
   error?: string; list?: string; type?: string; hint?: string; maxLength?: number;
 }> = ({ label, value, onChange, onBlur, placeholder, required, error, list, type = "text", hint, maxLength }) => {
   const [touched, setTouched] = useState(false);
-  const showValid = touched && !error && value.trim().length > 0;
+  const showValid = touched && !error && value.trim().length > 0 && !isDummyText(value);
   return (
     <div>
       <Label required={required} counter={maxLength ? `${value.length}/${maxLength}` : undefined}>{label}</Label>
@@ -523,10 +713,10 @@ const TextField: React.FC<{
 
 const TextAreaField: React.FC<{
   label: string; value: string; onChange: (v: string) => void;
-  placeholder?: string; rows?: number; required?: boolean; error?: string; maxLength?: number; hint?: string;
-}> = ({ label, value, onChange, placeholder, rows = 3, required, error, maxLength, hint }) => {
+  onBlur?: () => void; placeholder?: string; rows?: number; required?: boolean; error?: string; maxLength?: number; hint?: string;
+}> = ({ label, value, onChange, onBlur, placeholder, rows = 3, required, error, maxLength, hint }) => {
   const [touched, setTouched] = useState(false);
-  const showValid = touched && !error && value.trim().length > 0;
+  const showValid = touched && !error && value.trim().length > 0 && !isDummyText(value);
   return (
     <div>
       <Label required={required} counter={maxLength ? `${value.length}/${maxLength}` : undefined}>{label}</Label>
@@ -535,7 +725,7 @@ const TextAreaField: React.FC<{
         rows={rows} value={value} placeholder={placeholder}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setTouched(true)}
+        onBlur={() => { setTouched(true); onBlur?.(); }}
         aria-invalid={!!error}
       />
       {error ? <ErrorText msg={error} /> : hint ? <HintText msg={hint} /> : null}
@@ -1070,12 +1260,20 @@ const ProductServiceManager: React.FC = () => {
 
   const isProductFilled = (p: ProductEntry) =>
     Object.entries(p).some(
-      ([k, v]) => k !== "id" && k !== "priceType" && String(v ?? "").trim(),
+      ([k, v]) =>
+        k !== "id" &&
+        k !== "priceType" &&
+        String(v ?? "").trim() !== "" &&
+        !isDummyText(String(v ?? "")),
     );
 
   const isServiceFilled = (s: ServiceEntry) =>
     Object.entries(s).some(
-      ([k, v]) => k !== "id" && k !== "priceType" && String(v ?? "").trim(),
+      ([k, v]) =>
+        k !== "id" &&
+        k !== "priceType" &&
+        String(v ?? "").trim() !== "" &&
+        !isDummyText(String(v ?? "")),
     );
 
   const handleKindChange = async (kind: EntryKind) => {
@@ -1130,12 +1328,18 @@ const ProductServiceManager: React.FC = () => {
 
     if (activeKind === "COMPANY") {
       const companyErrors: FieldErrors = {};
-      if (!company.companyName.trim()) companyErrors.companyName = "Company name is required";
-      if (!company.companyDescription.trim()) companyErrors.companyDescription = "Company description is required";
-      if (!company.locations.trim()) companyErrors.locations = "Location is required";
-      // if (!company.type.trim()) companyErrors.type = "Company type is required";
-      if (company.gstNumber.trim() && !/^[0-9A-Z]{15}$/i.test(company.gstNumber.trim()))
-        companyErrors.gstNumber = "GST number must be exactly 15 alphanumeric characters (e.g. 22AAAAA0000A1Z5)";
+      const nameErr = validateCompanyName(company.companyName);
+      if (nameErr) companyErrors.companyName = nameErr;
+
+      const locErr = validateCompanyLocation(company.locations);
+      if (locErr) companyErrors.locations = locErr;
+
+      const gstErr = validateCompanyGst(company.gstNumber);
+      if (gstErr) companyErrors.gstNumber = gstErr;
+
+      const descErr = validateCompanyDescription(company.companyDescription);
+      if (descErr) companyErrors.companyDescription = descErr;
+
       if (company.websiteUrl.trim() && !isValidHttpsUrl(company.websiteUrl))
         companyErrors.websiteUrl = "Website URL must start with https:// and be a valid URL";
       if (company.linkedinUrl.trim() && !isValidLinkedInUrl(company.linkedinUrl))
@@ -1176,7 +1380,7 @@ const ProductServiceManager: React.FC = () => {
       setSavingAll(true);
       setStatus((prev) => ({ ...prev, COMPANY: "saving" }));
       try {
-        const message = await saveCompany(company, memberId);
+        const message = await saveCompany(company, memberId, companyId);
         setStatus((prev) => ({ ...prev, COMPANY: "saved" }));
         setHasCompany(true);
         setCompanyErrors({});
@@ -1189,12 +1393,48 @@ const ProductServiceManager: React.FC = () => {
         });
         setCompany(emptyCompany());
         navigate("/main/dashboard/my-companies", { replace: true });
-      } catch (error) {
+      } catch (error: unknown) {
         setStatus((prev) => ({ ...prev, COMPANY: "error" }));
+        const errorText = extractErrorMessage(
+          error,
+          companyId ? "Company update failed" : "Company save failed"
+        );
+
+        const isDuplicateName =
+          /company\s*name/i.test(errorText) ||
+          /already\s*exists/i.test(errorText) ||
+          /duplicate/i.test(errorText);
+
+        if (isDuplicateName) {
+          setCompanyErrors((prev) => ({
+            ...prev,
+            companyName: errorText,
+          }));
+          window.setTimeout(() => {
+            const input = document.getElementById("company-form-section")?.querySelector<HTMLInputElement>('input[placeholder*="AskOxy"]');
+            if (input) {
+              input.scrollIntoView({ behavior: "smooth", block: "center" });
+              input.focus();
+            } else {
+              const firstInvalid = document.getElementById("company-form-section")?.querySelector('[aria-invalid="true"]');
+              if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+                (firstInvalid as HTMLElement).focus?.();
+              }
+            }
+          }, 50);
+        }
+
+        showToast("error", errorText);
+
         await Swal.fire({
           icon: "error",
-          title: companyId ? "Company update failed" : "Company save failed",
-          text: error instanceof Error ? error.message : "Please try again.",
+          title: isDuplicateName
+            ? "Company name already exists"
+            : companyId
+            ? "Company update failed"
+            : "Company save failed",
+          text: errorText,
           confirmButtonText: "Try again",
           confirmButtonColor: "#7C3AED",
         });
@@ -1230,8 +1470,11 @@ const ProductServiceManager: React.FC = () => {
 
       targetProducts.forEach((p) => {
         const errs: FieldErrors = {};
-        if (!p.name.trim()) errs.name = "Product name is required";
+        const nameErr = validateProductName(p.name);
+        if (nameErr) errs.name = nameErr;
         if (!p.category.trim()) errs.category = "Select a product category";
+        if (p.brand.trim() && (isDummyText(p.brand) || !/[a-zA-Z]/.test(p.brand)))
+          errs.brand = "Enter a valid brand name";
         if (!isPositiveNumber(p.price)) errs.price = "Enter a valid selling price greater than 0";
         if (!p.availability) errs.availability = "Select availability";
         if (!p.priceType) errs.priceType = "Select a price type";
@@ -1248,6 +1491,14 @@ const ProductServiceManager: React.FC = () => {
         if (!p.imageUrl.trim()) errs.imageUrl = "Upload a product image";
         else if (!isValidHttpsUrl(p.imageUrl))
           errs.imageUrl = "Product image URL must start with https://";
+        if (p.keyFeatures.trim()) {
+          const kfErr = validateOptionalKeyFeatures(p.keyFeatures);
+          if (kfErr) errs.keyFeatures = kfErr;
+        }
+        if (p.description.trim()) {
+          const descErr = validateOptionalDescription(p.description);
+          if (descErr) errs.description = descErr;
+        }
         if (Object.keys(errs).length) nextProductErrors[p.id] = errs;
       });
 
@@ -1267,7 +1518,7 @@ const ProductServiceManager: React.FC = () => {
       }
 
       const validProducts = targetProducts.filter(
-        (p) => p.name.trim() && p.category.trim(),
+        (p) => !validateProductName(p.name) && p.category.trim(),
       );
 
       if (!validProducts.length) {
@@ -1377,16 +1628,33 @@ const ProductServiceManager: React.FC = () => {
 
       targetServices.forEach((s) => {
         const errs: FieldErrors = {};
-        if (!s.name.trim()) errs.name = "Service name is required";
+        const nameErr = validateServiceName(s.name);
+        if (nameErr) errs.name = nameErr;
         if (!s.category.trim()) errs.category = "Select a service category";
+        if (s.providerName.trim() && (isDummyText(s.providerName) || !isValidTextContent(s.providerName, 2, 2)))
+          errs.providerName = "Enter a valid provider name";
+        if (s.businessName.trim() && (isDummyText(s.businessName) || !isValidTextContent(s.businessName, 2, 2)))
+          errs.businessName = "Enter a valid business name";
         if (!isPositiveNumber(s.price)) errs.price = "Enter a valid service fee greater than 0";
         if (!s.availability) errs.availability = "Select availability";
         if (!s.serviceMode) errs.serviceMode = "Select service mode";
+        if (s.serviceLocation.trim()) {
+          const locErr = validateServiceLocation(s.serviceLocation);
+          if (locErr) errs.serviceLocation = locErr;
+        }
         if (!s.bookingRequired) errs.bookingRequired = "Select booking requirement";
         if (s.imageUrl.trim() && !isValidHttpsUrl(s.imageUrl))
           errs.imageUrl = "Service image URL must start with https://";
         if (s.brochureUrl.trim() && !isValidHttpsUrl(s.brochureUrl))
           errs.brochureUrl = "Brochure / portfolio URL must start with https://";
+        if (s.keyFeatures.trim()) {
+          const kfErr = validateOptionalKeyFeatures(s.keyFeatures);
+          if (kfErr) errs.keyFeatures = kfErr;
+        }
+        if (s.description.trim()) {
+          const descErr = validateOptionalDescription(s.description);
+          if (descErr) errs.description = descErr;
+        }
         if (Object.keys(errs).length) nextServiceErrors[s.id] = errs;
       });
 
@@ -1406,7 +1674,7 @@ const ProductServiceManager: React.FC = () => {
       }
 
       const validServices = targetServices.filter(
-        (s) => s.name.trim() && s.category.trim(),
+        (s) => !validateServiceName(s.name) && s.category.trim(),
       );
 
       if (!validServices.length) {
@@ -1552,7 +1820,14 @@ const ProductServiceManager: React.FC = () => {
               const isActive = activeKind === kind;
               const needsCompany = (kind === "PRODUCT" || kind === "SERVICE") && hasCompany !== true && !editId;
               const isCheckingCompany = needsCompany && hasCompany === null;
-              const count = kind === "PRODUCT" ? products.length : kind === "SERVICE" ? services.length : (company.companyName ? 1 : 0);
+              const count =
+                kind === "PRODUCT"
+                  ? products.length
+                  : kind === "SERVICE"
+                    ? services.length
+                    : company.companyName && !isDummyText(company.companyName)
+                      ? 1
+                      : 0;
               return (
                 <div key={kind} className="relative group">
                   <button
@@ -1627,6 +1902,10 @@ const ProductServiceManager: React.FC = () => {
                       placeholder="e.g. Organic Herbal Shampoo"
                       maxLength={120}
                       onChange={(v) => updateProduct(p.id, "name", v)}
+                      onBlur={() => {
+                        const err = validateProductName(p.name);
+                        if (err) setProductErrors((prev) => ({ ...prev, [p.id]: { ...prev[p.id], name: err } }));
+                      }}
                     />
                     <SelectField
                       label="Category"
@@ -1647,6 +1926,7 @@ const ProductServiceManager: React.FC = () => {
                     <TextField
                       label="Brand / manufacturer"
                       value={p.brand}
+                      error={errs.brand}
                       placeholder="e.g. Tata, Amul"
                       onChange={(v) => updateProduct(p.id, "brand", v)}
                     />
@@ -1826,6 +2106,7 @@ const ProductServiceManager: React.FC = () => {
                     <TextAreaField
                       label="Key features / highlights"
                       value={p.keyFeatures}
+                      error={errs.keyFeatures}
                       placeholder="100% natural ingredients • 2-year warranty • ISO certified"
                       hint="Use bullet points (•) to list features"
                       maxLength={500}
@@ -1834,10 +2115,17 @@ const ProductServiceManager: React.FC = () => {
                     <TextAreaField
                       label="Detailed description"
                       value={p.description}
+                      error={errs.description}
                       placeholder="Specifications and details a fellow member should know..."
                       rows={4}
                       maxLength={1000}
                       onChange={(v) => updateProduct(p.id, "description", v)}
+                      onBlur={() => {
+                        if (p.description.trim()) {
+                          const err = validateOptionalDescription(p.description);
+                          if (err) setProductErrors((prev) => ({ ...prev, [p.id]: { ...prev[p.id], description: err } }));
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -1892,6 +2180,10 @@ const ProductServiceManager: React.FC = () => {
                       placeholder="e.g. Legal Advisory & Trademark Registration"
                       maxLength={120}
                       onChange={(v) => updateService(s.id, "name", v)}
+                      onBlur={() => {
+                        const err = validateServiceName(s.name);
+                        if (err) setServiceErrors((prev) => ({ ...prev, [s.id]: { ...prev[s.id], name: err } }));
+                      }}
                     />
                     <SelectField
                       label="Category"
@@ -1911,12 +2203,14 @@ const ProductServiceManager: React.FC = () => {
                     <TextField
                       label="Specialist / provider name"
                       value={s.providerName}
+                      error={errs.providerName}
                       placeholder="Dr. Rajesh Kumar"
                       onChange={(v) => updateService(s.id, "providerName", v)}
                     />
                     <TextField
                       label="Business / clinic / firm name"
                       value={s.businessName}
+                      error={errs.businessName}
                       placeholder="Sharma & Associates"
                       onChange={(v) => updateService(s.id, "businessName", v)}
                     />
@@ -1981,10 +2275,17 @@ const ProductServiceManager: React.FC = () => {
                     <TextField
                       label="Service location"
                       value={s.serviceLocation}
+                      error={errs.serviceLocation}
                       placeholder="At Clinic, Client Site, Virtual"
                       onChange={(v) =>
                         updateService(s.id, "serviceLocation", v)
                       }
+                      onBlur={() => {
+                        if (s.serviceLocation.trim()) {
+                          const err = validateServiceLocation(s.serviceLocation);
+                          if (err) setServiceErrors((prev) => ({ ...prev, [s.id]: { ...prev[s.id], serviceLocation: err } }));
+                        }
+                      }}
                     />
                     <TextField
                       label="Service duration"
@@ -2049,6 +2350,7 @@ const ProductServiceManager: React.FC = () => {
                     <TextAreaField
                       label="Key features / highlights"
                       value={s.keyFeatures}
+                      error={errs.keyFeatures}
                       placeholder="15+ years experience • Free initial consultation"
                       hint="Use bullet points (•) to list features"
                       maxLength={500}
@@ -2057,10 +2359,17 @@ const ProductServiceManager: React.FC = () => {
                     <TextAreaField
                       label="Detailed description"
                       value={s.description}
+                      error={errs.description}
                       placeholder="Comprehensive service specifications and terms..."
                       rows={4}
                       maxLength={1000}
                       onChange={(v) => updateService(s.id, "description", v)}
+                      onBlur={() => {
+                        if (s.description.trim()) {
+                          const err = validateOptionalDescription(s.description);
+                          if (err) setServiceErrors((prev) => ({ ...prev, [s.id]: { ...prev[s.id], description: err } }));
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -2095,10 +2404,55 @@ const ProductServiceManager: React.FC = () => {
             </div>
             <SectionHeading>Basic information</SectionHeading>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TextField label="Company name" required value={company.companyName} error={companyErrors.companyName} placeholder="e.g. AskOxy Technologies" onChange={(v) => updateCompany("companyName", v)} maxLength={100} />
+              <TextField
+                label="Company name"
+                required
+                value={company.companyName}
+                error={companyErrors.companyName}
+                placeholder="e.g. AskOxy Technologies"
+                onChange={(v) => updateCompany("companyName", v)}
+                onBlur={() => {
+                  const localErr = validateCompanyName(company.companyName);
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    companyName: localErr || prev.companyName,
+                  }));
+                }}
+                maxLength={100}
+              />
 
-              <TextField label="Locations" required value={company.locations} error={companyErrors.locations} placeholder="e.g. Hyderabad, Telangana" hint="City or cities where you operate" onChange={(v) => updateCompany("locations", v)} />
-              <TextField label="GST number" value={company.gstNumber} error={companyErrors.gstNumber} placeholder="22AAAAA0000A1Z5" hint="15-character GSTIN (optional)" maxLength={15} onChange={(v) => updateCompany("gstNumber", v.toUpperCase())} />
+              <TextField
+                label="Locations"
+                required
+                value={company.locations}
+                error={companyErrors.locations}
+                placeholder="e.g. Hyderabad, Telangana"
+                hint="City or cities where you operate"
+                maxLength={150}
+                onChange={(v) => updateCompany("locations", v)}
+                onBlur={() => {
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    locations: validateCompanyLocation(company.locations),
+                  }));
+                }}
+              />
+              <TextField
+                label="GST number"
+                required
+                value={company.gstNumber}
+                error={companyErrors.gstNumber}
+                placeholder="22AAAAA0000A1Z5"
+                hint="Mandatory 15-character GSTIN (e.g. 22AAAAA0000A1Z5)"
+                maxLength={15}
+                onChange={(v) => updateCompany("gstNumber", v.toUpperCase())}
+                onBlur={() => {
+                  setCompanyErrors((prev) => ({
+                    ...prev,
+                    gstNumber: validateCompanyGst(company.gstNumber),
+                  }));
+                }}
+              />
               <TextField
                 label="Website URL"
                 type="url"
@@ -2160,7 +2514,23 @@ const ProductServiceManager: React.FC = () => {
               <UploadField label="GST document" value={company.gstDocumentUrl} userId={memberId} validationError={companyErrors.gstDocumentUrl} onToast={showToast} onChange={(v) => updateCompany("gstDocumentUrl", v)} />
             </div>
             <SectionHeading>About the company</SectionHeading>
-            <TextAreaField label="Company description" required value={company.companyDescription} error={companyErrors.companyDescription} placeholder="Describe your company, what you offer, your mission and key strengths..." rows={5} maxLength={1000} hint="Min 50 characters recommended" onChange={(v) => updateCompany("companyDescription", v)} />
+            <TextAreaField
+              label="Company description"
+              required
+              value={company.companyDescription}
+              error={companyErrors.companyDescription}
+              placeholder="Describe your company, what you offer, your mission and key strengths..."
+              rows={5}
+              maxLength={1000}
+              hint="Min 20 characters required (min 50 recommended)"
+              onChange={(v) => updateCompany("companyDescription", v)}
+              onBlur={() => {
+                setCompanyErrors((prev) => ({
+                  ...prev,
+                  companyDescription: validateCompanyDescription(company.companyDescription),
+                }));
+              }}
+            />
           </div>
         )}
 

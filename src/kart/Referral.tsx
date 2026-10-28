@@ -4,13 +4,12 @@ import { FaWhatsapp } from "react-icons/fa";
 import BASE_URL from "../Config";
 
 import {
-
   Copy,
-  Link as LinkIcon,
   X,
+  CheckCircle2,
+  AlertCircle,
   Gift,
   Users,
-
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -19,7 +18,6 @@ import PhoneInput, {
   parsePhoneNumber,
 } from "react-phone-number-input";
 import Footer from "../components/Footer";
-import axios from "axios";
 import "react-phone-number-input/style.css";
 import { Modal } from "antd";
 
@@ -57,13 +55,10 @@ interface FAQItem {
 const ReferralPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [shareAction, setShareAction] = useState<"whatsapp" | "copy" | null>(
-    null
-  );
   const [refereeDetails, setRefereeDetails] = useState<RefereeDetail[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>(undefined);
   const [error, setError] = useState("");
-  const [countryCode, setCountryCode] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [stats, setStats] = useState<Stats>({
@@ -134,7 +129,7 @@ const ReferralPage: React.FC = () => {
   const fetchUserDetails = async () => {
     try {
       const response = await customerApi.get(
-        `${BASE_URL}/user-service/user/${customerId}`
+        `${BASE_URL}/user-service/user/${customerId}`,
       );
 
       if (response.data) {
@@ -160,14 +155,14 @@ const ReferralPage: React.FC = () => {
   const fetchRefereeDetails = async () => {
     try {
       const response = await customerApi.get<RefereeDetail[]>(
-        `${BASE_URL}/reference-service/getreferencedetails/${customerId}`
+        `${BASE_URL}/reference-service/getreferencedetails/${customerId}`,
       );
 
-      setRefereeDetails(response.data.reverse()); // Reverse to show the latest first 
+      setRefereeDetails(response.data.reverse()); // Reverse to show the latest first
 
       const total = response.data.length;
       const active = response.data.filter(
-        (d) => d.referenceStatus === "REGISTERED"
+        (d) => d.referenceStatus === "REGISTERED",
       ).length;
       setStats({
         totalReferrals: total,
@@ -180,18 +175,17 @@ const ReferralPage: React.FC = () => {
   };
 
   const handleShare = (action: "whatsapp" | "copy") => {
-    setShareAction(action);
-
     // Track share action
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "share_referral", {
         method: action,
-        content_type: "referral_link"
+        content_type: "referral_link",
       });
     }
 
     if (action === "whatsapp") {
       setPhoneNumber(undefined);
+      setPhoneTouched(false);
       setError("");
       setIsModalOpen(true);
     } else if (action === "copy") {
@@ -200,58 +194,101 @@ const ReferralPage: React.FC = () => {
     }
   };
 
-  // Function to normalize phone numbers for comparison
-  const normalizePhoneNumber = (number: string): string => {
-    // Remove all non-digit characters
-    return number.replace(/\D/g, "");
+  // Validate by selected country. India additionally requires exactly ten
+  // digits beginning with 6-9. A valid format does not establish that a
+  // number is active; only the server can check account/referral eligibility.
+  // Catch obvious placeholder/dummy numbers that pass ordinary length checks.
+  // This is a heuristic, NOT confirmation of SIM ownership or WhatsApp activity.
+  const isObviousDummyNumber = (national: string): boolean => {
+    const digits = national.replace(/\D/g, "");
+    if (!digits) return false;
+    if (/^(\d)\1+$/.test(digits)) return true; // 8888888888
+    if (/^(\d{2})\1{4}$/.test(digits)) return true; // 9898989898
+    if (digits === "1234567890" || digits === "9876543210") return true;
+    const ascending = "01234567890123456789";
+    const descending = "98765432109876543210";
+    if (
+      digits.length === 10 &&
+      (ascending.includes(digits) || descending.includes(digits))
+    )
+      return true;
+    return false;
   };
 
-  useEffect(() => {
-    if (phoneNumber) {
-      // Extract country code without the + sign
-      const phoneNumberS = parsePhoneNumber(phoneNumber);
-      const countryCode = phoneNumberS?.countryCallingCode
-        ? `+${phoneNumberS.countryCallingCode}`
-        : "";
-      setCountryCode(countryCode || "");
+  const validateReferralPhone = (value?: string): string => {
+    if (!value) return "Enter a mobile number.";
+    const parsed = parsePhoneNumber(value);
+    if (!parsed || !isValidPhoneNumber(value)) {
+      return "Enter a valid mobile number.";
     }
-  }, [phoneNumber]);
+    if (
+      parsed.country === "IN" &&
+      !/^[6-9]\d{9}$/.test(parsed.nationalNumber)
+    ) {
+      return "Enter a valid 10-digit Indian mobile number.";
+    }
+    if (isObviousDummyNumber(parsed.nationalNumber)) {
+      return "This looks like a dummy number. Enter a real mobile number.";
+    }
+    return "";
+  };
+
+  const samePhone = (left?: string | null, right?: string | null): boolean => {
+    if (!left || !right) return false;
+    const a = left.replace(/\D/g, "");
+    const b = right.replace(/\D/g, "");
+    if (!a || !b) return false;
+    // Stored numbers may omit India's +91 calling code.
+    const canonical = (digits: string) =>
+      digits.length === 10 && /^[6-9]/.test(digits) ? `91${digits}` : digits;
+    return canonical(a) === canonical(b);
+  };
+
+  const getReferralError = (value?: string): string => {
+    const formatError = validateReferralPhone(value);
+    if (formatError) return formatError;
+    const ownNumbers = [
+      userDetails?.whatsappNumber,
+      localStorage.getItem("whatsappNumber"),
+    ];
+    if (ownNumbers.some((number) => samePhone(number, value))) {
+      return "You cannot refer yourself.";
+    }
+    if (
+      refereeDetails.some((detail) => samePhone(detail.whatsappnumber, value))
+    ) {
+      return "This number has already been referred.";
+    }
+    return "";
+  };
+
+  const handlePhoneChange = (value?: string) => {
+    // Prevent >10 national digits for Indian numbers, even on paste.
+    const parsed = value ? parsePhoneNumber(value) : undefined;
+    if (parsed?.country === "IN" && parsed.nationalNumber.length > 10) return;
+    setPhoneNumber(value);
+    setPhoneTouched(true);
+    setError("");
+  };
+
+  const phoneValidationError = phoneTouched
+    ? getReferralError(phoneNumber)
+    : "";
+  const shownPhoneError = error || phoneValidationError;
+  const phoneValid = Boolean(phoneNumber) && !getReferralError(phoneNumber);
 
   const handleSubmit = async () => {
-    // Reset error state
+    if (isLoading) return;
+    setPhoneTouched(true);
     setError("");
-
-    // Validate phone number format
-    if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
-      setError("Please enter a valid phone number");
+    const validationError = getReferralError(phoneNumber);
+    if (validationError) {
+      setError(validationError);
       return;
     }
-
-    // Check for self-referral
-    if (localStorage.getItem("whatsappNumber") === phoneNumber) {
-      setError(
-        "Self-referral is not allowed. Enter a different referral number."
-      );
-      return;
-    }
-
-    // Check if number has already been referred
-    const normalizedInput = normalizePhoneNumber(phoneNumber);
-    const alreadyReferred = refereeDetails.some((detail) => {
-      const normalizedRefNumber = normalizePhoneNumber(detail.whatsappnumber);
-      const refSuffix = normalizedRefNumber.slice(
-        -Math.min(10, normalizedRefNumber.length)
-      );
-      const inputSuffix = normalizedInput.slice(
-        -Math.min(10, normalizedInput.length)
-      );
-      return refSuffix === inputSuffix;
-    });
-
-    if (alreadyReferred) {
-      setError(
-        "This number has already been referred. Please enter a different number."
-      );
+    const parsed = parsePhoneNumber(phoneNumber!);
+    if (!parsed || !customerId) {
+      setError("Unable to send invitation. Please sign in again.");
       return;
     }
 
@@ -260,52 +297,50 @@ const ReferralPage: React.FC = () => {
       const response = await customerApi.post(
         `${BASE_URL}/user-service/inviteaUser`,
         {
-          referealId: customerId,
-          refereeMobileNumber: phoneNumber.replace(countryCode, ""),
-          countryCode: countryCode,
-        }
+          referealId: customerId, // Keep backend's existing field name.
+          refereeMobileNumber: parsed.nationalNumber,
+          countryCode: `+${parsed.countryCallingCode}`,
+        },
       );
-
-      // Track friend invitation
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "invite_friend", {
-        method: "whatsapp_invitation",
-        invitation_sent: true
-      });
-    }
-      setIsModalOpen(false);
-      fetchRefereeDetails();
-
-      Modal.success({
-        content: response.data.message || "Referral sent successfully!",
-        onOk: () => { },
-      });
-    } catch (error: any) {
-      // Type error as 'any' to handle axios error
-      console.error("Error inviting user:", error);
-
-      // Handle different error scenarios
-      let errorMessage = "Failed to invite user. Please try again.";
-
-      if (error.response) {
-        if (error.response.data && error.response.data.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.status === 409) {
-          errorMessage = "An invitation has already been sent to this user.";
-        } else if (error.response.status === 400) {
-          // Check if it's a self-referral error from backend
-          if (
-            error.response.data &&
-            error.response.data.error &&
-            error.response.data.error.includes("self")
-          ) {
-            errorMessage =
-              "Self-referral is not allowed. Enter a different referral number.";
-          }
-        }
+      if (response.data?.success === false) {
+        throw new Error("Invitation could not be sent. Please try again.");
       }
-
-      setError(errorMessage);
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "invite_friend", {
+          method: "whatsapp_invitation",
+          invitation_sent: true,
+        });
+      }
+      setIsModalOpen(false);
+      setPhoneNumber(undefined);
+      setPhoneTouched(false);
+      void fetchRefereeDetails();
+      Modal.success({ content: "Invitation sent successfully!" });
+    } catch (requestError: any) {
+      const status = requestError?.response?.status;
+      const raw = String(
+        requestError?.response?.data?.message ||
+          requestError?.response?.data?.error ||
+          "",
+      ).toLowerCase();
+      let message = "Unable to send invitation. Please try again.";
+      if (raw.includes("self")) message = "You cannot refer yourself.";
+      else if (
+        raw.includes("already") ||
+        raw.includes("duplicate") ||
+        status === 409
+      )
+        message = "This number has already been referred.";
+      else if (
+        raw.includes("invalid") ||
+        (raw.includes("mobile") && status === 400)
+      )
+        message = "Enter a valid mobile number.";
+      else if (status === 401 || status === 403)
+        message = "Session expired. Please sign in again.";
+      else if (status >= 500)
+        message = "Service unavailable. Please try again.";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -318,7 +353,7 @@ const ReferralPage: React.FC = () => {
           return { ...faq, isOpen: !faq.isOpen };
         }
         return faq;
-      })
+      }),
     );
   };
 
@@ -351,7 +386,7 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "share_referral", {
         method: "whatsapp_broadcast",
-        content_type: "referral_link"
+        content_type: "referral_link",
       });
     }
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
@@ -369,7 +404,7 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
 
     Modal.success({
       content: "Referral link copied to clipboard!",
-      onOk: () => { },
+      onOk: () => {},
     });
   };
 
@@ -526,17 +561,29 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
                       {refereeDetails.map((referee) => (
                         <tr key={referee.id} className="hover:bg-gray-50">
                           <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
-                            {referee.whatsappnumber}
+                            <div className="flex flex-col items-start gap-1">
+                              <span>{referee.whatsappnumber}</span>
+                              {isObviousDummyNumber(
+                                referee.whatsappnumber
+                                  .replace(/\D/g, "")
+                                  .slice(-10),
+                              ) && (
+                                <span className="inline-flex rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                  Suspected dummy number
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600 hidden sm:table-cell">
                             {formatDate(referee.created_at)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-4 text-sm">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium ${referee.referenceStatus === "REGISTERED"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-amber-100 text-amber-800"
-                                }`}
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                                referee.referenceStatus === "REGISTERED"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-amber-100 text-amber-800"
+                              }`}
                             >
                               {referee.referenceStatus}
                             </span>
@@ -634,33 +681,69 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
                 </p>
               </div>
 
-              <div className="mb-6">
-                <PhoneInput
-                  international
-                  countryCallingCodeEditable={false}
-                  defaultCountry="IN"
-                  value={phoneNumber}
-                  onChange={(value) => {
-                    setPhoneNumber(value);
-                    setError(""); // Clear error when user types
-                  }}
-                  className="w-full p-3 bg-white/30 backdrop-blur-md shadow-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-gray-800 placeholder-transparent [&>*]:outline-none [&.PhoneInputInput]:outline-none [&.PhoneInputInput]:border-none"
-                />
-                {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+              <div className="mb-5">
+                <label
+                  htmlFor="referral-mobile"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Mobile number <span className="text-red-600">*</span>
+                </label>
+                <div
+                  className={`rounded-xl border bg-white px-3 py-3 transition-colors focus-within:ring-2 focus-within:ring-purple-200 ${shownPhoneError ? "border-red-400" : phoneValid && phoneTouched ? "border-green-500" : "border-gray-300"}`}
+                >
+                  <PhoneInput
+                    id="referral-mobile"
+                    international
+                    countryCallingCodeEditable={false}
+                    defaultCountry="IN"
+                    value={phoneNumber}
+                    onChange={handlePhoneChange}
+                    onBlur={() => setPhoneTouched(true)}
+                    placeholder="Enter mobile number"
+                    numberInputProps={{
+                      inputMode: "tel",
+                      autoComplete: "tel",
+                      "aria-invalid": Boolean(shownPhoneError),
+                      "aria-describedby": "referral-mobile-feedback",
+                    }}
+                    className="w-full text-base text-gray-900 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:w-full [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputCountry]:mr-3"
+                  />
+                </div>
+                <div
+                  id="referral-mobile-feedback"
+                  aria-live="polite"
+                  className="mt-2 min-h-[20px]"
+                >
+                  {shownPhoneError ? (
+                    <p className="flex items-start gap-1.5 text-sm text-red-600">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      {shownPhoneError}
+                    </p>
+                  ) : phoneTouched && phoneValid ? (
+                    <p className="flex items-center gap-1.5 text-sm text-green-700">
+                      <CheckCircle2 className="h-4 w-4 shrink-0" /> Valid mobile
+                      number format
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500">
+                      Select the country and enter the mobile number.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
                 <button
                   onClick={handleSubmit}
-                  className="w-full sm:flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                  disabled={isLoading}
+                  className="w-full sm:flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isLoading || !phoneValid}
                 >
-                  {isLoading ? "Processing..." : "Send Invitation"}
+                  {isLoading ? "Sending..." : "Send Invitation"}
                 </button>
 
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="w-full sm:flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium mt-2 sm:mt-0"
+                  className="w-full sm:flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium mt-2 sm:mt-0"
                 >
                   Cancel
                 </button>

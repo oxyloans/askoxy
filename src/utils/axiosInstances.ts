@@ -23,6 +23,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { store } from "../store";
+import { logout } from "../store/authSlice";
 import {
   refreshAccessToken,
   refreshEmployeeAccessToken,
@@ -207,8 +208,27 @@ if (on401 === "business-card-refresh") {
       // Redirect flow (or refresh failed): clear the module's tokens then send to login
       if (clearTokens) clearTokens();
       if (loginRoute) {
+        const isCustomerFlow = on401 === "refresh";
+        const isCustomerProtectedRoute =
+          window.location.pathname.startsWith("/main") ||
+          window.location.pathname.startsWith("/oxycommunity");
+
+        // Customer 401s on public routes (like "/", "/oxynews", "/freeaibook", etc.) should NOT redirect to login
+        if (isCustomerFlow && !isCustomerProtectedRoute) {
+          return Promise.reject(error);
+        }
+
         const currentPath = window.location.pathname + window.location.search;
-        sessionStorage.setItem("redirectPath", currentPath);
+        const isAuthOrRoot =
+          currentPath === "/" ||
+          currentPath === "" ||
+          currentPath.includes("/whatsapplogin") ||
+          currentPath.includes("/whatsappregister");
+
+        if (!isAuthOrRoot) {
+          sessionStorage.setItem("redirectPath", currentPath);
+        }
+
         window.location.href = loginRoute;
       }
 
@@ -294,6 +314,9 @@ export const customerApi = createInstance({
   getToken: customerToken,
   on401: "refresh",
   loginRoute: "/whatsapplogin",
+  clearTokens: () => {
+    store.dispatch(logout());
+  },
 });
 
 /** Admin portal — redirects to /admin on 401 */

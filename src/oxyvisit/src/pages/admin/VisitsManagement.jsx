@@ -9,6 +9,30 @@ import BASE_URL from '../../core/config/Config';
 
 const API_BASE = `${BASE_URL}/ai-service`;
 
+const isToday = (dateVal) => {
+  if (!dateVal) return false;
+  try {
+    const d = new Date(dateVal);
+    if (!isNaN(d.getTime())) {
+      const now = new Date();
+      if (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      ) {
+        return true;
+      }
+    }
+    const str = String(dateVal);
+    const now = new Date();
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayISO = now.toISOString().slice(0, 10);
+    return str.startsWith(todayLocal) || str.startsWith(todayISO);
+  } catch {
+    return false;
+  }
+};
+
 const VisitsManagement = () => {
   const [visits, setVisits] = useState([]);
   const [filteredVisits, setFilteredVisits] = useState([]);
@@ -17,11 +41,13 @@ const VisitsManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchText, setSearchText] = useState('');
+  const [filterTodayOnly, setFilterTodayOnly] = useState(false);
   const [stats, setStats] = useState({ totalVisits: 0, totalCategories: 0, todayVisits: 0 });
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    userName: '',
     location: '',
     contactNumber: '',
     description: '',
@@ -37,29 +63,26 @@ const VisitsManagement = () => {
   }, [categoryId]);
 
   useEffect(() => {
-    const filtered = visits.filter(visit =>
-      visit.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      visit.userName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      visit.categoryName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      visit.location?.toLowerCase().includes(searchText.toLowerCase()) ||
-      visit.contactNumber?.includes(searchText)
-    );
+    let filtered = visits;
+
+    if (filterTodayOnly) {
+      filtered = filtered.filter(visit => isToday(visit.createdAt || visit.createdDate));
+    }
+
+    if (searchText.trim()) {
+      const query = searchText.toLowerCase().trim();
+      filtered = filtered.filter(visit =>
+        visit.name?.toLowerCase().includes(query) ||
+        visit.userName?.toLowerCase().includes(query) ||
+        visit.categoryName?.toLowerCase().includes(query) ||
+        visit.location?.toLowerCase().includes(query) ||
+        visit.contactNumber?.includes(query) ||
+        (visit.createdAt || visit.createdDate || '').toLowerCase().includes(query)
+      );
+    }
+
     setFilteredVisits(filtered);
-    
-    // Update stats based on filtered visits
-    const uniqueCategories = new Set(filtered.map(v => v.categoryId)).size;
-    const today = new Date().toISOString().split('T')[0];
-    const todayCount = filtered.filter(visit => {
-      const visitDate = (visit.createdAt || visit.createdDate || '').split(' ')[0];
-      return visitDate === today;
-    }).length;
-    
-    setStats({
-      totalVisits: filtered.length,
-      totalCategories: uniqueCategories,
-      todayVisits: todayCount
-    });
-  }, [searchText, visits]);
+  }, [searchText, filterTodayOnly, visits]);
 
   const fetchVisits = async () => {
     setLoading(true);
@@ -71,6 +94,15 @@ const VisitsManagement = () => {
       const list = Array.isArray(response.data) ? [...response.data].reverse() : [];
       setVisits(list);
       setFilteredVisits(list);
+
+      const uniqueCategories = new Set(list.map(v => v.categoryId)).size;
+      const todayCount = list.filter(v => isToday(v.createdAt || v.createdDate)).length;
+      setStats({
+        totalVisits: list.length,
+        totalCategories: uniqueCategories,
+        todayVisits: todayCount
+      });
+
       if (categoryId && list.length > 0 && list[0].categoryName) {
         setCategoryName(list[0].categoryName);
       } else {
@@ -108,10 +140,11 @@ const VisitsManagement = () => {
   const handleEdit = (visit) => {
     setSelectedVisit(visit);
     setFormData({
-      name: visit.name,
-      location: visit.location,
-      contactNumber: visit.contactNumber,
-      description: visit.description,
+      name: visit.name || '',
+      userName: visit.userName || '',
+      location: visit.location || '',
+      contactNumber: visit.contactNumber || '',
+      description: visit.description || '',
       webLink: visit.webLink || '',
       image: null
     });
@@ -147,7 +180,16 @@ const VisitsManagement = () => {
     if (!validateForm()) return;
 
     try {
+      // Keep the exact same userId and userName from the GET call (selectedVisit); never change or overwrite with admin name
+      const rawUserName = selectedVisit?.userName ?? selectedVisit?.username ?? selectedVisit?.user_name ?? '';
+      const resolvedUserName = (rawUserName === null || rawUserName === undefined || rawUserName === 'null') ? '' : rawUserName;
+
+      const rawUserId = selectedVisit?.userId ?? selectedVisit?.userid ?? selectedVisit?.user_id ?? '';
+      const resolvedUserId = (rawUserId === null || rawUserId === undefined || rawUserId === 'null') ? '' : rawUserId;
+
       const data = new FormData();
+      data.append('userId', resolvedUserId);
+      data.append('userName', resolvedUserName);
       data.append('name', formData.name);
       data.append('location', formData.location);
       data.append('contactNumber', formData.contactNumber);
@@ -156,26 +198,32 @@ const VisitsManagement = () => {
       if (formData.image) data.append('image', formData.image);
 
       const token = localStorage.getItem('token');
-      await axios.patch(`${API_BASE}/visits/${selectedVisit.visitId}?userId=${selectedVisit.userId}`, data, {
+      await axios.patch(`${API_BASE}/visits/${selectedVisit.visitId}?userId=${resolvedUserId}`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Visit updated successfully',
+        title: 'Visit Updated!',
+        text: 'The visit details have been updated successfully.',
         timer: 2000,
+        showConfirmButton: false,
       });
       setEditModalVisible(false);
       setSelectedVisit(null);
-      setFormData({ name: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+      setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
       setErrors({});
       fetchVisits();
     } catch (error) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to update visit';
+      const errorMessage =
+        error.response?.data?.errorMessage ||
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.status ||
+        'Failed to update visit. Please try again.';
       Swal.fire({
         icon: 'error',
-        title: 'Error',
+        title: 'Update Error',
         text: errorMessage,
       });
     }
@@ -196,12 +244,11 @@ const VisitsManagement = () => {
       key: "userName",
       align: "center",
       render: (text) => (
-        <div className="flex gap-2">
-        
-          <span>{text}</span>
+        <div className="flex gap-2 justify-center">
+          <span>{text || '-'}</span>
         </div>
       ),
-      sorter: (a, b) => a.userName.localeCompare(b.userName),
+      sorter: (a, b) => (a.userName || '').localeCompare(b.userName || ''),
     },
     {
       title: "Category",
@@ -209,7 +256,7 @@ const VisitsManagement = () => {
       key: "categoryName",
       align: "center",
       render: (text) => <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{text}</span>,
-      sorter: (a, b) => a.categoryName.localeCompare(b.categoryName),
+      sorter: (a, b) => (a.categoryName || '').localeCompare(b.categoryName || ''),
     },
     {
       title: "Visit Name",
@@ -217,7 +264,7 @@ const VisitsManagement = () => {
       key: "name",
       align: "center",
       render: (text) => <div>{text}</div>,
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
     },
     {
       title: "Location",
@@ -376,14 +423,17 @@ const VisitsManagement = () => {
           <Col xs={24} sm={8}>
             <Card 
               hoverable
-              onClick={() => {
-                const today = new Date().toISOString().split('T')[0];
-                setSearchText(today);
+              onClick={() => setFilterTodayOnly((prev) => !prev)}
+              style={{ 
+                cursor: 'pointer',
+                borderColor: filterTodayOnly ? '#ff6b6b' : undefined,
+                backgroundColor: filterTodayOnly ? '#fff5f5' : undefined,
+                boxShadow: filterTodayOnly ? '0 0 0 2px rgba(255, 107, 107, 0.25)' : undefined,
+                transition: 'all 0.3s ease'
               }}
-              style={{ cursor: 'pointer' }}
             >
               <Statistic
-                title="Today's Visits (Click to filter)"
+                title={filterTodayOnly ? "Today's Visits (Filter Active - Click to clear)" : "Today's Visits (Click to filter)"}
                 value={stats.todayVisits}
                 prefix={<CalendarOutlined />}
                 valueStyle={{ color: '#ff6b6b' }}
@@ -402,7 +452,22 @@ const VisitsManagement = () => {
         ) : (
           <>
             <div className="p-4 md:p-6">
-              <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold m-0">
+                    {filterTodayOnly ? "Today's Visits" : "All Visits"}
+                  </h3>
+                  {filterTodayOnly && (
+                    <Tag 
+                      color="red" 
+                      closable 
+                      onClose={() => setFilterTodayOnly(false)}
+                      style={{ cursor: 'pointer', fontSize: '12px', padding: '2px 8px' }}
+                    >
+                      Showing Today Only (Click × to show all)
+                    </Tag>
+                  )}
+                </div>
                 <div className="w-full sm:w-auto">
                   <Input
                     placeholder="Search visits, users, locations..."
@@ -410,7 +475,7 @@ const VisitsManagement = () => {
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     size="large"
-                    style={{ minWidth: '300px' }}
+                    style={{ width: '100%', maxWidth: '320px' }}
                   />
                 </div>
               </div>
@@ -463,11 +528,12 @@ const VisitsManagement = () => {
         onCancel={() => {
           setEditModalVisible(false);
           setSelectedVisit(null);
-          setFormData({ name: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+          setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
           setErrors({});
         }}
         footer={null}
         width={600}
+        style={{ maxWidth: '95vw', top: 20 }}
       >
         <Form layout="vertical">
           <Form.Item

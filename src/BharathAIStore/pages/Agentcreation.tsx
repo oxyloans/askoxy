@@ -933,8 +933,7 @@ const Agentcreation: React.FC = () => {
       creatorNameRef.current.focus();
     }
 
-    const timer = setTimeout(() => setCreatorNameNudge(false), 60000); // allow nudge again after 60s
-    return () => clearTimeout(timer);
+    // Show the creator-name reminder once per page visit, not repeatedly.
   }, [
     roleResolved,
     goalResolved,
@@ -1939,6 +1938,63 @@ const Agentcreation: React.FC = () => {
     setStartersEdit(false);
   };
 
+  // Required inputs: keep validation messages beside the corresponding fields.
+  type AgentField = "role" | "goal" | "purpose" | "creator" | "name" | "description" | "instructions";
+  const [agentErrors, setAgentErrors] = useState<Partial<Record<AgentField, string>>>({});
+  const [validationAttempted, setValidationAttempted] = useState(false);
+  const [requireInstructions, setRequireInstructions] = useState(false);
+  const requiredFields = useMemo(() => {
+    const next: Partial<Record<AgentField, string>> = {};
+    if (!roleResolved) next.role = roleSelect === "Other" ? "Enter your role." : "Select your role.";
+    if (!goalResolved) next.goal = goalSelect === "Other" ? "Enter your goal." : "Select a goal.";
+    if (!purposeResolved) next.purpose = purposeSelect === "Other" ? "Enter your purpose." : "Select a purpose.";
+    if (!agentUserName.trim()) next.creator = "Enter the creator name.";
+    else if (agentUserName.trim().length > 25) next.creator = "Creator name must be 25 characters or fewer.";
+    if (!agentName.trim()) next.name = "Enter an agent name.";
+    else if (agentName.trim().length < 3) next.name = "Agent name must have at least 3 characters.";
+    else if (agentName.trim().length > 80) next.name = "Agent name must have 80 characters or fewer.";
+    if (description.trim().length < MIN_DESC) next.description = `Description must be at least ${MIN_DESC} characters.`;
+    else if (description.trim().length > MAX_DESC) next.description = `Description must have ${MAX_DESC} characters or fewer.`;
+    if (!instructions.trim()) next.instructions = "Add agent instructions before publishing.";
+    return next;
+  }, [roleResolved, goalResolved, purposeResolved, roleSelect, goalSelect, purposeSelect, agentUserName, agentName, description, instructions]);
+
+  useEffect(() => {
+    if (validationAttempted) {
+      const next = { ...requiredFields };
+      if (!requireInstructions) delete next.instructions;
+      setAgentErrors(next);
+    }
+  }, [requiredFields, validationAttempted, requireInstructions]);
+
+  const validateAgent = (checkInstructions = false): boolean => {
+    const next = { ...requiredFields };
+    if (!checkInstructions) delete next.instructions;
+    setValidationAttempted(true);
+    if (next.description) setDescTouched(true);
+    setRequireInstructions(checkInstructions);
+    setAgentErrors(next);
+    const first = (Object.keys(next) as AgentField[])[0];
+    if (first) {
+      message.error(next[first] || "Complete the required fields.");
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById(`agent-field-${first}`);
+        target?.scrollIntoView({ behavior: "smooth", block: "center" });
+        const input = target?.querySelector<HTMLElement>("input, textarea, button");
+        input?.focus({ preventScroll: true });
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const fieldError = (field: AgentField) =>
+    (field === "description" && descTouched ? requiredFields.description : agentErrors[field]) ? (
+      <div role="alert" style={{ color: "#B91C1C", fontSize: 12, marginTop: 5, lineHeight: 1.4 }}>
+        {field === "description" && descTouched ? requiredFields.description : agentErrors[field]}
+      </div>
+    ) : null;
+
   const nameCount = agentName.trim().length;
 
   const canPreview =
@@ -2290,9 +2346,12 @@ const Agentcreation: React.FC = () => {
   }, [roleResolved, goalResolved, purposeResolved]);
 
   const requestAndOpenEditor = useCallback(async () => {
-    const baseErr = `Please enter a Description (${MIN_DESC}–${MAX_DESC} characters) to generate instructions.`;
+    const baseErr = `Description must be at least ${MIN_DESC} characters.`;
     if (!description.trim() || description.trim().length < MIN_DESC) {
+      setDescTouched(true);
+      setAgentErrors((prev) => ({ ...prev, description: baseErr }));
       message.error(baseErr);
+      document.getElementById("agent-field-description")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     const auth = getAuthHeader() as Record<string, string>;
@@ -2665,6 +2724,7 @@ const Agentcreation: React.FC = () => {
   ]);
 
   const confirmPublish = useCallback(() => {
+    if (!validateAgent(true)) return;
     if (description.trim().length < MIN_DESC) {
       Modal.error({
         title: "Description too short",
@@ -2712,7 +2772,7 @@ const Agentcreation: React.FC = () => {
     }
 
     setPublishModalOpen(true);
-  }, [description, instructions, agentName, customerId]);
+  }, [description, instructions, agentName, customerId, requiredFields]);
 
   const fetchProfilePdfAndUpload = useCallback(
     async (
@@ -2772,6 +2832,7 @@ const Agentcreation: React.FC = () => {
   );
 
   const handlePublishConfirm = async () => {
+    if (!validateAgent(true)) { setPublishModalOpen(false); return; }
     setPublishModalOpen(false);
     setLoading(true);
 
@@ -2879,12 +2940,9 @@ const Agentcreation: React.FC = () => {
   ]);
 
   const handlePublishClick = useCallback(() => {
-    if (!canPreview) {
-      message.error("Please complete all fields before publishing.");
-      return;
-    }
+    if (!validateAgent(false)) return;
     openPreviewAndAutogen();
-  }, [canPreview, openPreviewAndAutogen]);
+  }, [requiredFields, openPreviewAndAutogen]);
 
   const gradientText = (text: string, i = 0) => (
     <span
@@ -3689,7 +3747,7 @@ const Agentcreation: React.FC = () => {
                       }}
                     >
                       <div style={labelColStyle}>{gradientText("I am", 0)}</div>
-                      <div style={{ flex: 1 }}>
+                      <div id="agent-field-role" style={{ flex: 1, minWidth: 0 }}>
                         <CompactSelect
                           value={roleSelect}
                           onChange={setRoleSelect}
@@ -3703,6 +3761,7 @@ const Agentcreation: React.FC = () => {
                             setRoleOther,
                             "Type your role…",
                           )}
+                        {fieldError("role")}
                       </div>
                       <Tooltip title="Examples: Student, Founder, Developer, Marketer, Lawyer">
                         <svg
@@ -3765,7 +3824,7 @@ const Agentcreation: React.FC = () => {
                       <div style={labelColStyle}>
                         {gradientText("I want to", 1)}
                       </div>
-                      <div style={{ flex: 1 }}>
+                      <div id="agent-field-goal" style={{ flex: 1, minWidth: 0 }}>
                         <div
                           onClick={() => {
                             if (!roleSelect.trim()) {
@@ -3787,6 +3846,7 @@ const Agentcreation: React.FC = () => {
                             setGoalOther,
                             "Type your goal…",
                           )}
+                        {fieldError("goal")}
                       </div>
                       <Tooltip title="Learn skills, Raise funding, Get a job, Grow sales, Legal help">
                         <svg
@@ -3849,7 +3909,7 @@ const Agentcreation: React.FC = () => {
                       <div style={labelColStyle}>
                         {gradientText("My purpose", 2)}
                       </div>
-                      <div style={{ flex: 1 }}>
+                      <div id="agent-field-purpose" style={{ flex: 1, minWidth: 0 }}>
                         <div
                           onClick={() => {
                             if (!roleSelect.trim()) {
@@ -3874,6 +3934,7 @@ const Agentcreation: React.FC = () => {
                             setPurposeOther,
                             "Type your purpose…",
                           )}
+                        {fieldError("purpose")}
                       </div>
                       <Tooltip title="Build agent, automate support, file a case, launch MVP">
                         <svg
@@ -3943,6 +4004,7 @@ const Agentcreation: React.FC = () => {
 
                   <div style={bodyPad}>
                     <input
+                      id="agent-field-creator"
                       ref={creatorNameRef}
                       type="text"
                       value={agentUserName}
@@ -3980,6 +4042,7 @@ const Agentcreation: React.FC = () => {
                           "box-shadow 0.2s ease, border-color 0.2s ease",
                       }}
                     />
+                    {fieldError("creator")}
 
                     <div
                       style={{
@@ -4056,6 +4119,7 @@ const Agentcreation: React.FC = () => {
                     </button>
                   </div>
                   <div style={bodyPad}>
+                    <div id="agent-field-name">
                     <input
                       value={agentName}
                       onChange={(e) => {
@@ -4092,6 +4156,8 @@ const Agentcreation: React.FC = () => {
                         boxShadow: "inset 0 1px 0 rgba(2,8,23,0.04)",
                       }}
                     />
+                    {fieldError("name")}
+                    </div>
                   </div>
                 </div>
 
@@ -4146,26 +4212,16 @@ const Agentcreation: React.FC = () => {
                     </button>
                   </div>
                   <div style={bodyPad}>
+                    <div id="agent-field-description">
                     <textarea
                       value={description}
                       onChange={(e) => {
                         setDescription(e.target.value);
                         // as user types, keep the field "touched" once they've left it once
-                        if (
-                          descTouched &&
-                          e.target.value.trim().length >= MIN_DESC
-                        ) {
-                          // clear any inline error automatically when they fix it
-                          // (no extra state needed; the condition below will stop rendering the error)
-                        }
+                        // Revalidate immediately after the first blur or submit.
                       }}
                       onBlur={() => {
                         setDescTouched(true);
-                        if (descCount < MIN_DESC) {
-                          message.error(
-                            `Description must be at least ${MIN_DESC} characters.`,
-                          );
-                        }
                       }}
                       maxLength={MAX_DESC}
                       placeholder="Tell what this agent does in your own words…"
@@ -4175,7 +4231,7 @@ const Agentcreation: React.FC = () => {
                         padding: 12,
                         borderRadius: 12,
                         border: `1px solid ${
-                          descTouched && descCount < MIN_DESC
+                          (descTouched || validationAttempted) && descCount < MIN_DESC
                             ? "#DC2626"
                             : BORDER
                         }`,
@@ -4188,6 +4244,8 @@ const Agentcreation: React.FC = () => {
                         boxShadow: "inset 0 1px 0 rgba(2,8,23,0.04)",
                       }}
                     />
+                    {fieldError("description")}
+                    </div>
 
                     {/* Inline helper + counter */}
                     <div
@@ -4197,25 +4255,20 @@ const Agentcreation: React.FC = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
+                        gap: 12,
                       }}
                     >
                       <span
                         style={{
-                          color:
-                            descTouched && descCount < MIN_DESC
-                              ? "#DC2626"
-                              : TEXT_MUTED,
+                          color: TEXT_MUTED,
                         }}
                       >
-                        {descTouched && descCount < MIN_DESC
-                          ? `Minimum ${MIN_DESC} characters required.`
-                          : `Keep it between ${MIN_DESC}–${MAX_DESC} characters.`}
                       </span>
                       <span
                         style={{
                           fontWeight: 800,
                           color:
-                            descTouched && descCount < MIN_DESC
+                            (descTouched || validationAttempted) && descCount < MIN_DESC
                               ? "#DC2626" // red when invalid
                               : descCount > MAX_DESC - 20
                                 ? "#F59E0B" // warm warning near max
@@ -4345,25 +4398,31 @@ const Agentcreation: React.FC = () => {
                     alignItems: "center",
                     gap: 12,
                     marginTop: 20,
-                    flexWrap: "nowrap",
+                    flexWrap: "wrap",
                     overflow: "visible",
                     padding: "10px 2px 20px",
                   }}
                 >
+                  {validationAttempted && Object.keys(agentErrors).length > 0 && (
+                    <div role="alert" style={{ flexBasis: "100%", padding: "10px 12px", border: "1px solid #FECACA", borderRadius: 10, background: "#FEF2F2", color: "#991B1B", fontSize: 13 }}>
+                      Please complete the highlighted required fields.
+                    </div>
+                  )}
                   {/* Preview Button */}
                   <button
-                    onClick={openPreviewAndAutogen}
-                    disabled={!canPreview}
+                    onClick={() => { if (validateAgent(false)) openPreviewAndAutogen(); }}
                     style={{
                       padding: "10px 24px",
+                      minHeight: 44,
+                      flex: isMobile ? "1 1 140px" : undefined,
                       borderRadius: 999,
                       border: `1px solid ${BORDER}`,
                       background: "#FFFFFF",
                       color: "#475569",
                       fontWeight: 800,
                       fontSize: 15,
-                      cursor: canPreview ? "pointer" : "not-allowed",
-                      opacity: canPreview ? 1 : 0.6,
+                      cursor: "pointer",
+                      opacity: 1,
                       whiteSpace: "nowrap",
                       boxShadow:
                         "0 2px 6px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.06)",
@@ -4385,6 +4444,8 @@ const Agentcreation: React.FC = () => {
                     disabled={loading}
                     style={{
                       padding: "10px 28px",
+                      minHeight: 44,
+                      flex: isMobile ? "1 1 140px" : undefined,
                       borderRadius: 999,
                       border: "none",
                       background:
@@ -4518,7 +4579,7 @@ const Agentcreation: React.FC = () => {
               {/* Publish Button (Updated gradient + glow) */}
               <button
                 onClick={confirmPublish}
-                disabled={!canPublish || loading}
+                disabled={loading}
                 style={{
                   flex: isMobile ? "1 1 calc(50% - 6px)" : "0 0 auto",
                   padding: "10px 22px",
@@ -4529,8 +4590,8 @@ const Agentcreation: React.FC = () => {
                   color: "#FFFFFF",
                   fontWeight: 900,
                   fontSize: 15,
-                  cursor: canPublish ? "pointer" : "not-allowed",
-                  opacity: canPublish ? (loading ? 0.85 : 1) : 0.6,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading ? 0.7 : 1,
                   whiteSpace: "nowrap",
                   boxShadow:
                     "0 4px 12px rgba(37,99,235,0.35), 0 8px 25px rgba(109,40,217,0.3)",

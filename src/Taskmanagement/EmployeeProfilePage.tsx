@@ -179,9 +179,19 @@ interface EmployeeInfoResponse {
   panUrl?: string | null;
   ssc?: string | null;
   userId?: string | null;
+  id?: string | null;
+  imageUrl?: string | null;
+  rawAadharUrl?: string | null;
+  rawPanUrl?: string | null;
 }
 
 const cleanText = (value: unknown) => String(value ?? "").trim();
+
+const cleanS3Url = (value?: string | null) => {
+  const url = cleanText(value);
+  if (!url) return "";
+  return url.split("?")[0];
+};
 
 const digits10 = (value: string) =>
   (value || "").replace(/\D/g, "").slice(0, 10);
@@ -495,7 +505,50 @@ const EmployeeProfilePage: React.FC = () => {
         `${BASE_URL}/user-service/write/employee-info/${userId}`,
       );
 
-      const data: EmployeeInfoResponse = response.data?.data || response.data || {};
+      const resData = response.data?.data || response.data || {};
+      const rawInfo: Record<string, any> =
+        resData.employeeInfo && typeof resData.employeeInfo === "object"
+          ? resData.employeeInfo
+          : resData;
+
+      const presignedAadharUrl = cleanText(resData.aadharUrl);
+      const presignedPanUrl = cleanText(resData.panUrl);
+      const presignedImageUrl = cleanText(resData.imageUrl);
+
+      const rawAadharUrl = cleanText(rawInfo.aadharUrl);
+      const rawPanUrl = cleanText(rawInfo.panUrl);
+
+      const displayAadharUrl = presignedAadharUrl || rawAadharUrl;
+      const displayPanUrl = presignedPanUrl || rawPanUrl;
+      const displayImageUrl = presignedImageUrl || cleanText(rawInfo.imageUrl);
+
+      const data: EmployeeInfoResponse = {
+        ...rawInfo,
+        id: cleanText(rawInfo.id),
+        email: cleanText(rawInfo.email),
+        userId: cleanText(rawInfo.userId),
+        homeAddress: cleanText(rawInfo.homeAddress),
+        contactNumber: cleanText(rawInfo.contactNumber),
+        ssc: cleanText(rawInfo.ssc),
+        intermediate: cleanText(rawInfo.intermediate),
+        diploma: cleanText(rawInfo.diploma),
+        graduation: cleanText(rawInfo.graduation),
+        graduationCourse: cleanText(rawInfo.graduationCourse),
+        graduationPassOutYear: cleanText(rawInfo.graduationPassOutYear),
+        graduationCollegeAddress: cleanText(rawInfo.graduationCollegeAddress),
+        graduationCollegeWebsiteUrl: cleanText(rawInfo.graduationCollegeWebsiteUrl),
+        bloodGroup: cleanText(rawInfo.bloodGroup),
+        panNumber: cleanText(rawInfo.panNumber),
+        aadharNumber: cleanText(rawInfo.aadharNumber),
+        employeeWorkingStatus: cleanText(rawInfo.employeeWorkingStatus),
+        employeeIdNumber: cleanText(rawInfo.employeeIdNumber),
+        linkdinUrl: cleanText(rawInfo.linkdinUrl),
+        aadharUrl: displayAadharUrl,
+        panUrl: displayPanUrl,
+        imageUrl: displayImageUrl,
+        rawAadharUrl: rawAadharUrl || displayAadharUrl,
+        rawPanUrl: rawPanUrl || displayPanUrl,
+      };
       setEmployeeInfo(data);
 
       const hasData = Boolean(
@@ -541,10 +594,20 @@ const EmployeeProfilePage: React.FC = () => {
         graduationCollegeAddress: cleanText(data.graduationCollegeAddress),
         graduationCollegeWebsiteUrl: cleanText(data.graduationCollegeWebsiteUrl),
         aadharNumber: digits12(data.aadharNumber || ""),
-        aadharUrl: cleanText(data.aadharUrl),
+        aadharUrl: cleanText(rawAadharUrl || data.aadharUrl),
         panNumber: normalizePan(data.panNumber || ""),
-        panUrl: cleanText(data.panUrl),
+        panUrl: cleanText(rawPanUrl || data.panUrl),
       });
+
+      if (displayImageUrl) {
+        setProfile((prev) => ({
+          ...prev,
+          imageUrl: displayImageUrl,
+        }));
+        if (!form.getFieldValue("imageUrl")) {
+          form.setFieldsValue({ imageUrl: displayImageUrl });
+        }
+      }
 
       return hasData;
     } catch (error: any) {
@@ -780,7 +843,13 @@ const EmployeeProfilePage: React.FC = () => {
 
       if (uploadedUrl && /^https?:\/\//i.test(uploadedUrl)) {
         form.setFieldsValue({ [fieldName]: uploadedUrl });
-        setEmployeeInfo((prev) => ({ ...prev, [fieldName]: uploadedUrl }));
+        setEmployeeInfo((prev) => ({
+          ...prev,
+          [fieldName]: uploadedUrl,
+          ...(fileType === "aadhar"
+            ? { rawAadharUrl: uploadedUrl }
+            : { rawPanUrl: uploadedUrl }),
+        }));
       }
 
       // Immediately fetch latest employee info so uploaded document (S3 URL) is loaded and displayed directly
@@ -855,7 +924,7 @@ const EmployeeProfilePage: React.FC = () => {
       designation: designations.join(", "),
       empNumber: mobile,
       employeeId: userId,
-      imageUrl: cleanText(values.imageUrl) || null,
+      imageUrl: cleanS3Url(values.imageUrl || profile.imageUrl || employeeInfo.imageUrl) || null,
       location: cleanText(values.location) || null,
       projectType: projectType.join(", "),
       skills,
@@ -864,7 +933,7 @@ const EmployeeProfilePage: React.FC = () => {
 
     const employeeInfoPayload = {
       aadharNumber: digits12(values.aadharNumber || ""),
-      aadharUrl: cleanText(values.aadharUrl),
+      aadharUrl: cleanS3Url(employeeInfo.rawAadharUrl || values.aadharUrl),
       bloodGroup: cleanText(values.bloodGroup),
       contactNumber: mobile,
       diploma: cleanText(values.diploma),
@@ -880,7 +949,7 @@ const EmployeeProfilePage: React.FC = () => {
       intermediate: cleanText(values.intermediate),
       linkdinUrl: cleanText(values.linkdinUrl),
       panNumber: normalizePan(values.panNumber || ""),
-      panUrl: cleanText(values.panUrl),
+      panUrl: cleanS3Url(employeeInfo.rawPanUrl || values.panUrl),
       ssc: cleanText(values.ssc),
       userId,
     };
@@ -967,8 +1036,9 @@ const EmployeeProfilePage: React.FC = () => {
   };
 
   const profileImage =
-    cleanText(form.getFieldValue("imageUrl")) ||
-    cleanText(profile.imageUrl);
+    validExternalUrl(employeeInfo.imageUrl) ||
+    validExternalUrl(profile.imageUrl) ||
+    validExternalUrl(form.getFieldValue("imageUrl"));
 
   const roles =
     designationValues?.length
@@ -1007,14 +1077,20 @@ const EmployeeProfilePage: React.FC = () => {
     employeeEmail;
 
   const documentAadharUrl =
+    (watchedAadharUrl && watchedAadharUrl !== employeeInfo.rawAadharUrl
+      ? validExternalUrl(watchedAadharUrl)
+      : "") ||
+    validExternalUrl(employeeInfo.aadharUrl) ||
     validExternalUrl(watchedAadharUrl) ||
-    validExternalUrl(form.getFieldValue("aadharUrl")) ||
-    validExternalUrl(employeeInfo.aadharUrl);
+    validExternalUrl(form.getFieldValue("aadharUrl"));
 
   const documentPanUrl =
+    (watchedPanUrl && watchedPanUrl !== employeeInfo.rawPanUrl
+      ? validExternalUrl(watchedPanUrl)
+      : "") ||
+    validExternalUrl(employeeInfo.panUrl) ||
     validExternalUrl(watchedPanUrl) ||
-    validExternalUrl(form.getFieldValue("panUrl")) ||
-    validExternalUrl(employeeInfo.panUrl);
+    validExternalUrl(form.getFieldValue("panUrl"));
 
   const linkedInUrl = validExternalUrl(employeeInfo.linkdinUrl);
   const collegeWebsiteUrl = validExternalUrl(employeeInfo.graduationCollegeWebsiteUrl);

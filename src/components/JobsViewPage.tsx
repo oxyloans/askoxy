@@ -14,6 +14,7 @@ import {
   Mail,
   GraduationCap,
   CalendarX2,
+  ChevronDown,
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -241,35 +242,125 @@ const JobViewPage: React.FC = () => {
   };
 
   const cleanExperience = (experience: string): string => {
-    if (!experience) return "";
+    if (!experience || typeof experience !== "string") return "";
 
-    let cleaned = experience
-      .replace(/\bgood\s+years?\b/gi, "")
-      .replace(/\bprofessional\b/gi, "")
+    const trimmed = experience.trim();
+    const lower = trimmed.toLowerCase();
+
+    // Filter out invalid or null-like placeholders
+    if (
+      !trimmed ||
+      lower === "null" ||
+      lower === "undefined" ||
+      lower === "n/a" ||
+      lower === "none" ||
+      lower === "-" ||
+      lower === "not specified"
+    ) {
+      return "";
+    }
+
+    // 1. Fresher / Entry Level / Internship
+    if (/^freshers?$/i.test(trimmed) || lower.includes("fresher")) {
+      return "Fresher";
+    }
+    if (/^entry[\s-]*level$/i.test(trimmed) || lower.includes("entry level")) {
+      return "Entry Level";
+    }
+    if (/^intern(ship)?$/i.test(trimmed) || lower.includes("intern")) {
+      return "Internship";
+    }
+
+    // 2. Numerical Range: e.g. "0-2", "0 - 2", "0 to 2", "1-3 Yrs", "2 - 5 years"
+    const rangeMatch = trimmed.match(/(\d+)\s*(?:-|to)\s*(\d+)/i);
+    if (rangeMatch) {
+      const min = parseInt(rangeMatch[1], 10);
+      const max = parseInt(rangeMatch[2], 10);
+      return `${min}-${max} Years`;
+    }
+
+    // 3. Plus notation: e.g. "3+", "3 + yrs", "5+ years", "10+ Years"
+    const plusMatch = trimmed.match(/(\d+)\s*\+/);
+    if (plusMatch) {
+      const num = parseInt(plusMatch[1], 10);
+      return `${num}+ Years`;
+    }
+
+    // 4. Months: e.g. "6 months", "0-6 months"
+    if (lower.includes("month")) {
+      const monthRange = trimmed.match(/(\d+)\s*(?:-|to)\s*(\d+)\s*months?/i);
+      if (monthRange) {
+        return `${monthRange[1]}-${monthRange[2]} Months`;
+      }
+      const singleMonth = trimmed.match(/(\d+)\s*months?/i);
+      if (singleMonth) {
+        return `${singleMonth[1]} Months`;
+      }
+    }
+
+    // 5. Single number of years: e.g. "1 year", "2 years", "3 yrs", or just "2"
+    const singleNumMatch =
+      trimmed.match(/^(\d+)\s*(?:years?|yrs?)?$/i) ||
+      trimmed.match(/(\d+)\s*(?:years?|yrs?)/i);
+    if (singleNumMatch) {
+      const num = parseInt(singleNumMatch[1], 10);
+      if (num === 0) return "Fresher";
+      return num === 1 ? "1 Year" : `${num} Years`;
+    }
+
+    // 6. Senior / Junior
+    if (/^senior$/i.test(trimmed)) return "Senior";
+    if (/^junior$/i.test(trimmed)) return "Junior";
+
+    // 7. General cleanup for any other valid descriptive experience string
+    const cleaned = trimmed
       .replace(/\bexperience\b/gi, "")
+      .replace(/\bprofessional\b/gi, "")
+      .replace(/\bgood\b/gi, "")
       .replace(/[,\s]+/g, " ")
       .trim();
 
-    const validPatterns = [
-      /^\d+-\d+\s*years?$/i,
-      /^\d+\s*years?$/i,
-      /^\d+\+\s*years?$/i,
-      /^fresher$/i,
-      /^entry\s*level$/i,
-      /^senior$/i,
-      /^junior$/i,
-    ];
-
-    const isValid = validPatterns.some((pattern) => pattern.test(cleaned));
-
-    if (isValid) {
-      if (/^\d+$/.test(cleaned)) {
-        return `${cleaned} years`;
-      }
-      return cleaned;
+    if (cleaned.length > 0 && cleaned.length < 30) {
+      return cleaned
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
     }
 
-    return "";
+    return trimmed;
+  };
+
+  const sortExperience = (a: string, b: string): number => {
+    const getExpRank = (exp: string): number => {
+      const lower = exp.toLowerCase();
+      if (lower === "fresher" || lower.includes("fresher")) return -2;
+      if (lower === "internship" || lower.includes("intern")) return -1;
+      if (lower === "entry level") return 0;
+      if (lower.includes("month")) return 0.5;
+
+      const match = exp.match(/(\d+)/);
+      if (match) {
+        const minVal = parseInt(match[1], 10);
+        const range = exp.match(/(\d+)\s*-\s*(\d+)/);
+        if (range) {
+          return minVal + parseInt(range[2], 10) * 0.01;
+        }
+        if (exp.includes("+")) {
+          return minVal + 0.5;
+        }
+        return minVal;
+      }
+
+      return 999;
+    };
+
+    const rankA = getExpRank(a);
+    const rankB = getExpRank(b);
+
+    if (rankA !== rankB) {
+      return rankA - rankB;
+    }
+    return a.localeCompare(b);
   };
 
   const uniqueLocations = Array.from(
@@ -290,7 +381,12 @@ const JobViewPage: React.FC = () => {
         .map((job) => cleanExperience(job.experience?.trim() || ""))
         .filter((exp) => exp && exp.length > 0),
     ),
-  ).sort();
+  ).sort(sortExperience);
+
+  const experienceOptions =
+    uniqueExperience.length > 0
+      ? uniqueExperience
+      : ["Fresher", "0-1 Years", "1-3 Years", "3-5 Years", "5+ Years"];
 
   const uniqueIndustries = Array.from(
     new Set([
@@ -532,10 +628,51 @@ const JobViewPage: React.FC = () => {
 
     if (filters.experience) {
       filtered = filtered.filter((job) => {
-        const cleanedJobExperience = cleanExperience(job.experience || "");
-        return cleanedJobExperience
-          .toLowerCase()
-          .includes(filters.experience.toLowerCase());
+        if (!job.experience) return false;
+        const cleanedJobExperience = cleanExperience(job.experience);
+        const filterVal = filters.experience.toLowerCase();
+        const cleanLower = cleanedJobExperience.toLowerCase();
+        const rawLower = job.experience.toLowerCase();
+
+        if (
+          cleanLower === filterVal ||
+          cleanLower.includes(filterVal) ||
+          filterVal.includes(
+            cleanLower && cleanLower.length > 2 ? cleanLower : "___",
+          ) ||
+          rawLower.includes(filterVal)
+        ) {
+          return true;
+        }
+
+        // Check numerical range overlap (e.g., filter "1-3 Years" matches "2 Years", "1-2 Years")
+        const parseRange = (text: string) => {
+          const range = text.match(/(\d+)\s*(?:-|to)\s*(\d+)/i);
+          if (range) {
+            return {
+              min: parseInt(range[1], 10),
+              max: parseInt(range[2], 10),
+            };
+          }
+          const plus = text.match(/(\d+)\s*\+/);
+          if (plus) {
+            return { min: parseInt(plus[1], 10), max: 99 };
+          }
+          const single = text.match(/(\d+)/);
+          if (single) {
+            const v = parseInt(single[1], 10);
+            return { min: v, max: v };
+          }
+          return null;
+        };
+
+        const fRange = parseRange(filters.experience);
+        const jRange = parseRange(job.experience);
+        if (fRange && jRange) {
+          return jRange.min <= fRange.max && jRange.max >= fRange.min;
+        }
+
+        return false;
       });
     }
 
@@ -1249,7 +1386,7 @@ const JobViewPage: React.FC = () => {
         <div className="mb-6 p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-blue-500" />
+              <Building2 className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-blue-500 pointer-events-none" />
 
               <select
                 value={currentCompany}
@@ -1267,7 +1404,7 @@ const JobViewPage: React.FC = () => {
                 className="
       w-full appearance-none cursor-pointer rounded-lg
       border-2 border-blue-500 bg-white
-      py-2 pl-8 pr-4 font-medium text-gray-800
+      py-2 pl-9 pr-9 font-medium text-gray-800
       shadow-[0_0_0_3px_rgba(59,130,246,0.18)]
       animate-pulse transition-colors
       hover:border-blue-600
@@ -1284,21 +1421,22 @@ const JobViewPage: React.FC = () => {
                     </option>
                   ))}
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4 pointer-events-none" />
             </div>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <input
                 type="text"
-                placeholder=" Search jobs, skills..."
+                placeholder="Search jobs, skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 hover:border-blue-300 transition-colors"
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 hover:border-blue-300 transition-colors"
               />
             </div>
             {/* AI Jobs Button*/}
             <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <button
                 onClick={() => {
                   const token = localStorage.getItem("accessToken");
@@ -1310,7 +1448,7 @@ const JobViewPage: React.FC = () => {
 
                   navigate(`${prefix}/default/AI Jobs`);
                 }}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg 
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg 
     text-left text-gray-800 bg-white 
     hover:border-blue-300 focus:ring-2 focus:ring-blue-500 
     focus:border-transparent transition-colors"
@@ -1319,45 +1457,47 @@ const JobViewPage: React.FC = () => {
               </button>
             </div>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <select
                 value={filters.location}
                 onChange={(e) => handleFilterChange("location", e.target.value)}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
+                className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
-                <option value=""> All Locations</option>
+                <option value="">All Locations</option>
                 {uniqueLocations.map((loc) => (
                   <option key={loc} value={loc}>
                     {loc}
                   </option>
                 ))}
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
             </div>
 
             <div className="relative">
-              <Clock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Clock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <select
                 value={filters.experience}
                 onChange={(e) =>
                   handleFilterChange("experience", e.target.value)
                 }
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
+                className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
-                <option value=""> All Experience</option>
-                {uniqueExperience.map((exp) => (
+                <option value="">All Experience</option>
+                {experienceOptions.map((exp) => (
                   <option key={exp} value={exp}>
                     {exp}
                   </option>
                 ))}
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
             </div>
 
             <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <select
                 value={filters.industry}
                 onChange={(e) => handleFilterChange("industry", e.target.value)}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
+                className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
                 <option value="">All Industries</option>
                 {/* <option value="AI Jobs">AI Jobs</option> */}
@@ -1369,6 +1509,7 @@ const JobViewPage: React.FC = () => {
                     </option>
                   ))}
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
             </div>
 
             {/* <div className="relative">

@@ -60,13 +60,14 @@ const handleAuthError = (
   if (err.response?.status === 401) {
     const existing = sessionStorage.getItem("redirectPath");
 
-    // ✅ Never store auth pages as redirect target
+    // ✅ Never store auth pages or root "/" as redirect target
     const current = window.location.pathname + window.location.search;
     const isAuthPage =
       current.includes("whatsapplogin") || current.includes("whatsappregister");
+    const isRoot = current === "/" || current === "";
 
-    // ✅ Only write redirectPath if missing AND current is not an auth page
-    if ((!existing || existing.trim() === "") && !isAuthPage) {
+    // ✅ Only write redirectPath if missing AND current is not an auth page or root
+    if ((!existing || existing.trim() === "" || existing === "/") && !isAuthPage && !isRoot) {
       sessionStorage.setItem("redirectPath", current);
     }
 
@@ -83,11 +84,14 @@ const handleLoginRedirect = (
   navigate: (path: string) => void,
   redirectPath?: string,
 ) => {
-  if (!sessionStorage.getItem("redirectPath")) {
-    sessionStorage.setItem(
-      "redirectPath",
-      redirectPath || window.location.pathname,
-    );
+  const target = redirectPath || window.location.pathname;
+  if (
+    target &&
+    target !== "/" &&
+    !target.includes("whatsapplogin") &&
+    !target.includes("whatsappregister")
+  ) {
+    sessionStorage.setItem("redirectPath", target);
   }
   // ✅ Preserve correct return context based on user type
   const primaryType =
@@ -240,13 +244,21 @@ const WhatsappLogin: React.FC = () => {
         if (userData && userData.userId) {
           // localStorage.setItem("userId", userData.userId); // Store userId (commented as per snippet)
           console.log("redirectPath", sessionStorage.getItem("redirectPath"));
-         const redirectPath =
-  sessionStorage.getItem("redirectPath") ||
-  (sessionStorage.getItem("fromAISTore") === "true"
-    ? "/bharath-aistore"
-    : sessionStorage.getItem("fromStudyAbroad") === "true"
-    ? "/studyabroad"
-    : "/main/dashboard/home");
+          const rawRedirectGoogle = sessionStorage.getItem("redirectPath");
+          const isValidRedirectGoogle =
+            rawRedirectGoogle &&
+            rawRedirectGoogle.trim() !== "" &&
+            rawRedirectGoogle !== "/" &&
+            !rawRedirectGoogle.includes("whatsapplogin") &&
+            !rawRedirectGoogle.includes("whatsappregister");
+
+          const redirectPath =
+            (isValidRedirectGoogle ? rawRedirectGoogle : null) ||
+            (sessionStorage.getItem("fromAISTore") === "true"
+              ? "/bharath-aistore"
+              : sessionStorage.getItem("fromStudyAbroad") === "true"
+              ? "/studyabroad"
+              : "/main/dashboard/home");
           sessionStorage.removeItem("pendingGoogleAuth");
           // sessionStorage.removeItem("redirectPath");
           sessionStorage.removeItem("receiveNotifications");
@@ -645,26 +657,31 @@ const WhatsappLogin: React.FC = () => {
         return;
       }
 
+      const returnedAccessToken =
+        response.data?.accessToken || (response.data as any)?.mobileNumber;
+      const returnedRefreshToken =
+        response.data?.refreshToken || response.data?.mobileOtpSession;
+
       if (
-        response.data?.accessToken &&
+        returnedAccessToken &&
         response.data?.userId &&
         loginAttemptRef.current === currentAttempt
       ) {
-        setCustomerAccessToken(response.data.accessToken);
+        setCustomerAccessToken(returnedAccessToken);
         // customerApi prefers the Redux token over the cookie. Replace any token
         // left in the in-memory store before requesting the newly logged-in user.
-        store.dispatch(updateAccessToken(response.data.accessToken));
+        store.dispatch(updateAccessToken(returnedAccessToken));
 
-        if (response.data.refreshToken) {
-          setRefreshToken(response.data.refreshToken);
-          store.dispatch(updateRefreshToken(response.data.refreshToken));
+        if (returnedRefreshToken) {
+          setRefreshToken(returnedRefreshToken);
+          store.dispatch(updateRefreshToken(returnedRefreshToken));
         }
 
         localStorage.setItem("primaryType", primaryType);
-        localStorage.setItem("accessToken", response.data.accessToken);
-        localStorage.setItem("token", response.data.accessToken);
+        localStorage.setItem("accessToken", returnedAccessToken);
+        localStorage.setItem("token", returnedAccessToken);
 
-        const userData = await fetchUserDetails(response.data.accessToken);
+        const userData = await fetchUserDetails(returnedAccessToken);
 
         if (userData?.userId && loginAttemptRef.current === currentAttempt) {
           if (otpMethod === "whatsapp") {
@@ -687,13 +704,21 @@ const WhatsappLogin: React.FC = () => {
           redirectTimerRef.current = setTimeout(() => {
             if (loginAttemptRef.current !== currentAttempt) return;
 
+            const rawRedirect = sessionStorage.getItem("redirectPath");
+            const isValidRedirect =
+              rawRedirect &&
+              rawRedirect.trim() !== "" &&
+              rawRedirect !== "/" &&
+              !rawRedirect.includes("whatsapplogin") &&
+              !rawRedirect.includes("whatsappregister");
+
             const redirectPath =
-  sessionStorage.getItem("redirectPath") ||
-  (sessionStorage.getItem("fromAISTore") === "true"
-    ? "/bharath-aistore"
-    : sessionStorage.getItem("fromStudyAbroad") === "true"
-    ? "/studyabroad"
-    : "/main/dashboard/home");
+              (isValidRedirect ? rawRedirect : null) ||
+              (sessionStorage.getItem("fromAISTore") === "true"
+                ? "/bharath-aistore"
+                : sessionStorage.getItem("fromStudyAbroad") === "true"
+                ? "/studyabroad"
+                : "/main/dashboard/home");
 
             navigate(redirectPath, { replace: true });
 

@@ -22,6 +22,8 @@ const DashboardLayout = () => {
   const [isMobile, setIsMobile] = useState(false);
   const { navigate, base, pathname } = useOxyNavigate();
   const primaryType = localStorage.getItem("primaryType") || localStorage.getItem("admin_primaryType");
+  const pType = (primaryType || "").toUpperCase().trim();
+  const isAdmin = pType === "HELPDESKADMIN" || pType === "HELPDESKSUPERADMIN";
   const siderRef = useRef(null);
  
   useEffect(() => {
@@ -52,7 +54,10 @@ const DashboardLayout = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    sessionStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    sessionStorage.removeItem("refreshToken");
     localStorage.removeItem("primaryType");
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
@@ -72,7 +77,7 @@ const DashboardLayout = () => {
   };
 
   const getMenuItems = () => {
-    if (primaryType === "HELPDESKADMIN" || primaryType === "HELPDESKSUPERADMIN") {
+    if (isAdmin) {
       return [
         {
           key: "/oxyvisit/dashboard/categories",
@@ -127,6 +132,12 @@ const DashboardLayout = () => {
 
   return (
     <Layout style={{ minHeight: "100vh", width: "100%" }}>
+      {isMobile && !collapsed && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[1000] transition-opacity"
+          onClick={() => setCollapsed(true)}
+        />
+      )}
       <Sider
         ref={siderRef}
         trigger={null}
@@ -135,7 +146,18 @@ const DashboardLayout = () => {
         breakpoint="lg"
         collapsedWidth={isMobile ? 0 : 80}
         width={240}
-        style={{ background: "#1a202c" }}
+        style={{
+          background: "#1a202c",
+          ...(isMobile ? {
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 1001,
+            height: '100vh',
+            boxShadow: collapsed ? 'none' : '4px 0 16px rgba(0,0,0,0.4)',
+          } : {})
+        }}
       >
         <div
           className="flex items-center justify-between h-16 px-4"
@@ -144,11 +166,12 @@ const DashboardLayout = () => {
           <div
             className="flex items-center cursor-pointer select-none"
             onClick={() => {
-              if (primaryType === "HELPDESKADMIN" || primaryType === "HELPDESKSUPERADMIN") {
+              if (isAdmin) {
                 navigate("/oxyvisit/dashboard/categories");
               } else {
                 navigate("/oxyvisit/dashboard");
               }
+              if (isMobile) setCollapsed(true);
             }}
             title="Go to Dashboard"
           >
@@ -185,7 +208,10 @@ const DashboardLayout = () => {
           theme="dark"
           mode="inline"
           selectedKeys={getSelectedKey()}
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => {
+            navigate(key);
+            if (isMobile) setCollapsed(true);
+          }}
           items={getMenuItems()}
           style={{ background: "#1a202c", borderRight: 0 }}
           className="custom-menu"
@@ -200,7 +226,7 @@ const DashboardLayout = () => {
             position: "fixed",
             top: 0,
             right: 0,
-            left: collapsed ? (isMobile ? 0 : 80) : 240,
+            left: isMobile ? 0 : (collapsed ? 80 : 240),
             zIndex: 998,
             transition: "left 0.2s",
           }}
@@ -214,8 +240,7 @@ const DashboardLayout = () => {
             />
             <div className="flex items-center gap-2 md:gap-4">
               <span className="text-xs md:text-sm text-gray-600 hidden sm:inline">
-                {primaryType === "HELPDESKADMIN" ||
-                primaryType === "HELPDESKSUPERADMIN"
+                {isAdmin
                   ? "Admin Panel"
                   : localStorage.getItem('userName') || "User Panel"}
               </span>

@@ -3,6 +3,8 @@ import { store } from "../store";
 import { updateAccessToken, updateRefreshToken, logout } from "../store/authSlice";
 import {
   getRefreshToken,
+  setRefreshToken,
+  setCustomerAccessToken,
   getEmployeeRefreshToken,
   setEmployeeAccessToken,
   setEmployeeRefreshToken,
@@ -52,20 +54,24 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 
       const data = await response.json();
 
-      if (data.mobileNumber) {
-        store.dispatch(updateAccessToken(data.mobileNumber));
+      const newAccessToken = data.accessToken || data.mobileNumber;
+      const newRefreshToken = data.refreshToken || data.mobileOtpSession;
+
+      if (!newAccessToken || typeof newAccessToken !== "string") {
+        throw new Error("Refresh token returned no access token");
       }
 
-      if (data.mobileOtpSession) {
-        store.dispatch(updateRefreshToken(data.mobileOtpSession));
+      setCustomerAccessToken(newAccessToken);
+      store.dispatch(updateAccessToken(newAccessToken));
+
+      if (newRefreshToken && typeof newRefreshToken === "string") {
+        setRefreshToken(newRefreshToken);
+        store.dispatch(updateRefreshToken(newRefreshToken));
       }
 
       return true;
     } catch {
       store.dispatch(logout());
-      const currentPath = window.location.pathname + window.location.search;
-      sessionStorage.setItem("redirectPath", currentPath);
-      window.location.href = "/whatsapplogin";
       return false;
     } finally {
       pendingRefresh = null;
