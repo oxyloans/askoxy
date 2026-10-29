@@ -23,6 +23,9 @@ import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { Button, message, Select } from "antd";
 import JobApplicationModal from "./JobApplyModal";
 import ResumeUploadModal from "./ResumeUploadModal";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 
 interface Job {
   id: string;
@@ -61,6 +64,13 @@ type FilterKey =
   | "skills";
 
 const { Option } = Select;
+
+const normalizeDescription = (text: string) =>
+  (text || "").replace(/\\n/g, "\n").replace(/\r\n/g, "\n");
+
+const looksLikeMarkdown = (text: string) =>
+  /^#{1,6}\s|\*\*.+\*\*|^\s*[-*]\s+|^>\s|\[.+\]\(.+\)/m.test(text);
+
 
 const JobViewPage: React.FC = () => {
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -1264,14 +1274,45 @@ const JobViewPage: React.FC = () => {
               <h2 className="text-[17px] font-bold text-gray-900 mb-4 tracking-tight">
                 Job description
               </h2>
-              <div
-                className="prose max-w-none text-gray-700 leading-relaxed text-[15px] max-h-[500px] overflow-y-auto pr-4 custom-scrollbar whitespace-pre-line"
-                dangerouslySetInnerHTML={{
-                  __html: autoFormatDescription(
-                    formatDescription(job.description),
-                  ),
-                }}
-              />
+              {(() => {
+  const desc = normalizeDescription(job.description);
+
+  return looksLikeMarkdown(desc) ? (
+    <div className="max-w-none text-gray-700 leading-relaxed text-[15px] max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        components={{
+          h1: (p) => <h1 className="text-2xl font-bold text-gray-900 mt-4 mb-2" {...p} />,
+          h2: (p) => <h2 className="text-xl font-bold text-gray-900 mt-5 mb-2" {...p} />,
+          h3: (p) => <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-1" {...p} />,
+          p:  (p) => <p className="mb-3" {...p} />,
+          ul: (p) => <ul className="list-disc pl-6 mb-3 space-y-1" {...p} />,
+          ol: (p) => <ol className="list-decimal pl-6 mb-3 space-y-1" {...p} />,
+          strong: (p) => <strong className="font-semibold text-gray-900" {...p} />,
+          hr: () => <hr className="my-4 border-gray-200" />,
+          blockquote: (p) => (
+            <blockquote className="border-l-4 border-indigo-300 bg-indigo-50 text-gray-700 pl-4 py-2 my-3 rounded-r" {...p} />
+          ),
+          a: (p) => (
+            <a className="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer" {...p} />
+          ),
+        }}
+      >
+        {desc}
+      </ReactMarkdown>
+    </div>
+  ) : (
+    // old plain-text jobs keep the existing behaviour
+    <div
+      className="prose max-w-none text-gray-700 leading-relaxed text-[15px] max-h-[500px] overflow-y-auto pr-4 custom-scrollbar whitespace-pre-line"
+      dangerouslySetInnerHTML={{
+        __html: autoFormatDescription(
+          formatDescription(job.description),
+        ),
+      }}
+    />
+  );
+})()}
             </section>
           )}
 

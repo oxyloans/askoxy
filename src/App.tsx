@@ -67,6 +67,8 @@ import EventDetails from "./AskoxyAdmin/EventDetails";
 import OxyLoansOverviewPage from "./components/OxyLoansOverview";
 import IRDAINewsPage from "./OxyNews/pages/IRDAINewsPage";
 import JobProgramDashboard from "./components/JobProgramDashboard";
+// import NineDaysJobProgramPlan from "./Jobplan/NineDaysJobProgramPlan";
+import TopModelsByTask, { ModelRankPage, ProviderRankPage, RankingsRoutes } from "./OxyNews/components/TopModelsByTask";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -360,6 +362,7 @@ const LeagueJourneysAdmin = lazy(
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
+
 const Landingpage = lazy(() => import("./components/Landingpage"));
 // const Freerudraksha = lazy(() => import("./components/Services/Freerudraksh"));
 const TermsAndConditions = lazy(() => import("./kart/TermsAndConditions"));
@@ -1099,6 +1102,10 @@ const App: React.FC = () => {
               <Route path="/shop-form" element={<ShopFormPage />} />
               <Route path="/shop-list" element={<ShopListPage />} />
               <Route path="/shop-edit/:id" element={<ShopEditForm />} />
+              {/* <Route
+  path="/9daysjobprogramplan"
+  element={<NineDaysJobProgramPlan />}
+/> */}
               <Route path="/90dayjobplan" element={<JobTraining90DaysPage />} />
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
@@ -1142,7 +1149,36 @@ const App: React.FC = () => {
                 />
                 <Route path="/radhai-news" element={<RadhaiNewsPage />} />
                 <Route path="/rbi-news" element={<RBINewsPage />} />
+
                 <Route path="/irdai-news" element={<IRDAINewsPage />} />
+
+                <Route
+                  path="/rankings"
+                  element={
+                    <div
+                      style={{
+                        maxWidth: 1200,
+                        margin: "0 auto",
+                        padding: "0 24px 40px",
+                      }}
+                    >
+                      <TopModelsByTask basePath="/rankings" />
+                    </div>
+                  }
+                />
+                <Route
+                  path="/rankings/:provider"
+                  element={<ProviderRankPage basePath="/rankings" />}
+                />
+                <Route
+                  path="/rankings/:provider/:model"
+                  element={<ModelRankPage basePath="/rankings" />}
+                />
+                <Route
+                  path="/rankings/:provider/:model/*"
+                  element={<ModelRankPage basePath="/rankings" />}
+                />
+                <Route path="/rankings/*" element={<RankingsRoutes />} />
               </Route>
               {/* OXY BFSAI Engine — full layout with fixed header */}
               <Route element={<FinvibeLayout />}>
@@ -1340,26 +1376,56 @@ const App: React.FC = () => {
               {/* ===================================================== */}
               <Route path="/whatsapplogin" element={<WhatsappLogin />} />
               <Route path="/whatsappregister" element={<WhatsappRegister />} />
-<Route path="/oxyvisit" element={<OxyVisitLogin />} />
-              <Route path="/oxyvisit/login" element={<Navigate to="/oxyvisit" replace />} />
+              {/* ===================================================== */}
+              {/* ✅ OXYVISIT ROUTES */}
+              {/* ===================================================== */}
+              <Route path="/oxyvisit" element={<OxyVisitLogin />} />
+              <Route
+                path="/oxyvisit/login"
+                element={<Navigate to="/oxyvisit" replace />}
+              />
               <Route path="/oxyvisit/register" element={<OxyVisitRegister />} />
-              <Route path="/oxyvisit/unauthorized" element={<OxyVisitUnauthorized />} />
+              <Route
+                path="/oxyvisit/unauthorized"
+                element={<OxyVisitUnauthorized />}
+              />
 
               <Route
                 path="/oxyvisit/dashboard"
                 element={
-                  <OxyVisitProtectedRoute allowedRoles={["EMPLOYEE", "HELPDESKADMIN", "HELPDESKSUPERADMIN"]}>
+                  <OxyVisitProtectedRoute
+                    allowedRoles={[
+                      "OXYVISIT",
+                      "HELPDESKADMIN",
+                      "HELPDESKSUPERADMIN",
+                    ]}
+                  >
                     <OxyVisitDashboardLayout />
                   </OxyVisitProtectedRoute>
                 }
               >
                 <Route index element={<OxyVisitDashboardIndex />} />
-                <Route path="categories" element={<OxyVisitCategoriesManagement />} />
+                <Route
+                  path="categories"
+                  element={<OxyVisitCategoriesManagement />}
+                />
                 <Route path="visits" element={<OxyVisitVisitsManagement />} />
-                <Route path="visits/:categoryId" element={<OxyVisitVisitsManagement />} />
-                <Route path="user-categories" element={<OxyVisitUserCategories />} />
-                <Route path="user-visits/:categoryId" element={<OxyVisitUserVisits />} />
-                <Route path="user-all-visits" element={<OxyVisitUserAllVisits />} />
+                <Route
+                  path="visits/:categoryId"
+                  element={<OxyVisitVisitsManagement />}
+                />
+                <Route
+                  path="user-categories"
+                  element={<OxyVisitUserCategories />}
+                />
+                <Route
+                  path="user-visits/:categoryId"
+                  element={<OxyVisitUserVisits />}
+                />
+                <Route
+                  path="user-all-visits"
+                  element={<OxyVisitUserAllVisits />}
+                />
               </Route>
               <Route path="/partner" element={<OxyLoansOverviewPage />} />
               {/* ===================================================== */}
@@ -2103,19 +2169,43 @@ const App: React.FC = () => {
                 <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
-                <Route path="dashboard/addproduct-service" element={<ProductServiceManager />} />
-                <Route path="/main/dashboard/addproduct-service" element={<ProductServiceManager />} />
-                <Route path="dashboard/my-products-services" element={<MyProductsServices />} />
-                <Route path="/main/dashboard/my-products-services" element={<MyProductsServices />} />
-                <Route path="dashboard/my-companies" element={<MyCompanies />} />
-                <Route path="/main/dashboard/my-companies" element={<MyCompanies />} />
+                <Route
+                  path="dashboard/addproduct-service"
+                  element={<ProductServiceManager />}
+                />
+                <Route
+                  path="/main/dashboard/addproduct-service"
+                  element={<ProductServiceManager />}
+                />
+                <Route
+                  path="dashboard/my-products-services"
+                  element={<MyProductsServices />}
+                />
+                <Route
+                  path="/main/dashboard/my-products-services"
+                  element={<MyProductsServices />}
+                />
+                <Route
+                  path="dashboard/my-companies"
+                  element={<MyCompanies />}
+                />
+                <Route
+                  path="/main/dashboard/my-companies"
+                  element={<MyCompanies />}
+                />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
                 <Route
                   path="dashboard/leaguejourneys"
                   element={<LeagueJourneysPage />}
                 />
-                <Route path="partner/journeys" element={<OxyLoansIntegration />} />
-                <Route path="partner/referral-network" element={<OxyLoansReferralNetwork />} />
+                <Route
+                  path="partner/journeys"
+                  element={<OxyLoansIntegration />}
+                />
+                <Route
+                  path="partner/referral-network"
+                  element={<OxyLoansReferralNetwork />}
+                />
                 <Route path="partner/summary" element={<OxyLoansSummary />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
@@ -2356,18 +2446,9 @@ const App: React.FC = () => {
                   path="sudheervakkalagadda"
                   element={<SudheerVakkalagadda />}
                 />
-                <Route
-                  path="amfireports"
-                  element={<AmfiReports />}
-                />
-                <Route
-                  path="radha-linkedin"
-                  element={<RadhaLinkedin />}
-                />
-                <Route
-                  path="naukri-records"
-                  element={<SaNaukariRecords />}
-                />
+                <Route path="amfireports" element={<AmfiReports />} />
+                <Route path="radha-linkedin" element={<RadhaLinkedin />} />
+                <Route path="naukri-records" element={<SaNaukariRecords />} />
                 <Route
                   path="tahsildar-records"
                   element={<TahsildarRecords />}
@@ -2376,10 +2457,7 @@ const App: React.FC = () => {
                   path="active-membership"
                   element={<ActiveMembership />}
                 />
-                <Route
-                  path="activemembership"
-                  element={<ActiveMembership />}
-                />
+                <Route path="activemembership" element={<ActiveMembership />} />
                 <Route
                   path="ams-lost-customer-data"
                   element={<AmsLostCustomerData />}
@@ -2388,30 +2466,12 @@ const App: React.FC = () => {
                   path="amslostcustomerdata"
                   element={<AmsLostCustomerData />}
                 />
-                <Route
-                  path="saksham-data"
-                  element={<SakshamData />}
-                />
-                <Route
-                  path="sakshamdata"
-                  element={<SakshamData />}
-                />
-                <Route
-                  path="saksham"
-                  element={<SakshamData />}
-                />
-                <Route
-                  path="tie-data"
-                  element={<TieData />}
-                />
-                <Route
-                  path="tiedata"
-                  element={<TieData />}
-                />
-                <Route
-                  path="tie"
-                  element={<TieData />}
-                />
+                <Route path="saksham-data" element={<SakshamData />} />
+                <Route path="sakshamdata" element={<SakshamData />} />
+                <Route path="saksham" element={<SakshamData />} />
+                <Route path="tie-data" element={<TieData />} />
+                <Route path="tiedata" element={<TieData />} />
+                <Route path="tie" element={<TieData />} />
                 <Route
                   path="two-years-service-data"
                   element={<TwoYearsServiceData />}
@@ -2420,58 +2480,19 @@ const App: React.FC = () => {
                   path="twoyearsservicedata"
                   element={<TwoYearsServiceData />}
                 />
-                <Route
-                  path="unknown-data"
-                  element={<UnknownData />}
-                />
-                <Route
-                  path="unknow-data"
-                  element={<UnknownData />}
-                />
-                <Route
-                  path="unknowndata"
-                  element={<UnknownData />}
-                />
-                <Route
-                  path="naukri-ras"
-                  element={<NaukriRasData />}
-                />
-                <Route
-                  path="naukriras"
-                  element={<NaukriRasData />}
-                />
-                <Route
-                  path="k2k-fintech"
-                  element={<K2kFintechData />}
-                />
-                <Route
-                  path="k2kfintech"
-                  element={<K2kFintechData />}
-                />
-                <Route
-                  path="nbfc-data"
-                  element={<NbfcData />}
-                />
-                <Route
-                  path="nbfcdata"
-                  element={<NbfcData />}
-                />
-                <Route
-                  path="nbfc"
-                  element={<NbfcData />}
-                />
-                <Route
-                  path="wam-data"
-                  element={<WamData />}
-                />
-                <Route
-                  path="wamdata"
-                  element={<WamData />}
-                />
-                <Route
-                  path="wam"
-                  element={<WamData />}
-                />
+                <Route path="unknown-data" element={<UnknownData />} />
+                <Route path="unknow-data" element={<UnknownData />} />
+                <Route path="unknowndata" element={<UnknownData />} />
+                <Route path="naukri-ras" element={<NaukriRasData />} />
+                <Route path="naukriras" element={<NaukriRasData />} />
+                <Route path="k2k-fintech" element={<K2kFintechData />} />
+                <Route path="k2kfintech" element={<K2kFintechData />} />
+                <Route path="nbfc-data" element={<NbfcData />} />
+                <Route path="nbfcdata" element={<NbfcData />} />
+                <Route path="nbfc" element={<NbfcData />} />
+                <Route path="wam-data" element={<WamData />} />
+                <Route path="wamdata" element={<WamData />} />
+                <Route path="wam" element={<WamData />} />
                 <Route
                   path="kukatpallyassignedData"
                   element={<KukatpallyAssignedDataPage />}

@@ -6,8 +6,19 @@ import { getCurrentUser } from '../../utils/user';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { applyPlugin } from 'jspdf-autotable';
 import BASE_URL from '../../core/config/Config';
+
+// Attach autoTable plugin to jsPDF prototype immediately
+try {
+  if (typeof applyPlugin === 'function') {
+    applyPlugin(jsPDF);
+  } else if (autoTable && typeof autoTable.applyPlugin === 'function') {
+    autoTable.applyPlugin(jsPDF);
+  }
+} catch (e) {
+  console.warn('Could not apply autoTable plugin:', e);
+}
 
 const API_BASE = `${BASE_URL}/ai-service`;
 
@@ -110,62 +121,107 @@ const UserDashboard = () => {
 
   const downloadTodayReport = async () => {
     try {
-      const user = getCurrentUser();
-      const currentUserId = user.id || localStorage.getItem('userId');
-      const isValidUuid = typeof currentUserId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserId);
-      const url = isValidUuid ? `${API_BASE}/visits?userId=${currentUserId}` : `${API_BASE}/visits`;
-      const response = await fetch(url);
+      const userId = localStorage.getItem('userId') || getCurrentUser().id || '';
+      let visits = [];
 
-      const visits = await response.json();
-      const list = Array.isArray(visits) ? visits : (visits?.data || []);
+      try {
+        const response = await fetch(`${API_BASE}/visits?userId=${userId}`);
+        const resJson = await response.json();
+        visits = Array.isArray(resJson) ? resJson : (resJson?.data || []);
+      } catch (fetchErr) {
+        console.warn('Direct fetch failed, falling back to state/axios:', fetchErr);
+      }
 
-      // filter today visits
-      const todayVisits = list.filter(visit => isToday(visit.createdAt || visit.createdDate));
+      // Fallback to already loaded user visits if direct fetch returned empty
+      if ((!visits || visits.length === 0) && userVisits && userVisits.length > 0) {
+        visits = userVisits;
+      }
 
-      if (todayVisits.length === 0) {
+      // Filter today visits using both the old format and isToday matcher
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      const todayVisits = visits.filter(visit => {
+        const dateField = visit.createdAt || visit.createdDate;
+        if (!dateField) return false;
+        const dateStr = String(dateField).trim();
+        const visitDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+        return visitDate === today || visitDate === todayLocal || isToday(dateField);
+      });
+
+      // Select target visits for report:
+      // If table has filtered visits (e.g. today filter or search), use filteredVisits.
+      // Otherwise, if today's visits exist, use todayVisits.
+      // Otherwise, use all available visits from the table.
+      let targetVisits = [];
+      if (filterTodayOnly) {
+        targetVisits = (filteredVisits && filteredVisits.length > 0) ? filteredVisits : todayVisits;
+      } else if (filteredVisits && filteredVisits.length > 0) {
+        targetVisits = filteredVisits;
+      } else if (todayVisits.length > 0) {
+        targetVisits = todayVisits;
+      } else {
+        targetVisits = visits;
+      }
+
+      if (!targetVisits || targetVisits.length === 0) {
         Swal.fire({
           icon: 'info',
           title: 'No Data',
-          text: 'No visits found for today.',
+          text: 'No visits available to download.',
         });
         return;
       }
 
-      const now = new Date();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
       const doc = new jsPDF('l', 'mm', 'a4');
 
-      const userName = (todayVisits.length && todayVisits[0].userName)
-        ? todayVisits[0].userName
-        : (localStorage.getItem('userName') || 'User');
+      const employeeName = (targetVisits.length && (targetVisits[0].userName || targetVisits[0].name))
+        ? (targetVisits[0].userName || targetVisits[0].name)
+        : (localStorage.getItem('userName') || 'Employee');
+
+      const isTodayOnly = filterTodayOnly || (targetVisits.length > 0 && targetVisits.every(v => isToday(v.createdAt || v.createdDate)));
 
       // Header
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text('STORE VISIT REPORT', 148, 18, { align: 'center' });
+      doc.text(isTodayOnly ? 'STORE VISIT REPORT - TODAY' : 'STORE VISIT REPORT', 148, 18, { align: 'center' });
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`User: ${userName}`, 14, 32);
-      doc.text(`Date: ${now.toLocaleDateString()}`, 14, 40);
-      doc.text(`Today's Visits: ${todayVisits.length}`, 14, 48);
+      doc.text(`Employee: ${employeeName}`, 14, 32);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 40);
+      doc.text(`Total Visits: ${targetVisits.length}`, 14, 48);
 
       // Table data
-      const tableRows = todayVisits.map((v, index) => [
-        index + 1,
-        v.categoryName || '-',
-        v.name || '-',
-        v.contactNumber || '-',
-        v.location || '-',
-        v.description || '-',
-        v.createdAt ? `${new Date(v.createdAt).toLocaleDateString()}\n${new Date(v.createdAt).toLocaleTimeString()}` : '-'
-      ]);
+      const tableRows = targetVisits.map((v, index) => {
+        let visitTime = '-';
+        const rawDate = v.createdAt || v.createdDate;
+        if (rawDate) {
+          try {
+            const dt = new Date(rawDate);
+            if (!isNaN(dt.getTime())) {
+              visitTime = `${dt.toLocaleDateString()}\n${dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+              visitTime = String(rawDate);
+            }
+          } catch {
+            visitTime = String(rawDate);
+          }
+        }
+        return [
+          index + 1,
+          v.categoryName || v.category || '-',
+          v.name || v.visitName || '-',
+          v.contactNumber || v.contact || '-',
+          v.location || '-',
+          v.description || '-',
+          visitTime,
+        ];
+      });
 
-      const renderTable = typeof autoTable === 'function' ? autoTable : (autoTable?.default || (typeof doc.autoTable === 'function' ? doc.autoTable.bind(doc) : null));
-      if (renderTable) {
-        renderTable(doc, {
-          startY: 56,
+      const tableConfig = {
+        startY: 56,
         head: [[
           'No.',
           'Category',
@@ -180,7 +236,7 @@ const UserDashboard = () => {
         headStyles: {
           fillColor: [224, 231, 255],
           textColor: [0, 0, 0],
-          fontSize: 12,
+          fontSize: 11,
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
@@ -189,7 +245,7 @@ const UserDashboard = () => {
           cellPadding: 3
         },
         bodyStyles: {
-          fontSize: 11,
+          fontSize: 10,
           cellPadding: 3,
           textColor: [0, 0, 0],
           lineWidth: 0.5,
@@ -200,25 +256,68 @@ const UserDashboard = () => {
           fillColor: [240, 240, 240]
         },
         columnStyles: {
-          0: { cellWidth: 12, halign: 'center', fontStyle: 'bold', fontSize: 12 },
-          1: { cellWidth: 35, fontStyle: 'bold', fontSize: 11 },
-          2: { cellWidth: 40, fontStyle: 'bold', fontSize: 11 },
-          3: { cellWidth: 28, halign: 'center', fontSize: 12, overflow: 'visible', fontStyle: 'bold' },
-          4: { cellWidth: 50, fontSize: 11 },
-          5: { cellWidth: 65, fontSize: 11 },
-          6: { cellWidth: 35, halign: 'center', fontSize: 11, fontStyle: 'bold' }
+          0: { cellWidth: 12, halign: 'center', fontStyle: 'bold' },
+          1: { cellWidth: 35, fontStyle: 'bold' },
+          2: { cellWidth: 38, fontStyle: 'bold' },
+          3: { cellWidth: 28, halign: 'center', fontStyle: 'bold' },
+          4: { cellWidth: 48 },
+          5: { cellWidth: 68 },
+          6: { cellWidth: 36, halign: 'center', fontStyle: 'bold' }
         },
         styles: {
           overflow: 'linebreak',
-          cellWidth: 'wrap',
           minCellHeight: 8,
           lineColor: [0, 0, 0],
-          lineWidth: 0.5
+          lineWidth: 0.5,
+          valign: 'middle'
         },
         margin: { left: 14, right: 14 },
         tableWidth: 'auto',
         halign: 'center'
-      });
+      };
+
+      if (typeof doc.autoTable === 'function') {
+        doc.autoTable(tableConfig);
+      } else if (typeof autoTable === 'function') {
+        autoTable(doc, tableConfig);
+      } else if (autoTable && typeof autoTable.default === 'function') {
+        autoTable.default(doc, tableConfig);
+      }
+
+      // 100% Guaranteed Visual Fallback: If autoTable plugin didn't paint, draw the table manually
+      if (!doc.lastAutoTable) {
+        let y = 60;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(224, 231, 255);
+        doc.rect(14, y, 269, 8, 'F');
+        doc.text('No.', 16, y + 6);
+        doc.text('Category', 30, y + 6);
+        doc.text('Visit Name', 70, y + 6);
+        doc.text('Contact', 115, y + 6);
+        doc.text('Location', 145, y + 6);
+        doc.text('Description', 195, y + 6);
+        doc.text('Visited At', 255, y + 6);
+        y += 10;
+        doc.setFont('helvetica', 'normal');
+        tableRows.forEach((row, i) => {
+          if (y > 185) {
+            doc.addPage();
+            y = 20;
+          }
+          if (i % 2 === 1) {
+            doc.setFillColor(245, 245, 245);
+            doc.rect(14, y - 4, 269, 8, 'F');
+          }
+          doc.text(String(row[0] || ''), 16, y + 2);
+          doc.text(String(row[1] || '').substring(0, 18), 30, y + 2);
+          doc.text(String(row[2] || '').substring(0, 20), 70, y + 2);
+          doc.text(String(row[3] || '').substring(0, 14), 115, y + 2);
+          doc.text(String(row[4] || '').substring(0, 22), 145, y + 2);
+          doc.text(String(row[5] || '').substring(0, 26), 195, y + 2);
+          doc.text(String(row[6] || '').substring(0, 12), 255, y + 2);
+          y += 9;
+        });
       }
 
       // Footer
@@ -236,19 +335,21 @@ const UserDashboard = () => {
         );
       }
 
-      doc.save(`Today_Report_${userName}_${today}.pdf`);
+      const safeEmployeeName = String(employeeName).replace(/[^a-zA-Z0-9_-]/g, '_');
+      doc.save(`Visit_Report_${safeEmployeeName}_${today}.pdf`);
 
       Swal.fire({
         icon: 'success',
         title: 'Downloaded',
-        text: `Today's report downloaded successfully!`,
+        text: `Report downloaded successfully!`,
         timer: 2000,
       });
     } catch (error) {
+      console.error('Failed to download report:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to download report.',
+        text: error?.message ? `Failed to download report: ${error.message}` : 'Failed to download report.',
       });
     }
   };
@@ -429,7 +530,7 @@ const UserDashboard = () => {
             size="large"
             className="w-full sm:w-auto"
           >
-            Download Today's Report
+            {filterTodayOnly ? "Download Today's Report" : "Download Report"}
           </Button>
         </div>
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">

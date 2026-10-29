@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Button, Spin, Tag, Input, Space, Image, Row, Col, Statistic, Modal, Form, Upload } from 'antd';
-import { ArrowLeftOutlined, SearchOutlined, UserOutlined, AppstoreOutlined, CheckCircleOutlined, CalendarOutlined, EditOutlined, UploadOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  SearchOutlined,
+  UserOutlined,
+  AppstoreOutlined,
+  CheckCircleOutlined,
+  CalendarOutlined,
+  EditOutlined,
+  UploadOutlined,
+  EnvironmentOutlined,
+  EyeOutlined,
+  PhoneOutlined,
+  GlobalOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import { useOxyNavigate } from '../../utils/navigation';
 import axios from 'axios';
@@ -45,6 +59,15 @@ const VisitsManagement = () => {
   const [stats, setStats] = useState({ totalVisits: 0, totalCategories: 0, todayVisits: 0 });
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState(null);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [viewVisit, setViewVisit] = useState(null);
+  const [descriptionModalVisible, setDescriptionModalVisible] = useState(false);
+  const [selectedDescription, setSelectedDescription] = useState('');
+
+  const handleOpenViewModal = (record) => {
+    setViewVisit(record);
+    setViewModalVisible(true);
+  };
   const [formData, setFormData] = useState({
     name: '',
     userName: '',
@@ -237,6 +260,7 @@ const VisitsManagement = () => {
       render: (_, __, index) => (
         <span>{(currentPage - 1) * pageSize + index + 1}</span>
       ),
+      width: 60,
     },
     {
       title: "User",
@@ -255,7 +279,16 @@ const VisitsManagement = () => {
       dataIndex: "categoryName",
       key: "categoryName",
       align: "center",
-      render: (text) => <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{text}</span>,
+      render: (text, record) => (
+        <span 
+          style={{ textTransform: 'uppercase', fontWeight: 'bold', cursor: 'pointer' }}
+          className="text-purple-600 hover:text-purple-800 hover:underline"
+          onClick={() => handleOpenViewModal(record)}
+          title="Click to view details"
+        >
+          {text}
+        </span>
+      ),
       sorter: (a, b) => (a.categoryName || '').localeCompare(b.categoryName || ''),
     },
     {
@@ -263,7 +296,15 @@ const VisitsManagement = () => {
       dataIndex: "name",
       key: "name",
       align: "center",
-      render: (text) => <div>{text}</div>,
+      render: (text, record) => (
+        <div 
+          className="cursor-pointer text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+          onClick={() => handleOpenViewModal(record)}
+          title="Click to view details"
+        >
+          {text}
+        </div>
+      ),
       sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
     },
     {
@@ -273,7 +314,7 @@ const VisitsManagement = () => {
       align: "center",
       render: (location) =>
         location ? (
-          <a href={location} target="_blank" rel="noopener noreferrer">
+          <a href={location} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
             View Map
           </a>
         ) : (
@@ -285,7 +326,7 @@ const VisitsManagement = () => {
       dataIndex: "contactNumber",
       key: "contactNumber",
       align: "center",
-      render: (text) => <div>{text}</div>,
+      render: (text) => <div>{text || '-'}</div>,
     },
     {
       title: "Description",
@@ -293,13 +334,17 @@ const VisitsManagement = () => {
       key: "description",
       align: "center",
       render: (text) => (
-        <div>
-          {text?.length > 80 ? (
-            <span title={text}>{text.substring(0, 80)}...</span>
-          ) : (
-            text
-          )}
-        </div>
+        <span 
+          style={{ cursor: 'pointer' }}
+          className="text-gray-700 hover:text-blue-600 hover:underline inline-block"
+          onClick={() => {
+            setSelectedDescription(text || 'No description provided');
+            setDescriptionModalVisible(true);
+          }}
+          title="Click to view full description"
+        >
+          {text?.length > 70 ? `${text.substring(0, 70)}...` : (text || '-')}
+        </span>
       ),
     },
     {
@@ -330,7 +375,7 @@ const VisitsManagement = () => {
       align: "center",
       render: (link) =>
         link ? (
-          <a href={link} target="_blank" rel="noopener noreferrer">
+          <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
             Visit
           </a>
         ) : (
@@ -342,7 +387,7 @@ const VisitsManagement = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-',
+      render: (date) => (date ? new Date(date).toLocaleDateString() : '-'),
       sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
     {
@@ -355,6 +400,7 @@ const VisitsManagement = () => {
           icon={<EditOutlined />}
           onClick={() => handleEdit(record)}
           style={{ backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
+          size="small"
         >
           Edit
         </Button>
@@ -484,8 +530,8 @@ const VisitsManagement = () => {
             <div className="p-4 md:p-6">
               <Table
                 columns={columns}
-                  dataSource={filteredVisits}
-                   bordered
+                dataSource={filteredVisits}
+                bordered
                 rowKey="visitId"
                 scroll={{ x: "max-content" }}
                 size="small"
@@ -630,6 +676,230 @@ const VisitsManagement = () => {
             </div>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* View Visit Details Modal (All Columns Clickable Pop Up) */}
+      <Modal
+        title={
+          <div className="flex items-center justify-between pr-6 flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <div 
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2563eb',
+                  fontSize: '20px'
+                }}
+              >
+                <EyeOutlined />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 m-0">Visit Details</h3>
+                <p className="text-xs text-gray-500 m-0">Complete record information</p>
+              </div>
+            </div>
+            {viewVisit?.categoryName && (
+              <Tag color="purple" style={{ textTransform: 'uppercase', fontWeight: 700, padding: '3px 12px', borderRadius: '14px', fontSize: '12px' }}>
+                {viewVisit.categoryName}
+              </Tag>
+            )}
+          </div>
+        }
+        open={viewModalVisible}
+        onCancel={() => {
+          setViewModalVisible(false);
+          setViewVisit(null);
+        }}
+        footer={
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => {
+                const visitToEdit = viewVisit;
+                setViewModalVisible(false);
+                handleEdit(visitToEdit);
+              }}
+              style={{ backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
+            >
+              Edit Visit
+            </Button>
+            <Button onClick={() => {
+              setViewModalVisible(false);
+              setViewVisit(null);
+            }}>
+              Close
+            </Button>
+          </div>
+        }
+        width={680}
+        style={{ maxWidth: '95vw', top: 20 }}
+      >
+        <div className="py-2 space-y-4">
+          {/* Top Card: Image + Main Meta */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            {viewVisit?.imageUrl ? (
+              <div className="flex-shrink-0">
+                <Image
+                  src={viewVisit.imageUrl}
+                  alt={viewVisit.name}
+                  width={130}
+                  height={130}
+                  style={{ borderRadius: '14px', objectFit: 'cover', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  preview={{ mask: <div>Click to Enlarge</div> }}
+                />
+              </div>
+            ) : (
+              <div 
+                style={{ width: '130px', height: '130px', borderRadius: '14px', backgroundColor: '#e2e8f0' }}
+                className="flex flex-col items-center justify-center text-gray-400 flex-shrink-0"
+              >
+                <FileTextOutlined style={{ fontSize: '32px' }} />
+                <span className="text-xs mt-1">No Image</span>
+              </div>
+            )}
+
+            <div className="flex-1 w-full space-y-2.5">
+              <div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Visit Name</span>
+                <h2 className="text-xl font-bold text-gray-800 m-0">{viewVisit?.name || '-'}</h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="bg-white p-2.5 rounded-xl border border-gray-100">
+                  <span className="text-xs text-gray-400 block">Created By (User)</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <UserOutlined className="text-blue-500 text-sm" />
+                    <span className="font-semibold text-gray-800">{viewVisit?.userName || 'Unknown'}</span>
+                  </div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-gray-100">
+                  <span className="text-xs text-gray-400 block">Category</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <AppstoreOutlined className="text-purple-500 text-sm" />
+                    <span className="font-semibold text-gray-800" style={{ textTransform: 'uppercase' }}>
+                      {viewVisit?.categoryName || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-gray-100">
+                  <span className="text-xs text-gray-400 block">Contact Number</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <PhoneOutlined className="text-emerald-500 text-sm" />
+                    {viewVisit?.contactNumber ? (
+                      <a href={`tel:${viewVisit.contactNumber}`} className="font-semibold text-emerald-600 hover:underline">
+                        {viewVisit.contactNumber}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-gray-100">
+                  <span className="text-xs text-gray-400 block">Created Date</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <CalendarOutlined className="text-amber-500 text-sm" />
+                    <span className="font-medium text-gray-700 text-xs">
+                      {viewVisit?.createdAt ? new Date(viewVisit.createdAt).toLocaleString() : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Location Card */}
+          <div className="p-3.5 bg-white rounded-xl border border-gray-200">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                <EnvironmentOutlined className="text-red-500" /> Location / Google Maps
+              </span>
+              {viewVisit?.location && (
+                <a 
+                  href={viewVisit.location} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1"
+                >
+                  Open in Google Maps ↗
+                </a>
+              )}
+            </div>
+            <p className="text-sm text-gray-800 m-0 break-all font-mono bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+              {viewVisit?.location || 'No location provided'}
+            </p>
+          </div>
+
+          {/* Web Link Card */}
+          {viewVisit?.webLink && (
+            <div className="p-3.5 bg-white rounded-xl border border-gray-200 flex justify-between items-center gap-3">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <GlobalOutlined className="text-blue-500 flex-shrink-0" />
+                <span className="text-sm text-gray-700 truncate">{viewVisit.webLink}</span>
+              </div>
+              <a 
+                href={viewVisit.webLink} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 flex-shrink-0"
+              >
+                Visit Website ↗
+              </a>
+            </div>
+          )}
+
+          {/* Full Description Card */}
+          <div className="p-4 bg-white rounded-xl border border-gray-200">
+            <span className="text-xs font-semibold text-gray-500 block mb-2">Full Description</span>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-100">
+              {viewVisit?.description || 'No description provided.'}
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Description Pop-up Modal */}
+      <Modal
+        title={
+          <span style={{ 
+            background: 'linear-gradient(90deg, #9333ea 0%, #3b82f6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            fontWeight: 'bold',
+            fontSize: '18px'
+          }}>
+            Description
+          </span>
+        }
+        open={descriptionModalVisible}
+        onCancel={() => {
+          setDescriptionModalVisible(false);
+          setSelectedDescription('');
+        }}
+        footer={[
+          <Button key="close" type="primary" onClick={() => {
+            setDescriptionModalVisible(false);
+            setSelectedDescription('');
+          }}>
+            Close
+          </Button>
+        ]}
+        width={600}
+        style={{ maxWidth: '95vw', top: 20 }}
+      >
+        <div style={{ padding: '20px 0', fontSize: '15px', lineHeight: '1.6', whiteSpace: 'pre-wrap', color: '#374151' }}>
+          {selectedDescription}
+        </div>
       </Modal>
     </div>
   );

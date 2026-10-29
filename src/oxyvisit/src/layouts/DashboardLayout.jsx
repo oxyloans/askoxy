@@ -131,7 +131,15 @@ const DashboardLayout = () => {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh", width: "100%" }}>
+    <Layout
+      style={{
+        height: "100vh",
+        maxHeight: "100vh",
+        width: "100%",
+        overflow: "hidden",
+        position: "relative",
+      }}
+    >
       {isMobile && !collapsed && (
         <div
           className="fixed inset-0 bg-black/50 z-[1000] transition-opacity"
@@ -148,15 +156,23 @@ const DashboardLayout = () => {
         width={240}
         style={{
           background: "#1a202c",
-          ...(isMobile ? {
-            position: 'fixed',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            zIndex: 1001,
-            height: '100vh',
-            boxShadow: collapsed ? 'none' : '4px 0 16px rgba(0,0,0,0.4)',
-          } : {})
+          height: "100vh",
+          overflowY: "auto",
+          overflowX: "hidden",
+          flexShrink: 0,
+          ...(isMobile
+            ? {
+                position: "fixed",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                zIndex: 1001,
+                boxShadow: collapsed ? "none" : "4px 0 16px rgba(0,0,0,0.4)",
+              }
+            : {
+                position: "relative",
+                zIndex: 10,
+              }),
         }}
       >
         <div
@@ -217,21 +233,31 @@ const DashboardLayout = () => {
           className="custom-menu"
         />
       </Sider>
-      <Layout>
+      <Layout
+        style={{
+          height: "100vh",
+          maxHeight: "100vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          background: "#f0f2f5",
+          minWidth: 0,
+        }}
+      >
         <Header
           style={{
             padding: 0,
             background: "#fff",
             boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-            position: "fixed",
-            top: 0,
-            right: 0,
-            left: isMobile ? 0 : (collapsed ? 80 : 240),
-            zIndex: 998,
-            transition: "left 0.2s",
+            height: 64,
+            lineHeight: "64px",
+            flexShrink: 0,
+            zIndex: 100,
+            position: "relative",
+            width: "100%",
           }}
         >
-          <div className="flex justify-between items-center px-4 md:px-6">
+          <div className="flex justify-between items-center px-4 md:px-6 h-full">
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -239,7 +265,7 @@ const DashboardLayout = () => {
               style={{ fontSize: "16px", width: 64, height: 64 }}
             />
             <div className="flex items-center gap-2 md:gap-4">
-              <span className="text-xs md:text-sm text-gray-600 hidden sm:inline">
+              <span className="text-xs md:text-sm text-gray-600 hidden sm:inline font-medium">
                 {isAdmin
                   ? "Admin Panel"
                   : localStorage.getItem('userName') || "User Panel"}
@@ -253,32 +279,50 @@ const DashboardLayout = () => {
             </div>
           </div>
         </Header>
-        <Content
+        <div
+          className="dashboard-content-scroll"
           style={{
-            margin: "16px",
-            marginTop: "80px",
-            padding: "16px",
-            background: "#fff",
-            minHeight: 280,
-            borderRadius: "8px",
-          }}
-          className="md:m-6 md:p-6 md:mt-20"
-        >
-          <Outlet />
-        </Content>
-        <Footer
-          style={{
-            textAlign: "center",
-            background: "#f9fafb",
-            padding: "16px",
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          <div className="text-gray-600 text-xs md:text-sm">
-            © {new Date().getFullYear()} <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>OXY</span><span style={{ color: '#1f2937', fontWeight: 'bold' }}>VISITS</span>. All rights reserved.
-          </div>
-        </Footer>
+          <Content
+            style={{
+              margin: "16px",
+              padding: "16px",
+              background: "#fff",
+              minHeight: 280,
+              borderRadius: "8px",
+              flex: "1 0 auto",
+            }}
+            className="md:m-6 md:p-6"
+          >
+            <Outlet />
+          </Content>
+          <Footer
+            style={{
+              textAlign: "center",
+              background: "#f9fafb",
+              padding: "16px",
+              flexShrink: 0,
+            }}
+          >
+            <div className="text-gray-600 text-xs md:text-sm">
+              © {new Date().getFullYear()} <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>OXY</span><span style={{ color: '#1f2937', fontWeight: 'bold' }}>VISITS</span>. All rights reserved.
+            </div>
+          </Footer>
+        </div>
       </Layout>
       <style>{`
+        .dashboard-content-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .dashboard-content-scroll::-webkit-scrollbar-track { background: #f0f2f5; }
+        .dashboard-content-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 8px; }
+        .dashboard-content-scroll::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+        .dashboard-content-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f0f2f5; }
+
         .ant-menu::-webkit-scrollbar { width: 5px; }
         .ant-menu::-webkit-scrollbar-track { background: #1a202c; }
         .ant-menu::-webkit-scrollbar-thumb { background-color: #4a5568; border-radius: 10px; }
@@ -334,7 +378,7 @@ const DashboardLayout = () => {
             left: 0;
             top: 0;
             bottom: 0;
-            z-index: 999;
+            z-index: 1001 !important;
           }
         }
       `}</style>

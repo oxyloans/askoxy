@@ -50,6 +50,60 @@ type FromStore = {
 
 type APIRole = "user" | "assistant";
 type APIMessage = { role: APIRole; content: string };
+type UploadedFile = { fileId: string; fileName: string; fileType: string };
+
+const supportedFileTypes = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/x-java-source",
+  "text/javascript",
+  "application/javascript",
+  "text/x-python",
+  "application/json",
+  "application/xml",
+  "text/xml",
+  "text/html",
+  "application/yaml",
+  "text/yaml",
+]);
+
+const fileTypeByExtension: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  png: "image/png",
+  webp: "image/webp",
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain",
+  java: "text/x-java-source",
+  js: "application/javascript",
+  py: "text/x-python",
+  json: "application/json",
+  xml: "application/xml",
+  html: "text/html",
+  htm: "text/html",
+  yaml: "application/yaml",
+  yml: "application/yaml",
+};
+
+const getSupportedFileType = (file: File): string | null => {
+  if (supportedFileTypes.has(file.type)) return file.type;
+
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  const inferredType = fileTypeByExtension[extension];
+  return inferredType && supportedFileTypes.has(inferredType)
+    ? inferredType
+    : null;
+};
 
 type ChatMessage = {
   role: "user" | "assistant" | "system";
@@ -189,7 +243,7 @@ const AssistantDetails: React.FC = () => {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [showNoChatModal, setShowNoChatModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fileIds, setFileIds] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [showMobileFiles, setShowMobileFiles] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
   // useEffect(() => {
@@ -982,7 +1036,7 @@ const AssistantDetails: React.FC = () => {
 
     // Reset file-thread state — it's per-conversation and must not leak
     // between chats when switching in the sidebar
-    setFileIds([]);
+    setUploadedFiles([]);
 
     // Fast path: use cached messages
     const cached = historyById[hid];
@@ -1918,9 +1972,17 @@ return normalizedMessages;
 
     if (!agentId) return null;
 
+    const filesToSend = selectedFiles;
+    const fileTypes = filesToSend.map(getSupportedFileType);
+    if (fileTypes.some((fileType) => fileType === null)) {
+      message.error(
+        "Please upload an image, PDF, Word document, text, code, JSON, XML, HTML, or YAML file.",
+      );
+      return null;
+    }
+
     setLoading(true);
 
-    const filesToSend = selectedFiles;
     const userMessage: ChatMessage = {
       role: "user",
       content: userPrompt,
@@ -1932,10 +1994,10 @@ return normalizedMessages;
     setInput("");
 
     try {
-      let effectiveFileIds = fileIds;
+      let effectiveFiles = uploadedFiles;
 
       // Upload whenever new files are attached to this message; continuation
-      // sends pass no new files and just resend the previously stored fileIds
+      // sends pass no new files and just resend the previously uploaded files
       if (filesToSend.length > 0) {
         const formData = new FormData();
         filesToSend.forEach((f) => formData.append("files", f));
@@ -1945,17 +2007,30 @@ return normalizedMessages;
           formData,
           { headers: { ...getAuthHeaders() } },
         );
-        effectiveFileIds = uploadRes.data?.fileIds ?? [];
-        setFileIds(effectiveFileIds);
+        const fileIds: string[] = uploadRes.data?.fileIds ?? [];
+        effectiveFiles = filesToSend.flatMap((file, index) => {
+          const fileId = fileIds[index];
+          const fileType = fileTypes[index];
+          return fileId && fileType
+            ? [
+                {
+                  fileId,
+                  fileName: file.name,
+                  fileType,
+                },
+              ]
+            : [];
+        });
+        setUploadedFiles(effectiveFiles);
       }
 
       const payload: any = {
         agentId,
         userId,
-        fileIds: effectiveFileIds,
+        threadId: threadId ?? null,
+        files: effectiveFiles,
         messageHistory: [{ role: "user", content: userPrompt }],
       };
-      if (threadId) payload.threadId = threadId;
 
       const { data: answerData } = await axios.post(
         `${BASE_URL}/ai-service/agent/new-chat-openai`,
@@ -2067,7 +2142,7 @@ return normalizedMessages;
     setThreadId(null);
     setThreadSource(null);
     setSelectedFiles([]);
-    setFileIds([]);
+    setUploadedFiles([]);
 
     console.log("[handleNewChat] Started new chat");
     if (isXs) setSidebarOpen(false);
@@ -4096,7 +4171,7 @@ ${msg.content}
                           multiple
                           className="hidden"
                           onChange={handleFilePicker}
-                          accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
+                          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif,.java,.js,.py,.json,.xml,.html,.htm,.yaml,.yml"
                         />
                         <span
                           className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
