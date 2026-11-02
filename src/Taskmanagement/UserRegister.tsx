@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Alert,
-  Card,
-  Typography,
-  Divider,
-} from "antd";
+import { Form, Input, Button } from "antd";
 import Swal from "sweetalert2";
 import axios from "axios";
 import BASE_URL from "../Config";
@@ -16,43 +8,73 @@ import { setIntendedRoute } from "../utils/taskTokenManager";
 import {
   MailOutlined,
   LockOutlined,
-  SafetyOutlined,
-  UserAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-
-const { Title, Text } = Typography;
+import taskbg from "../assets/img/taskbg.png";
+import OtpInput from "./OtpInput";
 
 interface RegisterResponse {
   emailOtpSession: string;
   salt: string;
   userId: string | null;
+  errorMessage?: string;
+  error?: string;
+  message?: string;
+  status?: string;
 }
 
 const UserRegister: React.FC = () => {
-  const [email, setEmail] = useState<string>("");
-  const [emailOtp, setEmailOtp] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [emailOtp, setEmailOtp] = useState<string>("");
   const [emailOtpSession, setEmailOtpSession] = useState<string>("");
   const [salt, setSalt] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [otpSending, setOtpSending] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isEmailSubmitted, setIsEmailSubmitted] = useState<boolean>(false);
+  const [resendTimer, setResendTimer] = useState<number>(0);
   const [registrationSuccess, setRegistrationSuccess] =
     useState<boolean>(false);
   const navigate = useNavigate();
 
-  // Effect to handle navigation after successful registration
+  // Clear error message after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Countdown timer for resending OTP
+  useEffect(() => {
+    let interval: any = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [resendTimer]);
+
+  // Handle navigation after successful registration
   useEffect(() => {
     if (registrationSuccess) {
-      // Show success message before redirecting
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Registration successful! Redirecting to login...", showConfirmButton: false, timer: 1500, timerProgressBar: true });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Registration successful! Redirecting to login...",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
 
-      // Set immediate timeout for redirection
       const redirectTimer = setTimeout(() => {
-        // Preserve intended route if it exists
-        const intendedRoute = localStorage.getItem('intendedRoute');
+        const intendedRoute = localStorage.getItem("intendedRoute");
         if (intendedRoute) {
           setIntendedRoute(intendedRoute);
         }
@@ -64,129 +86,130 @@ const UserRegister: React.FC = () => {
   }, [registrationSuccess, navigate]);
 
   const handleEmailSubmit = async (): Promise<void> => {
-    if (!email) {
-      setError("Please enter your email");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("Please enter your email address to receive an OTP");
       return;
     }
 
-    setLoading(true);
+    setOtpSending(true);
     setError(null);
 
     try {
       const response = await axios.post<RegisterResponse>(
         `${BASE_URL}/user-service/userEmailPassword`,
-        { email }
+        { email: trimmedEmail }
       );
+
+      const apiError = response.data.error || response.data.errorMessage;
+      if (apiError) {
+        setError(apiError);
+        return;
+      }
 
       if (response.data.emailOtpSession) {
         setIsEmailSubmitted(true);
         setEmailOtpSession(response.data.emailOtpSession);
         setSalt(response.data.salt);
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "OTP has been sent to your email", showConfirmButton: false, timer: 2000, timerProgressBar: true });
+        setResendTimer(30);
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
+          title: "OTP has been sent to your email",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
       } else {
-        setError("Failed to generate OTP. Please try again.");
+        setError(
+          apiError || "Failed to generate OTP. Please try again."
+        );
       }
-    } catch (err) {
-      setError("Network error. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    } catch (err: any) {
+      const serverMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.response?.data?.errorMessage ||
+        (typeof err.response?.data === "string" ? err.response.data : null);
 
-  const validateForm = (): boolean => {
-    if (!emailOtp) {
-      setError("Please enter the OTP");
-      return false;
+      setError(serverMessage || "Network error. Please try again later.");
+    } finally {
+      setOtpSending(false);
     }
-    if (!name) {
-      setError("Please enter your name");
-      return false;
-    }
-    if (!password) {
-      setError("Please enter the password");
-      return false;
-    }
-    return true;
   };
 
   const handleSubmitOtp = async (): Promise<void> => {
-    if (!validateForm()) return;
+    setError(null);
+    const trimmedName = name.trim();
+    const trimmedOtp = emailOtp.trim();
+
+    if (!trimmedOtp) {
+      setError("Please enter the OTP sent to your email");
+      return;
+    }
+    if (!trimmedName) {
+      setError("Please enter your full name");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters");
+      return;
+    }
 
     setLoading(true);
-    setError(null);
 
     try {
-      // Store name in session storage before API call
-      sessionStorage.setItem("Name", name);
+      sessionStorage.setItem("Name", trimmedName);
 
-      // Make sure all required data is prepared
       const requestData = {
-        email,
-        emailOtp,
+        email: email.trim(),
+        emailOtp: trimmedOtp,
         emailOtpSession,
         password,
         primaryType: "EMPLOYEE",
         salt,
-        name: name,
+        name: trimmedName,
       };
-
-      // Check if we have all required fields
-      const requiredFields = [
-        "email",
-        "emailOtp",
-        "emailOtpSession",
-        "password",
-        "salt",
-        "name",
-      ];
-      const missingFields = requiredFields.filter(
-        (field) => !requestData[field as keyof typeof requestData]
-      );
-
-      if (missingFields.length > 0) {
-        throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
-      }
 
       const response = await axios.post<RegisterResponse>(
         `${BASE_URL}/user-service/userEmailPassword`,
         requestData
       );
 
-      // Consider any response with status 2xx as success, even if userId is null
-      // This handles cases where the API might return differently than expected
-      setRegistrationSuccess(true);
+      // If backend returned an error in a 200 response
+      const apiError = response.data.error || response.data.errorMessage;
+      if (apiError) {
+        setError(apiError);
+        return;
+      }
 
-      // Reset form fields
-      setIsEmailSubmitted(false);
-      setEmail("");
+      setRegistrationSuccess(true);
       setName("");
+      setEmail("");
       setEmailOtp("");
       setPassword("");
       setEmailOtpSession("");
       setSalt("");
-    } catch (err) {
-      // More specific error handling
-      if (axios.isAxiosError(err) && err.response) {
-        // Handle API error responses
-        const statusCode = err.response.status;
-        if (statusCode === 400) {
-          setError(
-            "Invalid OTP or registration data. Please check and try again."
-          );
-        } else if (statusCode === 409) {
-          setError(
-            "Email already registered. Please use another email or login."
-          );
-        } else {
-          setError(`Registration failed (${statusCode}). Please try again.`);
-        }
+      setIsEmailSubmitted(false);
+    } catch (err: any) {
+      // Directly display the exact backend error message without hardcoded static text
+      const serverMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.response?.data?.errorMessage ||
+        (typeof err.response?.data === "string" ? err.response.data : null);
+
+      if (serverMessage) {
+        setError(serverMessage);
       } else if (err instanceof Error) {
-        // Handle other errors
         setError(err.message);
       } else {
-        setError(
-          "OTP verification failed. Please check your code and try again."
-        );
+        setError("Registration failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -194,179 +217,194 @@ const UserRegister: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100 p-4">
-      <Card
-        className="w-full max-w-md shadow-xl rounded-lg overflow-hidden border-0"
-        bodyStyle={{ padding: "2rem" }}
-      >
-        <div className="text-center mb-6">
-          <Title level={2} className="font-bold text-gray-800 mb-1">
-            Task Management
-          </Title>
-          <Title level={4} className="font-medium text-gray-600 m-0">
-            Create Account
-          </Title>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#f0f4f9] p-3 sm:p-4 lg:p-6">
+      {/* Main card container with balanced width and height */}
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-[800px] md:min-h-[480px] bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-slate-200/70">
+        {/* Left Side: Hidden on mobile, visible on desktop/tablet */}
+        <div className="hidden md:flex md:w-[52%] relative overflow-hidden items-center justify-center md:min-h-full">
+          <img
+            src={taskbg}
+            alt="Oxy Employee"
+            className="w-full h-full object-fill select-none block"
+          />
         </div>
 
-        <Form layout="vertical" size="large">
-          {!isEmailSubmitted ? (
-            <>
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">
-                    Email Address
-                  </span>
-                }
-                required
-                className="mb-4"
-              >
-                <Input
-                  prefix={<MailOutlined className="text-gray-400 mr-2" />}
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="rounded-md"
-                />
-              </Form.Item>
+        {/* Right Side: Clean form panel with spacious vertical padding */}
+        <div className="w-full md:w-[48%] bg-white flex flex-col justify-center p-6 sm:p-8 md:py-10">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="mb-4">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-800 bg-clip-text text-transparent">
+                Welcome to Oxy Employee
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                {!isEmailSubmitted
+                  ? "Enter your email to receive a verification OTP"
+                  : "Enter OTP and your details to complete registration"}
+              </p>
+            </div>
 
-              <Button
-                type="primary"
-                block
-                onClick={handleEmailSubmit}
-                loading={loading}
-                className="h-10 rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-              >
-                Send OTP
-              </Button>
-            </>
-          ) : (
-            <>
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">
-                    Email Address
-                  </span>
-                }
-                required
-                className="mb-4"
-              >
-                <Input
-                  prefix={<MailOutlined className="text-gray-400 mr-2" />}
-                  type="email"
-                  value={email}
-                  disabled
-                  className="rounded-md bg-gray-50"
-                />
-              </Form.Item>
+            {error && (
+              <div className="mb-3 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-left">
+                {error}
+              </div>
+            )}
 
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">
-                    One-Time Password
-                  </span>
-                }
-                required
-                className="mb-4"
-              >
-                <Input
-                  prefix={<SafetyOutlined className="text-gray-400 mr-2" />}
-                  value={emailOtp}
-                  onChange={(e) => setEmailOtp(e.target.value)}
-                  placeholder="Enter OTP sent to email"
-                  className="rounded-md"
-                />
-              </Form.Item>
+            <Form layout="vertical">
+              {!isEmailSubmitted ? (
+                /* Step 1: Enter email and send OTP */
+                <>
+                  <Form.Item
+                    label={
+                      <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                        Email Address
+                      </span>
+                    }
+                    required
+                    className="mb-4"
+                  >
+                    <Input
+                      prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="h-11 rounded-lg border-gray-300 text-sm hover:border-blue-400 focus:border-blue-500"
+                      onPressEnter={handleEmailSubmit}
+                    />
+                  </Form.Item>
 
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">Full Name</span>
-                }
-                required
-                className="mb-4"
-              >
-                <Input
-                  prefix={<UserOutlined className="text-gray-400 mr-2" />}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className="rounded-md"
-                />
-              </Form.Item>
+                  <Button
+                    type="primary"
+                    block
+                    onClick={handleEmailSubmit}
+                    loading={loading || otpSending}
+                    className="w-full h-11 sm:h-12 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg border-0 text-base transition-all mb-3"
+                  >
+                    Send OTP
+                  </Button>
+                </>
+              ) : (
+                /* Step 2: Show email (disabled), OTP, Full Name, Create Password */
+                <>
+                  {/* Email Address with Change Email option */}
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                      Email Address
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEmailSubmitted(false);
+                        setEmailOtp("");
+                      }}
+                      className="text-xs font-semibold text-indigo-600 hover:text-blue-700 transition-colors"
+                    >
+                      Change Email
+                    </button>
+                  </div>
+                  <Form.Item className="mb-3">
+                    <Input
+                      prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                      type="email"
+                      value={email}
+                      disabled
+                      className="h-11 rounded-lg bg-gray-50 border-gray-300 text-sm text-gray-600"
+                    />
+                  </Form.Item>
 
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">
-                    Create Password
-                  </span>
-                }
-                name="password"
-                rules={[
-                  { required: true, message: "Please enter your password" },
-                  {
-                    pattern:
-                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                    message:
-                      "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character",
-                  },
-                ]}
-                className="mb-6"
-              >
-                <Input.Password
-                  prefix={<LockOutlined className="text-gray-400 mr-2" />}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="rounded-md"
-                />
-              </Form.Item>
+                  {/* One-Time Password with 6 Rounded Boxes */}
+                  <div className="mb-3.5">
+                    <div className="flex justify-between items-center w-full mb-1.5">
+                      <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                        Enter 6-Digit OTP <span className="text-red-500">*</span>
+                      </span>
+                      {resendTimer > 0 ? (
+                        <span className="text-xs text-gray-400 font-medium">
+                          Resend in {resendTimer}s
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleEmailSubmit}
+                          disabled={otpSending}
+                          className="text-xs font-semibold text-indigo-600 hover:text-blue-700 transition-colors"
+                        >
+                          {otpSending ? "Sending..." : "Resend OTP"}
+                        </button>
+                      )}
+                    </div>
+                    <OtpInput
+                      value={emailOtp}
+                      onChange={setEmailOtp}
+                      disabled={loading}
+                    />
+                  </div>
 
-              <Button
-                type="primary"
-                block
-                onClick={handleSubmitOtp}
-                loading={loading}
-                className="h-10 rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-              >
-                Complete Registration
-              </Button>
+                  {/* Full Name */}
+                  <Form.Item
+                    label={
+                      <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                        Full Name
+                      </span>
+                    }
+                    required
+                    className="mb-3"
+                  >
+                    <Input
+                      prefix={<UserOutlined className="text-gray-400 mr-2" />}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="h-11 rounded-lg border-gray-300 text-sm hover:border-blue-400 focus:border-blue-500"
+                    />
+                  </Form.Item>
 
-              <Button
-                type="link"
-                className="mt-2 text-gray-500 hover:text-blue-500"
-                onClick={() => setIsEmailSubmitted(false)}
-              >
-                Change Email Address
-              </Button>
-            </>
-          )}
+                  {/* Create Password */}
+                  <Form.Item
+                    label={
+                      <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                        Create Password
+                      </span>
+                    }
+                    required
+                    className="mb-4"
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined className="text-gray-400 mr-2" />}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password (min 8 chars)"
+                      className="h-11 rounded-lg border-gray-300 text-sm hover:border-blue-400 focus:border-blue-500"
+                    />
+                  </Form.Item>
 
-          {error && (
-            <Alert
-              message={error}
-              type="error"
-              showIcon
-              className="mt-4 rounded-md"
-            />
-          )}
+                  {/* Complete Registration Button */}
+                  <Button
+                    type="primary"
+                    block
+                    onClick={handleSubmitOtp}
+                    loading={loading}
+                    className="w-full h-11 sm:h-12 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg border-0 text-base transition-all mb-3"
+                  >
+                    Complete Registration
+                  </Button>
+                </>
+              )}
 
-          <Divider className="my-6">
-            <Text className="text-gray-400">OR</Text>
-          </Divider>
-
-          <div className="text-center">
-            <Text className="text-gray-600">Already registered?</Text>
-            <Link to="/userlogin">
-              <Button
-                type="link"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                Sign In
-              </Button>
-            </Link>
+              {/* Already have an account link */}
+              <div className="text-center pt-1 text-xs sm:text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link
+                  to="/userlogin"
+                  className="font-semibold text-indigo-600 hover:text-blue-700 hover:underline transition-colors"
+                >
+                  Login
+                </Link>
+              </div>
+            </Form>
           </div>
-        </Form>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

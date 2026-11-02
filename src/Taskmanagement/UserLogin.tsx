@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-
-  Card,
-  Typography,
-  Divider,
-  Space,
-} from "antd";
+import { Form, Input, Button, Typography, Space } from "antd";
 import Swal from "sweetalert2";
 import axios, { AxiosError } from "axios";
 import BASE_URL from "../Config";
 import { useNavigate, Link } from "react-router-dom";
 import { getIntendedRoute, clearIntendedRoute } from "../utils/taskTokenManager";
-import { setEmployeeAccessToken, setEmployeeRefreshToken, getEmployeeAccessToken, removeEmployeeAccessToken, removeEmployeeRefreshToken } from "../utils/cookieUtils";
+import {
+  setEmployeeAccessToken,
+  setEmployeeRefreshToken,
+  getEmployeeAccessToken,
+  removeEmployeeAccessToken,
+  removeEmployeeRefreshToken,
+} from "../utils/cookieUtils";
 import {
   MailOutlined,
   LockOutlined,
@@ -22,8 +19,9 @@ import {
   ExclamationCircleOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import taskbg from "../assets/img/taskbg.png";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface LoginResponse {
   status: string;
@@ -59,18 +57,17 @@ const UserLogin: React.FC = () => {
     }
   }, [error]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in as EMPLOYEE
   useEffect(() => {
     const token = getEmployeeAccessToken();
     const type = sessionStorage.getItem("primaryType");
-    // If token exists but primaryType is not EMPLOYEE, clear stale e_at and stay on login
     if (token && type !== "EMPLOYEE") {
       removeEmployeeAccessToken();
       removeEmployeeRefreshToken();
       return;
     }
     if (token && type === "EMPLOYEE") {
-      window.history.replaceState(null, '', '/taskmanagement/dashboard');
+      window.history.replaceState(null, "", "/taskmanagement/dashboard");
       navigate("/taskmanagement/dashboard", { replace: true });
     }
   }, [navigate]);
@@ -81,13 +78,14 @@ const UserLogin: React.FC = () => {
     setAccessDenied(false);
     setUserType(null);
 
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
       setError("Please fill in both email and password fields");
       setLoading(false);
       return;
     }
 
-    const payload = { email, password };
+    const payload = { email: trimmedEmail, password };
 
     try {
       const response = await axios.post<LoginResponse>(
@@ -112,15 +110,27 @@ const UserLogin: React.FC = () => {
 
         // Handle different user types
         if (primaryType === "EMPLOYEE") {
-          Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Login Successful! Redirecting...", showConfirmButton: false, timer: 1500, timerProgressBar: true });
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Login Successful! Redirecting...",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+          });
 
-          // Slight delay for user to see success message
           setTimeout(() => {
             const intendedRoute = getIntendedRoute();
             clearIntendedRoute();
-            // Clear login page from history and navigate
-            window.history.replaceState(null, '', intendedRoute || "/taskmanagement/dashboard");
-            navigate(intendedRoute || "/taskmanagement/dashboard", { replace: true });
+            window.history.replaceState(
+              null,
+              "",
+              intendedRoute || "/taskmanagement/dashboard"
+            );
+            navigate(intendedRoute || "/taskmanagement/dashboard", {
+              replace: true,
+            });
           }, 1000);
         } else if (
           primaryType === "SELLER" ||
@@ -137,8 +147,8 @@ const UserLogin: React.FC = () => {
       } else {
         setError(response.data.errorMessage || "Invalid credentials provided");
       }
-    } catch (error: any) {
-      const axiosError = error as AxiosError<LoginErrorResponse>;
+    } catch (err: any) {
+      const axiosError = err as AxiosError<LoginErrorResponse>;
       let errorMessage = "An unexpected error occurred. Please try again.";
 
       if (axiosError.response) {
@@ -176,162 +186,155 @@ const UserLogin: React.FC = () => {
     }
   };
 
-  const inputStyle = {
-    height: "48px",
-    width: "100%",
-    fontSize: "16px",
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100 p-4">
-      <Card
-        className="w-full max-w-md shadow-xl rounded-lg overflow-hidden border-0"
-        bodyStyle={{ padding: "2rem" }}
-      >
-        {accessDenied ? (
-          <div className="text-center">
-            <ExclamationCircleOutlined
-              style={{ fontSize: 64, color: "#f5222d" }}
-            />
-            <Title level={3} className="font-medium text-gray-700 mt-4">
-              Access Denied
-            </Title>
-            <Paragraph className="mb-6 text-gray-600">
-              Your account type ({userType}) does not have access to the Task
-              Management system. This portal is only available for EMPLOYEE
-              accounts.
-            </Paragraph>
-            <Space direction="vertical" size="middle" className="w-full">
-              <Button
-                type="primary"
-                onClick={() => {
-                  setAccessDenied(false);
-                  setUserType(null);
-                  setEmail("");
-                  setPassword("");
-                }}
-                className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-                icon={<UserOutlined />}
-                style={{ height: "48px" }}
-              >
-                Try Different Account
-              </Button>
-              <Button
-                type="link"
-                className="w-full rounded-md font-medium text-gray-600 hover:text-gray-800"
-                href="mailto:support@example.com"
-              >
-                Contact Support
-              </Button>
-            </Space>
-          </div>
-        ) : (
-          <>
-            <div className="text-center mb-6">
-              <Title level={3} className="font-medium text-gray-700 m-0">
-                Login to Task Management
-              </Title>
-              <Text type="secondary">
-                Enter your credentials to access the system
-              </Text>
-            </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#f0f4f9] p-3 sm:p-4 lg:p-6">
+      {/* Main card container with balanced width and height */}
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-[800px] md:min-h-[480px] bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-slate-200/70">
+        {/* Left Side: Hidden on mobile, visible on desktop/tablet */}
+        <div className="hidden md:flex md:w-[52%] relative overflow-hidden items-center justify-center md:min-h-full">
+          <img
+            src={taskbg}
+            alt="Oxy Employee"
+            className="w-full h-full object-fill select-none block"
+          />
+        </div>
 
-            <Form layout="vertical" size="large" onFinish={handleLogin}>
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">
-                    Email Address
-                  </span>
-                }
-                name="email"
-                rules={[
-                  { required: true, message: "Please enter your email" },
-                  {
-                    type: "email",
-                    message: "Please enter a valid email address",
-                  },
-                ]}
-                className="mb-4"
-              >
-                <Input
-                  prefix={<MailOutlined className="text-gray-400 mr-2" />}
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="rounded-md"
-                  style={inputStyle}
+        {/* Right Side: Clean form panel with spacious vertical padding */}
+        <div className="w-full md:w-[48%] bg-white flex flex-col justify-center p-6 sm:p-8 md:py-10">
+          <div className="w-full max-w-sm mx-auto">
+            {accessDenied ? (
+              <div className="text-center py-2">
+                <ExclamationCircleOutlined
+                  style={{ fontSize: 56, color: "#f5222d" }}
                 />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <span className="text-gray-700 font-medium">Password</span>
-                }
-                name="password"
-                rules={[
-                  { required: true, message: "Please enter your password" },
-                  {
-                    pattern:
-                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                    message:
-                      "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
-                  },
-                ]}
-                className="mb-6"
-              >
-                <Input.Password
-                  prefix={<LockOutlined className="text-gray-400 mr-2" />}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="rounded-md"
-                  style={inputStyle}
-                />
-              </Form.Item>
-
-              <Form.Item className="mb-2">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  icon={<LoginOutlined />}
-                  className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-                  style={{ height: "48px" }}
-                >
-                  Login
-                </Button>
-              </Form.Item>
-
-              {error && (
-                <div className="flex justify-center w-full px-4 mt-4">
-                  <div className="max-w-md w-full">
-                    <p className="text-red-700 bg-red-100 px-4 py-2 rounded-md text-sm text-center break-words">
-                      {error}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <Divider className="my-6">
-                <Text className="text-gray-400">OR</Text>
-              </Divider>
-
-              <div className="text-center">
-                <Text className="text-gray-600">Don't have an account?</Text>
-                <Link to="/userregister">
+                <Title level={3} className="font-semibold text-gray-800 mt-4 mb-2">
+                  Access Denied
+                </Title>
+                <Paragraph className="mb-6 text-gray-600 text-sm leading-relaxed">
+                  Your account type ({userType}) does not have access to the
+                  Task Management system. This portal is only available for
+                  EMPLOYEE accounts.
+                </Paragraph>
+                <Space direction="vertical" size="middle" className="w-full">
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      setAccessDenied(false);
+                      setUserType(null);
+                      setEmail("");
+                      setPassword("");
+                    }}
+                    className="w-full h-11 rounded-lg font-medium shadow-sm bg-blue-600 hover:bg-blue-500 border-0"
+                    icon={<UserOutlined />}
+                  >
+                    Try Different Account
+                  </Button>
                   <Button
                     type="link"
-                    className="font-medium text-blue-600 hover:text-blue-500"
+                    className="w-full font-medium text-gray-600 hover:text-gray-800 text-sm"
+                    href="mailto:support@example.com"
                   >
-                    Create Account
+                    Contact Support
                   </Button>
-                </Link>
+                </Space>
               </div>
-            </Form>
-          </>
-        )}
-      </Card>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-800 bg-clip-text text-transparent">
+                    Welcome to Oxy Employee
+                  </h2>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    Enter your credentials to access your dashboard
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="mb-3 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-left">
+                    {error}
+                  </div>
+                )}
+
+                <Form layout="vertical" onFinish={handleLogin}>
+                  {/* Email or Username */}
+                  <Form.Item
+                    label={
+                      <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                        Email
+                      </span>
+                    }
+                    name="email"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your email or username",
+                      },
+                    ]}
+                    className="mb-3"
+                  >
+                    <Input
+                      prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email or username"
+                      className="h-10 rounded-lg border-gray-300 text-sm hover:border-blue-400 focus:border-blue-500"
+                    />
+                  </Form.Item>
+
+                  {/* Password */}
+                  <Form.Item
+                    label={
+                      <span className="text-gray-700 text-xs sm:text-sm font-medium">
+                        Password
+                      </span>
+                    }
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your password",
+                      },
+                    ]}
+                    className="mb-4"
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined className="text-gray-400 mr-2" />}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="h-10 rounded-lg border-gray-300 text-sm hover:border-blue-400 focus:border-blue-500"
+                    />
+                  </Form.Item>
+
+                  {/* Submit Button */}
+                  <Form.Item className="mb-3">
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={loading}
+                      icon={<LoginOutlined />}
+                      className="w-full h-11 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg border-0 text-sm sm:text-base transition-all"
+                    >
+                      Login
+                    </Button>
+                  </Form.Item>
+
+                  {/* Don't have an account link */}
+                  <div className="text-center pt-1 text-xs sm:text-sm text-gray-600">
+                    Don't have an account?{" "}
+                    <Link
+                      to="/userregister"
+                      className="font-semibold text-indigo-600 hover:text-blue-700 hover:underline transition-colors"
+                    >
+                      Register
+                    </Link>
+                  </div>
+                </Form>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

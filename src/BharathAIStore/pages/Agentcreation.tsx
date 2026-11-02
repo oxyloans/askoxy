@@ -1,4 +1,4 @@
-﻿import React, {
+import React, {
   useCallback,
   useEffect,
   useMemo,
@@ -1976,7 +1976,7 @@ const Agentcreation: React.FC = () => {
     setAgentErrors(next);
     const first = (Object.keys(next) as AgentField[])[0];
     if (first) {
-      message.error(next[first] || "Complete the required fields.");
+
       window.requestAnimationFrame(() => {
         const target = document.getElementById(`agent-field-${first}`);
         target?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2726,19 +2726,21 @@ const Agentcreation: React.FC = () => {
   const confirmPublish = useCallback(() => {
     if (!validateAgent(true)) return;
     if (description.trim().length < MIN_DESC) {
-      Modal.error({
-        title: "Description too short",
-        content: `Please enter ${MIN_DESC}–${MAX_DESC} characters.`,
-        okText: "OK",
-      });
+      setAgentErrors((prev) => ({
+        ...prev,
+        description: `Please enter ${MIN_DESC}–${MAX_DESC} characters.`,
+      }));
+      setDescTouched(true);
+      document.getElementById("agent-field-description")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     if (description.trim().length > MAX_DESC) {
-      Modal.error({
-        title: "Description too long",
-        content: `Please keep it within ${MAX_DESC} characters.`,
-        okText: "OK",
-      });
+      setAgentErrors((prev) => ({
+        ...prev,
+        description: `Please keep it within ${MAX_DESC} characters.`,
+      }));
+      setDescTouched(true);
+      document.getElementById("agent-field-description")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -2757,17 +2759,11 @@ const Agentcreation: React.FC = () => {
       publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]");
     } catch {}
     if (publishedNames.includes(normalizedName)) {
-      Modal.error({
-        title: "Duplicate Agent Name",
-        content: (
-          <div>
-            An agent named <b>&#34;{agentName.trim()}&#34;</b> already exists.
-            <br />
-            Please use a different <b>Agent Name</b> to make it unique.
-          </div>
-        ),
-        okText: "Change Name",
-      });
+      setAgentErrors((prev) => ({
+        ...prev,
+        name: `An agent named "${agentName.trim()}" already exists. Please make it unique.`,
+      }));
+      document.getElementById("agent-field-name")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -2839,10 +2835,8 @@ const Agentcreation: React.FC = () => {
     try {
       await publishNow();
     } catch (error: any) {
-      setErrorMessage(
-        error?.message || "Failed to publish agent. Please try again.",
-      );
-      setErrorModalOpen(true);
+      console.error("Failed to publish agent:", error);
+      message.error("Failed to publish agent. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -6245,52 +6239,7 @@ const Agentcreation: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Error Modal */}
-      <Modal
-        open={errorModalOpen}
-        onCancel={handleErrorOk}
-        footer={null}
-        title={null}
-        centered
-        closable={false}
-        maskClosable={false}
-      >
-        <div style={{ textAlign: "center", padding: "20px 10px" }}>
-          <div style={{ fontSize: 60, marginBottom: 16 }}>❌</div>
-          <h3
-            style={{
-              margin: "0 0 12px 0",
-              fontSize: 20,
-              fontWeight: 800,
-              color: "#DC2626",
-            }}
-          >
-            Publishing Failed
-          </h3>
-          <p
-            style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}
-          >
-            {errorMessage ||
-              "Something went wrong while publishing your agent. Please try again."}
-          </p>
-          <button
-            onClick={handleErrorOk}
-            style={{
-              padding: "12px 32px",
-              borderRadius: 999,
-              border: "none",
-              background: "linear-gradient(90deg, #DC2626 0%, #EF4444 100%)",
-              color: "#FFFFFF",
-              fontWeight: 900,
-              fontSize: 16,
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(220,38,38,0.3)",
-            }}
-          >
-            OK
-          </button>
-        </div>
-      </Modal>
+
       <Modal
         open={autoFetchingProfile}
         footer={null}

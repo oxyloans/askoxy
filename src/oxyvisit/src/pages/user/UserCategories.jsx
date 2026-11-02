@@ -5,6 +5,13 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useOxyNavigate } from '../../utils/navigation';
 import { getCurrentUser } from '../../utils/user';
+import {
+  validateVisitForm,
+  showValidationErrorsPopup,
+  showBackendErrorPopup,
+  showInvalidImagePopup,
+  handleContactNumberChange,
+} from '../../utils/visitValidation';
 import BASE_URL from '../../core/config/Config';
 const API_BASE = `${BASE_URL}/ai-service`;
 
@@ -210,7 +217,7 @@ const getCategory3D = (name = '') => {
   return fallbacks[Math.abs(hash) % fallbacks.length];
 };
 
-const UserCategories = () => {
+export default function UserCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -278,24 +285,17 @@ const UserCategories = () => {
   };
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Visit name is required';
-    if (!formData.location.trim()) newErrors.location = 'Location is required';
-    if (!formData.contactNumber.trim()) {
-      newErrors.contactNumber = 'Contact number is required';
-    } else if (!/^[0-9]+$/.test(formData.contactNumber)) {
-      newErrors.contactNumber = 'Must be only digits';
-    }
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (formData.webLink && !/^https?:\/\/.+/.test(formData.webLink)) {
-      newErrors.webLink = 'Must be a valid URL';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const result = validateVisitForm(formData, 'Add');
+    setErrors(result.errors);
+    return result;
   };
 
   const handleAddVisit = async () => {
-    if (!validateForm()) return;
+    const { isValid, errorDetails } = validateForm();
+    if (!isValid) {
+      showValidationErrorsPopup(errorDetails, 'Add');
+      return;
+    }
 
     try {
       const user = getCurrentUser();
@@ -330,17 +330,7 @@ const UserCategories = () => {
       setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
       setErrors({});
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.errorMessage ||
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.response?.data?.status ||
-        'Failed to add visit. Please try again.';
-      Swal.fire({
-        icon: 'error',
-        title: 'Error Adding Visit',
-        text: errorMessage,
-      });
+      showBackendErrorPopup(error, 'Add');
     }
   };
 
@@ -589,14 +579,55 @@ const UserCategories = () => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Contact Number"
-                validateStatus={errors.contactNumber ? 'error' : ''}
-                help={errors.contactNumber || ''}
+                label={
+                  <span>
+                    Contact Number <span style={{ color: '#ef4444' }}>*</span>
+                    <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal', marginLeft: '6px' }}>
+                      (10 numeric digits only)
+                    </span>
+                  </span>
+                }
+                required
+                validateStatus={
+                  errors.contactNumber
+                    ? 'error'
+                    : formData.contactNumber?.length === 10
+                    ? 'success'
+                    : ''
+                }
+                help={
+                  errors.contactNumber ? (
+                    <span style={{ color: '#dc2626', fontWeight: 500 }}>
+                      ⚠️ {errors.contactNumber}
+                    </span>
+                  ) : formData.contactNumber?.length === 10 ? (
+                    <span style={{ color: '#16a34a', fontWeight: 500 }}>
+                      ✓ Valid 10-digit mobile number
+                    </span>
+                  ) : formData.contactNumber ? (
+                    <span style={{ color: '#d97706', fontSize: '12px' }}>
+                      ℹ️ {formData.contactNumber.length}/10 digits entered. Enter {10 - formData.contactNumber.length} more numeric digit(s).
+                    </span>
+                  ) : (
+                    <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                      Enter 10-digit mobile number using numeric digits (0-9) only. Alphabets are not allowed.
+                    </span>
+                  )
+                }
               >
                 <Input
                   value={formData.contactNumber}
-                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                  placeholder="Enter contact number"
+                  onChange={(e) => {
+                    const res = handleContactNumberChange(e.target.value);
+                    setFormData({ ...formData, contactNumber: res.value });
+                    setErrors((prev) => ({
+                      ...prev,
+                      contactNumber: res.error,
+                    }));
+                  }}
+                  maxLength={10}
+                  inputMode="numeric"
+                  placeholder="Enter 10-digit mobile number (e.g. 9876543210)"
                 />
               </Form.Item>
             </Col>
@@ -626,14 +657,38 @@ const UserCategories = () => {
               placeholder="Enter description"
             />
           </Form.Item>
-          <Form.Item label="Image">
+          <Form.Item
+            label="Image"
+            validateStatus={errors.image ? 'error' : ''}
+            help={errors.image || 'Allowed formats: PNG, JPG, JPEG only'}
+          >
             <Upload
               maxCount={1}
+              accept="image/png, image/jpeg, image/jpg, .png, .jpg, .jpeg, .img"
               beforeUpload={(file) => {
+                const isAllowed =
+                  file.type === 'image/png' ||
+                  file.type === 'image/jpeg' ||
+                  file.type === 'image/jpg' ||
+                  /\.(png|jpe?g|img)$/i.test(file.name);
+
+                if (!isAllowed) {
+                  showInvalidImagePopup(file);
+                  setErrors((prev) => ({
+                    ...prev,
+                    image: 'Only PNG, JPG, or JPEG image files are allowed. Please upload a valid image file.',
+                  }));
+                  return Upload.LIST_IGNORE || false;
+                }
+
+                setErrors((prev) => ({ ...prev, image: '' }));
                 setFormData({ ...formData, image: file });
                 return false;
               }}
-              onRemove={() => setFormData({ ...formData, image: null })}
+              onRemove={() => {
+                setFormData({ ...formData, image: null });
+                setErrors((prev) => ({ ...prev, image: '' }));
+              }}
               listType="picture"
             >
               <Button icon={<UploadOutlined />}>Select Image</Button>
@@ -662,6 +717,4 @@ const UserCategories = () => {
       </Modal>
     </div>
   );
-};
-
-export default UserCategories;
+}

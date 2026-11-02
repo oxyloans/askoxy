@@ -290,6 +290,12 @@ const WhatsappLogin: React.FC = () => {
       queryParams.get("from") === "studyabroad" ||
       location.state?.from?.includes("/studyabroad") ||
       document.referrer.includes("/studyabroad") ||
+      document.referrer.includes("/student-login") ||
+      document.referrer.includes("/studentlogin") ||
+      location.pathname.includes("/student-login") ||
+      location.pathname.includes("/studentlogin") ||
+      window.location.pathname.includes("/student-login") ||
+      window.location.pathname.includes("/studentlogin") ||
       sessionStorage.getItem("primaryType") === "STUDENT" ||
       sessionStorage.getItem("fromStudyAbroad") === "true"
     ) {

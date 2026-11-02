@@ -6,7 +6,12 @@ interface RequireAuthProps {
   children: JSX.Element;
 }
 
-const AUTH_PAGES = ["/whatsapplogin", "/whatsappregister"];
+const AUTH_PAGES = [
+  "/whatsapplogin",
+  "/whatsappregister",
+  "/studentlogin",
+  "/student-login",
+];
 
 const isAuthPage = (path: string) =>
   AUTH_PAGES.some((p) => path === p || path.startsWith(p + "?") || path.startsWith(p + "#"));

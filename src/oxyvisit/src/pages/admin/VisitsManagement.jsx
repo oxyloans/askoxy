@@ -19,35 +19,21 @@ import { useParams } from 'react-router-dom';
 import { useOxyNavigate } from '../../utils/navigation';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import {
+  validateVisitForm,
+  showValidationErrorsPopup,
+  showBackendErrorPopup,
+  showInvalidImagePopup,
+  parseVisitDate,
+  formatVisitDateTime,
+  isToday,
+  handleContactNumberChange,
+} from '../../utils/visitValidation';
 import BASE_URL from '../../core/config/Config';
 
 const API_BASE = `${BASE_URL}/ai-service`;
 
-const isToday = (dateVal) => {
-  if (!dateVal) return false;
-  try {
-    const d = new Date(dateVal);
-    if (!isNaN(d.getTime())) {
-      const now = new Date();
-      if (
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-      ) {
-        return true;
-      }
-    }
-    const str = String(dateVal);
-    const now = new Date();
-    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayISO = now.toISOString().slice(0, 10);
-    return str.startsWith(todayLocal) || str.startsWith(todayISO);
-  } catch {
-    return false;
-  }
-};
-
-const VisitsManagement = () => {
+export default function VisitsManagement() {
   const [visits, setVisits] = useState([]);
   const [filteredVisits, setFilteredVisits] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -144,20 +130,9 @@ const VisitsManagement = () => {
   };
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Visit name is required';
-    if (!formData.location.trim()) newErrors.location = 'Location is required';
-    if (!formData.contactNumber.trim()) {
-      newErrors.contactNumber = 'Contact number is required';
-    } else if (!/^[0-9]+$/.test(formData.contactNumber)) {
-      newErrors.contactNumber = 'Must be only digits';
-    }
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (formData.webLink && !/^https?:\/\/.+/.test(formData.webLink)) {
-      newErrors.webLink = 'Must be a valid URL';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const result = validateVisitForm(formData, 'Edit');
+    setErrors(result.errors);
+    return result;
   };
 
   const handleEdit = (visit) => {
@@ -200,7 +175,11 @@ const VisitsManagement = () => {
   };
 
   const handleUpdateVisit = async () => {
-    if (!validateForm()) return;
+    const { isValid, errorDetails } = validateForm();
+    if (!isValid) {
+      showValidationErrorsPopup(errorDetails, 'Update');
+      return;
+    }
 
     try {
       // Keep the exact same userId and userName from the GET call (selectedVisit); never change or overwrite with admin name
@@ -238,17 +217,7 @@ const VisitsManagement = () => {
       setErrors({});
       fetchVisits();
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.errorMessage ||
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.response?.data?.status ||
-        'Failed to update visit. Please try again.';
-      Swal.fire({
-        icon: 'error',
-        title: 'Update Error',
-        text: errorMessage,
-      });
+      showBackendErrorPopup(error, 'Update');
     }
   };
 
@@ -387,8 +356,12 @@ const VisitsManagement = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
-      render: (date) => (date ? new Date(date).toLocaleDateString() : '-'),
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      render: (date) => formatVisitDateTime(date, false),
+      sorter: (a, b) => {
+        const da = parseVisitDate(a.createdAt);
+        const db = parseVisitDate(b.createdAt);
+        return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+      },
     },
     {
       title: "Action",
@@ -610,14 +583,55 @@ const VisitsManagement = () => {
             </Space.Compact>
           </Form.Item>
           <Form.Item
-            label="Contact Number"
-            validateStatus={errors.contactNumber ? 'error' : ''}
-            help={errors.contactNumber || ''}
+            label={
+              <span>
+                Contact Number <span style={{ color: '#ef4444' }}>*</span>
+                <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal', marginLeft: '6px' }}>
+                  (10 numeric digits only)
+                </span>
+              </span>
+            }
+            required
+            validateStatus={
+              errors.contactNumber
+                ? 'error'
+                : formData.contactNumber?.length === 10
+                ? 'success'
+                : ''
+            }
+            help={
+              errors.contactNumber ? (
+                <span style={{ color: '#dc2626', fontWeight: 500 }}>
+                  ⚠️ {errors.contactNumber}
+                </span>
+              ) : formData.contactNumber?.length === 10 ? (
+                <span style={{ color: '#16a34a', fontWeight: 500 }}>
+                  ✓ Valid 10-digit mobile number
+                </span>
+              ) : formData.contactNumber ? (
+                <span style={{ color: '#d97706', fontSize: '12px' }}>
+                  ℹ️ {formData.contactNumber.length}/10 digits entered. Enter {10 - formData.contactNumber.length} more numeric digit(s).
+                </span>
+              ) : (
+                <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                  Enter 10-digit mobile number using numeric digits (0-9) only. Alphabets are not allowed.
+                </span>
+              )
+            }
           >
             <Input
               value={formData.contactNumber}
-              onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-              placeholder="Enter contact number"
+              onChange={(e) => {
+                const res = handleContactNumberChange(e.target.value);
+                setFormData({ ...formData, contactNumber: res.value });
+                setErrors((prev) => ({
+                  ...prev,
+                  contactNumber: res.error,
+                }));
+              }}
+              maxLength={10}
+              inputMode="numeric"
+              placeholder="Enter 10-digit mobile number (e.g. 9876543210)"
             />
           </Form.Item>
           <Form.Item
@@ -643,14 +657,38 @@ const VisitsManagement = () => {
               placeholder="Enter description"
             />
           </Form.Item>
-          <Form.Item label="Image">
+          <Form.Item
+            label="Image"
+            validateStatus={errors.image ? 'error' : ''}
+            help={errors.image || 'Allowed formats: PNG, JPG, JPEG only'}
+          >
             <Upload
               maxCount={1}
+              accept="image/png, image/jpeg, image/jpg, .png, .jpg, .jpeg, .img"
               beforeUpload={(file) => {
+                const isAllowed =
+                  file.type === 'image/png' ||
+                  file.type === 'image/jpeg' ||
+                  file.type === 'image/jpg' ||
+                  /\.(png|jpe?g|img)$/i.test(file.name);
+
+                if (!isAllowed) {
+                  showInvalidImagePopup(file);
+                  setErrors((prev) => ({
+                    ...prev,
+                    image: 'Only PNG, JPG, or JPEG image files are allowed. Please upload a valid image file.',
+                  }));
+                  return Upload.LIST_IGNORE || false;
+                }
+
+                setErrors((prev) => ({ ...prev, image: '' }));
                 setFormData({ ...formData, image: file });
                 return false;
               }}
-              onRemove={() => setFormData({ ...formData, image: null })}
+              onRemove={() => {
+                setFormData({ ...formData, image: null });
+                setErrors((prev) => ({ ...prev, image: '' }));
+              }}
               listType="picture"
             >
               <Button icon={<UploadOutlined />}>Select Image</Button>
@@ -809,7 +847,7 @@ const VisitsManagement = () => {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <CalendarOutlined className="text-amber-500 text-sm" />
                     <span className="font-medium text-gray-700 text-xs">
-                      {viewVisit?.createdAt ? new Date(viewVisit.createdAt).toLocaleString() : '-'}
+                      {viewVisit?.createdAt ? formatVisitDateTime(viewVisit.createdAt, false) : '-'}
                     </span>
                   </div>
                 </div>
@@ -903,6 +941,4 @@ const VisitsManagement = () => {
       </Modal>
     </div>
   );
-};
-
-export default VisitsManagement;
+}

@@ -343,6 +343,8 @@ const TaskUpdate: React.FC = () => {
     }
   }, [fetchAllPendingTasks, form]);
 const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
+  const BYRADHA_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
+    const BYRAMA_USER_ID = "27223f9d-296b-465a-b845-1001ef0d0fc0";
   // Check if task can be updated based on date and time
   const canUpdateTask = (task: Task): boolean => {
     const currentTime = dayjs();
@@ -350,13 +352,20 @@ const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
     const isSameDay = currentTime.isSame(taskDate, "day");
 
     const isBeforeNinePM =
-      currentTime.hour() < 21 ||
-      (currentTime.hour() === 21 && currentTime.minute() === 0);
+      currentTime.hour() < 23 ||
+      (currentTime.hour() === 23 && currentTime.minute() === 0);
     
     if (task.userId === BYSAI_USER_ID) {
       return true; // Always allow updates for BYSAI_USER_ID
     }
-    return  isBeforeNinePM;
+    if(task.userId === BYRADHA_USER_ID)
+    {
+      return true;
+    }
+    if(task.userId === BYRAMA_USER_ID){
+      return true;
+    }
+    return  isSameDay && isBeforeNinePM;
   };
   const selectTask = (task: Task) => {
     setSelectedTask(task);
@@ -394,7 +403,7 @@ const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
       Swal.fire({
         icon: "warning",
         title: "Update Window Closed",
-        text: "This task can be updated only on the same day before 9:00 PM IST. Please contact your admin if you need any changes.",
+        text: "This task can be updated only on the same day before 11:00 PM IST. Please contact your admin if you need any changes.",
         confirmButtonText: "OK",
       });
       return;
@@ -1143,7 +1152,7 @@ const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
                           <Paragraph type="secondary">
                             This task cannot be updated because it is either
                             from a different day or the update window (before
-                            9:00 PM IST) has passed.
+                            11:00 PM IST) has passed.
                           </Paragraph>
                         </div>
                       }

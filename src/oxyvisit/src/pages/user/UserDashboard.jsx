@@ -1,52 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Spin, Table, Image, Button, Input, Modal, Tag } from 'antd';
-import { CheckCircleOutlined, AppstoreOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Statistic, Spin, Table, Image, Button, Input, Modal, Tag, Form, Upload, Space } from 'antd';
+import {
+  CheckCircleOutlined,
+  AppstoreOutlined,
+  SearchOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  EnvironmentOutlined,
+  UploadOutlined,
+  FilePdfOutlined,
+} from '@ant-design/icons';
 import { useOxyNavigate } from '../../utils/navigation';
 import { getCurrentUser } from '../../utils/user';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import {
+  validateVisitForm,
+  showValidationErrorsPopup,
+  showBackendErrorPopup,
+  showInvalidImagePopup,
+  parseVisitDate,
+  formatVisitDateTime,
+  isToday,
+  handleContactNumberChange,
+} from '../../utils/visitValidation';
 import jsPDF from 'jspdf';
 import autoTable, { applyPlugin } from 'jspdf-autotable';
 import BASE_URL from '../../core/config/Config';
 
-// Attach autoTable plugin to jsPDF prototype immediately
-try {
-  if (typeof applyPlugin === 'function') {
-    applyPlugin(jsPDF);
-  } else if (autoTable && typeof autoTable.applyPlugin === 'function') {
-    autoTable.applyPlugin(jsPDF);
-  }
-} catch (e) {
-  console.warn('Could not apply autoTable plugin:', e);
-}
-
 const API_BASE = `${BASE_URL}/ai-service`;
 
-const isToday = (dateVal) => {
-  if (!dateVal) return false;
-  try {
-    const d = new Date(dateVal);
-    if (!isNaN(d.getTime())) {
-      const now = new Date();
-      if (
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-      ) {
-        return true;
-      }
-    }
-    const str = String(dateVal);
-    const now = new Date();
-    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayISO = now.toISOString().slice(0, 10);
-    return str.startsWith(todayLocal) || str.startsWith(todayISO);
-  } catch {
-    return false;
-  }
-};
-
-const UserDashboard = () => {
+export default function UserDashboard() {
   const { navigate } = useOxyNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ categories: 0, visits: 0, todayVisits: 0 });
@@ -56,6 +40,27 @@ const UserDashboard = () => {
   const [filterTodayOnly, setFilterTodayOnly] = useState(false);
   const [descriptionModalVisible, setDescriptionModalVisible] = useState(false);
   const [selectedDescription, setSelectedDescription] = useState('');
+
+  // Report Preview states
+  const [reportPreviewModalVisible, setReportPreviewModalVisible] = useState(false);
+  const [reportPreviewVisits, setReportPreviewVisits] = useState([]);
+  const [reportPreviewEmployee, setReportPreviewEmployee] = useState('');
+  const [reportPreviewDate, setReportPreviewDate] = useState('');
+  const [downloadingReport, setDownloadingReport] = useState(false);
+
+  // Edit Visit states
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    userName: '',
+    location: '',
+    contactNumber: '',
+    description: '',
+    webLink: '',
+    image: null,
+  });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchStats();
@@ -119,7 +124,8 @@ const UserDashboard = () => {
     }
   };
 
-  const downloadTodayReport = async () => {
+  // Step 1: Open Report Preview before downloading
+  const handleOpenReportPreview = async () => {
     try {
       const userId = localStorage.getItem('userId') || getCurrentUser().id || '';
       let visits = [];
@@ -132,83 +138,81 @@ const UserDashboard = () => {
         console.warn('Direct fetch failed, falling back to state/axios:', fetchErr);
       }
 
-      // Fallback to already loaded user visits if direct fetch returned empty
       if ((!visits || visits.length === 0) && userVisits && userVisits.length > 0) {
         visits = userVisits;
       }
 
-      // Filter today visits using both the old format and isToday matcher
-      const today = new Date().toISOString().split('T')[0];
       const now = new Date();
-      const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const todayFormatted = now.toLocaleDateString();
 
-      const todayVisits = visits.filter(visit => {
-        const dateField = visit.createdAt || visit.createdDate;
-        if (!dateField) return false;
-        const dateStr = String(dateField).trim();
-        const visitDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
-        return visitDate === today || visitDate === todayLocal || isToday(dateField);
-      });
+      // Strictly filter for same-date visits only (NO OLD DATA)
+      const sameDateVisits = visits.filter(visit => isToday(visit.createdAt || visit.createdDate));
 
-      // Select target visits for report:
-      // If table has filtered visits (e.g. today filter or search), use filteredVisits.
-      // Otherwise, if today's visits exist, use todayVisits.
-      // Otherwise, use all available visits from the table.
-      let targetVisits = [];
-      if (filterTodayOnly) {
-        targetVisits = (filteredVisits && filteredVisits.length > 0) ? filteredVisits : todayVisits;
-      } else if (filteredVisits && filteredVisits.length > 0) {
-        targetVisits = filteredVisits;
-      } else if (todayVisits.length > 0) {
-        targetVisits = todayVisits;
-      } else {
-        targetVisits = visits;
-      }
-
-      if (!targetVisits || targetVisits.length === 0) {
+      if (!sameDateVisits || sameDateVisits.length === 0) {
         Swal.fire({
           icon: 'info',
-          title: 'No Data',
-          text: 'No visits available to download.',
+          title: 'No Data for Today',
+          text: `No visits found for today (${todayFormatted}). The report only includes visits from today (same date).`,
         });
         return;
       }
 
-      const doc = new jsPDF('l', 'mm', 'a4');
-
-      const employeeName = (targetVisits.length && (targetVisits[0].userName || targetVisits[0].name))
-        ? (targetVisits[0].userName || targetVisits[0].name)
+      const employeeName = (sameDateVisits.length && (sameDateVisits[0].userName || sameDateVisits[0].name))
+        ? (sameDateVisits[0].userName || sameDateVisits[0].name)
         : (localStorage.getItem('userName') || 'Employee');
 
-      const isTodayOnly = filterTodayOnly || (targetVisits.length > 0 && targetVisits.every(v => isToday(v.createdAt || v.createdDate)));
+      setReportPreviewVisits(sameDateVisits);
+      setReportPreviewEmployee(employeeName);
+      setReportPreviewDate(todayFormatted);
+      setReportPreviewModalVisible(true);
+    } catch (error) {
+      console.error('Failed to prepare report preview:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to prepare report preview.',
+      });
+    }
+  };
+
+  // Step 2: Confirm and download the PDF after user clicks "OK" in preview
+  const handleConfirmDownloadPdf = async () => {
+    setDownloadingReport(true);
+    try {
+      const sameDateVisits = reportPreviewVisits;
+      const employeeName = reportPreviewEmployee;
+      const todayFormatted = reportPreviewDate;
+      const now = new Date();
+      const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      // Initialize autoTable plugin safely before generating document
+      try {
+        if (typeof applyPlugin === 'function') {
+          applyPlugin(jsPDF);
+        } else if (autoTable && typeof autoTable.applyPlugin === 'function') {
+          autoTable.applyPlugin(jsPDF);
+        }
+      } catch (pluginErr) {
+        // Plugin application failed or already applied
+      }
+
+      const doc = new jsPDF('l', 'mm', 'a4');
 
       // Header
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text(isTodayOnly ? 'STORE VISIT REPORT - TODAY' : 'STORE VISIT REPORT', 148, 18, { align: 'center' });
+      doc.text('STORE VISIT REPORT - TODAY', 148, 18, { align: 'center' });
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.text(`Employee: ${employeeName}`, 14, 32);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 40);
-      doc.text(`Total Visits: ${targetVisits.length}`, 14, 48);
+      doc.text(`Date: ${todayFormatted}`, 14, 40);
+      doc.text(`Today's Visits: ${sameDateVisits.length}`, 14, 48);
 
-      // Table data
-      const tableRows = targetVisits.map((v, index) => {
-        let visitTime = '-';
+      // Table data — same date visits only (formatted to client system date and time)
+      const tableRows = sameDateVisits.map((v, index) => {
         const rawDate = v.createdAt || v.createdDate;
-        if (rawDate) {
-          try {
-            const dt = new Date(rawDate);
-            if (!isNaN(dt.getTime())) {
-              visitTime = `${dt.toLocaleDateString()}\n${dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-            } else {
-              visitTime = String(rawDate);
-            }
-          } catch {
-            visitTime = String(rawDate);
-          }
-        }
+        const visitTime = formatVisitDateTime(rawDate, true);
         return [
           index + 1,
           v.categoryName || v.category || '-',
@@ -315,7 +319,13 @@ const UserDashboard = () => {
           doc.text(String(row[3] || '').substring(0, 14), 115, y + 2);
           doc.text(String(row[4] || '').substring(0, 22), 145, y + 2);
           doc.text(String(row[5] || '').substring(0, 26), 195, y + 2);
-          doc.text(String(row[6] || '').substring(0, 12), 255, y + 2);
+          const timeParts = String(row[6] || '').split('\n');
+          doc.text(timeParts[0] || '', 255, y + 1);
+          if (timeParts[1]) {
+            doc.setFontSize(8);
+            doc.text(timeParts[1], 255, y + 5);
+            doc.setFontSize(10);
+          }
           y += 9;
         });
       }
@@ -336,12 +346,14 @@ const UserDashboard = () => {
       }
 
       const safeEmployeeName = String(employeeName).replace(/[^a-zA-Z0-9_-]/g, '_');
-      doc.save(`Visit_Report_${safeEmployeeName}_${today}.pdf`);
+      doc.save(`Today_Report_${safeEmployeeName}_${todayISO}.pdf`);
+
+      setReportPreviewModalVisible(false);
 
       Swal.fire({
         icon: 'success',
         title: 'Downloaded',
-        text: `Report downloaded successfully!`,
+        text: `Today's report downloaded successfully!`,
         timer: 2000,
       });
     } catch (error) {
@@ -351,6 +363,101 @@ const UserDashboard = () => {
         title: 'Error',
         text: error?.message ? `Failed to download report: ${error.message}` : 'Failed to download report.',
       });
+    } finally {
+      setDownloadingReport(false);
+    }
+  };
+
+  // Edit Visit validation & submit
+  const validateForm = () => {
+    const result = validateVisitForm(formData, 'Edit');
+    setErrors(result.errors);
+    return result;
+  };
+
+  const handleEdit = (visit) => {
+    setSelectedVisit(visit);
+    setFormData({
+      name: visit.name || '',
+      userName: visit.userName || '',
+      location: visit.location || '',
+      contactNumber: visit.contactNumber || '',
+      description: visit.description || '',
+      webLink: visit.webLink || '',
+      image: null,
+    });
+    setErrors({});
+    setEditModalVisible(true);
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+          setFormData({ ...formData, location: googleMapsUrl });
+        },
+        () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Unable to get location. Please enable location access.',
+          });
+        }
+      );
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Geolocation is not supported by your browser.',
+      });
+    }
+  };
+
+  const handleUpdateVisit = async () => {
+    const { isValid, errorDetails } = validateForm();
+    if (!isValid) {
+      showValidationErrorsPopup(errorDetails, 'Update');
+      return;
+    }
+
+    try {
+      const rawUserName = selectedVisit?.userName ?? selectedVisit?.username ?? selectedVisit?.user_name ?? '';
+      const resolvedUserName = (rawUserName === null || rawUserName === undefined || rawUserName === 'null') ? '' : rawUserName;
+
+      const rawUserId = selectedVisit?.userId ?? selectedVisit?.userid ?? selectedVisit?.user_id ?? localStorage.getItem('userId') ?? '';
+      const resolvedUserId = (rawUserId === null || rawUserId === undefined || rawUserId === 'null') ? '' : rawUserId;
+
+      const data = new FormData();
+      data.append('userId', resolvedUserId);
+      data.append('userName', resolvedUserName);
+      data.append('name', formData.name);
+      data.append('location', formData.location);
+      data.append('contactNumber', formData.contactNumber);
+      data.append('description', formData.description);
+      if (formData.webLink) data.append('webLink', formData.webLink);
+      if (formData.image) data.append('image', formData.image);
+
+      const token = localStorage.getItem('token');
+      await axios.patch(`${API_BASE}/visits/${selectedVisit.visitId}?userId=${resolvedUserId}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Visit Updated!',
+        text: 'The visit details have been updated successfully.',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      setEditModalVisible(false);
+      setSelectedVisit(null);
+      setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+      setErrors({});
+      fetchStats();
+    } catch (error) {
+      showBackendErrorPopup(error, 'Update');
     }
   };
 
@@ -360,26 +467,21 @@ const UserDashboard = () => {
       key: "sno",
       align: "center",
       render: (_, __, index) => <span>{index + 1}</span>,
-      width: 80,
+      width: 70,
     },
     {
       title: "Category",
       dataIndex: "categoryName",
       key: "categoryName",
       align: "center",
-      render: (text) => <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{text}</span>,
+      render: (text) => <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{text || '-'}</span>,
     },
     {
       title: "Visit Name",
       dataIndex: "name",
       key: "name",
       align: "center",
-    },
-    {
-      title: "Contact",
-      dataIndex: "contactNumber",
-      key: "contactNumber",
-      align: "center",
+      render: (text) => <span>{text || '-'}</span>,
     },
     {
       title: "Location",
@@ -396,6 +498,13 @@ const UserDashboard = () => {
         ),
     },
     {
+      title: "Contact Number",
+      dataIndex: "contactNumber",
+      key: "contactNumber",
+      align: "center",
+      render: (text) => <span>{text || '-'}</span>,
+    },
+    {
       title: "Description",
       dataIndex: "description",
       key: "description",
@@ -408,7 +517,7 @@ const UserDashboard = () => {
             setDescriptionModalVisible(true);
           }}
         >
-          {text?.length > 50 ? `${text.substring(0, 50)}...` : text}
+          {text?.length > 50 ? `${text.substring(0, 50)}...` : (text || '-')}
         </span>
       ),
     },
@@ -454,7 +563,7 @@ const UserDashboard = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-',
+      render: (date) => formatVisitDateTime(date, false),
     },
   ];
 
@@ -525,12 +634,12 @@ const UserDashboard = () => {
           <Button
             type="primary"
             icon={<DownloadOutlined />}
-            onClick={downloadTodayReport}
+            onClick={handleOpenReportPreview}
             style={{ backgroundColor: '#10b981', borderColor: '#10b981' }}
             size="large"
             className="w-full sm:w-auto"
           >
-            {filterTodayOnly ? "Download Today's Report" : "Download Report"}
+            Download Today's Report
           </Button>
         </div>
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -568,6 +677,7 @@ const UserDashboard = () => {
         />
       </Card>
 
+      {/* Description Modal */}
       <Modal
         title={
           <span style={{ 
@@ -595,8 +705,353 @@ const UserDashboard = () => {
           {selectedDescription}
         </div>
       </Modal>
+
+      {/* Report Preview Modal Before Download */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FilePdfOutlined style={{ fontSize: '22px', color: '#10b981' }} />
+            <span style={{ 
+              background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              Store Visit Report - Preview
+            </span>
+          </div>
+        }
+        open={reportPreviewModalVisible}
+        onCancel={() => setReportPreviewModalVisible(false)}
+        width={950}
+        style={{ maxWidth: '96vw', top: 20 }}
+        footer={[
+          <Button key="cancel" onClick={() => setReportPreviewModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button
+            key="download"
+            type="primary"
+            icon={<DownloadOutlined />}
+            loading={downloadingReport}
+            onClick={handleConfirmDownloadPdf}
+            style={{ backgroundColor: '#10b981', borderColor: '#10b981' }}
+          >
+            OK - Download Report
+          </Button>
+        ]}
+      >
+        <div style={{ padding: '10px 0' }}>
+          {/* Header Summary Card */}
+          <div style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)',
+            border: '1px solid #bbf7d0',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            marginBottom: '16px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '20px',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Employee</div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{reportPreviewEmployee}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Report Date</div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{reportPreviewDate}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Total Today's Visits</div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#10b981' }}>{reportPreviewVisits.length} Visits</div>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '13px', color: '#475569', marginBottom: '12px' }}>
+            Please review the visits for today below. Click <strong>"OK - Download Report"</strong> to download the PDF.
+          </p>
+
+          {/* Visits Table Preview */}
+          <Table
+            dataSource={reportPreviewVisits}
+            rowKey={(r, idx) => r.visitId || idx}
+            size="small"
+            bordered
+            pagination={false}
+            scroll={{ x: 'max-content', y: 340 }}
+            columns={[
+              {
+                title: 'No.',
+                key: 'idx',
+                align: 'center',
+                width: 55,
+                render: (_, __, i) => i + 1,
+              },
+              {
+                title: 'Category',
+                dataIndex: 'categoryName',
+                key: 'categoryName',
+                width: 120,
+                render: (text, r) => <strong>{text || r.category || '-'}</strong>,
+              },
+              {
+                title: 'Visit Name',
+                dataIndex: 'name',
+                key: 'name',
+                width: 130,
+                render: (text, r) => text || r.visitName || '-',
+              },
+              {
+                title: 'Contact',
+                dataIndex: 'contactNumber',
+                key: 'contactNumber',
+                align: 'center',
+                width: 110,
+                render: (text, r) => text || r.contact || '-',
+              },
+              {
+                title: 'Location',
+                dataIndex: 'location',
+                key: 'location',
+                width: 120,
+                render: (loc) =>
+                  loc ? (
+                    <a href={loc} target="_blank" rel="noopener noreferrer">
+                      View Map
+                    </a>
+                  ) : (
+                    '-'
+                  ),
+              },
+              {
+                title: 'Description',
+                dataIndex: 'description',
+                key: 'description',
+                render: (desc) => (
+                  <span style={{ fontSize: '12px' }}>
+                    {desc?.length > 40 ? `${desc.substring(0, 40)}...` : (desc || '-')}
+                  </span>
+                ),
+              },
+              {
+                title: 'Visited At',
+                key: 'visitedAt',
+                align: 'center',
+                width: 140,
+                render: (_, r) => {
+                  const raw = r.createdAt || r.createdDate;
+                  return formatVisitDateTime(raw, false);
+                },
+              },
+            ]}
+          />
+        </div>
+      </Modal>
+
+      {/* Edit Visit Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ 
+              background: 'linear-gradient(90deg, #9333ea 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              Edit Visit - {selectedVisit?.categoryName || 'Visit'}
+            </span>
+          </div>
+        }
+        open={editModalVisible}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setSelectedVisit(null);
+          setFormData({ name: '', userName: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+          setErrors({});
+        }}
+        footer={null}
+        width={600}
+        style={{ maxWidth: '95vw', top: 20 }}
+      >
+        <Form layout="vertical">
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Visit Name"
+                validateStatus={errors.name ? 'error' : ''}
+                help={errors.name || ''}
+              >
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter visit name"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Location"
+                validateStatus={errors.location ? 'error' : ''}
+                help={errors.location || ''}
+              >
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Enter location"
+                  />
+                  <Button onClick={getCurrentLocation} icon={<EnvironmentOutlined />} type="primary">
+                    Current Location
+                  </Button>
+                </Space.Compact>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={
+                  <span>
+                    Contact Number <span style={{ color: '#ef4444' }}>*</span>
+                    <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal', marginLeft: '6px' }}>
+                      (10 numeric digits only)
+                    </span>
+                  </span>
+                }
+                required
+                validateStatus={
+                  errors.contactNumber
+                    ? 'error'
+                    : formData.contactNumber?.length === 10
+                    ? 'success'
+                    : ''
+                }
+                help={
+                  errors.contactNumber ? (
+                    <span style={{ color: '#dc2626', fontWeight: 500 }}>
+                      ⚠️ {errors.contactNumber}
+                    </span>
+                  ) : formData.contactNumber?.length === 10 ? (
+                    <span style={{ color: '#16a34a', fontWeight: 500 }}>
+                      ✓ Valid 10-digit mobile number
+                    </span>
+                  ) : formData.contactNumber ? (
+                    <span style={{ color: '#d97706', fontSize: '12px' }}>
+                      ℹ️ {formData.contactNumber.length}/10 digits entered. Enter {10 - formData.contactNumber.length} more numeric digit(s).
+                    </span>
+                  ) : (
+                    <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                      Enter 10-digit mobile number using numeric digits (0-9) only. Alphabets are not allowed.
+                    </span>
+                  )
+                }
+              >
+                <Input
+                  value={formData.contactNumber}
+                  onChange={(e) => {
+                    const res = handleContactNumberChange(e.target.value);
+                    setFormData({ ...formData, contactNumber: res.value });
+                    setErrors((prev) => ({
+                      ...prev,
+                      contactNumber: res.error,
+                    }));
+                  }}
+                  maxLength={10}
+                  inputMode="numeric"
+                  placeholder="Enter 10-digit mobile number (e.g. 9876543210)"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Web Link"
+                validateStatus={errors.webLink ? 'error' : ''}
+                help={errors.webLink || ''}
+              >
+                <Input
+                  value={formData.webLink}
+                  onChange={(e) => setFormData({ ...formData, webLink: e.target.value })}
+                  placeholder="Enter web link"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item
+            label="Description"
+            validateStatus={errors.description ? 'error' : ''}
+            help={errors.description || ''}
+          >
+            <Input.TextArea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
+              placeholder="Enter description"
+            />
+          </Form.Item>
+          <Form.Item
+            label="Image"
+            validateStatus={errors.image ? 'error' : ''}
+            help={errors.image || 'Allowed formats: PNG, JPG, JPEG only'}
+          >
+            <Upload
+              maxCount={1}
+              accept="image/png, image/jpeg, image/jpg, .png, .jpg, .jpeg, .img"
+              beforeUpload={(file) => {
+                const isAllowed =
+                  file.type === 'image/png' ||
+                  file.type === 'image/jpeg' ||
+                  file.type === 'image/jpg' ||
+                  /\.(png|jpe?g|img)$/i.test(file.name);
+
+                if (!isAllowed) {
+                  showInvalidImagePopup(file);
+                  setErrors((prev) => ({
+                    ...prev,
+                    image: 'Only PNG, JPG, or JPEG image files are allowed. Please upload a valid image file.',
+                  }));
+                  return Upload.LIST_IGNORE || false;
+                }
+
+                setErrors((prev) => ({ ...prev, image: '' }));
+                setFormData({ ...formData, image: file });
+                return false;
+              }}
+              onRemove={() => {
+                setFormData({ ...formData, image: null });
+                setErrors((prev) => ({ ...prev, image: '' }));
+              }}
+              listType="picture"
+            >
+              <Button icon={<UploadOutlined />}>Select Image</Button>
+            </Upload>
+          </Form.Item>
+          <Form.Item>
+            <div className="flex gap-2">
+              <Button
+                type="primary"
+                onClick={handleUpdateVisit}
+                style={{ backgroundColor: '#008cba', borderColor: '#008cba' }}
+              >
+                Update Visit
+              </Button>
+              <Button onClick={() => {
+                setEditModalVisible(false);
+                setSelectedVisit(null);
+                setFormData({ name: '', location: '', contactNumber: '', description: '', webLink: '', image: null });
+                setErrors({});
+              }}>
+                Cancel
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
-};
-
-export default UserDashboard;
+}

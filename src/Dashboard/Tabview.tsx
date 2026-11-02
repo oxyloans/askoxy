@@ -1,244 +1,38 @@
 import { Dashboard } from "@mui/icons-material";
 import axios from "axios";
 import {
- Users,
+  Users,
   Check,
   Coins,
   Copy,
   HelpCircle,
   ShoppingCart,
- TrendingUp,
+  TrendingUp,
   SendHorizonal,
- ArrowRight,
+  ArrowRight,
   X,
+  AlertCircle,
 } from "lucide-react";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import BASE_URL from "../Config";
-import BMVICON from "../assets/img/bmvlogo.png"; // Make sure to import the BMVICON
+import BMVICON from "../assets/img/bmvlogo.png";
 import customerApi from "../utils/axiosInstances";
 
+// Standalone BMV Information Modal
+const BMVInfoModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
+  isOpen,
+  onClose,
+}) => {
+  if (!isOpen) return null;
 
-const Tabview = () => {
-  const [multichainId, setMultichainId] = useState("");
-  const [bmvCoin, setBmvCoin] = useState(0);
-  const [isCopied, setIsCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState("services");
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [showBmvModal, setShowBmvModal] = useState(false);
-  const [showTransferModal, setShowTransferModal] = useState(false);
-  const [userMobileNumber, setUserMobileNumber] = useState("");
-
-  // Refs for uncontrolled inputs
-  const mobileInputRef = useRef<HTMLInputElement>(null);
-  const amountInputRef = useRef<HTMLInputElement>(null);
-
-  const [transferStatus, setTransferStatus] = useState({
-    loading: false,
-    success: false,
-    error: null as string | null,
-  });
-
-  // Add state to store transfer details for the success message
-  const [transferDetails, setTransferDetails] = useState({
-    recipientMobile: "",
-    amount: "",
-  });
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleScroll);
-
-    // Fetch multichain ID and BMV coin
-    fetchUserData();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    const pathTab = location.pathname.split("/").pop();
-
-    if (pathTab) {
-      setActiveTab(pathTab);
-    }
-  }, [location.pathname]);
-
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
-    navigate(`/main/dashboard/${tab}`);
-  };
-
-  const fetchUserData = async () => {
-    try {
-      const userId = localStorage.getItem("userId");
-      const response = await customerApi.get(
-        `${BASE_URL}/user-service/getProfile/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      setMultichainId(response.data.multiChainId);
-      setBmvCoin(response.data.coinAllocated);
-      setUserMobileNumber(response.data.mobileNumber || "");
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
-  useEffect(() => {
-    const pathSegments = location.pathname.split("/");
-    const pathTab = pathSegments[2]; // Extracts "dashboard"
-
-    console.log(pathTab);
-
-    if (pathTab === "dashboard") {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-  }, [location.pathname]);
-
-  const handleCopyMultichainId = async () => {
-    if (multichainId) {
-      try {
-        await navigator.clipboard.writeText(multichainId);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy:", err);
-      }
-    }
-  };
-
-  const handleTransferSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Get values from refs
-    const recipientMobile = mobileInputRef.current?.value || "";
-    const transferAmount = amountInputRef.current?.value || "";
-
-    // Validate form
-    if (!recipientMobile || !transferAmount) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error: "Please fill in all fields",
-      });
-      return;
-    }
-
-    // Validate mobile number
-    if (recipientMobile.length !== 10 || !/^\d{10}$/.test(recipientMobile)) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error: "Please enter a valid 10-digit mobile number",
-      });
-      return;
-    }
-
-    // Validate amount
-    const amount = parseFloat(transferAmount);
-    if (isNaN(amount) || amount <= 0 || amount > bmvCoin) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error: `Please enter a valid amount between 1 and ${bmvCoin}`,
-      });
-      return;
-    }
-
-    try {
-      setTransferStatus({ loading: true, success: false, error: null });
-
-      const token = localStorage.getItem("token");
-      const response = await customerApi.post(
-        `${BASE_URL}/user-service/assetTransfer`,
-        {
-          from_mobile: userMobileNumber,
-          to_mobile: recipientMobile,
-          amount: transferAmount,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Save the transfer details for the success message
-      setTransferDetails({
-        recipientMobile: recipientMobile,
-        amount: transferAmount,
-      });
-
-      // Handle successful transfer
-      setTransferStatus({ loading: false, success: true, error: null });
-
-      // Refresh coin balance
-      fetchUserData();
-
-      // Reset form and close modal after delay
-      setTimeout(() => {
-        if (mobileInputRef.current) mobileInputRef.current.value = "";
-        if (amountInputRef.current) amountInputRef.current.value = "";
-        setShowTransferModal(false);
-        setTransferStatus({ loading: false, success: false, error: null });
-      }, 2000);
-    } catch (error: any) {
-      setTransferStatus({
-        loading: false,
-        success: false,
-        error:
-          error.response?.data?.message || "Transfer failed. Please try again.",
-      });
-    }
-  };
-
-  const TabButton: React.FC<{
-    tab: string;
-    icon: React.ReactNode;
-    label: string;
-    count?: number;
-  }> = ({ tab, icon, label, count }) => (
-    <button
-      onClick={() => handleTabClick(tab)}
-      className={`
-          flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-          transition-all duration-200 relative
-          ${
-            activeTab === tab
-              ? "bg-purple-100 text-purple-700 shadow-sm"
-              : "hover:bg-gray-100 text-gray-600"
-          }
-        `}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-
-  const BMVInfoModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
         <button
-          onClick={() => setShowBmvModal(false)}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors z-10"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors z-10 p-1 rounded-full hover:bg-gray-100 cursor-pointer"
           aria-label="Close modal"
         >
           <X size={20} />
@@ -269,7 +63,7 @@ const Tabview = () => {
             <div className="bg-purple-50 p-4 rounded-lg">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">
-                  Current Value: <span   className="text-purple-600 font-bold">₹0.02 per coin</span>
+                  Current Value: <span className="text-purple-600 font-bold">₹0.02 per coin</span>
                 </span>
 
                 <span className="text-purple-700 font-bold">
@@ -364,8 +158,9 @@ const Tabview = () => {
 
           {/* Close Button */}
           <button
-            onClick={() => setShowBmvModal(false)}
-            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2"
+            type="button"
+            onClick={onClose}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2 cursor-pointer"
           >
             Got it
             <ArrowRight size={16} />
@@ -374,124 +169,408 @@ const Tabview = () => {
       </div>
     </div>
   );
+};
 
-  const TransferModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4 relative">
+// Standalone Transfer BMVCOINS Modal with Manual Validation (No Form Submit / No Data Clearing)
+interface TransferModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  availableBalance: number;
+  senderMobile: string;
+  onSuccess: () => void;
+}
+
+const TransferModal: React.FC<TransferModalProps> = ({
+  isOpen,
+  onClose,
+  availableBalance,
+  senderMobile,
+  onSuccess,
+}) => {
+  const [recipientMobile, setRecipientMobile] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [mobileError, setMobileError] = useState("");
+  const [amountError, setAmountError] = useState("");
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [transferDetails, setTransferDetails] = useState({
+    recipientMobile: "",
+    amount: "",
+  });
+
+  // Only reset inputs when modal is closed, NEVER while it is open or when errors occur
+  useEffect(() => {
+    if (!isOpen) {
+      setRecipientMobile("");
+      setTransferAmount("");
+      setMobileError("");
+      setAmountError("");
+      setGeneralError(null);
+      setLoading(false);
+      setSuccess(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const balance = Number(availableBalance) || 0;
+  const cleanSender = (senderMobile || localStorage.getItem("mobileNumber") || "")
+    .replace(/\D/g, "")
+    .slice(-10);
+
+  // Manual Validation Helper for Mobile Number
+  const validateMobileManual = (val: string): string => {
+    const clean = val.replace(/\D/g, "");
+    if (!clean) {
+      return "Recipient mobile number is required.";
+    }
+    // Block 0000000000 or all zeroes explicitly
+    if (/^0+$/.test(clean) || clean === "0000000000") {
+      return "Invalid mobile number. 0000000000 is not allowed.";
+    }
+    // Block any repeating 10 identical digits (e.g. 1111111111, 9999999999)
+    if (/^(\d)\1{9}$/.test(clean)) {
+      return `Invalid mobile number. Repeated digits (${clean}) are not allowed.`;
+    }
+    // Indian numbers must start with 6, 7, 8, or 9
+    if (/^[0-5]/.test(clean)) {
+      return `Mobile number must start with 6, 7, 8, or 9 (cannot start with ${clean[0]}).`;
+    }
+    // Must be exactly 10 digits
+    if (clean.length < 10) {
+      return `Please enter complete 10-digit mobile number (${clean.length}/10 digits entered).`;
+    }
+    if (!/^[6-9]\d{9}$/.test(clean)) {
+      return "Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.";
+    }
+    // Prevent self-transfer
+    if (cleanSender && clean === cleanSender) {
+      return "You cannot transfer BMVCOINS to your own mobile number.";
+    }
+    return "";
+  };
+
+  // Manual Validation Helper for Amount
+  const validateAmountManual = (val: string): string => {
+    if (!val || !val.trim()) {
+      return "Transfer amount is required.";
+    }
+    const num = Number(val);
+    if (isNaN(num) || num <= 0) {
+      return "Please enter a valid amount of at least 1 BMVCOIN.";
+    }
+    if (balance <= 0) {
+      return "You have 0 BMVCOINS available to transfer.";
+    }
+    if (num > balance) {
+      return `Insufficient balance! You have ${balance} BMVCOINS, but entered ${num}.`;
+    }
+    return "";
+  };
+
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setRecipientMobile(val);
+    setGeneralError(null);
+
+    // Live validation feedback
+    if (val.length > 0) {
+      setMobileError(validateMobileManual(val));
+    } else {
+      setMobileError("");
+    }
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, "");
+    setTransferAmount(val);
+    setGeneralError(null);
+
+    // Live validation feedback without wiping input
+    if (val.length > 0) {
+      setAmountError(validateAmountManual(val));
+    } else {
+      setAmountError("");
+    }
+  };
+
+  // Pure Manual Validation on Transfer Click (No form submit, never clears input data)
+  const handleManualTransfer = async () => {
+    const mErr = validateMobileManual(recipientMobile);
+    const aErr = validateAmountManual(transferAmount);
+
+    setMobileError(mErr);
+    setAmountError(aErr);
+
+    if (mErr || aErr) {
+      setGeneralError(mErr || aErr);
+      return; // Do NOT clear recipientMobile or transferAmount! Keep user inputs intact!
+    }
+
+    try {
+      setLoading(true);
+      setGeneralError(null);
+
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken") || "";
+      const sender = senderMobile || localStorage.getItem("mobileNumber") || "";
+      const cleanRecipient = recipientMobile.replace(/\D/g, "");
+
+      await customerApi.post(
+        `${BASE_URL}/user-service/assetTransfer`,
+        {
+          from_mobile: sender,
+          to_mobile: cleanRecipient,
+          amount: transferAmount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setTransferDetails({
+        recipientMobile: cleanRecipient,
+        amount: transferAmount,
+      });
+
+      setLoading(false);
+      setSuccess(true);
+      onSuccess();
+    } catch (err: any) {
+      setLoading(false);
+      // Keep input data completely intact on error
+      const rawMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Transfer failed. Please check recipient mobile number and try again.";
+      setGeneralError(rawMsg);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setRecipientMobile("");
+    setTransferAmount("");
+    setMobileError("");
+    setAmountError("");
+    setGeneralError(null);
+    setLoading(false);
+    setSuccess(false);
+    onClose();
+  };
+
+  const cleanRecipient = recipientMobile.replace(/\D/g, "");
+  const numAmount = Number(transferAmount);
+  const isMobileValid = cleanRecipient.length === 10 && !mobileError;
+  const isAmountValid = transferAmount !== "" && !isNaN(numAmount) && numAmount > 0 && numAmount <= balance && !amountError;
+  const remainingBalance = balance - (isAmountValid ? numAmount : 0);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
+      <div className="bg-white p-6 sm:p-7 rounded-2xl shadow-2xl w-full max-w-md mx-auto relative border border-slate-100">
         <button
-          onClick={() => {
-            setShowTransferModal(false);
-            setTransferStatus({ loading: false, success: false, error: null });
-            if (mobileInputRef.current) mobileInputRef.current.value = "";
-            if (amountInputRef.current) amountInputRef.current.value = "";
-          }}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          type="button"
+          onClick={handleCloseModal}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 cursor-pointer"
           aria-label="Close modal"
         >
           <X size={20} />
         </button>
 
-        <div className="flex items-center mb-6">
-          <div className="p-2 rounded-full bg-purple-100 mr-3">
-            <SendHorizonal className="h-6 w-6 text-purple-600" />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-purple-100 text-purple-700">
+            <SendHorizonal className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-bold text-purple-700">
-            Transfer BMVCOINS
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+              Transfer BMVCOINS
+            </h2>
+            <p className="text-xs text-gray-500">
+              Send coins instantly to any registered mobile number
+            </p>
+          </div>
         </div>
 
-        {transferStatus.success ? (
+        {success ? (
           <div className="text-center py-6">
-            <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-              <Check className="h-8 w-8 text-green-600" />
+            <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4 animate-bounce">
+              <Check className="h-8 w-8 stroke-[3]" />
             </div>
-            <p className="text-lg font-medium text-gray-900">
+            <h3 className="text-xl font-bold text-gray-900">
               Transfer Successful!
-            </p>
-            <p className="text-sm text-gray-500 mt-2 mb-4">
-              {transferDetails.amount} BMVCOINS transferred to{" "}
-              {transferDetails.recipientMobile}
-            </p>
+            </h3>
+            <div className="mt-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+              <p className="text-2xl font-black text-purple-700">
+                {transferDetails.amount}{" "}
+                <span className="text-sm font-semibold text-purple-600">
+                  BMVCOINS
+                </span>
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                transferred to{" "}
+                <strong className="text-gray-900">
+                  +91 {transferDetails.recipientMobile}
+                </strong>
+              </p>
+            </div>
             <button
-              onClick={() => {
-                setShowTransferModal(false);
-                setTransferStatus({
-                  loading: false,
-                  success: false,
-                  error: null,
-                });
-                if (mobileInputRef.current) mobileInputRef.current.value = "";
-                if (amountInputRef.current) amountInputRef.current.value = "";
-              }}
-              className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              type="button"
+              onClick={handleCloseModal}
+              className="mt-6 w-full bg-purple-600 text-white font-semibold py-3 rounded-xl hover:bg-purple-700 transition shadow-md shadow-purple-200 cursor-pointer"
             >
-              Close
+              Done
             </button>
           </div>
         ) : (
-          <form onSubmit={handleTransferSubmit} className="space-y-5">
+          <div className="space-y-4">
+            {/* Recipient Mobile Field */}
             <div>
-              <label
-                htmlFor="to_mobile"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Recipient Mobile Number
-              </label>
-              <input
-                type="text"
-                id="to_mobile"
-                name="to_mobile"
-                ref={mobileInputRef}
-                placeholder="Enter 10-digit mobile number"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                maxLength={10}
-                required
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <label
-                  htmlFor="amount"
-                  className="block text-sm font-medium text-gray-700"
+                  htmlFor="to_mobile"
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700"
                 >
-                  Amount
+                  Recipient Mobile Number <span className="text-red-500">*</span>
                 </label>
-                <span className="text-sm text-gray-500">
-                  Available: {bmvCoin}
+                <span className="text-xs font-semibold text-gray-400">
+                  {cleanRecipient.length}/10
                 </span>
               </div>
-              <input
-                type="text"
-                id="amount"
-                name="amount"
-                ref={amountInputRef}
-                placeholder="Enter amount to transfer"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                required
-              />
+              <div
+                className={`flex items-center rounded-xl border bg-white transition-all shadow-sm overflow-hidden ${
+                  mobileError
+                    ? "border-red-500 ring-2 ring-red-100"
+                    : isMobileValid
+                    ? "border-green-500 ring-2 ring-green-100"
+                    : "border-gray-300 focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-100"
+                }`}
+              >
+                <span className="px-3.5 py-3 text-xs sm:text-sm font-semibold text-gray-600 bg-gray-50 border-r border-gray-200 select-none flex items-center gap-1">
+                  <span>🇮🇳</span>
+                  <span>+91</span>
+                </span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  id="to_mobile"
+                  name="to_mobile"
+                 
+                  value={recipientMobile}
+                  onChange={handleMobileChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleManualTransfer();
+                    }
+                  }}
+                  placeholder="Enter 10-digit mobile number"
+                  className="w-full px-3.5 py-2.5 text-sm sm:text-base font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
+                />
+                {isMobileValid && (
+                  <div className="pr-3 text-green-600" title="Valid mobile number">
+                    <Check className="h-5 w-5 stroke-[2.5]" />
+                  </div>
+                )}
+              </div>
+              {mobileError && (
+                <p className="mt-1.5 text-xs text-red-600 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{mobileError}</span>
+                </p>
+              )}
             </div>
 
-            {transferStatus.error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{transferStatus.error}</p>
+            {/* Amount Field */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  htmlFor="amount"
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700"
+                >
+                  Transfer Amount <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                  Available: {balance} Coins
+                </span>
+              </div>
+              <div
+                className={`flex items-center rounded-xl border bg-white transition-all shadow-sm overflow-hidden ${
+                  amountError
+                    ? "border-red-500 ring-2 ring-red-100"
+                    : isAmountValid
+                    ? "border-green-500 ring-2 ring-green-100"
+                    : "border-gray-300 focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-100"
+                }`}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  id="amount"
+                  name="amount"
+                  value={transferAmount}
+                  onChange={handleAmountChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleManualTransfer();
+                    }
+                  }}
+                  placeholder="Enter coin amount"
+                  className="w-full px-3.5 py-2.5 text-sm sm:text-base font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
+                />
+                <span className="px-3.5 py-2.5 text-xs font-bold text-gray-500 select-none">
+                  BMV
+                </span>
+              </div>
+
+              {/* Remaining Balance Preview or Error */}
+              {isAmountValid ? (
+                <p className="mt-1.5 text-xs text-gray-500 flex items-center justify-between">
+                  <span>Balance after transfer:</span>
+                  <strong className="text-gray-800 font-bold">{remainingBalance} Coins</strong>
+                </p>
+              ) : numAmount > balance ? (
+                <div className="mt-1.5 p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 font-semibold flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>
+                    Insufficient balance: You have <strong>{balance}</strong> BMVCOINS, but entered <strong>{numAmount}</strong>.
+                  </span>
+                </div>
+              ) : null}
+
+              {amountError && numAmount <= balance && (
+                <p className="mt-1.5 text-xs text-red-600 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{amountError}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Status General Error Banner */}
+            {generalError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 flex items-start gap-2 shadow-sm">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <p className="font-semibold flex-1">{generalError}</p>
               </div>
             )}
 
+            {/* Transfer Action Button (Manual Trigger, Always Clickable to show errors, No HTML Form Submit) */}
             <button
-              type="submit"
-              disabled={transferStatus.loading}
-              className={`mt-4 w-full py-3 px-4 rounded-lg font-medium text-white
-                ${
-                  transferStatus.loading
-                    ? "bg-purple-400 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700 transition-colors"
-                }`}
+              type="button"
+              onClick={handleManualTransfer}
+              disabled={loading || balance <= 0}
+              className={`mt-4 w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                loading || balance <= 0
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                  : "bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:opacity-95 shadow-purple-200 active:scale-[0.99]"
+              }`}
             >
-              {transferStatus.loading ? (
-                <span className="flex items-center justify-center">
+              {loading ? (
+                <>
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    className="animate-spin h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -510,16 +589,127 @@ const Tabview = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Processing...
-                </span>
+                  <span>Processing Transfer...</span>
+                </>
               ) : (
-                "Transfer BMVCOINS"
+                <span>Transfer BMVCOINS →</span>
               )}
             </button>
-          </form>
+          </div>
         )}
       </div>
     </div>
+  );
+};
+
+const Tabview = () => {
+  const [multichainId, setMultichainId] = useState("");
+  const [bmvCoin, setBmvCoin] = useState(0);
+  const [isCopied, setIsCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("services");
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [showBmvModal, setShowBmvModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [userMobileNumber, setUserMobileNumber] = useState("");
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll);
+
+    // Fetch multichain ID and BMV coin
+    fetchUserData();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const pathTab = location.pathname.split("/").pop();
+
+    if (pathTab) {
+      setActiveTab(pathTab);
+    }
+  }, [location.pathname]);
+
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    navigate(`/main/dashboard/${tab}`);
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      const response = await customerApi.get(
+        `${BASE_URL}/user-service/getProfile/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      setMultichainId(response.data.multiChainId || "");
+      setBmvCoin(Number(response.data.coinAllocated) || 0);
+      setUserMobileNumber(response.data.mobileNumber || "");
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+  useEffect(() => {
+    const pathSegments = location.pathname.split("/");
+    const pathTab = pathSegments[2]; // Extracts "dashboard"
+
+    if (pathTab === "dashboard") {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [location.pathname]);
+
+  const handleCopyMultichainId = async () => {
+    if (multichainId) {
+      try {
+        await navigator.clipboard.writeText(multichainId);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy:", err);
+      }
+    }
+  };
+
+  const TabButton: React.FC<{
+    tab: string;
+    icon: React.ReactNode;
+    label: string;
+    count?: number;
+  }> = ({ tab, icon, label, count }) => (
+    <button
+      onClick={() => handleTabClick(tab)}
+      className={`
+          flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+          transition-all duration-200 relative
+          ${
+            activeTab === tab
+              ? "bg-purple-100 text-purple-700 shadow-sm"
+              : "hover:bg-gray-100 text-gray-600"
+          }
+        `}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 
   return (
@@ -537,7 +727,6 @@ const Tabview = () => {
       {isVisible && (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mt-4 w-full">
           {/* Blockchain ID Section */}
-   
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 bg-white p-3 rounded-lg shadow-lg w-full sm:w-auto text-center">
             {/* Blockchain ID Text */}
             <button
@@ -594,8 +783,19 @@ const Tabview = () => {
       )}
 
       {/* Modals */}
-      {showBmvModal && <BMVInfoModal />}
-      {showTransferModal && <TransferModal />}
+      <BMVInfoModal
+        isOpen={showBmvModal}
+        onClose={() => setShowBmvModal(false)}
+      />
+      <TransferModal
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        availableBalance={Number(bmvCoin) || 0}
+        senderMobile={userMobileNumber || localStorage.getItem("mobileNumber") || ""}
+        onSuccess={() => {
+          fetchUserData();
+        }}
+      />
     </div>
   );
 };

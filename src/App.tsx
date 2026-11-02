@@ -45,7 +45,6 @@ import RBINewsPage from "./OxyNews/pages/RBINewsPage";
 import RiceContainerData from "./PartnerWeb/RiceContainerData";
 import JourneysPagewithoutlogin from "./components/Journeyspagewithoutlogin";
 
-
 import OxyLoansSummary from "./components/OxyLoansSummary";
 import AmfiReports from "./AskoxyAdmin/AmfiReports";
 import RadhaLinkedin from "./AskoxyAdmin/RadhaLinkedin";
@@ -67,13 +66,25 @@ import EventDetails from "./AskoxyAdmin/EventDetails";
 import OxyLoansOverviewPage from "./components/OxyLoansOverview";
 import IRDAINewsPage from "./OxyNews/pages/IRDAINewsPage";
 import JobProgramDashboard from "./components/JobProgramDashboard";
-// import NineDaysJobProgramPlan from "./Jobplan/NineDaysJobProgramPlan";
-import TopModelsByTask, { ModelRankPage, ProviderRankPage, RankingsRoutes } from "./OxyNews/components/TopModelsByTask";
+import NineDaysJobProgramPlan from "./Jobplan/NineDaysJobProgramPlan";
+import TopModelsByTask, {
+  ModelRankPage,
+  ProviderRankPage,
+  RankingsRoutes,
+} from "./OxyNews/components/TopModelsByTask";
 // import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
 const NinetyDayPlanPage = lazy(() => import("./components/NinetyDayPlanPage"));
+const NineDaysInsideAfterLogin = lazy(
+  () => import("./Jobplan/NineDaysInsideAfterLogin"),
+);
+const CASRouteRenderer9Days = lazy(
+  () => import("./GLMS/CAS/Pages/CASRouteRenderer9Days"),
+);
+const FMSRoutes9Days = lazy(() => import("./GLMS/FMS/Pages/FMSRoutes9Days"));
+const CMSroutes9Days = lazy(() => import("./GLMS/CMS/Pages/CMSroutes9Days"));
 const CASRouteRenderer1 = lazy(
   () => import("./GLMS/CAS/Pages/CASRouteRenderer1"),
 );
@@ -351,7 +362,9 @@ const CeoDetailsListPage = lazy(
   () => import("./BusinessCard/CeoDetailsListPage"),
 );
 const AddLeagueJourney = lazy(() => import("./AskoxyAdmin/AddLeagueJourney"));
-const LeagueJourneyScorecard = lazy(() => import("./AskoxyAdmin/LeagueJourneyScorecard"));
+const LeagueJourneyScorecard = lazy(
+  () => import("./AskoxyAdmin/LeagueJourneyScorecard"),
+);
 const BorrowerChatPage = lazy(() => import("./components/BorrowerChatPage"));
 const AdminDashboardPage = lazy(
   () => import("./components/Admindashboardpage"),
@@ -440,6 +453,7 @@ const ThankYouPage = lazy(() => import("./components/ThankYouPage"));
 
 const WhatsappLogin = lazy(() => import("./Pages/Auth/WhatsappLogin"));
 const WhatsappRegister = lazy(() => import("./Pages/Auth/WhatsappRegister"));
+const StudentLogin = lazy(() => import("./components/StudentLogin"));
 const AllQueries = lazy(() => import("./AskoxyAdmin/AllQueries"));
 const RequireAuth = lazy(() => import("./auth/RequireAuth"));
 const ItemDisplayPage = lazy(() => import("./kart/itemsdisplay"));
@@ -456,6 +470,8 @@ const ManageAddressesPage = lazy(() => import("./kart/Address"));
 const CheckoutPage = lazy(() => import("./kart/Checkout"));
 const AgentComboOffersPage = lazy(() => import("./kart/AgentComboOffersPage"));
 const PrivacyPolicy = lazy(() => import("./kart/Privacypolicy"));
+const DataDeletion = lazy(() => import("./Pages/data-deletion"));
+
 const ReferralPage = lazy(() => import("./kart/Referral"));
 const DashboardMain = lazy(() => import("./Dashboard/Dashboardmain"));
 const BMVPDF = lazy(() => import("./components/bmvpdf"));
@@ -622,8 +638,12 @@ const OfferImagesUpdate = lazy(() => import("./PartnerWeb/OfferImagesUpdate"));
 const JobsAdminPage = lazy(() => import("./AskoxyAdmin/Alljobdetails"));
 const AddReference = lazy(() => import("./PartnerWeb/AddReference"));
 const UserAppliedJob = lazy(() => import("./AskoxyAdmin/UserAppliedJobs"));
-const InterestedCandidates = lazy(() => import("./AskoxyAdmin/InterestedCandidates"));
-const AgentAutomationAdmin = lazy(() => import("./AskoxyAdmin/AgentAutomationAdmin"));
+const InterestedCandidates = lazy(
+  () => import("./AskoxyAdmin/InterestedCandidates"),
+);
+const AgentAutomationAdmin = lazy(
+  () => import("./AskoxyAdmin/AgentAutomationAdmin"),
+);
 const StockTable = lazy(() => import("./PartnerWeb/StockDetails"));
 const MarketReport = lazy(() => import("./PartnerWeb/Marketreport"));
 const FreeAiBookLandingPage = lazy(() => import("./FREEAIBOOK/LandingPage"));
@@ -740,20 +760,42 @@ const AccentureServices = lazy(
 const CommunityPage = lazy(
   () => import("./components/community/CommunityPage"),
 );
-const OxyVisitLogin = lazy(() => import("./oxyvisit/src/Auth/LoginandRegister"));
+const OxyVisitLogin = lazy(
+  () => import("./oxyvisit/src/Auth/LoginandRegister"),
+);
 const OxyVisitRegister = lazy(() => import("./oxyvisit/src/Auth/Register"));
-const OxyVisitUnauthorized = lazy(() => import("./oxyvisit/src/pages/Unauthorized"));
-const OxyVisitDashboardLayout = lazy(() => import("./oxyvisit/src/layouts/DashboardLayout"));
-const OxyVisitCategoriesManagement = lazy(() => import("./oxyvisit/src/pages/admin/CategoriesManagement"));
-const OxyVisitVisitsManagement = lazy(() => import("./oxyvisit/src/pages/admin/VisitsManagement"));
-const OxyVisitUserDashboard = lazy(() => import("./oxyvisit/src/pages/user/UserDashboard"));
-const OxyVisitUserCategories = lazy(() => import("./oxyvisit/src/pages/user/UserCategories"));
-const OxyVisitUserVisits = lazy(() => import("./oxyvisit/src/pages/user/UserVisits"));
-const OxyVisitUserAllVisits = lazy(() => import("./oxyvisit/src/pages/user/UserAllVisits"));
-const OxyVisitProtectedRoute = lazy(() => import("./oxyvisit/src/utils/ProtectedRoute"));
+const OxyVisitUnauthorized = lazy(
+  () => import("./oxyvisit/src/pages/Unauthorized"),
+);
+const OxyVisitDashboardLayout = lazy(
+  () => import("./oxyvisit/src/layouts/DashboardLayout"),
+);
+const OxyVisitCategoriesManagement = lazy(
+  () => import("./oxyvisit/src/pages/admin/CategoriesManagement"),
+);
+const OxyVisitVisitsManagement = lazy(
+  () => import("./oxyvisit/src/pages/admin/VisitsManagement"),
+);
+const OxyVisitUserDashboard = lazy(
+  () => import("./oxyvisit/src/pages/user/UserDashboard"),
+);
+const OxyVisitUserCategories = lazy(
+  () => import("./oxyvisit/src/pages/user/UserCategories"),
+);
+const OxyVisitUserVisits = lazy(
+  () => import("./oxyvisit/src/pages/user/UserVisits"),
+);
+const OxyVisitUserAllVisits = lazy(
+  () => import("./oxyvisit/src/pages/user/UserAllVisits"),
+);
+const OxyVisitProtectedRoute = lazy(
+  () => import("./oxyvisit/src/utils/ProtectedRoute"),
+);
 
 const OxyVisitDashboardIndex: React.FC = () => {
-  const primaryType = localStorage.getItem("primaryType") || localStorage.getItem("admin_primaryType");
+  const primaryType =
+    localStorage.getItem("primaryType") ||
+    localStorage.getItem("admin_primaryType");
   if (primaryType === "HELPDESKADMIN" || primaryType === "HELPDESKSUPERADMIN") {
     return <Navigate to="/oxyvisit/dashboard/categories" replace />;
   }
@@ -987,6 +1029,9 @@ const App: React.FC = () => {
       "/partner",
       "/fpl",
       "/oxygold",
+      "/student-login",
+      "/studentlogin",
+      "/ninedaysjobprogramplan",
       "/viewjobdetails/default/ALL",
     ];
     if (validEntryPoints.includes(location.pathname)) {
@@ -1102,10 +1147,10 @@ const App: React.FC = () => {
               <Route path="/shop-form" element={<ShopFormPage />} />
               <Route path="/shop-list" element={<ShopListPage />} />
               <Route path="/shop-edit/:id" element={<ShopEditForm />} />
-              {/* <Route
-  path="/9daysjobprogramplan"
-  element={<NineDaysJobProgramPlan />}
-/> */}
+              <Route
+                path="/ninedaysjobprogramplan"
+                element={<NineDaysJobProgramPlan />}
+              />
               <Route path="/90dayjobplan" element={<JobTraining90DaysPage />} />
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
@@ -1325,6 +1370,46 @@ const App: React.FC = () => {
                 }
               />
               <Route
+                path="/ninedaysinside"
+                element={
+                  <RequireAuth>
+                    <NineDaysInsideAfterLogin />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ninedaysinsideafterlogin"
+                element={
+                  <RequireAuth>
+                    <NineDaysInsideAfterLogin />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ninedaysinside"
+                element={
+                  <RequireAuth>
+                    <NineDaysInsideAfterLogin />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ninedaysinsideafterlogin"
+                element={
+                  <RequireAuth>
+                    <NineDaysInsideAfterLogin />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/dummy-for-replace"
+                element={
+                  <RequireAuth>
+                    <NinetyDayPlanPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
                 path="/campaign/:campaignId"
                 element={<CampaignBlogPage />}
               />
@@ -1376,6 +1461,8 @@ const App: React.FC = () => {
               {/* ===================================================== */}
               <Route path="/whatsapplogin" element={<WhatsappLogin />} />
               <Route path="/whatsappregister" element={<WhatsappRegister />} />
+              <Route path="/studentlogin" element={<StudentLogin />} />
+              <Route path="/student-login" element={<StudentLogin />} />
               {/* ===================================================== */}
               {/* ✅ OXYVISIT ROUTES */}
               {/* ===================================================== */}
@@ -1568,6 +1655,18 @@ const App: React.FC = () => {
               <Route
                 path="/cm-system/:useCaseId/:type"
                 element={<CMSroutes1 />}
+              />
+              <Route
+                path="/lo-system-9days/:useCaseId/:type"
+                element={<CASRouteRenderer9Days />}
+              />
+              <Route
+                path="/fm-system-9days/:useCaseId/:type"
+                element={<FMSRoutes9Days />}
+              />
+              <Route
+                path="/cm-system-9days/:useCaseId/:type"
+                element={<CMSroutes9Days />}
               />
               <Route path="/cms" element={<CMSDashboard />} />
               <Route
@@ -2018,6 +2117,9 @@ const App: React.FC = () => {
                 element={<SIBAIIntelligenceReport2026 />}
               />
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+              <Route path="/data-deletion" element={<DataDeletion />} />
+              <Route path="/datadeletion" element={<DataDeletion />} />
+            
               <Route path="/bmvpdf" element={<BMVPDF />} />
 
               <Route path="/teststore" element={<TestStore />} />

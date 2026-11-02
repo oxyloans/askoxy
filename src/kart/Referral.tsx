@@ -57,6 +57,7 @@ const ReferralPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [refereeDetails, setRefereeDetails] = useState<RefereeDetail[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>(undefined);
+  const [selectedCountry, setSelectedCountry] = useState<string>("IN");
   const [error, setError] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
@@ -186,6 +187,7 @@ const ReferralPage: React.FC = () => {
     if (action === "whatsapp") {
       setPhoneNumber(undefined);
       setPhoneTouched(false);
+      setSelectedCountry("IN");
       setError("");
       setIsModalOpen(true);
     } else if (action === "copy") {
@@ -218,14 +220,19 @@ const ReferralPage: React.FC = () => {
   const validateReferralPhone = (value?: string): string => {
     if (!value) return "Enter a mobile number.";
     const parsed = parsePhoneNumber(value);
-    if (!parsed || !isValidPhoneNumber(value)) {
+    if (!parsed) {
       return "Enter a valid mobile number.";
     }
-    if (
-      parsed.country === "IN" &&
-      !/^[6-9]\d{9}$/.test(parsed.nationalNumber)
-    ) {
-      return "Enter a valid 10-digit Indian mobile number.";
+    if (parsed.country === "IN") {
+      if (!/^[6-9]/.test(parsed.nationalNumber)) {
+        return "Mobile number must start with 6, 7, 8, or 9.";
+      }
+      if (parsed.nationalNumber.length !== 10) {
+        return "Mobile number must be exactly 10 digits.";
+      }
+    }
+    if (!isValidPhoneNumber(value)) {
+      return "Enter a valid mobile number.";
     }
     if (isObviousDummyNumber(parsed.nationalNumber)) {
       return "This looks like a dummy number. Enter a real mobile number.";
@@ -265,7 +272,18 @@ const ReferralPage: React.FC = () => {
   const handlePhoneChange = (value?: string) => {
     // Prevent >10 national digits for Indian numbers, even on paste.
     const parsed = value ? parsePhoneNumber(value) : undefined;
-    if (parsed?.country === "IN" && parsed.nationalNumber.length > 10) return;
+    if (
+      parsed &&
+      parsed.country === "IN" &&
+      parsed.nationalNumber &&
+      parsed.nationalNumber.length > 10
+    ) {
+      const code = parsed.countryCallingCode || "91";
+      setPhoneNumber(`+${code}${parsed.nationalNumber.slice(0, 10)}`);
+      setPhoneTouched(true);
+      setError("");
+      return;
+    }
     setPhoneNumber(value);
     setPhoneTouched(true);
     setError("");
@@ -694,14 +712,22 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
                   <PhoneInput
                     id="referral-mobile"
                     international
+                    limitMaxLength
                     countryCallingCodeEditable={false}
                     defaultCountry="IN"
                     value={phoneNumber}
                     onChange={handlePhoneChange}
+                    onCountryChange={(country) => {
+                      setSelectedCountry(country || "IN");
+                    }}
                     onBlur={() => setPhoneTouched(true)}
-                    placeholder="Enter mobile number"
+                    placeholder={
+                      selectedCountry === "IN"
+                        ? "Enter 10-digit mobile number"
+                        : "Enter mobile number"
+                    }
                     numberInputProps={{
-                      inputMode: "tel",
+                      inputMode: "numeric",
                       autoComplete: "tel",
                       "aria-invalid": Boolean(shownPhoneError),
                       "aria-describedby": "referral-mobile-feedback",
