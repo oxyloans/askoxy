@@ -80,6 +80,9 @@ const NinetyDayPlanPage = lazy(() => import("./components/NinetyDayPlanPage"));
 const NineDaysInsideAfterLogin = lazy(
   () => import("./Jobplan/NineDaysInsideAfterLogin"),
 );
+const NineDaysJobProgramDashboard = lazy(
+  () => import("./Jobplan/9daysjobprogramdashboard"),
+);
 const CASRouteRenderer9Days = lazy(
   () => import("./GLMS/CAS/Pages/CASRouteRenderer9Days"),
 );
@@ -1114,6 +1117,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/radhai") ||
       currentPath.startsWith("/talktoceo") ||
       currentPath.startsWith("/radhai-connect") ||
+      currentPath.startsWith("/ninedaysjobprogramplan") ||    
       currentPath.startsWith("/radhAI") ||
       currentPath.startsWith("/radhai-admin") ||
       currentPath.startsWith("/generate") ||
@@ -1410,6 +1414,22 @@ const App: React.FC = () => {
                 }
               />
               <Route
+                path="/9daysjobprogramdashboard"
+                element={
+                  <RequireAuth>
+                    <NineDaysJobProgramDashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ninedaysjobprogramdashboard"
+                element={
+                  <RequireAuth>
+                    <NineDaysJobProgramDashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
                 path="/campaign/:campaignId"
                 element={<CampaignBlogPage />}
               />
@@ -1422,6 +1442,7 @@ const App: React.FC = () => {
               />
               <Route path="services/:id/:type" element={<CampaignDetails />} />
               <Route path="blog/:id/:type" element={<BlogDetails />} />
+                <Route path="blog/:id" element={<BlogDetails />} />
               <Route path="jobdetails" element={<JobDetails />} />
               <Route path="viewjobdetails" element={<JobViewPage />} />
               <Route path="viewjobdetails/:id" element={<JobViewPage />} />
@@ -2366,6 +2387,7 @@ const App: React.FC = () => {
                   element={<CampaignDetails />}
                 />
                 <Route path="blog/:id/:type" element={<BlogDetails />} />
+                <Route path="blog/:id" element={<BlogDetails />} />
                 <Route path="viewjobdetails" element={<JobViewPage />} />
                 <Route path="viewjobdetails/:id" element={<JobViewPage />} />
                 <Route

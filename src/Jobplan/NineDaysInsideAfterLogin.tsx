@@ -10,18 +10,15 @@ import {
   NINE_DAYS_VIEW_KEY,
   NineDaysUseCaseLink,
 } from "../components/NineDaysUseCaseNavigation";
+import {
+  ModuleKey,
+  NineDaysUseCaseItem,
+  NINE_DAYS_USE_CASES,
+  getUseCaseCode,
+  parseUseCaseNumbers,
+} from "./nineDaysUseCasesData";
 
-type ModuleKey = "lo-system-9days" | "fm-system-9days" | "cm-system-9days";
-
-export type NineDaysUseCaseItem = {
-  id: number;
-  day: number;
-  path: string;
-  title: string;
-  description: string;
-  module: ModuleKey;
-  moduleLabel: "LOS" | "FMS" | "CMS";
-};
+export * from "./nineDaysUseCasesData";
 
 export type InterestApiResponse = {
   interested?: boolean;
@@ -100,484 +97,6 @@ const Toast = Swal.mixin({
   },
 });
 
-// Exactly 51 Use Cases across 6 Days
-export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
-  // Day 1: 1 - 8 (LOS)
-  {
-    id: 1,
-    day: 1,
-    path: "customer-id-creation",
-    title: "Customer ID Creation",
-    description:
-      "Generate unique customer ID and link it to the Core Banking System (CBS)",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 2,
-    day: 1,
-    path: "co-applicant-linking",
-    title: "Co-applicant & Guarantor Linking",
-    description:
-      "Upload and link KYC/supporting documents for co-applicants or guarantors",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 3,
-    day: 1,
-    path: "customer-id-loan-link",
-    title: "Customer ID to Loan Linking",
-    description:
-      "Map customer ID to the loan application for tracking and verification",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 4,
-    day: 1,
-    path: "loan-appraisal",
-    title: "Loan Appraisal System",
-    description: "Perform customer credit scoring and financial appraisal",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 5,
-    day: 1,
-    path: "loan-assessment",
-    title: "Loan Assessment Workflow",
-    description: "Capture loan application and perform preliminary checks",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 6,
-    day: 1,
-    path: "recommendation-workflow",
-    title: "Recommendation & Sanction Letter",
-    description: "Review loan details and generate sanction recommendations",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 7,
-    day: 1,
-    path: "risk-analysis-upload",
-    title: "Risk Analysis Documentation",
-    description: "Upload signed agreements and perform risk validation",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 8,
-    day: 1,
-    path: "sanction-disbursement",
-    title: "Sanction & Customer Response Tracking",
-    description: "Track sanction status and customer acknowledgments",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-
-  // Day 2: 9 - 17 (LOS + FMS)
-  {
-    id: 9,
-    day: 2,
-    path: "loan-repayment-schedule",
-    title: "Repayment Schedule Generation",
-    description: "Generate EMI schedule and repayment tracking data",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 10,
-    day: 2,
-    path: "terms-conditions-workflow",
-    title: "Terms & Conditions Approval",
-    description: "Approve and manage loan terms and condition agreements",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 11,
-    day: 2,
-    path: "asset-details-capture",
-    title: "Asset Details Capture",
-    description: "Record asset details offered as collateral or security",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 12,
-    day: 2,
-    path: "limit-check-profile-update",
-    title: "Profile Update & Limit Check",
-    description: "Update customer info and check applicable credit limits",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 13,
-    day: 2,
-    path: "account-closure-process",
-    title: "Account Closure & Net Worth Analysis",
-    description: "Initiate account closure and analyze party's net worth",
-    module: "lo-system-9days",
-    moduleLabel: "LOS",
-  },
-  {
-    id: 14,
-    day: 2,
-    path: "asset-details",
-    title: "Asset Details",
-    description: "Manage and monitor asset-related case information.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 15,
-    day: 2,
-    path: "allocation-contract",
-    title: "PDC Printing",
-    description: "Automated post-dated cheque processing.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 16,
-    day: 2,
-    path: "installment-prepayment",
-    title: "WF_ Installment Prepayment",
-    description: "Handle early repayments and installment adjustments.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 17,
-    day: 2,
-    path: "case-reallocation",
-    title: "WF_ NPA Grading",
-    description: "Non-performing asset classification system.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-
-  // Day 3: 18 - 25 (FMS)
-  {
-    id: 18,
-    day: 3,
-    path: "npa-provisioning",
-    title: "WF_ NPA Provisioning",
-    description: "Process provisioning for non-performing assets.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 19,
-    day: 3,
-    path: "settlement-knockoff",
-    title: "WF_ Settlements - Knock Off",
-    description: "Record settlements and update outstanding balances.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 20,
-    day: 3,
-    path: "cheque-processing",
-    title: "WF_ Settlements_Cheque(Receipt_Payment) Processing",
-    description: "Manage cheque-based settlements and payments.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 21,
-    day: 3,
-    path: "settlement-advisory",
-    title: "WF_ Settlements_Manual Advise",
-    description: "Provide manual advisory for payment settlements.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 22,
-    day: 3,
-    path: "foreclosure-management",
-    title: "WF_ Termination - Foreclosure - Closure",
-    description: "Handle early closure and foreclosure of loans.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 23,
-    day: 3,
-    path: "finance-viewer",
-    title: "WF_FMS_ Finance Viewer",
-    description: "View financial metrics and account overviews.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 24,
-    day: 3,
-    path: "floating-review",
-    title: "WF_FMS_ Floating Review Process",
-    description: "Manage reviews for floating-rate financial products.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 25,
-    day: 3,
-    path: "daily-workplan",
-    title: "WF_FMS_ Settlements - Receipts",
-    description: "Automated receipt settlement processing",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-
-  // Day 4: 26 - 34 (FMS)
-  {
-    id: 26,
-    day: 4,
-    path: "settlements-payment",
-    title: "WF_FMS_ Settlements_Payment",
-    description: "Track and process all types of settlement payments.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 27,
-    day: 4,
-    path: "settlements-waiveoff",
-    title: "WF_FMS_ Settlements_Waive Off",
-    description: "Manage waived-off cases and financial adjustments.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 28,
-    day: 4,
-    path: "eod-bod-process",
-    title: "WF_FMS_EOD_ BOD",
-    description: "Run end-of-day and beginning-of-day operations.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 29,
-    day: 4,
-    path: "account-closure",
-    title: "Work Flow Closure_Account Closure",
-    description: "Close accounts after settlement or full repayment.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 30,
-    day: 4,
-    path: "account-status",
-    title: "Work Flow Closure_View Account Status",
-    description: "Check and track account lifecycle and changes.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 31,
-    day: 4,
-    path: "document-master",
-    title: "Work Flow_Document Master",
-    description: "Manage and define all finance-related documentation.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 32,
-    day: 4,
-    path: "bulk-prepayment",
-    title: "Work Flow_Finance Rescheduling_Bulk Prepayment",
-    description: "Handle bulk prepayment processing and schedules.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 33,
-    day: 4,
-    path: "due-date-change",
-    title: "Work Flow_Finance Rescheduling_Due Date Change",
-    description: "Edit due dates for finance repayments.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 34,
-    day: 4,
-    path: "profit-rate-change",
-    title: "Work Flow_Finance Rescheduling_Profit Rate Change",
-    description: "Adjust profit rates for financial products.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-
-  // Day 5: 35 - 42 (FMS + CMS)
-  {
-    id: 35,
-    day: 5,
-    path: "tenure-change",
-    title: "Work Flow_Finance Rescheduling_Tenure Change",
-    description: "Modify loan tenures and repayment terms.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 36,
-    day: 5,
-    path: "post-disbursal-edit",
-    title: "Work Flow_Post Disbursal Edit",
-    description: "Amend disbursed loans for corrections or changes.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 37,
-    day: 5,
-    path: "deferral-constitution",
-    title: "Work Flow_Repayment Deferral_Constitution Wise Deferral",
-    description: "Manage repayment deferrals by constitution types.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 38,
-    day: 5,
-    path: "deferral-financewise",
-    title: "Work Flow_Repayment Deferral_Finance Wise Deferral",
-    description: "Apply deferrals based on finance criteria.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 39,
-    day: 5,
-    path: "deferral-portfolio",
-    title: "Work Flow_Repayment Deferral_Portfolio Wise Deferral",
-    description: "Initiate deferrals across loan portfolios.",
-    module: "fm-system-9days",
-    moduleLabel: "FMS",
-  },
-  {
-    id: 40,
-    day: 5,
-    path: "allocation-hold",
-    title: "Allocation of Delinquent Cases_Allocation Hold",
-    description: "Place delinquent cases on hold based on predefined rules.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 41,
-    day: 5,
-    path: "define-allocation-contract",
-    title: "Allocation of Delinquent Cases_Define Allocation contract",
-    description: "Upload and manage contracts for delinquent case allocation.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 42,
-    day: 5,
-    path: "manual-allocation",
-    title: "Allocation of Delinquent Cases_Manual Allocation",
-    description: "Manually assign delinquent cases to collection agents.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-
-  // Day 6: 43 - 51 (CMS)
-  {
-    id: 43,
-    day: 6,
-    path: "manual-reallocation",
-    title: "Allocation of Delinquent Cases_Manual Reallocation",
-    description:
-      "Reassign cases based on collector availability and performance.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 44,
-    day: 6,
-    path: "bod-process",
-    title: "Beginning of Day Process",
-    description: "Initialize and prepare daily queue for collections.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 45,
-    day: 6,
-    path: "define-queue",
-    title: "Classification of Delinquent Cases - Define Queue",
-    description: "Create and manage delinquent case queues.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 46,
-    day: 6,
-    path: "contact-recording",
-    title: "Contact Recording",
-    description: "Record contact attempts and customer communication logs.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 47,
-    day: 6,
-    path: "legal-collections",
-    title: "Legal Collections Workflow",
-    description: "Initiate and track legal recovery processes.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 48,
-    day: 6,
-    path: "prioritize-queue",
-    title: "Prioritizing a Queue",
-    description: "Set priority for follow-up based on risk and aging.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 49,
-    day: 6,
-    path: "communication-mapping",
-    title: "Queue Communication Mapping",
-    description: "Assign communication templates to specific queues.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 50,
-    day: 6,
-    path: "queue-curing",
-    title: "Queue Curing",
-    description: "Monitor and track cured accounts from delinquency.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-  {
-    id: 51,
-    day: 6,
-    path: "work-plan",
-    title: "Collector Work Plan",
-    description: "Design and track daily plans for collection agents.",
-    module: "cm-system-9days",
-    moduleLabel: "CMS",
-  },
-];
-
 const dayMeta = [
   {
     day: 1,
@@ -629,359 +148,496 @@ const dayMeta = [
   },
   {
     day: 7,
-    title: "Docker, CI/CD & Cloud Deployment",
-    category: "Deployment & DevOps",
-    count: "DevOps & Cloud Tools",
-    badge: "Docker & Cloud",
-    shortBadge: "Docker & Cloud",
+    title: "Build 51 Use-Case Banking Project with AI Tools",
+    category: "Full-Stack AI Project",
+    count: "AI Project Generation & IDE Setup",
+    badge: "AI Project Build",
+    shortBadge: "AI Build (51 UC)",
   },
   {
     day: 8,
-    title: "Production Monitoring, Reliability & Recovery",
-    category: "Production Reliability",
-    count: "Production Reliability & Recovery",
-    badge: "Monitoring & Recovery",
-    shortBadge: "Monitoring & Recovery",
+    title: "Production Deployment: Deploying Your Banking Project",
+    category: "Cloud & DevOps Deployment",
+    count: "End-to-End Live Deployment Guide",
+    badge: "Cloud Deployment",
+    shortBadge: "Live Deploy",
   },
   {
     day: 9,
-    title: "Technical Interviews & Career Launch",
-    category: "Career & Interview",
-    count: "51 Use-Case Viva & Assessment",
-    badge: "Technical Interviews",
-    shortBadge: "Technical Interviews",
+    title: "Technical Assessment & Final Exam",
+    category: "Assessment & Exam",
+    count: "Final Knowledge Exam & Certification",
+    badge: "Final Exam",
+    shortBadge: "Final Exam",
   },
 ];
 
-// Day 7: DevOps & Deployment Tools
-const DEPLOYMENT_TOOLS = [
-  {
-    id: "docker",
-    name: "Docker Containerization",
-    category: "Containers",
-    tag: "Essential",
-    whatIsIt:
-      "A platform that packages an application and all its dependencies (runtime, system tools, libraries) into a lightweight, portable container that runs consistently on any machine.",
-    whyUsed:
-      "Eliminates 'it works on my machine' issues. In banking systems, multiple microservices (LOS, FMS, CMS) run isolated without dependency collisions and scale reliably.",
-    howToSearch:
-      "Search terminal: 'docker --version', 'docker ps', 'docker images'. Search packages: hub.docker.com",
-    keyCommands: [
-      "docker build -t askoxy-banking:v1 .",
-      "docker run -d -p 8080:80 --name oxy-app askoxy-banking:v1",
-      "docker ps -a  # Check container status",
-      "docker logs -f oxy-app  # Live logs check",
-    ],
-    docLink: "https://docs.docker.com/get-started/",
+// Day 7: Suggested Banking Project Details & IDE Setup
+export const PROJECT_CONFIG = {
+  suggestedName: "OxyBank-Enterprise-Lending",
+  altNames: ["FinLend360-Platform", "OxyCore-Lending-Suite"],
+  architecture: "Full-Stack Modular Architecture (LOS + FMS + CMS)",
+  techStack: {
+    frontend: "React 18, TypeScript, Tailwind CSS, Lucide Icons, Axios",
+    backend: "Node.js (Express / TypeScript) or Java Spring Boot",
+    database: "PostgreSQL (ACID compliance) + Redis Cache",
+    apiPattern: "RESTful JSON API with OpenAPI/Swagger contracts",
   },
-  {
-    id: "github-actions",
-    name: "GitHub Actions CI/CD",
-    category: "CI/CD Pipeline",
-    tag: "Automation",
-    whatIsIt:
-      "A continuous integration and continuous delivery (CI/CD) automation platform that builds, tests, and deploys code directly from your GitHub repository upon every push or PR.",
-    whyUsed:
-      "Ensures zero untested code reaches production. Automatically runs TypeScript linting, unit tests, generates production Docker images, and deploys to servers seamlessly.",
-    howToSearch:
-      "Check '.github/workflows/*.yml' files in repo root. Search on GitHub Marketplace for pre-built actions.",
-    keyCommands: [
-      "# In .github/workflows/deploy.yml:",
-      "on: [push]",
-      "jobs:",
-      "  deploy: runs-on: ubuntu-latest",
-      "  steps: - uses: actions/checkout@v4",
-      "         - run: npm ci && npm run build",
-    ],
-    docLink: "https://docs.github.com/en/actions",
-  },
-  {
-    id: "aws-ec2",
-    name: "AWS Cloud (EC2, S3, RDS)",
-    category: "Cloud Hosting",
-    tag: "Cloud",
-    whatIsIt:
-      "Amazon Web Services provides secure cloud virtual machines (EC2), managed databases (RDS Postgres/MySQL), and high-durability object storage for customer KYC documents (S3).",
-    whyUsed:
-      "Provides enterprise-grade 99.99% uptime, auto-scaling during peak loan application hours, and banking-grade encryption at rest and in transit.",
-    howToSearch:
-      "Search AWS CLI: 'aws --version', 'aws ec2 describe-instances', 'aws s3 ls'. AWS Web Console: console.aws.amazon.com",
-    keyCommands: [
-      "ssh -i 'oxy-key.pem' ubuntu@ec2-public-ip.compute.amazonaws.com",
-      "aws s3 cp document.pdf s3://oxy-kyc-bucket/",
-      "aws sts get-caller-identity  # Verify IAM credentials",
-    ],
-    docLink: "https://aws.amazon.com/ec2/",
-  },
-  {
-    id: "nginx",
-    name: "Nginx Reverse Proxy",
-    category: "Web Server & Gateway",
-    tag: "Gateway",
-    whatIsIt:
-      "A fast, open-source HTTP web server and reverse proxy that intercepts client requests and forwards them securely to the underlying application servers.",
-    whyUsed:
-      "Handles SSL termination, DDoS protection, rate-limiting on sensitive banking endpoints (OTP/login), and load balancing across microservice containers.",
-    howToSearch:
-      "Verify on server: 'nginx -v', check status: 'systemctl status nginx', config file: '/etc/nginx/sites-available/'",
-    keyCommands: [
-      "nginx -t  # Test configuration syntax",
-      "systemctl restart nginx  # Reload proxy rules",
-      "tail -f /var/log/nginx/access.log  # View live incoming traffic",
-    ],
-    docLink: "https://nginx.org/en/docs/",
-  },
-  {
-    id: "ssl-certbot",
-    name: "SSL / TLS & Let's Encrypt Certbot",
-    category: "Security",
-    tag: "Security",
-    whatIsIt:
-      "Certbot is an automated agent that issues and renews free, trusted SSL/TLS certificates from Let's Encrypt to enable HTTPS encryption for web applications.",
-    whyUsed:
-      "Protects sensitive financial data, customer PAN, Aadhaar, and bank account numbers from eavesdropping or man-in-the-middle (MITM) attacks.",
-    howToSearch:
-      "Check certificate status: 'certbot certificates', test renewal: 'certbot renew --dry-run', verify browser padlock icon.",
-    keyCommands: [
-      "sudo apt install certbot python3-certbot-nginx",
-      "sudo certbot --nginx -d jobplan.askoxy.ai",
-      "sudo certbot renew --dry-run  # Automated test renewal",
-    ],
-    docLink: "https://certbot.eff.org/",
-  },
-  {
-    id: "prometheus-grafana",
-    name: "Prometheus & Grafana Monitoring",
-    category: "Observability",
-    tag: "Monitoring",
-    whatIsIt:
-      "Prometheus scrapes time-series metrics (CPU, RAM, HTTP latency, 5xx errors), while Grafana visualizes them into intuitive live dashboards.",
-    whyUsed:
-      "Provides instant alerts when disbursement response time increases or transaction failure rates exceed 0.5%, meeting strict banking regulatory SLAs.",
-    howToSearch:
-      "Metrics endpoint check: 'curl http://localhost:9090/metrics', verify Grafana at port :3000.",
-    keyCommands: [
-      "curl http://localhost:9090/-/healthy",
-      "# PromQL Query for error rate:",
-      "rate(http_requests_total{status=~'5..'}[5m])",
-    ],
-    docLink: "https://prometheus.io/docs/introduction/overview/",
-  },
-  {
-    id: "sentry-apm",
-    name: "Sentry APM & Crash Reporting",
-    category: "Error Tracking",
-    tag: "APM",
-    whatIsIt:
-      "Application Performance Monitoring (APM) and real-time error tracking software that captures uncaught exceptions, stack traces, and slow database queries.",
-    whyUsed:
-      "Alerts engineering teams before users report bugs. Pinpoints exact line of code that failed during a loan sanction or repayment computation.",
-    howToSearch:
-      "Search npm: '@sentry/react', '@sentry/node'. Check DSN configuration in application environment variables.",
-    keyCommands: [
-      "npm install @sentry/react",
-      "// In src/index.tsx:",
-      "Sentry.init({ dsn: 'https://key@sentry.io/123', tracesSampleRate: 1.0 });",
-    ],
-    docLink: "https://docs.sentry.io/",
-  },
-  {
-    id: "pitr-database",
-    name: "PostgreSQL Backups & PITR",
-    category: "Database & Recovery",
-    tag: "Disaster Recovery",
-    whatIsIt:
-      "Point-in-Time Recovery (PITR) continuously archives database WAL (Write-Ahead Logging) files, allowing restoration of the financial database to any exact second.",
-    whyUsed:
-      "Essential for banking compliance. If an unexpected batch job error occurs at 14:32:10, the database can be rolled back to 14:32:09 without data loss.",
-    howToSearch:
-      "Search tool: 'pg_dump', 'pg_restore', AWS RDS Automated Backups / PITR timeline window.",
-    keyCommands: [
-      "pg_dump -U postgres -h localhost -d oxylending > backup.sql",
-      "pg_restore -U postgres -d oxylending backup.sql",
-    ],
-    docLink:
-      "https://www.postgresql.org/docs/current/continuous-archiving.html",
-  },
-];
+  runEnvironments: [
+    {
+      label: "Frontend Web Application",
+      url: "http://localhost:3000",
+      command: "npm start (or npm run dev)",
+      description: "User dashboard, loan application forms, repayment tables, and queue management.",
+    },
+    {
+      label: "Backend REST API Server",
+      url: "http://localhost:8080",
+      command: "npm run dev (or nodemon src/server.ts)",
+      description: "Business logic engine: PAN deduplication, FIFO knock-off calculations, and database CRUD.",
+    },
+    {
+      label: "PostgreSQL Database",
+      url: "localhost:5432 / oxylending_db",
+      command: "docker run --name pg-bank -p 5432:5432 -e POSTGRES_PASSWORD=secret -d postgres:alpine",
+      description: "ACID-compliant storage for customer KYC, loan ledgers, and audit trails.",
+    },
+  ],
+  recommendedIdes: [
+    {
+      id: "cursor",
+      name: "Cursor IDE",
+      tag: "Top Recommended",
+      badge: "AI-Native Editor",
+      icon: "⚡",
+      whyUse:
+        "Cursor indexes your whole project folder. Its Composer mode (Ctrl+I / Cmd+I) can scaffold multi-file projects, generate backend controllers, and write full React interfaces in minutes.",
+      shortcut: "Ctrl + I (Composer) / Ctrl + L (Chat)",
+      docLink: "https://www.cursor.com/",
+    },
+    {
+      id: "windsurf",
+      name: "Windsurf IDE",
+      tag: "AI Cascade Flow",
+      badge: "Codeium AI",
+      icon: "🌊",
+      whyUse:
+        "Windsurf features 'Cascade AI' that deeply understands multi-directory project context and executes terminal commands directly while generating code for all 51 use cases.",
+      shortcut: "Ctrl + K (Inline AI) / Cascade Panel",
+      docLink: "https://codeium.com/windsurf",
+    },
+    {
+      id: "vscode",
+      name: "VS Code + Copilot / Claude",
+      tag: "Industry Standard",
+      badge: "Extensible",
+      icon: "💻",
+      whyUse:
+        "The global developer standard. Pair it with GitHub Copilot Chat, Claude Code CLI, or Antigravity / Gemini Code Assist to generate and test your banking codebase.",
+      shortcut: "Ctrl + Shift + P / Copilot Chat Panel",
+      docLink: "https://code.visualstudio.com/",
+    },
+  ],
+};
 
-// Day 8: Step-by-Step Deployment Guide
-const DEPLOYMENT_STEPS = [
+// Day 7: 6-Phase Step-by-Step AI Project Build Workflow
+export const DAY7_PROJECT_STEPS = [
   {
     step: 1,
-    title: "Environment Configuration & Secrets Hardening",
+    phase: "Phase 1: Setup & Architecture",
+    title: "Project Initialization & Workspace Architecture",
+    duration: "45 mins",
     summary:
-      "Segregate configurations and protect production API keys & credentials.",
-    details:
-      "Never commit production secrets into Git repositories. Create an isolated `.env.production` file containing the core banking endpoints, database connection pools, JWT secret keys, and third-party API credentials.",
+      "Initialize the repository, setup directory structure, and install essential frontend & backend dependencies in your chosen IDE.",
+    folderTree: `oxybank-enterprise-lending/
+├── frontend/
+│   ├── src/
+│   │   ├── modules/
+│   │   │   ├── los/  # UC 1-13 (Onboarding, KYC, Credit Appraisal, Sanction)
+│   │   │   ├── fms/  # UC 14-34 (Disbursement, FIFO Knock-off, NPA, EOD)
+│   │   │   └── cms/  # UC 35-51 (DPD Queues, PTP Tracking, Legal Notices)
+│   │   ├── components/ # Navigation, Metrics, Status Badges
+│   │   ├── types/      # Banking Domain TypeScript Types
+│   │   └── services/   # apiClient.ts
+├── backend/
+│   ├── src/
+│   │   ├── controllers/ # losController, fmsController, cmsController
+│   │   ├── models/      # Customer, Loan, Ledger, Repayment, Queue
+│   │   └── routes/      # losRoutes.ts, fmsRoutes.ts, cmsRoutes.ts
+├── package.json
+└── README.md`,
     commands: [
-      "# Create protected env file on host",
-      "touch .env.production",
-      "chmod 600 .env.production  # Read-write only by root",
-      "export NODE_ENV=production",
+      "# 1. Create project root folder",
+      "mkdir oxybank-enterprise-lending && cd oxybank-enterprise-lending",
+      "",
+      "# 2. Scaffold React TypeScript Frontend",
+      "npx create-react-app frontend --template typescript",
+      "cd frontend && npm install axios lucide-react sweetalert2",
+      "npm install -D tailwindcss postcss autoprefixer",
+      "npx tailwindcss init -p",
+      "",
+      "# 3. Scaffold Node.js TypeScript Backend",
+      "cd .. && mkdir backend && cd backend",
+      "npm init -y",
+      "npm install express cors dotenv pg",
+      "npm install -D typescript ts-node @types/node @types/express @types/cors",
+      "npx tsc --init",
     ],
     bestPractice:
-      "Use AWS Secrets Manager or HashiCorp Vault for rotated production keys.",
+      "Keep banking domain modules (LOS, FMS, CMS) decoupled so each can be migrated to standalone microservices when traffic grows.",
   },
   {
     step: 2,
-    title: "Multi-Stage Docker Packaging",
-    summary: "Build an optimized, secure Docker image with minimal footprint.",
-    details:
-      "Use a two-stage Dockerfile: Stage 1 compiles TypeScript and runs lint checks using Node.js; Stage 2 copies only the production build artifacts into an ultra-lean Alpine Nginx container.",
-    commands: [
-      "# Stage 1: Build",
-      "FROM node:18-alpine AS build",
-      "WORKDIR /app && COPY package*.json ./ && RUN npm ci",
-      "COPY . . && RUN npm run build",
-      "# Stage 2: Serve",
-      "FROM nginx:alpine",
-      "COPY --from=build /app/dist /usr/share/nginx/html",
-      "EXPOSE 80",
-    ],
+    phase: "Phase 2: Master AI Scaffold Prompt",
+    title: "Master AI Prompt for Full-Stack 51 Use-Case Scaffolding",
+    duration: "30 mins",
+    summary:
+      "Copy and paste this master architecture prompt into Cursor Composer (Ctrl+I) or Claude 3.7 / ChatGPT 4o to scaffold the entire project boilerplate.",
+    aiPrompt: `You are an expert BFSI software architect. Scaffold a complete enterprise full-stack banking web app named "OxyBank-Enterprise-Lending" in React 18 (TypeScript, Tailwind CSS) and Node.js Express (TypeScript).
+
+The platform must implement all 51 core banking use cases split into 3 distinct modules:
+1. LOS (Loan Origination System - Use Cases 1 to 13):
+   - Customer ID creation with national ID deduplication (PAN/Aadhaar)
+   - Co-applicant & Guarantor KYC document linking
+   - Preliminary loan assessment, CIBIL bureau credit scoring, and Sanction Recommendation Letter generation.
+2. FMS (Financial Management System - Use Cases 14 to 34):
+   - Loan disbursement ledger & Repayment schedule generation
+   - Core FIFO (First-In, First-Out) repayment knock-off engine (clearing penalties -> overdue interest -> principal)
+   - EOD/BOD batch interest accruals and 90-day DPD Non-Performing Asset (NPA) classification.
+3. CMS (Collection Management System - Use Cases 35 to 51):
+   - Delinquency queues segmented by DPD (1-30, 31-60, 61-90 DPD)
+   - Promise-to-Pay (PTP) recording and field collector follow-up tracking
+   - Automated Legal Notice generator and One-Time Settlement (OTS) waiver approval workflow.
+
+Generate clean TypeScript types, modular mock controllers, and reactive UI navigation connecting all 51 use cases.`,
     bestPractice:
-      "Multi-stage builds reduce image size from 1.2 GB to under 35 MB.",
+      "Paste this into Cursor's Composer mode (Ctrl+I). Cursor will create the folder hierarchy and write the module interfaces automatically.",
   },
   {
     step: 3,
-    title: "CI/CD Pipeline Setup (GitHub Actions)",
+    phase: "Phase 3: Module 1 Implementation",
+    title: "LOS: Borrower Onboarding, KYC & Credit Appraisal (UC 1 to 13)",
+    duration: "2 hours",
     summary:
-      "Automate code verification, container building, and deployment triggers.",
-    details:
-      "Configure a GitHub workflow in `.github/workflows/deploy.yml`. When code is merged into the `main` branch, the workflow automatically runs automated tests, builds the Docker image, tags it with the commit SHA, and pushes to your container registry.",
-    commands: [
-      "name: Build & Deploy",
-      "on: { push: { branches: [main] } }",
-      "jobs:",
-      "  build:",
-      "    runs-on: ubuntu-latest",
-      "    steps:",
-      "      - uses: actions/checkout@v4",
-      "      - run: docker build -t oxybank:${{ github.sha }} .",
-      "      - run: docker push oxybank:${{ github.sha }}",
+      "Implement customer deduplication, co-applicant KYC linkage, bureau scoring integration, and sanction letter generation.",
+    files: [
+      "frontend/src/modules/los/CustomerOnboarding.tsx",
+      "frontend/src/modules/los/KycDocumentUploader.tsx",
+      "frontend/src/modules/los/CreditAppraisalEngine.tsx",
+      "frontend/src/modules/los/SanctionLetterModal.tsx",
+      "backend/src/controllers/losController.ts",
     ],
+    aiPrompt: `Prompt for Cursor/Claude:
+"Implement Module 1: LOS (Loan Origination System) for OxyBank.
+Create 'CustomerOnboarding.tsx' with PAN/Aadhaar validation and deduplication check against CBS.
+Create 'CreditAppraisalEngine.tsx' that accepts income, existing EMI debts, calculates Debt-to-Income (DTI), queries simulated CIBIL score (300-900), and auto-generates a Sanction Recommendation Letter if score >= 700 with approved loan amount and interest rate."`,
+    verificationCheck:
+      "Open http://localhost:3000/los, fill borrower details, enter PAN, verify deduplication check passes, and view generated Sanction Letter.",
     bestPractice:
-      "Always enforce branch protection rules requiring passing CI checks before merging.",
+      "Enforce strict frontend and backend input validation for National Identifiers (PAN: 10 chars uppercase alphanumeric).",
   },
   {
     step: 4,
-    title: "Server Provisioning & Security Group Ingress",
-    summary: "Launch cloud compute instances and configure firewall rules.",
-    details:
-      "Launch an Ubuntu LTS instance on AWS EC2 or your chosen cloud. Configure the Security Group firewall to open only port 80 (HTTP), port 443 (HTTPS), and port 22 (SSH strictly restricted to your management IP).",
-    commands: [
-      "# SSH into the server securely",
-      "ssh -i 'oxy-deploy-key.pem' ubuntu@<your-server-ip>",
-      "# Update and install runtime dependencies",
-      "sudo apt update && sudo apt upgrade -y",
-      "sudo apt install -y docker.io nginx ufw",
-      "sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw enable",
+    phase: "Phase 4: Module 2 Implementation",
+    title: "FMS: Repayment Schedules & FIFO Knock-off Engine (UC 14 to 34)",
+    duration: "2.5 hours",
+    summary:
+      "Build repayment schedule calculators, automated FIFO knock-off for loan payments, and 90-day NPA provisioning.",
+    files: [
+      "frontend/src/modules/fms/RepaymentSchedule.tsx",
+      "frontend/src/modules/fms/PaymentSettlement.tsx",
+      "frontend/src/modules/fms/NpaProvisioning.tsx",
+      "backend/src/services/FifoKnockOffService.ts",
+      "backend/src/controllers/fmsController.ts",
     ],
+    aiPrompt: `Prompt for Cursor/Claude:
+"Implement Module 2: FMS (Financial Management System) for OxyBank.
+Implement 'FifoKnockOffService.ts': When borrower pays an EMI amount, apply strict FIFO knock-off:
+1. First clear unpaid late fees and penalties
+2. Next clear oldest accrued overdue interest
+3. Finally apply remaining balance to principal component.
+Also create 'NpaProvisioning.tsx' to categorize loan accounts crossing 90+ DPD into Sub-Standard, Doubtful, or Loss assets."`,
+    codeSnippet: {
+      filename: "backend/src/services/FifoKnockOffService.ts",
+      language: "typescript",
+      code: `// Banking Standard FIFO Knock-off Settlement Logic
+export function applyFifoKnockOff(
+  outstanding: { penalty: number; overdueInterest: number; principal: number },
+  paymentAmount: number
+) {
+  let rem = paymentAmount;
+
+  // 1. Clear Penalty & Charges First
+  const clearedPenalty = Math.min(rem, outstanding.penalty);
+  rem -= clearedPenalty;
+
+  // 2. Clear Overdue Accrued Interest
+  const clearedInterest = Math.min(rem, outstanding.overdueInterest);
+  rem -= clearedInterest;
+
+  // 3. Clear Outstanding Principal
+  const clearedPrincipal = Math.min(rem, outstanding.principal);
+  rem -= clearedPrincipal;
+
+  return {
+    clearedPenalty,
+    clearedInterest,
+    clearedPrincipal,
+    unallocatedSurplus: rem,
+    remainingBalance: (outstanding.penalty - clearedPenalty) +
+                     (outstanding.overdueInterest - clearedInterest) +
+                     (outstanding.principal - clearedPrincipal)
+  };
+}`,
+    },
+    verificationCheck:
+      "Input an EMI payment of ₹25,000 for a loan with ₹3,000 penalty and ₹7,000 interest. Verify penalty and interest are fully knocked off first.",
     bestPractice:
-      "Never leave port 22 open to 0.0.0.0/0. Use VPN or bastion host.",
+      "Always wrap repayment knock-off in a database transaction (BEGIN ... COMMIT) to prevent race conditions during concurrent settlements.",
   },
   {
     step: 5,
-    title: "Nginx Reverse Proxy & Domain Routing",
+    phase: "Phase 5: Module 3 Implementation",
+    title: "CMS: Delinquency Queues, PTP Tracking & Curing (UC 35 to 51)",
+    duration: "2 hours",
     summary:
-      "Configure Nginx to route traffic to the containerized banking app.",
-    details:
-      "Create a virtual host configuration in `/etc/nginx/sites-available/banking.conf`. Point your domain DNS A-Record to the server's public Elastic IP and forward HTTP requests to your local container port.",
-    commands: [
-      "server {",
-      "    server_name jobplan.askoxy.ai;",
-      "    location / {",
-      "        proxy_pass http://localhost:8080;",
-      "        proxy_set_header Host $host;",
-      "        proxy_set_header X-Real-IP $remote_addr;",
-      "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
-      "    }",
-      "}",
+      "Construct DPD bucket queues (1-30, 31-60, 61-90 DPD), Promise-to-Pay (PTP) tracking, field visit logs, and legal notice generation.",
+    files: [
+      "frontend/src/modules/cms/DelinquencyQueues.tsx",
+      "frontend/src/modules/cms/PtpTracker.tsx",
+      "frontend/src/modules/cms/LegalNoticeGenerator.tsx",
+      "backend/src/controllers/cmsController.ts",
     ],
+    aiPrompt: `Prompt for Cursor/Claude:
+"Implement Module 3: CMS (Collection Management System) for OxyBank.
+Build 'DelinquencyQueues.tsx' with bucket filters (DPD 1-30 Early Delinquency, DPD 31-60 Mid-Stage, DPD 61-90 Severe Default).
+For each delinquent account, allow collection officers to log a Promise-to-Pay (PTP) date, record call dispositions, print Legal Recall Notices, or submit a One-Time Settlement (OTS) waiver request."`,
+    verificationCheck:
+      "Navigate to CMS Delinquency Queue, filter accounts by 'DPD 31-60', log a PTP date for next Monday, and confirm account state updates to 'PTP Logged'.",
     bestPractice:
-      "Always run `sudo nginx -t` to test syntax before reloading Nginx.",
+      "Store all field officer collector notes with immutable audit timestamps for banking regulatory compliance.",
   },
   {
     step: 6,
-    title: "SSL/TLS Hardening via Let's Encrypt",
-    summary: "Obtain automated trusted SSL certificates for end-to-end HTTPS.",
-    details:
-      "Run Certbot with the Nginx plugin. It validates your domain ownership, writes SSL directives into your Nginx configuration, redirects all HTTP traffic to HTTPS, and sets up a cron job for automatic renewal.",
-    commands: [
-      "sudo apt install -y certbot python3-certbot-nginx",
-      "sudo certbot --nginx -d jobplan.askoxy.ai",
-      "# Verify renewal timer",
-      "sudo systemctl status certbot.timer",
-    ],
-    bestPractice:
-      "Enforce HTTP Strict Transport Security (HSTS) headers for banking applications.",
-  },
-  {
-    step: 7,
-    title: "Zero-Downtime Deployment & Health Checks",
+    phase: "Phase 6: IDE Execution & AI Debugging",
+    title: "Multi-Service Execution, Local Testing & AI Debugging",
+    duration: "1 hour",
     summary:
-      "Deploy new app versions without dropping active borrower sessions.",
-    details:
-      "Use Blue-Green deployment or Docker Compose rolling updates. Start the newly built container on an alternate port, verify its `/health` status endpoint returns HTTP 200 OK, update the Nginx proxy target, and gracefully terminate the legacy container.",
+      "Launch frontend & backend services simultaneously in your IDE, verify all endpoints, and use AI to fix any compilation errors.",
     commands: [
-      "# Pull new image",
-      "docker pull oxybank:latest",
-      "# Run on standby port and probe health",
-      "docker run -d --name oxy-green -p 8081:80 oxybank:latest",
-      "curl -f http://localhost:8081/health || exit 1",
-      "# Switch Nginx target and stop old container",
-      "docker stop oxy-blue && docker rm oxy-blue",
+      "# Open two terminal tabs in Cursor / VS Code:",
+      "",
+      "# Tab 1: Start Backend API (Port 8080)",
+      "cd backend && npm run dev",
+      "# => [OxyBank API] listening at http://localhost:8080",
+      "",
+      "# Tab 2: Start Frontend Web App (Port 3000)",
+      "cd frontend && npm start",
+      "# => [React App] running at http://localhost:3000",
     ],
+    aiPrompt: `AI Debugging Trick in Cursor / VS Code:
+Highlight any compilation error in terminal or code editor, press 'Ctrl + L' (Chat) or 'Ctrl + K' (Inline Edit) and ask:
+"Fix this TypeScript error in OxyBank without breaking the banking domain types."`,
+    verificationCheck:
+      "Open http://localhost:3000 in your browser, test customer creation in LOS, inspect network tab verifying requests to http://localhost:8080, and ensure zero console errors.",
     bestPractice:
-      "Never swap traffic before the container passes internal health probes.",
-  },
-  {
-    step: 8,
-    title: "Live Monitoring, Log Aggregation & Rollback Plan",
-    summary:
-      "Verify real-time application health and maintain an emergency rollback plan.",
-    details:
-      "Confirm Prometheus metrics and Sentry APM are capturing live transactions. Retain the previous container tag so that if an anomaly occurs, an automated or 1-command rollback can be executed within 30 seconds.",
-    commands: [
-      "# Check container logs in real time",
-      "docker logs -f --tail 100 oxy-green",
-      "# Quick rollback command if needed:",
-      "docker stop oxy-green && docker run -d --name oxy-rollback -p 8080:80 oxybank:previous-stable",
-    ],
-    bestPractice: "Simulate a rollback drill in staging once every sprint.",
+      "Add a Health Check endpoint (GET /api/health returning { status: 'UP', timestamp: Date.now() }) to ensure your app is ready for Day 8 deployment.",
   },
 ];
 
-// Day 9: Assessment Viva Questions
-const VIVA_QUESTIONS = [
+// Day 8: Step-by-Step Production Deployment Guide
+export const DEPLOYMENT_STEPS = [
   {
-    q: "1. Explain the complete Borrower Onboarding and KYC Linking workflow in LOS.",
-    answer:
-      "The Loan Origination System (LOS) starts with Customer ID Creation, verifying unique national identifiers (PAN/Aadhaar) to prevent deduplication across the Core Banking System (CBS). Next, Co-applicant & Guarantor Linking captures secondary KYC documents, establishing joint legal liability. The Customer ID is then mapped to the loan file, followed by preliminary loan assessment, automated bureau credit scoring (CIBIL/Equifax), and generation of the Sanction Recommendation Letter.",
+    step: 1,
+    title: "Environment Configuration & Production Secrets Hardening",
+    summary:
+      "Segregate configurations and protect production API keys & database credentials.",
+    details:
+      "Never commit production secrets into Git repositories. Create an isolated `.env.production` file for OxyBank containing database connection strings, JWT secret keys, and banking service ports.",
+    commands: [
+      "# Create protected production environment file",
+      "touch .env.production",
+      "chmod 600 .env.production  # Read-write restricted to owner",
+      "cat << 'EOF' > .env.production",
+      "PORT=8080",
+      "NODE_ENV=production",
+      "DATABASE_URL=postgres://oxybank_admin:StrongP@ssw0rd!@postgres:5432/oxybank_prod",
+      "JWT_SECRET=super_secret_banking_jwt_token_2026",
+      "CORS_ORIGIN=https://jobplan.askoxy.ai",
+      "EOF",
+    ],
+    bestPractice:
+      "Use AWS Secrets Manager or HashiCorp Vault for rotated production keys in regulated banking environments.",
   },
   {
-    q: "2. How does FIFO (First-In, First-Out) knock-off work during loan repayment settlements in FMS?",
-    answer:
-      "In the Financial Management System (FMS), when a borrower makes an unallocated or partial repayment, the system automatically applies the FIFO principle against outstanding dues. Charges, penalties, and late fees are knocked off first, followed by overdue interest accrued from the earliest unpaid instalment, and finally the principal component. This prevents bad-debt accumulation and maintains clear audit trails.",
+    step: 2,
+    title: "Multi-Stage Docker Packaging (Frontend & Backend)",
+    summary: "Build ultra-lean, secure Docker images with minimal attack surface.",
+    details:
+      "Use two-stage Dockerfiles. Stage 1 compiles TypeScript and runs lint checks using Node.js; Stage 2 copies only the production build artifacts into an ultra-lean Alpine container.",
+    commands: [
+      "# --- frontend/Dockerfile ---",
+      "FROM node:18-alpine AS build",
+      "WORKDIR /app && COPY package*.json ./ && RUN npm ci",
+      "COPY . . && RUN npm run build",
+      "FROM nginx:alpine",
+      "COPY --from=build /app/dist /usr/share/nginx/html",
+      "EXPOSE 80",
+      "",
+      "# --- backend/Dockerfile ---",
+      "FROM node:18-alpine AS backend-build",
+      "WORKDIR /app && COPY package*.json ./ && RUN npm ci",
+      "COPY . . && RUN npm run build",
+      "EXPOSE 8080",
+      'CMD ["node", "dist/server.js"]',
+    ],
+    bestPractice:
+      "Multi-stage builds reduce image size from 1.2 GB to under 40 MB and eliminate build tool security vulnerabilities.",
   },
   {
-    q: "3. What is the fundamental difference between Delinquency Queue (CMS) and NPA Provisioning (FMS)?",
-    answer:
-      "Delinquency in CMS represents operational distress—cases categorized from DPD 1–30, 31–60, 61–90 days where collection collectors contact borrowers, log Promises-to-Pay (PTP), and execute curing workflows. NPA (Non-Performing Asset) in FMS is a statutory accounting classification triggered when an account breaches 90+ DPD. Once classified as Sub-standard, Doubtful, or Loss, FMS computes mandatory regulatory capital provisioning percentages against the bank balance sheet.",
+    step: 3,
+    title: "Multi-Container Docker Compose Stack (App + Postgres + Redis)",
+    summary:
+      "Orchestrate all banking microservices with isolated internal networking.",
+    details:
+      "Define `docker-compose.yml` in the project root to launch the frontend, backend API, PostgreSQL database with persistent volume, and Redis cache with automated health checks.",
+    commands: [
+      "# Run full multi-container stack in background:",
+      "docker-compose up -d --build",
+      "",
+      "# Verify running containers:",
+      "docker-compose ps",
+      "",
+      "# Check live logs for OxyBank API:",
+      "docker-compose logs -f backend",
+    ],
+    bestPractice:
+      "Always set up named volumes (`postgres_data:/var/lib/postgresql/data`) to protect financial records across container restarts.",
   },
   {
-    q: "4. Explain how Banking Batches (EOD/BOD) handle Interest Accruals and Rescheduling.",
-    answer:
-      "End-of-Day (EOD) and Beginning-of-Day (BOD) batches run scheduled automated financial jobs: calculating daily interest accruals across live accounts, identifying accounts crossing due-date thresholds, updating delinquency buckets, generating PDC clearing files, and processing approved loan rescheduling modifications (due-date changes, tenure extensions, profit-rate adjustments).",
+    step: 4,
+    title: "GitHub Repository & Automated CI/CD (GitHub Actions)",
+    summary:
+      "Automate testing, container building, and deployment upon git push.",
+    details:
+      "Configure a GitHub workflow in `.github/workflows/deploy.yml`. Whenever code is merged into `main`, GitHub Actions automatically runs tests, builds Docker images, and triggers deployment.",
+    commands: [
+      "# Initialize Git and push to GitHub",
+      "git init && git add .",
+      'git commit -m "feat: complete 51 use cases for OxyBank"',
+      "git remote add origin https://github.com/your-username/oxybank-enterprise-lending.git",
+      "git branch -M main && git push -u origin main",
+    ],
+    bestPractice:
+      "Enforce branch protection rules requiring passing CI checks and at least 1 peer approval before merging into main.",
   },
   {
-    q: "5. Defend your End-to-End Cloud Deployment Architecture for this Banking App.",
-    answer:
-      "The application uses multi-stage Docker containers hosted on AWS EC2 behind an Nginx reverse proxy with TLS 1.3 encryption issued via Let's Encrypt Certbot. Continuous deployment is handled via GitHub Actions CI/CD pipelines enforcing lint and test suites before image publishing. Zero-downtime rolling updates ensure continuous availability, while Prometheus, Grafana, and Sentry APM provide 24/7 observability and automated alerting.",
+    step: 5,
+    title: "AWS EC2 Cloud Server Provisioning & SSH Access",
+    summary: "Launch cloud compute instances and configure firewall rules.",
+    details:
+      "Launch an Ubuntu 22.04 LTS instance on AWS EC2 (t3.small or t3.medium). Configure the Security Group firewall to open only port 80 (HTTP), port 443 (HTTPS), and port 22 (SSH).",
+    commands: [
+      "# SSH into the AWS server securely",
+      'ssh -i "oxy-deploy-key.pem" ubuntu@<your-ec2-public-ip>',
+      "",
+      "# Update OS & install Docker + Compose",
+      "sudo apt update && sudo apt upgrade -y",
+      "sudo apt install -y docker.io docker-compose git ufw",
+      "sudo usermod -aG docker ubuntu",
+    ],
+    bestPractice:
+      "Never leave port 22 open to 0.0.0.0/0. Restrict SSH ingress to your office or static VPN IP.",
+  },
+  {
+    step: 6,
+    title: "Security Firewall Hardening via UFW",
+    summary: "Lock down all unused network ports on the production server.",
+    details:
+      "Configure Uncomplicated Firewall (UFW) to block all unsolicited incoming connections except HTTP, HTTPS, and SSH.",
+    commands: [
+      "# Configure UFW firewall rules",
+      "sudo ufw default deny incoming",
+      "sudo ufw default allow outgoing",
+      "sudo ufw allow 22/tcp   # SSH",
+      "sudo ufw allow 80/tcp   # HTTP",
+      "sudo ufw allow 443/tcp  # HTTPS",
+      "sudo ufw enable",
+      "sudo ufw status verbose",
+    ],
+    bestPractice:
+      "Enable UFW only after explicitly adding the SSH allow rule to prevent accidental lockout from the cloud instance.",
+  },
+  {
+    step: 7,
+    title: "Nginx Reverse Proxy & Custom Domain Routing",
+    summary:
+      "Route incoming web traffic through Nginx gateway to OxyBank containers.",
+    details:
+      "Install Nginx on the host and configure `/etc/nginx/sites-available/oxybank.conf`. Forward web traffic to the frontend container on port 80 and API calls to port 8080.",
+    commands: [
+      "sudo apt install -y nginx",
+      "# Create Nginx server configuration",
+      "sudo nano /etc/nginx/sites-available/oxybank.conf",
+      "# Test Nginx syntax and reload",
+      "sudo nginx -t",
+      "sudo systemctl restart nginx",
+    ],
+    bestPractice:
+      "Always test configuration syntax with `sudo nginx -t` before restarting Nginx to avoid downtime.",
+  },
+  {
+    step: 8,
+    title: "SSL/TLS via Let's Encrypt Certbot & Live URL Verification",
+    summary:
+      "Obtain automated trusted SSL certificates and verify live production endpoints.",
+    details:
+      "Run Certbot with the Nginx plugin to issue automated trusted HTTPS certificates. Verify your live domain URL and probe the `/api/health` endpoint.",
+    commands: [
+      "# Install Certbot and request SSL certificate",
+      "sudo apt install -y certbot python3-certbot-nginx",
+      "sudo certbot --nginx -d jobplan.askoxy.ai",
+      "",
+      "# Test auto-renewal timer",
+      "sudo certbot renew --dry-run",
+      "",
+      "# Verify live health check endpoint",
+      "curl -f https://jobplan.askoxy.ai/api/health",
+    ],
+    bestPractice:
+      "Enforce HTTP Strict Transport Security (HSTS) and modern TLS 1.3 encryption for all banking endpoints.",
   },
 ];
 
 export default function NineDaysInsideAfterLogin() {
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+
+  const handleCopy = (text: string, label: string) => {
+    try {
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedText(label);
+      Toast.fire({
+        icon: "success",
+        title: `${label} copied to clipboard!`,
+      });
+      setTimeout(() => setCopiedText(null), 3000);
+    } catch (err) {
+      Toast.fire({
+        icon: "info",
+        title: `Copied ${label}`,
+      });
+    }
+  };
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1001,8 +657,6 @@ export default function NineDaysInsideAfterLogin() {
   }, [searchParams]);
 
   const [selectedDay, setSelectedDay] = useState<number>(initialDay);
-  const [toolSearch, setToolSearch] = useState("");
-  const [activeViva, setActiveViva] = useState<number | null>(0);
   const [selectedQuizAnswers, setSelectedQuizAnswers] = useState<
     Record<number, number>
   >({});
@@ -1013,13 +667,21 @@ export default function NineDaysInsideAfterLogin() {
   const [isAlreadyRegistered, setIsAlreadyRegistered] = useState<boolean>(
     () => {
       const uid =
+        new URLSearchParams(window.location.search).get("userId") ||
+        new URLSearchParams(window.location.search).get("userid") ||
         localStorage.getItem("userId") ||
         localStorage.getItem("userid") ||
         localStorage.getItem("customerId") ||
+        sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("userid") ||
         "";
-      return uid
-        ? localStorage.getItem(`job_program_registered_${uid}`) === "true"
-        : false;
+      if (
+        uid &&
+        localStorage.getItem(`job_program_registered_${uid}`) === "true"
+      ) {
+        return true;
+      }
+      return localStorage.getItem("job_program_registered") === "true";
     },
   );
 
@@ -1059,34 +721,41 @@ export default function NineDaysInsideAfterLogin() {
     null,
   );
 
-  // Helper to format use case code: index 0 -> UC-01, index 1 -> UC-02, etc.
-  const getUseCaseCode = (indexInDay: number) => {
-    const num = indexInDay + 1;
-    return `UC-${num < 10 ? "0" + num : num}`;
-  };
-
-  // Synchronize completed use cases when selectedDay changes
+  // Synchronize completed use cases when selectedDay changes, or when returning to this page (focus / storage)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(
-        `job_program_completed_ucs_day_${selectedDay}`,
-      );
-      setCompletedUseCases(saved ? JSON.parse(saved) : []);
-    } catch {
-      setCompletedUseCases([]);
-    }
+    const syncCompleted = () => {
+      try {
+        const saved = localStorage.getItem(
+          `job_program_completed_ucs_day_${selectedDay}`,
+        );
+        setCompletedUseCases(saved ? JSON.parse(saved) : []);
+      } catch {
+        setCompletedUseCases([]);
+      }
+    };
+
+    syncCompleted();
+    window.addEventListener("focus", syncCompleted);
+    window.addEventListener("storage", syncCompleted);
+    return () => {
+      window.removeEventListener("focus", syncCompleted);
+      window.removeEventListener("storage", syncCompleted);
+    };
   }, [selectedDay]);
 
-  // Check if a use case in the current day is unlocked
+  // Check if a use case in the current day is unlocked (Day 1 & Use Case 1 unlock only after expressing interest)
   const isUseCaseUnlocked = useCallback(
     (indexInDay: number) => {
-      // First use case in any day is always open
+      // If user has not registered interest, ALL use cases are disabled/locked
+      if (!isAlreadyRegistered) return false;
+
+      // First use case in any day is open once interest is registered
       if (indexInDay === 0) return true;
       // Subsequent use case is open only if previous one is completed
       const prevCode = getUseCaseCode(indexInDay - 1);
       return completedUseCases.includes(prevCode);
     },
-    [completedUseCases],
+    [completedUseCases, isAlreadyRegistered],
   );
 
   // 1. Fetch Dashboard API
@@ -1141,6 +810,36 @@ export default function NineDaysInsideAfterLogin() {
                 `job_program_registered_${resolvedUserId}`,
                 "true",
               );
+            }
+
+            // Parse useCaseNumbers string from GET call (e.g. "UC-01,UC-02,UC-03")
+            // Separates use cases, marks them as completed, and unlocks next use case
+            if (Array.isArray(d.days)) {
+              d.days.forEach((dayItem: any) => {
+                const dayNum = dayItem?.dayNumber;
+                const rawUcs = dayItem?.useCaseNumbers;
+                if (dayNum && rawUcs) {
+                  const parsed = parseUseCaseNumbers(rawUcs);
+                  if (parsed.length > 0) {
+                    const existingStr = localStorage.getItem(
+                      `job_program_completed_ucs_day_${dayNum}`,
+                    );
+                    const existing: string[] = existingStr
+                      ? JSON.parse(existingStr)
+                      : [];
+                    const merged = Array.from(
+                      new Set([...existing, ...parsed]),
+                    );
+                    localStorage.setItem(
+                      `job_program_completed_ucs_day_${dayNum}`,
+                      JSON.stringify(merged),
+                    );
+                    if (dayNum === selectedDay) {
+                      setCompletedUseCases(merged);
+                    }
+                  }
+                }
+              });
             }
             return d;
           }
@@ -1203,6 +902,31 @@ export default function NineDaysInsideAfterLogin() {
             if (newDayId) {
               setDayProgressId(newDayId);
               localStorage.setItem("job_program_day_progress_id", newDayId);
+            }
+
+            // Parse useCaseNumbers string from start response (e.g. "UC-01,UC-02,UC-03")
+            const rawUcs =
+              resData.data?.useCaseNumbers || resData.useCaseNumbers;
+            const targetDay =
+              resData.data?.dayNumber || resData.dayNumber || dayNum;
+            if (targetDay && rawUcs) {
+              const parsed = parseUseCaseNumbers(rawUcs);
+              if (parsed.length > 0) {
+                const existingStr = localStorage.getItem(
+                  `job_program_completed_ucs_day_${targetDay}`,
+                );
+                const existing: string[] = existingStr
+                  ? JSON.parse(existingStr)
+                  : [];
+                const merged = Array.from(new Set([...existing, ...parsed]));
+                localStorage.setItem(
+                  `job_program_completed_ucs_day_${targetDay}`,
+                  JSON.stringify(merged),
+                );
+                if (targetDay === selectedDay) {
+                  setCompletedUseCases(merged);
+                }
+              }
             }
             if (resData.status === "DAY_LOCKED") {
               Toast.fire({
@@ -1332,20 +1056,10 @@ export default function NineDaysInsideAfterLogin() {
     setIsRegisteringInterest(false);
 
     if (resultData) {
-      const isReg =
-        resultData.interested ||
-        resultData.locked ||
-        (resultData.message &&
-          resultData.message.toLowerCase().includes("already registered"));
-
-      // Update state and storage so the button is immediately hidden
-      if (isReg) {
-        setIsAlreadyRegistered(true);
-        localStorage.setItem(
-          `job_program_registered_${resolvedUserId}`,
-          "true",
-        );
-      }
+      // Mark as registered and unlock Day 1 & Use Case 1 immediately
+      setIsAlreadyRegistered(true);
+      localStorage.setItem(`job_program_registered_${resolvedUserId}`, "true");
+      localStorage.setItem("job_program_registered", "true");
 
       if (resultData.enrollmentId) {
         setEnrollmentId(resultData.enrollmentId);
@@ -1357,15 +1071,15 @@ export default function NineDaysInsideAfterLogin() {
 
       // Display SweetAlert2 Toast with server message
       Toast.fire({
-        icon: resultData.interested ? "success" : "info",
+        icon: "success",
         title:
           resultData.message ||
-          (resultData.interested
-            ? "Interest registered successfully!"
-            : "Interest is already registered."),
+          "Day 1 and Use Case 1 are now unlocked! Happy Learning!",
       });
 
       // Immediately fetch dashboard to get currentDay and start Day 1
+      setCurrentAvailableDay((prev) => (prev < 1 ? 1 : prev));
+      localStorage.setItem("job_program_current_day", "1");
       const dash = await fetchDashboard(resolvedUserId);
       const cDay = dash?.currentDay || 1;
       await startDay(cDay, resultData.enrollmentId || dash?.enrollmentId, true);
@@ -1458,6 +1172,24 @@ export default function NineDaysInsideAfterLogin() {
             resData.data?.completed ||
             Boolean(resData.data);
           respMsg = resData.message || `${ucCode} completed successfully.`;
+
+          // Parse useCaseNumbers string from update response
+          const rawUcs = resData.data?.useCaseNumbers || resData.useCaseNumbers;
+          if (rawUcs) {
+            const parsed = parseUseCaseNumbers(rawUcs);
+            if (parsed.length > 0) {
+              const existingStr = localStorage.getItem(
+                `job_program_completed_ucs_day_${selectedDay}`,
+              );
+              const existing: string[] = existingStr ? JSON.parse(existingStr) : [];
+              const merged = Array.from(new Set([...existing, ...parsed, ucCode]));
+              localStorage.setItem(
+                `job_program_completed_ucs_day_${selectedDay}`,
+                JSON.stringify(merged),
+              );
+              setCompletedUseCases(merged);
+            }
+          }
           break;
         }
       } catch (err: any) {
@@ -1510,6 +1242,16 @@ export default function NineDaysInsideAfterLogin() {
 
   // Sync state with URL & SessionStorage with Day Lock enforcement
   const handleSelectDay = async (day: number) => {
+    // If user has not registered interest yet
+    if (!isAlreadyRegistered) {
+      Toast.fire({
+        icon: "warning",
+        title:
+          'Please click "Interested in this program" first to unlock Day 1.',
+      });
+      return;
+    }
+
     // If user clicked a locked day
     if (day > currentAvailableDay) {
       const res = await startDay(day, enrollmentId);
@@ -1578,18 +1320,6 @@ export default function NineDaysInsideAfterLogin() {
     sessionStorage.clear();
     navigate("/ninedaysjobprogramplan");
   };
-  // Filtered tools for Day 7
-  const filteredTools = useMemo(() => {
-    if (!toolSearch.trim()) return DEPLOYMENT_TOOLS;
-    const query = toolSearch.toLowerCase();
-    return DEPLOYMENT_TOOLS.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query) ||
-        t.whatIsIt.toLowerCase().includes(query) ||
-        t.whyUsed.toLowerCase().includes(query),
-    );
-  }, [toolSearch]);
 
   const activeMeta = dayMeta[selectedDay - 1] || dayMeta[0];
 
@@ -1613,14 +1343,14 @@ export default function NineDaysInsideAfterLogin() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Show "Register Interest" button ONLY if NOT already registered */}
-            {!isAlreadyRegistered && (
+            {/* Show "Interested in this program" button ONLY if NOT already registered */}
+            {!isAlreadyRegistered ? (
               <button
                 type="button"
                 onClick={handleRegisterInterest}
                 disabled={isRegisteringInterest}
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:from-emerald-700 hover:to-teal-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-4 sm:py-2 sm:text-sm"
-                title="Register your interest for the 9-Day Job Program"
+                title="Express your interest for the 9-Day Job Program"
               >
                 {isRegisteringInterest ? (
                   <>
@@ -1643,16 +1373,34 @@ export default function NineDaysInsideAfterLogin() {
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                       />
                     </svg>
-                    <span>Registering...</span>
+                    <span>Submitting...</span>
                   </>
                 ) : (
                   <>
                     <span className="text-amber-300">★</span>
-                    <span>Register Interest</span>
+                    <span>Interested in this program</span>
                   </>
                 )}
               </button>
+            ) : (
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-extrabold text-emerald-800">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">
+                  ✓
+                </span>
+                <span>Enrolled in 9-Days Program</span>
+              </span>
             )}
+
+            {/* Dashboard Button */}
+            {/* <button
+              type="button"
+              onClick={() => navigate("/9daysjobprogramdashboard")}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-1.5 text-xs font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-600 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:text-sm"
+              title="View 9-Days Job Program Dashboard & Progress"
+            >
+              <span>📊</span>
+              <span>Dashboard</span>
+            </button> */}
 
             <button
               onClick={handleLogout}
@@ -1684,26 +1432,28 @@ export default function NineDaysInsideAfterLogin() {
                 {selectedDay <= 6
                   ? `Interactive simulation for banking use cases (${activeMeta.count}). Click Business or System to explore workflow execution.`
                   : selectedDay === 7
-                    ? "Explore all production deployment and DevOps tools required for banking-grade stability."
+                    ? "Build your own complete banking project covering all 51 use cases using modern AI tools and IDEs."
                     : selectedDay === 8
-                      ? "Step-by-step production deployment pipeline from local code to live AWS/Docker URL."
-                      : "51 Use-Case Architecture Viva, Mock Interview Checklist, and Final Knowledge Assessment."}
+                      ? "Step-by-step complete guide to deploy your 51 use-case banking application live on cloud servers."
+                      : "Final Knowledge Examination and Technical Assessment."}
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 9 Days Tab Bar (All 9 Days visible without scrolling) */}
+      {/* 9 Days Tab Bar (All 9 Days visible, touch-scrollable on mobile) */}
       <nav
         aria-label="9-Days Sprint Progress"
         className="sticky top-[61px] z-30 w-full border-b border-slate-200/90 bg-white shadow-sm"
       >
         <div className="mx-auto max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8">
-          <div className="grid grid-cols-9 gap-1 sm:gap-1.5 md:gap-2 py-2.5">
+          <div className="overflow-x-auto py-2 sm:py-2.5">
+            <div className="grid grid-cols-9 min-w-[540px] sm:min-w-0 gap-1 sm:gap-1.5 md:gap-2">
             {dayMeta.map((dm) => {
               const isActive = selectedDay === dm.day;
-              const isLocked = dm.day > currentAvailableDay;
+              const isLocked =
+                !isAlreadyRegistered || dm.day > currentAvailableDay;
 
               return (
                 <button
@@ -1719,7 +1469,9 @@ export default function NineDaysInsideAfterLogin() {
                   }`}
                   title={
                     isLocked
-                      ? `Day ${dm.day} is locked. Current available day is ${currentAvailableDay}.`
+                      ? !isAlreadyRegistered
+                        ? 'Please click "Interested in this program" first to unlock Day 1.'
+                        : `Day ${dm.day} is locked. Current available day is ${currentAvailableDay}.`
                       : `${dm.title} - ${dm.count}`
                   }
                 >
@@ -1757,6 +1509,7 @@ export default function NineDaysInsideAfterLogin() {
                 </button>
               );
             })}
+            </div>
           </div>
         </div>
       </nav>
@@ -1781,6 +1534,41 @@ export default function NineDaysInsideAfterLogin() {
 
              
             </div> */}
+
+            {/* If not registered, show prompt banner to express interest */}
+            {!isAlreadyRegistered && (
+              <div className="mb-6 rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 via-teal-50 to-white p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs text-white">
+                        ★
+                      </span>
+                      <h4 className="text-sm sm:text-base font-extrabold text-slate-900">
+                        Interested in the 9-Days Job Program?
+                      </h4>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600">
+                      Click below to express your interest and unlock Day 1
+                      &amp; Use Case 1 immediately.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRegisterInterest}
+                    disabled={isRegisteringInterest}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+                  >
+                    <span className="text-amber-300">★</span>
+                    <span>
+                      {isRegisteringInterest
+                        ? "Submitting..."
+                        : "Interested in this program"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Grid of Use Cases */}
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -1877,21 +1665,19 @@ export default function NineDaysInsideAfterLogin() {
                     {/* Actions: Business & System or Completed or Locked */}
                     <div className="mt-6 border-t border-slate-100 pt-4">
                       {isCompleted ? (
-                        /* When completed: Business and System are replaced by Completed */
-                        <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 py-2.5 px-3">
-                          <span className="flex items-center gap-1.5 text-xs font-black text-emerald-800">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">
-                              ✓
-                            </span>
-                            Completed
-                          </span>
-                          <span className="rounded-md bg-emerald-100/90 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">
-                            Verified
-                          </span>
-                        </div>
-                      ) : isCurrent ? (
-                        /* Open / Current: Business, System, and Complete & Unlock Next */
+                        /* Completed State */
                         <div className="space-y-2">
+                          <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 py-2 px-3">
+                            <span className="flex items-center gap-1.5 text-xs font-black text-emerald-800">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">
+                                ✓
+                              </span>
+                              Completed
+                            </span>
+                            <span className="rounded-md bg-emerald-100/90 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">
+                              Verified
+                            </span>
+                          </div>
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
@@ -1911,42 +1697,26 @@ export default function NineDaysInsideAfterLogin() {
                               <span>⚙️ System</span>
                             </button>
                           </div>
+                        </div>
+                      ) : isCurrent ? (
+                        /* Open / Current: Business and System (Complete & Unlock Next moved to route page) */
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenUseCase(uc, "business")}
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-600 hover:text-white"
+                            title={`Open Business View for ${uc.title}`}
+                          >
+                            <span>💼 Business</span>
+                          </button>
 
                           <button
                             type="button"
-                            onClick={() => handleCompleteUseCase(uc, index)}
-                            disabled={isUpdatingUseCase === ucCode}
-                            className="w-full inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-extrabold text-white shadow-sm transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
-                            title={`Complete ${ucCode} and unlock next use case`}
+                            onClick={() => handleOpenUseCase(uc, "system")}
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-800 shadow-sm transition hover:bg-indigo-600 hover:text-white"
+                            title={`Open System View for ${uc.title}`}
                           >
-                            {isUpdatingUseCase === ucCode ? (
-                              <>
-                                <svg
-                                  className="h-3.5 w-3.5 animate-spin text-white"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                  />
-                                </svg>
-                                <span>Completing {ucCode}...</span>
-                              </>
-                            ) : (
-                              <>
-                                <span>✓ Complete & Unlock Next</span>
-                              </>
-                            )}
+                            <span>⚙️ System</span>
                           </button>
                         </div>
                       ) : (
@@ -1955,7 +1725,9 @@ export default function NineDaysInsideAfterLogin() {
                           <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                             <span>🔒</span>
                             <span>
-                              Locked (Complete {getUseCaseCode(index - 1)} first)
+                              {!isAlreadyRegistered
+                                ? 'Locked (Click "Interested in this program" to unlock)'
+                                : `Locked (Complete ${getUseCaseCode(index - 1)} first)`}
                             </span>
                           </span>
                         </div>
@@ -1968,138 +1740,401 @@ export default function NineDaysInsideAfterLogin() {
           </div>
         )}
 
-        {/* DAY 7: DOCKER, CI/CD & CLOUD DEPLOYMENT */}
+        {/* DAY 7: BUILD 51 USE-CASE BANKING PROJECT WITH AI TOOLS */}
         {selectedDay === 7 && (
-          <div className="space-y-6">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-emerald-100 pb-4">
-              <div>
-                <h2 className="text-xl font-extrabold text-[#153c2c] sm:text-2xl">
-                  Day 7: {activeMeta.title}
-                </h2>
-                <p className="text-xs text-slate-600 sm:text-sm">
-                  Essential DevOps and production deployment tooling required for
-                  banking-grade stability and security.
-                </p>
+          <div className="space-y-8">
+            {/* Header & Goal Banner */}
+            <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-white via-emerald-50/40 to-emerald-100/30 p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="max-w-3xl">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-black uppercase tracking-wider text-white">
+                    <span>⚡</span>
+                    <span>Day 7 Capstone Project</span>
+                  </span>
+                  <h2 className="mt-3 text-2xl font-black tracking-tight text-[#143d2c] sm:text-3xl">
+                    Build Your 51 Use-Case Banking Project with AI Tools
+                  </h2>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                    Build a complete enterprise core lending web app (LOS, FMS, CMS) using AI coding tools (Cursor Composer, Claude 3.7 / ChatGPT 4o, GitHub Copilot). Follow the structured blueprint below to generate, assemble, and run all 51 use cases locally in your IDE.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2.5 sm:flex-row lg:flex-col shrink-0 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopy(DAY7_PROJECT_STEPS[1].aiPrompt || "", "Master AI Prompt")
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-95 w-full sm:w-auto"
+                  >
+                    <span>📋</span>
+                    <span>Copy Master AI Prompt</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDay(8)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-50 w-full sm:w-auto"
+                  >
+                    <span>Proceed to Day 8 Deploy →</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Search Bar for Tools */}
-              <div className="w-full sm:w-80">
-                <label htmlFor="toolSearch" className="sr-only">
-                  Search Tools
-                </label>
-                <div className="relative">
-                  <input
-                    id="toolSearch"
-                    type="text"
-                    placeholder="Search tool (e.g. Docker, Nginx)..."
-                    value={toolSearch}
-                    onChange={(e) => setToolSearch(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:text-sm"
-                  />
-                  {toolSearch && (
+              {/* Project Specification Meta Cards */}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Suggested Project Name
+                  </span>
+                  <div className="mt-1 flex items-center justify-between gap-1">
+                    <span className="font-mono text-xs sm:text-sm font-black text-emerald-800 break-all sm:break-normal">
+                      {PROJECT_CONFIG.suggestedName}
+                    </span>
                     <button
-                      onClick={() => setToolSearch("")}
-                      className="absolute right-3 top-2 text-xs font-bold text-slate-400 hover:text-slate-600"
+                      type="button"
+                      onClick={() => handleCopy(PROJECT_CONFIG.suggestedName, "Project Name")}
+                      className="rounded p-1 text-slate-400 hover:text-emerald-700 shrink-0"
+                      title="Copy Project Name"
                     >
-                      ×
+                      📋
                     </button>
-                  )}
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Alternative: {PROJECT_CONFIG.altNames[0]}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Core Architecture
+                  </span>
+                  <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    Modular Monolith / Microservices
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    LOS (13) • FMS (21) • CMS (17)
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Recommended Tech Stack
+                  </span>
+                  <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    React 18 + Node.js (TypeScript)
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    PostgreSQL ACID • Tailwind CSS
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Where Code Runs
+                  </span>
+                  <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    localhost:3000 &amp; :8080
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Node.js v18/20 LTS runtime
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Tools Grid */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              {filteredTools.map((tool) => (
-                <div
-                  key={tool.id}
-                  className="flex flex-col justify-between rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">
-                        {tool.category}
-                      </span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                        {tool.tag}
-                      </span>
-                    </div>
+            {/* Recommended IDEs & Environment Section */}
+            <div>
+              <div className="mb-4">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700">
+                  Where to Write &amp; Run Your Code
+                </span>
+                <h3 className="mt-0.5 text-lg font-black text-[#143d2c] sm:text-xl">
+                  Recommended AI-Native IDEs &amp; Local Environments
+                </h3>
+                <p className="text-xs text-slate-600 sm:text-sm">
+                  Use these specialized AI code editors to generate files across the 51 use cases with full context awareness.
+                </p>
+              </div>
 
-                    <h3 className="mt-3 text-lg font-black text-[#153c2c]">
-                      {tool.name}
-                    </h3>
-
-                    {/* What is it */}
-                    <div className="mt-3 rounded-xl bg-slate-50 p-3">
-                      <span className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                        What is it?
-                      </span>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-700 sm:text-sm">
-                        {tool.whatIsIt}
+              <div className="grid gap-5 md:grid-cols-3">
+                {PROJECT_CONFIG.recommendedIdes.map((ide) => (
+                  <div
+                    key={ide.id}
+                    className="flex flex-col justify-between rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">{ide.icon}</span>
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                          {ide.tag}
+                        </span>
+                      </div>
+                      <h4 className="mt-3 text-base font-extrabold text-slate-900">
+                        {ide.name}
+                      </h4>
+                      <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">
+                        {ide.whyUse}
                       </p>
+                      <div className="mt-3 rounded-xl bg-slate-50 p-2.5 border border-slate-100">
+                        <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                          Key AI Shortcut
+                        </span>
+                        <span className="mt-0.5 block font-mono text-xs font-bold text-emerald-800">
+                          {ide.shortcut}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Why is it used in Banking */}
-                    <div className="mt-3 rounded-xl bg-emerald-50/60 p-3 border border-emerald-100">
-                      <span className="block text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
-                        Why is it used in Banking?
-                      </span>
-                      <p className="mt-1 text-xs leading-relaxed text-emerald-950 sm:text-sm">
-                        {tool.whyUsed}
-                      </p>
-                    </div>
-
-                    {/* How to Search & Verify */}
-                    <div className="mt-3">
-                      <span className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                        How to Search & Verify
-                      </span>
-                      <p className="mt-1 text-xs text-slate-600 font-mono bg-slate-100 px-2.5 py-1.5 rounded-lg">
-                        {tool.howToSearch}
-                      </p>
-                    </div>
-
-                    {/* Key Commands */}
-                    <div className="mt-3">
-                      <span className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                        Key CLI Commands & Config
-                      </span>
-                      <pre className="mt-1 overflow-x-auto rounded-xl bg-slate-900 p-3 text-xs text-emerald-400 font-mono">
-                        {tool.keyCommands.join("\n")}
-                      </pre>
+                    <div className="mt-4 pt-3 border-t border-slate-100">
+                      <a
+                        href={ide.docLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900"
+                      >
+                        Visit {ide.name} ↗
+                      </a>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
 
-                  <div className="mt-4 border-t border-slate-100 pt-3">
-                    <a
-                      href={tool.docLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900"
-                    >
-                      Official Documentation & Guides ↗
-                    </a>
+            {/* Local Runtime Ports & Endpoints */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-base font-black text-[#143d2c]">
+                🌐 Local Execution Architecture (Where the Code Runs)
+              </h3>
+              <p className="mt-1 text-xs text-slate-600 sm:text-sm">
+                When running the project on your machine, three core services communicate locally:
+              </p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {PROJECT_CONFIG.runEnvironments.map((env) => (
+                  <div
+                    key={env.label}
+                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      {env.label}
+                    </span>
+                    <span className="mt-1 block font-mono text-sm font-extrabold text-emerald-700">
+                      {env.url}
+                    </span>
+                    <p className="mt-1 text-xs text-slate-600">
+                      {env.description}
+                    </p>
+                    <div className="mt-2.5 rounded-lg bg-slate-900 px-2.5 py-1.5 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+                      {env.command}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Step-by-Step 6-Phase Build Blueprint */}
+            <div>
+              <div className="mb-4">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700">
+                  Day 7 Step-by-Step Execution
+                </span>
+                <h3 className="mt-0.5 text-lg font-black text-[#143d2c] sm:text-xl">
+                  Step-by-Step AI Build Blueprint (All 51 Use Cases)
+                </h3>
+                <p className="text-xs text-slate-600 sm:text-sm">
+                  Execute these 6 phases during Day 7 to generate the code, implement all 3 banking modules, and verify functionality in your IDE.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {DAY7_PROJECT_STEPS.map((s) => (
+                  <div
+                    key={s.step}
+                    className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+                  >
+                    <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50/70 via-white to-white p-5 sm:p-6">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-sm font-black text-white shadow-sm">
+                            {s.step}
+                          </span>
+                          <div>
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">
+                              {s.phase}
+                            </span>
+                            <h4 className="mt-0.5 text-base font-black text-slate-900 sm:text-lg">
+                              {s.title}
+                            </h4>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-slate-500">
+                          ⏱ Est. {s.duration}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                        {s.summary}
+                      </p>
+                    </div>
+
+                    <div className="p-5 sm:p-6 space-y-4">
+                      {/* Folder Tree if present */}
+                      {s.folderTree && (
+                        <div>
+                          <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                            Recommended Project Tree
+                          </span>
+                          <pre className="mt-1.5 overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-xs text-emerald-300">
+                            {s.folderTree}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Commands if present */}
+                      {s.commands && s.commands.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                              Terminal Commands (Run in IDE)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(s.commands.join("\n"), `Step ${s.step} Commands`)}
+                              className="text-xs font-bold text-emerald-700 hover:text-emerald-900"
+                            >
+                              Copy Commands 📋
+                            </button>
+                          </div>
+                          <pre className="mt-1.5 overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-xs text-emerald-400">
+                            {s.commands.join("\n")}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* AI Prompt if present */}
+                      {s.aiPrompt && (
+                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-indigo-900">
+                              <span>🤖</span>
+                              <span>AI Prompt (Paste into Cursor / Claude / ChatGPT)</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(s.aiPrompt, `Step ${s.step} AI Prompt`)}
+                              className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700"
+                            >
+                              Copy AI Prompt 📋
+                            </button>
+                          </div>
+                          <pre className="mt-2.5 overflow-x-auto whitespace-pre-wrap rounded-lg bg-white p-3 font-mono text-xs text-slate-800 border border-indigo-200">
+                            {s.aiPrompt}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Files to Create */}
+                      {s.files && s.files.length > 0 && (
+                        <div>
+                          <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                            Key Files to Generate
+                          </span>
+                          <div className="mt-1.5 flex flex-wrap gap-2">
+                            {s.files.map((f) => (
+                              <span
+                                key={f}
+                                className="font-mono text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg"
+                              >
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Code Snippet if present */}
+                      {s.codeSnippet && (
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="block font-mono text-xs font-extrabold text-slate-700">
+                              📄 {s.codeSnippet.filename}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(s.codeSnippet?.code || "", s.codeSnippet?.filename || "Code")}
+                              className="text-xs font-bold text-emerald-700 hover:text-emerald-900"
+                            >
+                              Copy Code 📋
+                            </button>
+                          </div>
+                          <pre className="mt-1.5 overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-xs text-emerald-300">
+                            {s.codeSnippet.code}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Verification Check */}
+                      {s.verificationCheck && (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
+                          <span className="block text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
+                            ✓ How to Verify in Your Browser / IDE:
+                          </span>
+                          <p className="mt-1 text-xs font-semibold text-emerald-950 sm:text-sm">
+                            {s.verificationCheck}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Best Practice */}
+                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 pt-2 border-t border-slate-100">
+                        <span className="text-emerald-700 font-bold">💡 Best Practice:</span>
+                        <span>{s.bestPractice}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* DAY 8: PRODUCTION MONITORING, RELIABILITY & RECOVERY */}
+        {/* DAY 8: PRODUCTION DEPLOYMENT */}
         {selectedDay === 8 && (
-          <div className="space-y-6">
-            <div className="mb-6 border-b border-emerald-100 pb-4">
-              <h2 className="text-xl font-extrabold text-[#153c2c] sm:text-2xl">
-                Day 8: {activeMeta.title}
-              </h2>
-              <p className="text-xs text-slate-600 sm:text-sm">
-                Step-by-step production deployment pipeline and reliability
-                workflow from local code to live AWS/Docker URL.
-              </p>
+          <div className="space-y-8">
+            <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-white via-emerald-50/40 to-emerald-100/30 p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="max-w-3xl">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-black uppercase tracking-wider text-white">
+                    <span>🚀</span>
+                    <span>Day 8 Production Deployment</span>
+                  </span>
+                  <h2 className="mt-3 text-2xl font-black tracking-tight text-[#143d2c] sm:text-3xl">
+                    Deploy Your 51 Use-Case Banking Project
+                  </h2>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                    Take your <span className="font-mono font-bold text-emerald-800">OxyBank-Enterprise-Lending</span> project built on Day 7 to a live production server. Follow the 8-stage cloud deployment pipeline with Docker, GitHub Actions CI/CD, AWS EC2, Nginx, and free Let's Encrypt SSL.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2.5 sm:flex-row lg:flex-col shrink-0 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDay(9)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-95 w-full sm:w-auto"
+                  >
+                    <span>Proceed to Day 9 Final Exam →</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDay(7)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-50 w-full sm:w-auto"
+                  >
+                    <span>← Back to Day 7 AI Build</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               {DEPLOYMENT_STEPS.map((s) => (
                 <div
                   key={s.step}
@@ -2127,8 +2162,22 @@ export default function NineDaysInsideAfterLogin() {
                   </div>
 
                   {/* Commands / Workflow box */}
-                  <div className="mt-4 rounded-xl bg-slate-900 p-4 font-mono text-xs text-emerald-300 overflow-x-auto">
-                    {s.commands.join("\n")}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between pb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Deployment Script / Config
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(s.commands.join("\n"), `Step ${s.step} Script`)}
+                        className="text-xs font-bold text-emerald-700 hover:text-emerald-900"
+                      >
+                        Copy Script 📋
+                      </button>
+                    </div>
+                    <div className="rounded-xl bg-slate-900 p-4 font-mono text-xs text-emerald-300 overflow-x-auto">
+                      {s.commands.join("\n")}
+                    </div>
                   </div>
 
                   {/* Best practice callout */}
@@ -2142,7 +2191,8 @@ export default function NineDaysInsideAfterLogin() {
           </div>
         )}
 
-        {/* DAY 9: TECHNICAL INTERVIEWS & CAREER LAUNCH */}
+
+        {/* DAY 9: FINAL TECHNICAL ASSESSMENT & EXAM */}
         {selectedDay === 9 && (
           <div className="space-y-8">
             <div className="mb-6 border-b border-emerald-100 pb-4">
@@ -2150,60 +2200,11 @@ export default function NineDaysInsideAfterLogin() {
                 Day 9: {activeMeta.title}
               </h2>
               <p className="text-xs text-slate-600 sm:text-sm">
-                51 Use-Case Architecture Viva, Mock Interview Checklist, and Final Knowledge Assessment.
+                Final Online Technical Assessment &amp; Certification Exam.
               </p>
             </div>
 
-            {/* Section 1: Architecture Viva Questions */}
-            <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div>
-                  <h3 className="text-lg font-black text-[#153c2c]">
-                    🎓 51 Use-Case Architecture Viva Questions
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    High-impact interview defense questions asked by technical
-                    architects and hiring panels.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {VIVA_QUESTIONS.map((item, idx) => {
-                  const isOpen = activeViva === idx;
-                  return (
-                    <div
-                      key={item.q}
-                      className="overflow-hidden rounded-xl border border-slate-200 bg-white transition"
-                    >
-                      <button
-                        onClick={() => setActiveViva(isOpen ? null : idx)}
-                        className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left text-sm font-bold text-[#143c2c] hover:bg-emerald-50/50"
-                      >
-                        <span>{item.q}</span>
-                        <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black transition ${
-                            isOpen
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {isOpen ? "−" : "+"}
-                        </span>
-                      </button>
-
-                      {isOpen && (
-                        <div className="border-t border-slate-100 bg-slate-50/70 p-4 text-xs leading-relaxed text-slate-700 sm:text-sm">
-                          {item.answer}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Section 2: Interactive Assessment Test */}
+            {/* Online Technical Assessment */}
             <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
               <div className="border-b border-slate-100 pb-4">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">
@@ -2333,13 +2334,13 @@ export default function NineDaysInsideAfterLogin() {
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
                 <button
                   onClick={() => setShowQuizResults(true)}
-                  className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-emerald-700 sm:text-sm"
+                  className="w-full sm:w-auto rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-emerald-700 sm:text-sm"
                 >
                   Evaluate Assessment
                 </button>
 
                 {showQuizResults && (
-                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-xs font-bold text-emerald-800 sm:text-sm">
+                  <div className="w-full sm:w-auto rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-xs font-bold text-emerald-800 sm:text-sm">
                     Score:{" "}
                     {
                       [1, 2, 3, 4, 5].filter(
@@ -2356,7 +2357,8 @@ export default function NineDaysInsideAfterLogin() {
                                   : 1),
                       ).length
                     }{" "}
-                    / 5 Correct Answers! Keep revising the viva questions.
+                    / 5 Correct Answers! Keep practicing your banking domain
+                    knowledge.
                   </div>
                 )}
               </div>
@@ -2429,9 +2431,9 @@ export default function NineDaysInsideAfterLogin() {
               alt="9-Days Job Program"
               className="h-8 w-auto object-contain"
             />
-            <span>• 9-Days Job Program Portal</span>
+            {/* <span>• 9-Days Job Program Portal</span> */}
           </div>
-          <div className="flex gap-4 font-semibold text-slate-600">
+          <div className="flex flex-wrap justify-center sm:justify-end gap-3 sm:gap-4 font-semibold text-slate-600">
             <button
               onClick={() => handleSelectDay(1)}
               className="hover:text-emerald-700"
@@ -2442,13 +2444,19 @@ export default function NineDaysInsideAfterLogin() {
               onClick={() => handleSelectDay(7)}
               className="hover:text-emerald-700"
             >
-              DevOps
+              AI Project Build
+            </button>
+            <button
+              onClick={() => handleSelectDay(8)}
+              className="hover:text-emerald-700"
+            >
+              Cloud Deployment
             </button>
             <button
               onClick={() => handleSelectDay(9)}
               className="hover:text-emerald-700"
             >
-              Viva & Exam
+              Final Exam
             </button>
             <a
               href="https://www.askoxy.ai"

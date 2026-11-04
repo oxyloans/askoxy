@@ -208,12 +208,15 @@ const BlogsPage: React.FC = () => {
     const id = getCampaignId(campaign);
     const slug = slugify(getCampaignTitle(campaign));
     return !userId
-      ? `/blog/${id.slice(-4)}/${slug}`
-      : `/main/blog/${id.slice(-4)}/${slug}`;
+      ? `/blog/${id}/${slug}`
+      : `/main/blog/${id}/${slug}`;
   };
 
   const handleCampaignClick = (campaign: any) => {
-    navigate(getCampaignPath(campaign));
+    const id = getCampaignId(campaign);
+    navigate(getCampaignPath(campaign), {
+      state: { campaignId: id, campaign },
+    });
   };
 
   const handleAddBlog = () => {

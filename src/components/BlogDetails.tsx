@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Input, message, Modal, Spin } from "antd";
+import axios from "axios";
 import {
   DislikeFilled,
   DislikeOutlined,
@@ -29,7 +30,7 @@ import {
   submitWriteToUsQuery,
 } from "./servicesapi";
 import type { Campaign } from "./servicesapi";
-import { uploadurlwithId, resolveAskoxyUrl } from "../Config";
+import BASE_URL, { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 
 const { TextArea } = Input;
 
@@ -83,8 +84,14 @@ const ResponsiveModalWrapper: React.FC<ResponsiveModalWrapperProps> = ({
 const BlogDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const pathParts = location.pathname.split("/");
-  const blogId = pathParts[pathParts.indexOf("blog") + 1];
+  const { id: paramId } = useParams<{ id?: string; type?: string }>();
+  const pathParts = location.pathname.split("/").filter(Boolean);
+  const blogIndex = pathParts.indexOf("blog");
+  const urlBlogId = paramId || (blogIndex !== -1 ? pathParts[blogIndex + 1] : "");
+  const blogId =
+    (location.state as any)?.campaignId ||
+    urlBlogId ||
+    "";
 
   const userId =
     localStorage.getItem("userId") ||
@@ -161,6 +168,7 @@ const BlogDetails: React.FC = () => {
     campaign?.campaignTitle || campaign?.campaignType || "Blog";
 
   const getCampaignAuthor = (campaign: any) =>
+    campaign?.campaignTypeAddBy ||
     campaign?.authorName ||
     campaign?.campaignAuthor ||
     campaign?.createdBy ||
@@ -180,7 +188,7 @@ const BlogDetails: React.FC = () => {
   const getCampaignPath = (campaign: any) => {
     const id = getCampaignId(campaign);
     const slug = slugify(getCampaignTitle(campaign));
-    return userId ? `/main/blog/${id.slice(-4)}/${slug}` : `/blog/${id.slice(-4)}/${slug}`;
+    return userId ? `/main/blog/${id}/${slug}` : `/blog/${id}/${slug}`;
   };
 
   const getValidTeams = (campaign: any): string[] => {
@@ -248,80 +256,128 @@ const BlogDetails: React.FC = () => {
   };
 
   useEffect(() => {
-    const loadCampaignsAndComments = async () => {
+    const loadCampaignDetails = async () => {
+      if (!blogId) {
+        setIsLoading(false);
+        setPageReady(true);
+        return;
+      }
+
       setIsLoading(true);
       setPageReady(false);
 
       try {
-        const [allCampaigns, allGames] = await Promise.all([
-          fetchCampaigns(),
-          fetchAllGames(),
-        ]);
+        let campaignData: any = null;
 
-        const merged = [
-          ...((allCampaigns as any[]) || []),
-          ...((allGames as any[]) || []),
-        ];
-
-        const activeItems = merged.filter(
-          (c: any) => c?.campaignStatus === true || c?.campaignStatus === undefined
-        );
-
-        const campaignsWithDetails = await Promise.all(
-          activeItems.map(async (campaign: any) => {
-            const campaignId = getCampaignId(campaign);
-            if (!campaignId) return campaign;
-
+        // 1. Primary: Direct fetch by ID from getCampaignDatadetailsById
+        if (blogId.length > 6) {
+          try {
+            const res = await axios.get(
+              `${BASE_URL}/marketing-service/campgin/getCampaignDatadetailsById/${blogId}`
+            );
+            campaignData = res.data?.data || res.data?.response || res.data;
+          } catch (apiErr) {
+            console.warn("Direct BASE_URL fetch failed, trying meta.oxyloans.com fallback", apiErr);
             try {
-              const details = await fetchLikesAndComments(campaignId, userId);
-
-              const likesTotalCount = details?.likesTotalCount || 0;
-              const dislikesTotalCount = details?.dislikesTotalCount || 0;
-              const subComments = details?.subComments || [];
-              const likedState = details?.isLiked || false;
-              const dislikedState = details?.isDisliked || false;
-              const subscribedState = details?.isSubscribed || false;
-              const selectedTeam = details?.selectedTeam || campaign?.selectedTeam || "";
-
-              setLikeCount((prev) => ({
-                ...prev,
-                [campaignId]: likesTotalCount,
-              }));
-              setDislikeCount((prev) => ({
-                ...prev,
-                [campaignId]: dislikesTotalCount,
-              }));
-              setComments((prev) => ({ ...prev, [campaignId]: subComments }));
-              setIsLiked((prev) => ({ ...prev, [campaignId]: likedState }));
-              setIsDisliked((prev) => ({ ...prev, [campaignId]: dislikedState }));
-              setIsSubscribed((prev) => ({ ...prev, [campaignId]: subscribedState }));
-
-              if (selectedTeam) {
-                setSelectedVotes((prev) => ({
-                  ...prev,
-                  [campaignId]: selectedTeam,
-                }));
-              }
-
-              return {
-                ...campaign,
-                likesTotalCount,
-                dislikesTotalCount,
-                subComments,
-                isLiked: likedState,
-                isDisliked: dislikedState,
-                isSubscribed: subscribedState,
-                selectedTeam,
-              };
-            } catch {
-              return campaign;
+              const resFallback = await axios.get(
+                `https://meta.oxyloans.com/api/marketing-service/campgin/getCampaignDatadetailsById/${blogId}`
+              );
+              campaignData = resFallback.data?.data || resFallback.data?.response || resFallback.data;
+            } catch (fallbackErr) {
+              console.error("Fallback API fetch also failed", fallbackErr);
             }
-          })
-        );
+          }
+        }
 
-        setCampaigns(campaignsWithDetails as Campaign[]);
+        // 2. Backward compatibility fallback: If 4-char ID or direct fetch failed, search in campaign list
+        if (!campaignData || (!campaignData.campaignId && !campaignData.id)) {
+          try {
+            const all = await fetchCampaigns();
+            const matched = (all || []).find((c: any) => {
+              const cid = getCampaignId(c);
+              return cid === blogId || cid.slice(-4) === blogId;
+            });
+            if (matched) {
+              const fullId = getCampaignId(matched);
+              if (fullId && fullId.length > blogId.length) {
+                try {
+                  const res = await axios.get(
+                    `${BASE_URL}/marketing-service/campgin/getCampaignDatadetailsById/${fullId}`
+                  );
+                  campaignData = res.data?.data || res.data?.response || res.data;
+                } catch {
+                  campaignData = matched;
+                }
+              } else {
+                campaignData = matched;
+              }
+            }
+          } catch (listErr) {
+            console.error("Fallback list search failed", listErr);
+          }
+        }
+
+        if (campaignData && (campaignData.campaignId || campaignData.id)) {
+          const finalId = getCampaignId(campaignData) || blogId;
+          const activeItem = {
+            ...campaignData,
+            id: finalId,
+            campaignId: finalId,
+            campaignTitle: campaignData.campaignTitle || campaignData.campaignType || "Blog",
+            campaignType: campaignData.campaignType || campaignData.campaignTitle || "Blog",
+            campaignDescription: campaignData.campaignDescription || "",
+            campaignTypeAddBy: campaignData.campaignTypeAddBy || "ASKOXY",
+          };
+
+          // Fetch likes, comments, and interactions specifically for this campaign
+          let likesTotalCount = 0;
+          let dislikesTotalCount = 0;
+          let subComments: any[] = [];
+          let likedState = false;
+          let dislikedState = false;
+          let subscribedState = false;
+          let selectedTeam = activeItem?.selectedTeam || "";
+
+          try {
+            const details = await fetchLikesAndComments(finalId, userId);
+            likesTotalCount = details?.likesTotalCount || 0;
+            dislikesTotalCount = details?.dislikesTotalCount || 0;
+            subComments = details?.subComments || [];
+            likedState = details?.isLiked || false;
+            dislikedState = details?.isDisliked || false;
+            subscribedState = details?.isSubscribed || false;
+            selectedTeam = details?.selectedTeam || activeItem?.selectedTeam || "";
+          } catch (err) {
+            console.warn("fetchLikesAndComments error:", err);
+          }
+
+          setLikeCount((prev) => ({ ...prev, [finalId]: likesTotalCount }));
+          setDislikeCount((prev) => ({ ...prev, [finalId]: dislikesTotalCount }));
+          setComments((prev) => ({ ...prev, [finalId]: subComments }));
+          setIsLiked((prev) => ({ ...prev, [finalId]: likedState }));
+          setIsDisliked((prev) => ({ ...prev, [finalId]: dislikedState }));
+          setIsSubscribed((prev) => ({ ...prev, [finalId]: subscribedState }));
+          if (selectedTeam) {
+            setSelectedVotes((prev) => ({ ...prev, [finalId]: selectedTeam }));
+          }
+
+          const campaignWithDetails = {
+            ...activeItem,
+            likesTotalCount,
+            dislikesTotalCount,
+            subComments,
+            isLiked: likedState,
+            isDisliked: dislikedState,
+            isSubscribed: subscribedState,
+            selectedTeam,
+          };
+
+          setCampaigns([campaignWithDetails]);
+        } else {
+          setCampaigns([]);
+        }
       } catch (error) {
-        console.error("Error loading campaigns or comments:", error);
+        console.error("Error loading blog details:", error);
         setCampaigns([]);
       } finally {
         setIsLoading(false);
@@ -331,8 +387,8 @@ const BlogDetails: React.FC = () => {
       }
     };
 
-    loadCampaignsAndComments();
-  }, [userId]);
+    loadCampaignDetails();
+  }, [blogId, userId]);
 
   useEffect(() => {
     const isAnyModalOpen =
@@ -344,10 +400,13 @@ const BlogDetails: React.FC = () => {
   }, [isWriteToUsOpen, isProfileModalOpen, isSuccessModalOpen]);
 
   const featuredCampaign = useMemo(() => {
-    return campaigns.find((campaign: any) => {
-      const fullId = getCampaignId(campaign);
-      return fullId === blogId || fullId?.slice(-4) === blogId;
-    });
+    if (!campaigns || campaigns.length === 0) return null;
+    return (
+      campaigns.find((campaign: any) => {
+        const fullId = getCampaignId(campaign);
+        return fullId === blogId || fullId?.slice(-4) === blogId;
+      }) || campaigns[0] || null
+    );
   }, [campaigns, blogId]);
 
   const remainingCampaigns = useMemo(() => {
@@ -794,6 +853,37 @@ const handleWriteToUsSubmitButton = async () => {
         );
       }
 
+      // Check if entire line is a bold heading (e.g. **Heading**)
+      if (
+        trimmed.startsWith("**") &&
+        trimmed.endsWith("**") &&
+        !trimmed.slice(2, -2).includes("**")
+      ) {
+        const cleanHeading = trimmed.slice(2, -2);
+        return (
+          <h3
+            key={`heading-bold-${index}`}
+            className="text-[15px] sm:text-[16px] font-bold text-slate-900 mt-4 mb-2"
+          >
+            {cleanHeading}
+          </h3>
+        );
+      }
+
+      // Bullet points
+      if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
+        const bulletText = trimmed.replace(/^[-•]\s*/, "");
+        return (
+          <div
+            key={`bullet-${index}`}
+            className="flex items-start gap-2 text-slate-700 mb-2 text-[13px] sm:text-[14px] leading-6"
+          >
+            <span className="text-[#2563EB] font-bold mt-1 leading-none">•</span>
+            <span className="flex-1">{renderInlineFormattedText(bulletText)}</span>
+          </div>
+        );
+      }
+
       return (
         <p
           key={`para-${index}`}
@@ -922,10 +1012,19 @@ const handleWriteToUsSubmitButton = async () => {
     const campaignId = getCampaignId(campaign);
 
     const imageUrls: ImageItem[] = Array.isArray(campaign?.imageUrls)
-      ? campaign.imageUrls.map((img: any) =>
-          typeof img === "string" ? { imageUrl: img } : img
-        )
-      : campaign?.imageUrl
+      ? campaign.imageUrls
+          .map((img: any) =>
+            typeof img === "string" ? { imageUrl: img } : img
+          )
+          .filter(
+            (img: any) =>
+              img &&
+              typeof img.imageUrl === "string" &&
+              img.imageUrl.trim() !== ""
+          )
+      : campaign?.imageUrl &&
+        typeof campaign.imageUrl === "string" &&
+        campaign.imageUrl.trim() !== ""
       ? [{ imageUrl: campaign.imageUrl }]
       : [];
 
@@ -956,9 +1055,18 @@ const handleWriteToUsSubmitButton = async () => {
               <UserOutlined />
             </div>
             <div className="min-w-0">
-              <p className="m-0 text-[12px] sm:text-[13px] font-semibold uppercase tracking-wide text-slate-500">
+              <p className="m-0 text-[12px] sm:text-[13px] font-semibold uppercase tracking-wide text-slate-700">
                 {getCampaignAuthor(campaign)}
               </p>
+              {campaign?.createdAt && (
+                <p className="m-0 text-[11px] text-slate-400">
+                  {new Date(Number(campaign.createdAt)).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -1079,8 +1187,14 @@ const handleWriteToUsSubmitButton = async () => {
                   )}
                 </div>
               ) : (
-                <div className="h-[260px] sm:h-[420px] flex items-center justify-center bg-slate-100 text-slate-400">
-                  No image available
+                <div className="h-[220px] sm:h-[300px] flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50/70 via-slate-50 to-blue-50/70 text-slate-600 p-6 text-center border-b border-slate-100">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 text-[#2563EB] flex items-center justify-center text-2xl font-bold mb-2 shadow-sm">
+                    {(getCampaignTitle(campaign) || "B").charAt(0).toUpperCase()}
+                  </div>
+                  <h3 className="font-semibold text-slate-800 text-sm sm:text-base max-w-md line-clamp-2 m-0">
+                    {getCampaignTitle(campaign)}
+                  </h3>
+                  <span className="text-xs text-slate-500 mt-1">ASKOXY Official Blog</span>
                 </div>
               )}
             </div>
@@ -1212,6 +1326,11 @@ const handleWriteToUsSubmitButton = async () => {
               </div>
 
               <div className="px-4 sm:px-5 py-4 max-h-[520px] overflow-y-auto custom-scrollbar">
+                {campaign?.socialMediaCaption && (
+                  <div className="mb-4 rounded-xl bg-blue-50/70 border border-blue-100 p-3 text-[13px] text-blue-900 font-medium italic">
+                    "{campaign.socialMediaCaption}"
+                  </div>
+                )}
                 {campaign?.campaignDescription ? (
                   <div>{formatCampaignDescription(campaign.campaignDescription)}</div>
                 ) : (
@@ -1334,11 +1453,11 @@ const handleWriteToUsSubmitButton = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-white">
       {!isLoggedInUser && <Header1 />}
 
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_30%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,21,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(25,158,11,0.08),transparent_30%)] pointer-events-none" />
 
         <style>
           {`
@@ -1526,7 +1645,7 @@ const handleWriteToUsSubmitButton = async () => {
             paddingTop: isLoggedInUser ? undefined : "98px",
           }}
         >
-          <div className="mx-auto max-w-[1550px] ">
+          <div className="mx-auto max-w-7xl ">
             <div className="creatorRewardsBar mb-5 w-full  px-4 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 flex-1 text-left">

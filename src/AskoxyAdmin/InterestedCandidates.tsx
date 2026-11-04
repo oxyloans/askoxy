@@ -2,20 +2,19 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   Table,
-  Button,
+  
   Spin,
   Typography,
   Input,
   Tag,
-  Space,
+ 
   Select,
   Tooltip,
   Empty,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
-  ReloadOutlined,
-  SearchOutlined,
+  
   UserOutlined,
   MailOutlined,
   PhoneOutlined,
@@ -25,9 +24,10 @@ import {
   ClockCircleOutlined,
   LockOutlined,
   UnlockOutlined,
-  FilterOutlined,
+ 
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import BASE_URL from "../Config";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -54,7 +54,7 @@ interface Candidate {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const API_BASE =
-  "http://65.0.147.157:9229/api/marketing-service/campgin/job-program/interested-candidates";
+  `${BASE_URL}/marketing-service/campgin/job-program/interested-candidates`;
 
 const STATUS_OPTIONS: { label: string; value: CandidateStatus }[] = [
   { label: "All", value: "ALL" },
