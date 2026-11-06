@@ -14,6 +14,7 @@ import {
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 import { employeeApi } from "../utils/axiosInstances";
+import DiwaliWishesModal from "./DiwaliWishesModal";
 
 interface TaskStatusCounts {
     assignedCount: number;
@@ -238,6 +239,7 @@ const TaskDashboard: React.FC = () => {
     const [recentLoading, setRecentLoading] = useState(true);
     const [error, setError] = useState(false);
     const [recentError, setRecentError] = useState(false);
+    const [showDiwaliModal, setShowDiwaliModal] = useState(false);
     const userName = sessionStorage.getItem("Name") || "User";
 
     /*
@@ -432,7 +434,22 @@ const TaskDashboard: React.FC = () => {
     useEffect(() => {
         fetchDashboard();
         // checkEmployeeProfileCompletion();
+
+        // Show Diwali wishes modal after login if not already seen in this session
+        const userId = sessionStorage.getItem("userId");
+        const alreadyShown = sessionStorage.getItem("diwali_wishes_task_shown");
+        if (userId && !alreadyShown) {
+            const timer = setTimeout(() => {
+                setShowDiwaliModal(true);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
     }, []);
+
+    const handleCloseDiwaliModal = () => {
+        sessionStorage.setItem("diwali_wishes_task_shown", "true");
+        setShowDiwaliModal(false);
+    };
 
     const completionRate = useMemo(() => {
         if (!counts.totalCount) return 0;
@@ -461,14 +478,27 @@ const TaskDashboard: React.FC = () => {
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => navigate("/planoftheday")}
-                            className="inline-flex w-fit items-center gap-2 rounded-xl border border-purple-700 bg-purple-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:border-purple-800 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-teal-200"
-                        >
-                            <ClipboardList className="h-4 w-4" />
-                            Add Plan of the Day
-                        </button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowDiwaliModal(true)}
+                                className="inline-flex w-fit items-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-500 to-orange-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-amber-600 hover:to-orange-600 focus:outline-none focus:ring-4 focus:ring-amber-200"
+                                title="View Diwali Wishes"
+                            >
+                                <span className="text-base leading-none">🪔</span>
+                                <span>Diwali Wishes</span>
+                                <Sparkles className="h-4 w-4" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => navigate("/planoftheday")}
+                                className="inline-flex w-fit items-center gap-2 rounded-xl border border-purple-700 bg-purple-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:border-purple-800 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-teal-200"
+                            >
+                                <ClipboardList className="h-4 w-4" />
+                                Add Plan of the Day
+                            </button>
+                        </div>
                     </header>
 
                     <section
@@ -838,6 +868,13 @@ const TaskDashboard: React.FC = () => {
                     )}
                 </div>
             </main>
+
+            {/* Diwali Wishes Modal with Sky Rockets (stops completely when closed) */}
+            <DiwaliWishesModal
+                isOpen={showDiwaliModal}
+                onClose={handleCloseDiwaliModal}
+                userName={userName}
+            />
         </UserPanelLayout>
     );
 };

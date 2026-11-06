@@ -343,10 +343,10 @@ const OxyLoans: React.FC = () => {
         </div>
       </div>
         
-      {/* Benefits Tiles Section */}
+     
       <BenefitTiles />
 
-      {/* App Download Section */}
+      
       <section className="bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-xl py-16 text-center mb-16">
         <h2 className="text-4xl font-bold mb-6">Download OxyLoans App</h2>
         <p className="max-w-2xl mx-auto text-xl mb-8 opacity-90">
@@ -360,7 +360,7 @@ const OxyLoans: React.FC = () => {
             className="transform transition-transform hover:scale-105"
           >
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png" 
+              src="https://s2.rdbuz.com/web/images/homeV2/appinstall/playStore.svg" 
               alt="Google Play Store" 
               className="h-16"
             />
