@@ -345,6 +345,8 @@ const TaskUpdate: React.FC = () => {
 const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
   const BYRADHA_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
     const BYRAMA_USER_ID = "27223f9d-296b-465a-b845-1001ef0d0fc0";
+    const BYMOUNIKA_USER_ID ="518e39b5-671b-4bc8-a978-085ede1dbfc1"
+    const BYSUBBU_USER_ID ="72097c67-ff94-45a7-bed8-b328fbfe8c71"
   // Check if task can be updated based on date and time
   const canUpdateTask = (task: Task): boolean => {
     const currentTime = dayjs();
@@ -365,6 +367,14 @@ const BYSAI_USER_ID = "b06f3e29-d8a3-47b8-a682-f930b83f9e7d";
     if(task.userId === BYRAMA_USER_ID){
       return true;
     }
+    if(task.userId === BYMOUNIKA_USER_ID)
+      {
+        return true;
+      }
+  if(task.userId === BYSUBBU_USER_ID)
+  {
+    return true;
+  }
     return  isSameDay && isBeforeNinePM;
   };
   const selectTask = (task: Task) => {
