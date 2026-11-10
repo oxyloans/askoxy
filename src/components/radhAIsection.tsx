@@ -183,7 +183,7 @@ const RadhAISection: React.FC = () => {
               {/* Image */}
               <div className="order-1 flex items-center justify-center lg:order-2">
                 <motion.img
-                  src={AI1}
+                  src="https://i.ibb.co/0p6XWknc/AI1.png"
                   alt="radhAI"
                   loading="lazy"
                   transition={{

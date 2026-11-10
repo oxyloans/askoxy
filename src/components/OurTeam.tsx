@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { FaLinkedinIn } from "react-icons/fa";
 
 // Images
-import Radha from "../assets/img/radha sir.png";
-import Rama from "../assets/img/rama mam.png";
+import Radha from "../assets/img/radha.png";
+import Rama from "../assets/img/rama.png";
 import Sneha from "../assets/img/sneha.png";
 import Subash from "../assets/img/subbu.png";
 import Chakri from "../assets/img/jags.png";

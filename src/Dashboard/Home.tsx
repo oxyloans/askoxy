@@ -42,12 +42,9 @@ import CryptoImg1 from "../assets/img/bmvcoin.png";
 
 import O8 from "../assets/img/silver0.png";
 import aibook from "../assets/img/aibook.png";
-import diwali1 from "../assets/img/silverbuying1.png";
-import diwali2 from "../assets/img/goldbuying1.png";
-import diwali3 from "../assets/img/aimateaibook1.png";
-import diwali4 from "../assets/img/cashback1.png";
-import O5 from "../assets/img/g6.png";
-import O6 from "../assets/img/G5.png";
+
+import O5 from "../assets/img/cashewoffer1.png";
+import O6 from "../assets/img/35kg1.png";
 import CB1 from "../assets/img/document_Combo.png";
 import CB from "../assets/img/cashback offer png.png";
 import Cashew from "../assets/img/rakhi1.png";
@@ -60,7 +57,6 @@ import grocerie from "../assets/img/Groceries.png";
 import rice from "../assets/img/rice.png";
 import customerApi from "../utils/axiosInstances";
 import SilverOfferTooltip, { isSilverProduct } from "../components/SilverOfferTooltip";
-import FestiveBackground from "./FestiveBackground";
 
 // Define interfaces for Offer and UserEligibleOffer
 interface Offer {
@@ -94,61 +90,6 @@ interface UserEligibleOffer {
   eligible: boolean;
   weight: number;
 }
-
-// Traditional Animated Clay Diya (Deepam with dancing oil flame)
-const AnimatedClayDiya: React.FC<{
-  className?: string;
-  size?: "sm" | "md";
-}> = ({ className = "", size = "md" }) => {
-  const isSm = size === "sm";
-  return (
-    <div
-      className={`inline-flex flex-col items-center select-none pointer-events-none shrink-0 ${className}`}
-      aria-hidden="true"
-    >
-      {/* Dancing Oil Flame */}
-      <div
-        className="diwali-diya-flame -mb-0.5"
-        style={{
-          width: isSm ? 13 : 17,
-          height: isSm ? 16 : 21,
-        }}
-      >
-        <svg
-          viewBox="0 0 14 18"
-          fill="none"
-          className="w-full h-full drop-shadow-[0_0_6px_rgba(251,191,36,0.9)]"
-        >
-          <path
-            d="M7 0 C7 0 0 8 0 12 C0 15.5 3 18 7 18 C11 18 14 15.5 14 12 C14 8 7 0 7 0 Z"
-            fill="#F59E0B"
-          />
-          <path
-            d="M7 4 C7 4 2.5 8 2.5 12 C2.5 14.5 4.5 16 7 16 C9.5 16 11.5 14.5 11.5 12 C11.5 8 7 4 7 4 Z"
-            fill="#FFFBEB"
-          />
-        </svg>
-      </div>
-
-      {/* Traditional Clay Diya Base */}
-      <svg
-        viewBox="0 0 28 12"
-        fill="none"
-        style={{
-          width: isSm ? 24 : 32,
-          height: isSm ? 10 : 13,
-        }}
-        className="drop-shadow-xs"
-      >
-        <path
-          d="M1 3 C4 10, 24 10, 27 3 C26 11, 18 12, 14 12 C10 12, 2 11, 1 3 Z"
-          fill="#B45309"
-        />
-        <ellipse cx="14" cy="3" rx="13" ry="2.5" fill="#78350F" />
-      </svg>
-    </div>
-  );
-};
 
 // Product Skeleton Component
 const ProductSkeleton: React.FC<{ index: number }> = ({ index }) => {
@@ -792,49 +733,9 @@ const Home: React.FC = () => {
   }, [userEligibleOffers, offers.length]);
 
   const headerImages: HeaderImage[] = [
-    // {
-    //   id: "Buy Silver Coins",
-    //   src: O8,
-    //   alt: "Buy Silver Coins",
-    //   path: "/main/dashboard/products?type=SILVER",
-    //   onClick: () => {
-    //     navigate("/main/dashboard/products?type=SILVER");
-    //   },
-    // },
-    // {
-    //   id: "Cashback1",
-    //   src: CB,
-    //   alt: "Cashback Offer",
-    //   path: "/main/dashboard/products",
-    //   onClick: () => {
-    //     navigate("/main/dashboard/products", {
-    //       state: { selectedCategory: "All Items" },
-    //     });
-    //   },
-    // },
-    // {
-    //   id: "Cashew Offer",
-    //   src: Cashew,
-    //   alt: "Cashew Offer",
-    //   path: "/main/dashboard/products?type=AIBOOK",
-    //   onClick: () => {
-    //     navigate("/main/dashboard/products?type=AIBOOK");
-    //   },
-    // },
-    // {
-    //   id: "Rice Offer",
-    //   src: Riceoffers,
-    //   alt: "Rice Offer",
-    //   path: "/main/dashboard/products?type=GOLD",
-    //   onClick: () => {
-    //     navigate("/main/dashboard/products?type=GOLD");
-    //   },
-    // },
-
-
     {
       id: "Buy Silver Coins",
-      src: diwali1,
+      src: O8,
       alt: "Buy Silver Coins",
       path: "/main/dashboard/products?type=SILVER",
       onClick: () => {
@@ -843,7 +744,7 @@ const Home: React.FC = () => {
     },
     {
       id: "Cashback1",
-      src: diwali4,
+      src: CB,
       alt: "Cashback Offer",
       path: "/main/dashboard/products",
       onClick: () => {
@@ -854,7 +755,7 @@ const Home: React.FC = () => {
     },
     {
       id: "Cashew Offer",
-      src: diwali3,
+      src: Cashew,
       alt: "Cashew Offer",
       path: "/main/dashboard/products?type=AIBOOK",
       onClick: () => {
@@ -863,7 +764,7 @@ const Home: React.FC = () => {
     },
     {
       id: "Rice Offer",
-      src: diwali2,
+      src: Riceoffers,
       alt: "Rice Offer",
       path: "/main/dashboard/products?type=GOLD",
       onClick: () => {
@@ -1294,7 +1195,7 @@ const Home: React.FC = () => {
     }),
     hover: {
       scale: 1.02,
-      boxShadow: "0 8px 22px rgba(245, 158, 11, 0.22)",
+      boxShadow: "0 4px 12px rgba(147, 51, 234, 0.1)",
       transition: {
         type: "spring",
         stiffness: 300,
@@ -1331,7 +1232,7 @@ const Home: React.FC = () => {
         layoutId={`product-${item.itemId ?? item.id}`}
         onHoverStart={() => setHoveredProduct(item.itemId ?? item.id ?? null)}
         onHoverEnd={() => setHoveredProduct(null)}
-        className="bg-white rounded-xl shadow-sm overflow-hidden relative transform transition-all duration-200 border border-gray-100 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/10"
+        className="bg-white rounded-xl shadow-sm overflow-hidden relative transform transition-all duration-200 border border-gray-100 hover:border-purple-200"
       >
         {item.itemMrp && item.itemPrice && item.itemMrp > item.itemPrice && (
           <div className="absolute left-0 top-0 z-10 w-auto">
@@ -1367,7 +1268,7 @@ const Home: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="absolute inset-0 bg-amber-500 bg-opacity-10 flex items-center justify-center"
+                className="absolute inset-0 bg-purple-600 bg-opacity-5 flex items-center justify-center"
               >
                 <motion.div
                   initial={{ scale: 0.8 }}
@@ -1794,17 +1695,16 @@ const Home: React.FC = () => {
     index: number,
     type: "gpt" | "crypto",
   ) => {
-    // Diwali theme colors for OXYGPT & Cryptocurrency
     const bgGradient =
       type === "gpt"
-        ? "from-purple-800 via-purple-700 to-amber-600"
-        : "from-amber-600 via-amber-500 to-yellow-600";
+        ? "from-purple-600 to-indigo-700"
+        : "from-green-500 to-emerald-600";
     const iconBg =
       type === "gpt"
-        ? "from-amber-400 to-purple-800"
-        : "from-yellow-300 to-amber-600";
+        ? "from-purple-600 to-indigo-700"
+        : "from-green-500 to-emerald-600";
 
-    const iconColor = type === "gpt" ? "text-amber-100" : "text-yellow-100";
+    const iconColor = type === "gpt" ? "text-purple-200" : "text-green-200";
 
     return (
       <motion.div
@@ -1814,7 +1714,7 @@ const Home: React.FC = () => {
         animate="visible"
         variants={digitialServiceVariants}
         whileHover="hover"
-        className="rounded-xl overflow-hidden relative transform transition-all duration-200 border border-amber-300/40 shadow-md hover:shadow-amber-200/50 hover:border-amber-400"
+        className="rounded-xl overflow-hidden relative transform transition-all duration-200"
         onClick={() => navigate(item.path)}
       >
         <div className={`bg-gradient-to-r ${bgGradient} p-4 h-full`}>
@@ -1870,10 +1770,7 @@ const Home: React.FC = () => {
     });
   };
   return (
-    <div className="min-h-screen relative">
-      {/* Diwali Sky Fireworks & Sparkling Crackers */}
-      <FestiveBackground />
-
+    <div className="min-h-screen">
       {/* New styles for offers modal scrollbar */}
       <style>
         {`
@@ -1901,52 +1798,11 @@ const Home: React.FC = () => {
             scrollbar-width: auto;
           }
           @keyframes glowPulse {
-            0%, 100% { box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.45); }
-            50% { box-shadow: 0 0 18px 6px rgba(251, 191, 36, 0.2); }
+            0%, 100% { box-shadow: 0 0 6px 2px rgba(60, 114, 251, 0.4); }
+            50% { box-shadow: 0 0 18px 6px rgba(60, 120, 251, 0.15); }
           }
           .animate-pulse-border {
             animation: glowPulse 2s ease-in-out infinite;
-          }
-          @keyframes diwaliDiyaFlicker {
-            0%, 100% {
-              transform: scale(1) translateY(0);
-            }
-            50% {
-              transform: scale(1.12, 0.9) translateY(-1.5px);
-            }
-          }
-          .diwali-diya-flame {
-            animation: diwaliDiyaFlicker 1.4s ease-in-out infinite;
-            transform-origin: bottom center;
-          }
-
-          /* Diwali Theme Buttons: Add to Cart & Buy Now */
-          .ab-06__btn--cart {
-            --liquid: #d97706 !important;
-            --border-col: #f59e0b !important;
-            background: #fffdf5 !important;
-            color: #92400e !important;
-            border: 1.5px solid #f59e0b !important;
-            transition: all 0.2s ease !important;
-          }
-          .ab-06__btn--cart:hover:not(:disabled),
-          .ab-06__btn--cart:active:not(:disabled) {
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
-            border-color: #d97706 !important;
-          }
-
-          .ab-06__btn--buynow {
-            --liquid: #ea580c !important;
-            --border-col: #d97706 !important;
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
-            color: #78350f !important;
-            border: 1.5px solid #d97706 !important;
-            transition: all 0.2s ease !important;
-          }
-          .ab-06__btn--buynow:hover:not(:disabled),
-          .ab-06__btn--buynow:active:not(:disabled) {
-            box-shadow: 0 4px 16px rgba(234, 88, 12, 0.4) !important;
-            border-color: #c2410c !important;
           }
         `}
       </style>
@@ -2160,13 +2016,13 @@ const Home: React.FC = () => {
                       setBannerStartIndex(index);
                     }}
                     className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
-                      isActive ? "w-9 bg-amber-200" : "w-3 bg-amber-100 hover:bg-amber-200"
+                      isActive ? "w-9 bg-purple-200" : "w-3 bg-gray-300"
                     }`}
                   >
                     {isActive && !isHovered && (
                       <motion.span
                         key={`mobile-progress-${bannerIndex}`}
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                        className="absolute inset-y-0 left-0 rounded-full bg-purple-600"
                         initial={{ width: "0%" }}
                         animate={{ width: "100%" }}
                         transition={{ duration: 3.0, ease: "linear" }}
@@ -2228,14 +2084,14 @@ const Home: React.FC = () => {
                     }}
                     className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
                       isActive
-                        ? "w-10 bg-amber-200"
-                        : "w-4 bg-amber-100 hover:bg-amber-200"
+                        ? "w-10 bg-purple-200"
+                        : "w-4 bg-gray-300 hover:bg-gray-400"
                     }`}
                   >
                     {isActive && !isHovered && (
                       <motion.span
                         key={`desktop-progress-${bannerStartIndex}`}
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                        className="absolute inset-y-0 left-0 rounded-full bg-purple-600"
                         initial={{ width: "0%" }}
                         animate={{ width: "100%" }}
                         transition={{ duration: 3.5, ease: "linear" }}
@@ -2253,8 +2109,8 @@ const Home: React.FC = () => {
         <section ref={productsRef} className="mb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
             {/* Heading - Left Side */}
-            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-800 via-amber-700 to-yellow-600 bg-clip-text text-transparent flex items-center">
-              <AnimatedClayDiya size="sm" className="mr-2" />
+            <h2 className="text-xl font-bold text-purple-800 flex items-center">
+              <ShoppingBag className="text-purple-600 mr-2" size={20} />
               Our Products
             </h2>
 
@@ -2262,7 +2118,7 @@ const Home: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white rounded-full text-sm font-semibold flex items-center justify-center shadow-md shadow-amber-500/20 hover:from-amber-600 hover:to-yellow-700 hover:shadow-amber-500/35 transition-all"
+              className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center justify-center hover:bg-purple-700 transition-colors"
               onClick={viewAllProducts}
             >
               See All
@@ -2282,16 +2138,16 @@ const Home: React.FC = () => {
                   exit={{ opacity: 0 }}
                   whileHover={{
                     scale: 1.02,
-                    boxShadow: "0 3px 10px rgba(245, 158, 11, 0.15)",
+                    boxShadow: "0 3px 10px rgba(147, 51, 234, 0.1)",
                   }}
                   whileTap={{ scale: 0.98 }}
                   className={`bg-white rounded-lg shadow-sm overflow-hidden relative border border-gray-100 ${
                     activeCategory === category.categoryName
-                      ? "border-amber-400 ring-2 ring-amber-300/40 bg-amber-50/20"
+                      ? "border-purple-200"
                       : ["Combo Offer", "Special Deals"].includes(
                             category.categoryName,
                           )
-                        ? "border-amber-400 animate-pulse-border"
+                        ? "border-purple-300 animate-pulse-border"
                         : ""
                   } cursor-pointer`}
                   onClick={() => handleCategoryChange(category.categoryName)}
@@ -2313,11 +2169,11 @@ const Home: React.FC = () => {
                     />
                     {activeCategory === category.categoryName && (
                       <motion.div
-                        className="absolute inset-0 bg-amber-500 bg-opacity-15 flex items-center justify-center"
+                        className="absolute inset-0 bg-purple-600 bg-opacity-10 flex items-center justify-center"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        {/* <Star className="text-amber-600" size={20} /> */}
+                        {/* <Star className="text-purple-600" size={20} /> */}
                       </motion.div>
                     )}
                   </div>
@@ -2325,8 +2181,8 @@ const Home: React.FC = () => {
                     <h3
                       className={`font-bold text-md transition-colors ${
                         category.categoryName === "Special Deals"
-                          ? "text-amber-600 hover:text-amber-500"
-                          : "text-amber-800 hover:text-amber-600"
+                          ? "text-purple-600 hover:text-purple-500"
+                          : "text-purple-700 hover:text-purple-600"
                       }`}
                     >
                       {category.categoryName}
@@ -2349,8 +2205,8 @@ const Home: React.FC = () => {
                   }
                   className={`px-3 py-1 rounded-full text-sm border transition ${
                     selectedWeight === filter.value
-                      ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-white border-amber-500 shadow-xs"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-amber-400"
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-gray-700 border-gray-300"
                   }`}
                 >
                   {filter.label}
@@ -2412,14 +2268,14 @@ const Home: React.FC = () => {
         {/* Services Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-800 via-amber-700 to-yellow-600 bg-clip-text text-transparent flex items-center">
-              <AnimatedClayDiya size="sm" className="mr-2" />
+            <h2 className="text-xl font-bold text-purple-800 flex items-center">
+              <Settings className="text-purple-600 mr-2" size={20} />
               Our Services
             </h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white rounded-full text-sm font-semibold flex items-center shadow-md shadow-amber-500/20 hover:from-amber-600 hover:to-yellow-700 hover:shadow-amber-500/35 transition-all"
+              className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
               onClick={viewAllServices}
             >
               See All
@@ -2473,16 +2329,16 @@ const Home: React.FC = () => {
           <div className="p-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-amber-800 via-amber-700 to-yellow-600 bg-clip-text text-transparent flex items-center">
-                <AnimatedClayDiya size="sm" className="mr-2" />
+              <h2 className="text-xl font-bold text-purple-800 flex items-center">
+                <Bot className="mr-2 text-purple-600" size={24} />
                 OXYGPT
               </h2>
               <button
                 onClick={() => navigate("/genoxy")}
-                className="px-4 py-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white font-semibold rounded-full shadow-xs hover:from-amber-600 hover:to-yellow-700 flex items-center text-sm transition-all"
+                className="px-4 py-2 text-purple-600 font-medium flex items-center text-sm"
                 aria-label="Explore OXYGpt"
               >
-                Explore <ArrowRight size={16} className="ml-1.5" />
+                Explore <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
 
@@ -2494,12 +2350,12 @@ const Home: React.FC = () => {
                   .map((_, i) => (
                     <div
                       key={i}
-                      className="bg-gradient-to-r from-purple-100/90 via-amber-100/80 to-purple-100/90 h-24 flex items-center px-4 rounded-xl border border-amber-200/70 animate-pulse"
+                      className="bg-gradient-to-r from-blue-100 to-indigo-100 h-24 flex items-center px-4"
                     >
-                      <div className="w-12 h-12 rounded-full bg-amber-200/90 mr-4"></div>
+                      <div className="w-12 h-12 bg-blue-200 mr-4"></div>
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-amber-300/70 rounded w-3/4"></div>
-                        <div className="h-3 bg-purple-200/80 rounded w-1/2"></div>
+                        <div className="h-4 bg-blue-200 w-3/4"></div>
+                        <div className="h-3 bg-blue-200 w-1/2"></div>
                       </div>
                     </div>
                   ))
@@ -2519,17 +2375,17 @@ const Home: React.FC = () => {
           {/* Cryptocurrency Card */}
           <div className="p-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-amber-800 via-amber-700 to-yellow-600 bg-clip-text text-transparent flex items-center">
-                <AnimatedClayDiya size="sm" className="mr-2" />
+            <div className="flex flex-col sm:flex-row  from-green-500 to-emerald-600 sm:items-center sm:justify-between mb-5 gap-3">
+              <h2 className="text-xl font-bold text-green-800 flex items-center">
+                <Coins className="mr-2 text-green-600" size={24} />
                 Cryptocurrency
               </h2>
               <button
                 onClick={() => navigate("/main/crypto")}
-                className="px-4 py-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white font-semibold rounded-full shadow-xs hover:from-amber-600 hover:to-yellow-700 flex items-center text-sm transition-all"
+                className="px-4 py-2 text-green-600 font-medium flex items-center text-sm"
                 aria-label="Explore Cryptocurrency"
               >
-                Explore <ArrowRight size={16} className="ml-1.5" />
+                Explore <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
 
@@ -2541,12 +2397,12 @@ const Home: React.FC = () => {
                   .map((_, i) => (
                     <div
                       key={i}
-                      className="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-200/80 h-24 flex items-center px-4 rounded-xl border border-amber-300/70 animate-pulse"
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 h-24 flex items-center px-4"
                     >
-                      <div className="w-12 h-12 rounded-full bg-yellow-300/90 mr-4"></div>
+                      <div className="w-12 h-12 bg-amber-200 mr-4"></div>
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-amber-300/80 rounded w-3/4"></div>
-                        <div className="h-3 bg-yellow-200/90 rounded w-1/2"></div>
+                        <div className="h-4 bg-amber-200 w-3/4"></div>
+                        <div className="h-3 bg-amber-200 w-1/2"></div>
                       </div>
                     </div>
                   ))

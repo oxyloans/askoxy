@@ -210,7 +210,7 @@ const HiringPages: React.FC = () => {
         </div>
 
         <div className="px-4 pb-1">
-          <h3 className="line-clamp-2 text-center text-lg font-bold text-gray-800">
+          <h3 className="line-clamp-3 text-center text-lg font-bold text-gray-800">
             {job.jobTitle || "Job Title"}
           </h3>
         </div>

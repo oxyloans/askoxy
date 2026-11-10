@@ -1033,7 +1033,7 @@ const JobViewPage: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pb-1">
-          <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
+          <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-3">
             {job.jobTitle}
           </h3>
         </div>

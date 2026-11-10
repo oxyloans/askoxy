@@ -188,9 +188,13 @@ const JourneysPagewithoutlogin: React.FC = () => {
         campaign.campainInputType === "SERVICE" ||
         campaign.campainInputType === "PRODUCT"
       ) {
-        navigate(`/main/services/${campaignId.slice(-4)}/${titleSlug}`);
+        navigate(`/main/services/${campaignId.slice(-4)}/${titleSlug}`, {
+          state: { campaignId, campaign },
+        });
       } else {
-        navigate(`/main/blog/${campaignId.slice(-4)}/${titleSlug}`);
+        navigate(`/main/blog/${campaignId}/${titleSlug}`, {
+          state: { campaignId, campaign },
+        });
       }
       return;
     }
@@ -199,9 +203,13 @@ const JourneysPagewithoutlogin: React.FC = () => {
       campaign.campainInputType === "SERVICE" ||
       campaign.campainInputType === "PRODUCT"
     ) {
-      navigate(`/services/${campaignId.slice(-4)}/${titleSlug}`);
+      navigate(`/services/${campaignId.slice(-4)}/${titleSlug}`, {
+        state: { campaignId, campaign },
+      });
     } else {
-      navigate(`/blog/${campaignId.slice(-4)}/${titleSlug}`);
+      navigate(`/blog/${campaignId}/${titleSlug}`, {
+        state: { campaignId, campaign },
+      });
     }
   };
 

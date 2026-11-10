@@ -80,6 +80,12 @@ const NinetyDayPlanPage = lazy(() => import("./components/NinetyDayPlanPage"));
 const NineDaysInsideAfterLogin = lazy(
   () => import("./Jobplan/NineDaysInsideAfterLogin"),
 );
+const NineDaysPrerequisites = lazy(
+  () => import("./Jobplan/NineDaysPrerequisites"),
+);
+const NineDaysDayWorkflow = lazy(
+  () => import("./Jobplan/NineDaysDayWorkflow"),
+);
 const NineDaysJobProgramDashboard = lazy(
   () => import("./Jobplan/9daysjobprogramdashboard"),
 );
@@ -1377,7 +1383,23 @@ const App: React.FC = () => {
                 path="/ninedaysinside"
                 element={
                   <RequireAuth>
-                    <NineDaysInsideAfterLogin />
+                    <NineDaysPrerequisites />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ninedays-prerequisites"
+                element={
+                  <RequireAuth>
+                    <NineDaysPrerequisites />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ninedaysprerequisites"
+                element={
+                  <RequireAuth>
+                    <NineDaysPrerequisites />
                   </RequireAuth>
                 }
               />
@@ -1390,18 +1412,18 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/ninedaysinside"
+                path="/ninedaysdayworkflow"
                 element={
                   <RequireAuth>
-                    <NineDaysInsideAfterLogin />
+                    <NineDaysDayWorkflow />
                   </RequireAuth>
                 }
               />
               <Route
-                path="/ninedaysinsideafterlogin"
+                path="/ninedaysday1"
                 element={
                   <RequireAuth>
-                    <NineDaysInsideAfterLogin />
+                    <NineDaysDayWorkflow />
                   </RequireAuth>
                 }
               />

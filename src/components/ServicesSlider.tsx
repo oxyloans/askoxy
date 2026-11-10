@@ -168,11 +168,12 @@ const ServicesSlider: React.FC = () => {
   const slugify = (text: string) =>
     (text || "")
       .toLowerCase()
+      .trim()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 30);
+      .slice(0, 60);
 
   const getCampaignFirstImage = (campaign: Campaign) => {
     const firstImage =
@@ -472,22 +473,31 @@ const ServicesSlider: React.FC = () => {
 
     if (!campaignId) return;
 
-    if (accessToken) {
-      if (
-        campaign.campainInputType === "SERVICE" ||
-        campaign.campainInputType === "PRODUCT"
-      ) {
-        navigate(`/main/services/${campaignId.slice(-4)}/${titleSlug}`);
-      } else {
-        navigate(`/main/blog/${campaignId.slice(-4)}/${titleSlug}`);
-      }
-    } else if (
+    const userId =
+      localStorage.getItem("userId") ||
+      localStorage.getItem("customerId") ||
+      localStorage.getItem("user_id") ||
+      "";
+    const isLoggedIn = Boolean(accessToken || userId);
+
+    if (
       campaign.campainInputType === "SERVICE" ||
       campaign.campainInputType === "PRODUCT"
     ) {
-      navigate(`/services/${campaignId.slice(-4)}/${titleSlug}`);
+      navigate(
+        isLoggedIn
+          ? `/main/services/${campaignId.slice(-4)}/${titleSlug}`
+          : `/services/${campaignId.slice(-4)}/${titleSlug}`,
+        { state: { campaignId, campaign } }
+      );
     } else {
-      navigate(`/blog/${campaignId.slice(-4)}/${titleSlug}`);
+      // Blog and other campaigns: pass full campaignId in URL & state (same requirement as BlogPage.tsx)
+      navigate(
+        isLoggedIn
+          ? `/main/blog/${campaignId}/${titleSlug}`
+          : `/blog/${campaignId}/${titleSlug}`,
+        { state: { campaignId, campaign } }
+      );
     }
   };
 

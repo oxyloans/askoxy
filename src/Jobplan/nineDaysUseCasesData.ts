@@ -109,7 +109,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 8,
-    day: 1,
+    day: 2,
     path: "sanction-disbursement",
     title: "Sanction & Customer Response Tracking",
     description: "Track sanction status and customer acknowledgments",
@@ -174,7 +174,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 15,
-    day: 2,
+    day: 3,
     path: "allocation-contract",
     title: "PDC Printing",
     description: "Automated post-dated cheque processing.",
@@ -183,7 +183,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 16,
-    day: 2,
+    day: 3,
     path: "installment-prepayment",
     title: "WF_ Installment Prepayment",
     description: "Handle early repayments and installment adjustments.",
@@ -192,7 +192,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 17,
-    day: 2,
+    day: 3,
     path: "case-reallocation",
     title: "WF_ NPA Grading",
     description: "Non-performing asset classification system.",
@@ -239,7 +239,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 22,
-    day: 3,
+    day: 4,
     path: "foreclosure-management",
     title: "WF_ Termination - Foreclosure - Closure",
     description: "Handle early closure and foreclosure of loans.",
@@ -248,7 +248,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 23,
-    day: 3,
+    day: 4,
     path: "finance-viewer",
     title: "WF_FMS_ Finance Viewer",
     description: "View financial metrics and account overviews.",
@@ -257,7 +257,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 24,
-    day: 3,
+    day: 4,
     path: "floating-review",
     title: "WF_FMS_ Floating Review Process",
     description: "Manage reviews for floating-rate financial products.",
@@ -266,7 +266,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 25,
-    day: 3,
+    day: 4,
     path: "daily-workplan",
     title: "WF_FMS_ Settlements - Receipts",
     description: "Automated receipt settlement processing",
@@ -295,7 +295,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 28,
-    day: 4,
+    day: 5,
     path: "eod-bod-process",
     title: "WF_FMS_EOD_ BOD",
     description: "Run end-of-day and beginning-of-day operations.",
@@ -304,7 +304,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 29,
-    day: 4,
+    day: 5,
     path: "account-closure",
     title: "Work Flow Closure_Account Closure",
     description: "Close accounts after settlement or full repayment.",
@@ -313,7 +313,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 30,
-    day: 4,
+    day: 5,
     path: "account-status",
     title: "Work Flow Closure_View Account Status",
     description: "Check and track account lifecycle and changes.",
@@ -322,7 +322,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 31,
-    day: 4,
+    day: 5,
     path: "document-master",
     title: "Work Flow_Document Master",
     description: "Manage and define all finance-related documentation.",
@@ -331,7 +331,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 32,
-    day: 4,
+    day: 5,
     path: "bulk-prepayment",
     title: "Work Flow_Finance Rescheduling_Bulk Prepayment",
     description: "Handle bulk prepayment processing and schedules.",
@@ -340,7 +340,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 33,
-    day: 4,
+    day: 5,
     path: "due-date-change",
     title: "Work Flow_Finance Rescheduling_Due Date Change",
     description: "Edit due dates for finance repayments.",
@@ -349,7 +349,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 34,
-    day: 4,
+    day: 6,
     path: "profit-rate-change",
     title: "Work Flow_Finance Rescheduling_Profit Rate Change",
     description: "Adjust profit rates for financial products.",
@@ -360,7 +360,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   // Day 5: 35 - 42 (FMS + CMS)
   {
     id: 35,
-    day: 5,
+    day: 6,
     path: "tenure-change",
     title: "Work Flow_Finance Rescheduling_Tenure Change",
     description: "Modify loan tenures and repayment terms.",
@@ -369,7 +369,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 36,
-    day: 5,
+    day: 6,
     path: "post-disbursal-edit",
     title: "Work Flow_Post Disbursal Edit",
     description: "Amend disbursed loans for corrections or changes.",
@@ -378,7 +378,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 37,
-    day: 5,
+    day: 6,
     path: "deferral-constitution",
     title: "Work Flow_Repayment Deferral_Constitution Wise Deferral",
     description: "Manage repayment deferrals by constitution types.",
@@ -387,7 +387,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 38,
-    day: 5,
+    day: 6,
     path: "deferral-financewise",
     title: "Work Flow_Repayment Deferral_Finance Wise Deferral",
     description: "Apply deferrals based on finance criteria.",
@@ -396,7 +396,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 39,
-    day: 5,
+    day: 6,
     path: "deferral-portfolio",
     title: "Work Flow_Repayment Deferral_Portfolio Wise Deferral",
     description: "Initiate deferrals across loan portfolios.",
@@ -405,7 +405,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 40,
-    day: 5,
+    day: 7,
     path: "allocation-hold",
     title: "Allocation of Delinquent Cases_Allocation Hold",
     description: "Place delinquent cases on hold based on predefined rules.",
@@ -414,7 +414,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 41,
-    day: 5,
+    day: 7,
     path: "define-allocation-contract",
     title: "Allocation of Delinquent Cases_Define Allocation contract",
     description: "Upload and manage contracts for delinquent case allocation.",
@@ -423,7 +423,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 42,
-    day: 5,
+    day: 7,
     path: "manual-allocation",
     title: "Allocation of Delinquent Cases_Manual Allocation",
     description: "Manually assign delinquent cases to collection agents.",
@@ -434,7 +434,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   // Day 6: 43 - 51 (CMS)
   {
     id: 43,
-    day: 6,
+    day: 7,
     path: "manual-reallocation",
     title: "Allocation of Delinquent Cases_Manual Reallocation",
     description:
@@ -444,7 +444,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 44,
-    day: 6,
+    day: 7,
     path: "bod-process",
     title: "Beginning of Day Process",
     description: "Initialize and prepare daily queue for collections.",
@@ -453,7 +453,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 45,
-    day: 6,
+    day: 7,
     path: "define-queue",
     title: "Classification of Delinquent Cases - Define Queue",
     description: "Create and manage delinquent case queues.",
@@ -462,7 +462,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 46,
-    day: 6,
+    day: 8,
     path: "contact-recording",
     title: "Contact Recording",
     description: "Record contact attempts and customer communication logs.",
@@ -471,7 +471,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 47,
-    day: 6,
+    day: 8,
     path: "legal-collections",
     title: "Legal Collections Workflow",
     description: "Initiate and track legal recovery processes.",
@@ -480,7 +480,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 48,
-    day: 6,
+    day: 8,
     path: "prioritize-queue",
     title: "Prioritizing a Queue",
     description: "Set priority for follow-up based on risk and aging.",
@@ -489,7 +489,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 49,
-    day: 6,
+    day: 8,
     path: "communication-mapping",
     title: "Queue Communication Mapping",
     description: "Assign communication templates to specific queues.",
@@ -498,7 +498,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 50,
-    day: 6,
+    day: 8,
     path: "queue-curing",
     title: "Queue Curing",
     description: "Monitor and track cured accounts from delinquency.",
@@ -507,7 +507,7 @@ export const NINE_DAYS_USE_CASES: NineDaysUseCaseItem[] = [
   },
   {
     id: 51,
-    day: 6,
+    day: 8,
     path: "work-plan",
     title: "Collector Work Plan",
     description: "Design and track daily plans for collection agents.",

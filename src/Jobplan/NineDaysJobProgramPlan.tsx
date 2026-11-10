@@ -28,7 +28,7 @@ type Day = {
 };
 const logo = "https://i.ibb.co/39rQT8TW/9-Days-Job-Program-Logo-1.png";
 const hero =
-  "https://i.ibb.co/yc2F0HNd/Gemini-Generated-Image-6olzfg6olzfg6olz.png";
+  "https://i.ibb.co/Tqxw33Mg/9-Day-BFSI-Job-Ready-Journey.png";
 const companies = [
   {
     name: "OXYGLOBAL.TECH",
@@ -70,177 +70,150 @@ const companies = [
 const days: Day[] = [
   {
     day: 1,
-    title: "Customer Onboarding & Loan Origination",
-    category: "Banking Workflows",
-    count: 8,
+    title: "Frontend & Mobile Environment Setup",
+    category: "Frontend & Mobile",
     summary:
-      "Learn how banking systems manage customer registration, KYC, credit appraisal, loan applications and sanction approvals.",
+      "Install and configure Node.js, npm, VS Code, React.js and React Native. Prepare the development environment to build and run responsive web applications and Android and iOS mobile apps.",
     topics: [
-      "Customer ID Creation",
-      "Co-applicant & Guarantor Linking",
-      "Customer ID to Loan Linking",
-      "Loan Appraisal System",
-      "Loan Assessment Workflow",
-      "Recommendation & Sanction Letter",
-      "Risk Analysis Documentation",
-      "Sanction & Customer Response Tracking",
+      "Node.js",
+      "npm",
+      "VS Code",
+      "React.js",
+      "React Native",
+      "Android Studio",
+      "Xcode / Cloud Build",
     ],
     deliverable:
-      "Demonstrate a complete customer onboarding and loan origination workflow, from customer creation to sanction approval.",
+      "A fully configured frontend and mobile development environment capable of running web and mobile applications.",
   },
   {
     day: 2,
-    title: "Loan Servicing, Collateral & Risk Management",
-    category: "Banking Workflows",
-    count: 9,
+    title: "Backend & API Environment Setup",
+    category: "Backend & API",
     summary:
-      "Explore repayment schedules, collateral management, credit limits, loan servicing, prepayments and NPA classification.",
+      "Install and configure Java JDK, Spring Boot, Maven and an IDE. Set up REST API development tools, run a sample backend service and verify API requests using Postman.",
     topics: [
-      "Repayment Schedule Generation",
-      "Terms & Conditions Approval",
-      "Asset Details Capture",
-      "Profile Update & Limit Check",
-      "Account Closure & Net Worth Analysis",
-      "Asset Details",
-      "PDC Printing",
-      "Installment Prepayment",
-      "NPA Grading",
+      "Java JDK",
+      "Spring Boot",
+      "Maven",
+      "IntelliJ / VS Code",
+      "Postman",
     ],
     deliverable:
-      "Demonstrate loan repayment calculations, collateral capture, prepayment processing and risk classification workflows.",
+      "A working Spring Boot backend service with verified REST API endpoints and testing tools.",
   },
   {
     day: 3,
-    title: "NPA, Settlements & Financial Management",
-    category: "Banking Workflows",
-    count: 8,
+    title: "Database & Project Environment Setup",
+    category: "Database & Project",
     summary:
-      "Understand non-performing asset provisioning, settlement processing, cheque transactions, foreclosure and financial management operations.",
+      "Install PostgreSQL and configure Git and GitHub. Create a starter project with React, Spring Boot and PostgreSQL, connect the frontend to a working API, test database operations and push the project to GitHub.",
     topics: [
-      "NPA Provisioning",
-      "Settlements - Knock Off",
-      "Settlements - Cheque Processing",
-      "Settlements - Manual Advice",
-      "Termination, Foreclosure & Closure",
-      "Finance Viewer",
-      "Floating Rate Review Process",
-      "Settlements - Receipts",
+      "PostgreSQL",
+      "pgAdmin",
+      "Git",
+      "GitHub",
+      "Database Connection",
     ],
     deliverable:
-      "Demonstrate NPA provisioning, settlement processing, foreclosure and financial transaction reconciliation.",
+      "An integrated starter project with React frontend connected to Spring Boot API and PostgreSQL database on GitHub.",
   },
   {
     day: 4,
-    title: "Finance Operations, Closure & Rescheduling",
-    category: "Banking Workflows",
-    count: 9,
+    title: "Read & Understand 51 BFSI Use Cases",
+    category: "51 BFSI Use Cases",
+    count: 51,
     summary:
-      "Learn how banking systems process settlements, waivers, daily batch operations, account closures and loan rescheduling.",
+      "Study all 51 real-world banking and lending use cases across Loan Origination (LOS), Finance Management (FMS) and Collections (CMS). Understand each business problem, user role, workflow, required inputs, outputs and expected results.",
     topics: [
-      "Settlements - Payments",
-      "Settlements - Waive Off",
-      "End-of-Day & Beginning-of-Day Operations",
-      "Account Closure Workflow",
-      "View Account Status",
-      "Document Master",
-      "Finance Rescheduling - Bulk Prepayment",
-      "Finance Rescheduling - Due Date Change",
-      "Finance Rescheduling - Profit Rate Change",
+      "Loan Origination (LOS)",
+      "Finance Management (FMS)",
+      "Collections & Recovery (CMS)",
+      "Business Rules & Validations",
+      "Banking Architecture",
     ],
     deliverable:
-      "Demonstrate daily banking operations, settlement adjustments, account closure and repayment rescheduling workflows.",
+      "Comprehensive understanding of all 51 core banking workflows, business rules, inputs, outputs and system roles.",
   },
   {
     day: 5,
-    title: "Loan Restructuring, Deferrals & Case Allocation",
-    category: "Banking Workflows",
-    count: 8,
+    title: "Implement the BFSI Application",
+    category: "Full-Stack Development",
     summary:
-      "Understand post-disbursal modifications, repayment deferrals, loan restructuring and delinquent case allocation controls.",
+      "Build selected Loan Origination System workflows in one integrated full-stack application. Develop React screens, Spring Boot REST APIs and PostgreSQL tables. Implement customer onboarding, loan applications, appraisal, risk assessment, recommendations and sanction workflows, and test each module.",
     topics: [
-      "Finance Rescheduling - Tenure Change",
-      "Post-Disbursal Edit",
-      "Repayment Deferral - Constitution Wise",
-      "Repayment Deferral - Finance Wise",
-      "Repayment Deferral - Portfolio Wise",
-      "Delinquent Case Allocation - Hold",
-      "Define Allocation Contract",
-      "Manual Case Allocation",
+      "Customer Onboarding",
+      "Loan Application & Linking",
+      "Appraisal & Risk Assessment",
+      "Sanction Letter Generation",
+      "End-to-End Testing",
     ],
     deliverable:
-      "Demonstrate loan restructuring, repayment deferral approvals and delinquent case allocation workflows.",
+      "An integrated full-stack Loan Origination System application with React UI, Spring Boot APIs and PostgreSQL database.",
   },
   {
     day: 6,
-    title: "Collections, Delinquency & Legal Recovery",
-    category: "Banking Workflows",
-    count: 9,
+    title: "Deploy Web & Mobile Applications",
+    category: "Web & Mobile Deployment",
     summary:
-      "Explore delinquent account classification, collection queues, customer communication, recovery operations and legal escalation.",
+      "Deploy the React web application, Spring Boot backend and PostgreSQL database. Build and test Android and iOS versions using React Native, verify API connectivity and test the complete loan application workflow.",
     topics: [
-      "Manual Case Reallocation",
-      "Collections - Beginning of Day",
-      "Delinquent Case Classification - Define Queue",
-      "Contact Recording",
-      "Legal Collections Workflow",
-      "Queue Prioritization",
-      "Queue Communication Mapping",
-      "Queue Curing",
-      "Collector Work Plan",
+      "Web Cloud Deployment",
+      "Spring Boot & PostgreSQL Hosting",
+      "Android APK Build",
+      "iOS App Build",
+      "Full-Stack API Connectivity",
     ],
     deliverable:
-      "Demonstrate an end-to-end collections workflow, from delinquency classification and agent assignment to recovery and legal escalation.",
+      "Live deployed web application with operational Android and iOS mobile builds connected to live backend APIs.",
   },
   {
     day: 7,
-    title: "Build 51 Use-Case Banking Project with AI Tools",
-    category: "AI Full-Stack Development",
+    title: "Publish Daily Progress on LinkedIn",
+    category: "LinkedIn & #83GLAI",
     summary:
-      "Build your own complete banking software project covering all 51 Use Cases (LOS, FMS, CMS) using AI coding tools, Cursor/VS Code IDEs, and prompt engineering.",
+      "Share daily development updates, completed BFSI modules, screenshots, technical learnings, GitHub repositories and live application links. Connect with and tag relevant #83GLAI lending software companies and professionals.",
     topics: [
-      "Project Setup: OxyBank-Enterprise-Lending Architecture",
-      "Cursor / VS Code AI Setup & Environment Configuration",
-      "AI Master Prompts for LOS (UC 1-13) & Credit Appraisal",
-      "AI Master Prompts for FMS (UC 14-34) & FIFO Knock-off",
-      "AI Master Prompts for CMS (UC 35-51) & DPD Delinquency Queues",
-      "Local Multi-Service Execution & Verification (localhost:3000 / :8080)",
+      "Daily Build Posts",
+      "#83GLAI Network",
+      "GitHub & Live Demo Links",
+      "BFSI Professional Networking",
+      "Company Tagging Strategy",
     ],
     deliverable:
-      "A fully functional 51 Use-Case Banking Web App running locally in your IDE with automated AI-assisted test workflows.",
+      "A documented LinkedIn public development trail showcasing completed BFSI milestones and live deployment links.",
   },
   {
     day: 8,
-    title: "Production Deployment: Deploying Your Banking Project",
-    category: "Cloud & DevOps Deployment",
+    title: "Document Technical Challenges & Solutions",
+    category: "Problem Solving & RCA",
     summary:
-      "Step-by-step complete guide to take your 51 Use-Case Banking project live into production with Docker, CI/CD, AWS EC2, and HTTPS.",
+      "Record issues encountered during frontend, backend, database, API integration, testing and deployment. Identify each problem's root cause, explain how you resolved it and document the lessons learned.",
     topics: [
-      "Multi-Stage Docker Packaging for Frontend & Backend",
-      "Multi-Container Orchestration with Docker Compose",
-      "GitHub Actions Automated CI/CD Pipeline Configuration",
-      "AWS EC2 Cloud Server Provisioning & Firewall Hardening",
-      "Nginx Reverse Proxy & Custom Domain DNS Routing",
-      "Free SSL/TLS HTTPS Certificates via Let's Encrypt Certbot",
-      "Zero-Downtime Rolling Updates & Live Production Health Verification",
+      "Error Logging & Tracking",
+      "Root Cause Analysis (RCA)",
+      "Backend & DB Debugging",
+      "CORS & API Resolution",
+      "Technical Post-Mortem Docs",
     ],
     deliverable:
-      "A live production URL of your 51 Use-Case Banking Application accessible over secure HTTPS with continuous deployment.",
+      "A comprehensive technical troubleshooting log documenting issues faced, root causes, fixes and architectural insights.",
   },
   {
     day: 9,
-    title: "Final Technical Assessment",
-    category: "Assessment & Exam",
+    title: "Build Your Portfolio & Apply for Jobs",
+    category: "Portfolio & Job Readiness",
     summary:
-      "Complete your final online technical assessment exam and prepare your technical portfolio and ATS resume for banking software engineering careers.",
+      "Prepare an ATS-friendly, project-based resume. Showcase your GitHub repository, deployed application and LinkedIn updates. Research 83 lending software companies within the #83GLAI initiative, apply for relevant jobs and prepare to demonstrate your project in technical interviews.",
     topics: [
-      "51 Banking Use Cases - Technical Assessment Exam",
-      "Interactive 5-Question Domain Readiness Test & Score Evaluation",
-      "ATS-Optimized Resume Deliverables (LOS, FMS, CMS Keywords)",
-      "Technical Portfolio & Cloud Architecture Showcase",
-      "Certification Eligibility & Completion Badge",
+      "ATS-Optimized BFSI Resume",
+      "#83GLAI Company Research",
+      "GitHub Repository Showcase",
+      "Live Demo Project Presentation",
+      "Technical Interview Practice",
     ],
     deliverable:
-      "Pass the online technical assessment test, receive your 9-Day Job Program completion status, and finalize your job-ready technical portfolio.",
+      "A job-ready technical portfolio, ATS-optimized resume, targeted BFSI company list, and interview-ready project presentation.",
   },
 ];
 
@@ -248,60 +221,72 @@ const days: Day[] = [
 const advantages = [
   {
     icon: "01",
-    title: "51 Real-World Banking Use Cases",
-    desc: "Gain practical experience across loan origination, finance management, repayments, collections and recovery workflows.",
+    title: "51 Real-World BFSI Use Cases",
+    desc: "Understand banking and lending workflows across Loan Origination (LOS), Finance Management (FMS) and Collections (CMS).",
   },
   {
     icon: "02",
-    title: "Hands-On Project Experience",
-    desc: "Build, test and demonstrate banking software workflows while understanding real-world business logic and system architecture.",
+    title: "Build a Real BFSI Application",
+    desc: "Implement selected loan origination use cases in one integrated project using React, Spring Boot APIs and PostgreSQL.",
   },
   {
     icon: "03",
-    title: "Cloud & DevOps Skills",
-    desc: "Learn Docker, GitHub Actions CI/CD, AWS deployment, Nginx and SSL configuration for production-ready applications.",
+    title: "Web & Mobile Deployment",
+    desc: "Deploy your application on the web, build Android and iOS versions, and test full-stack connectivity.",
   },
   {
     icon: "04",
-    title: "Production Monitoring & Recovery",
-    desc: "Understand zero-downtime deployment, Sentry APM, Prometheus monitoring, disaster recovery and database backup strategies.",
+    title: "Learn by Solving Real Problems",
+    desc: "Document technical challenges, identify root causes, fix issues and explain your solutions across frontend, backend, database and deployment.",
   },
   {
     icon: "05",
-    title: "Resume & Portfolio Building",
-    desc: "Strengthen your GitHub portfolio, create an ATS-friendly resume and optimize your LinkedIn profile with demonstrable project experience.",
+    title: "GitHub & LinkedIn Portfolio",
+    desc: "Publish daily progress, showcase your GitHub repository and live project, and connect with 83 lending software companies and professionals across the #83GLAI network.",
   },
   {
     icon: "06",
-    title: "Mock Interviews & Career Readiness",
-    desc: "Practice technical interviews, architecture explanations, recruiter outreach and job application strategies with structured feedback.",
+    title: "Job Applications & Career Readiness",
+    desc: "Prepare a project-based resume, research #83GLAI lending technology companies, apply for relevant jobs and demonstrate your skills in the final practical examination.",
   },
 ];
 
 const faqs = [
   {
-    q: "How is this different from the 90-Day Job Plan?",
-    a: "The 9-days program is an intensive banking-tech sprint. The 90-day plan spreads daily discipline, 51 use cases, interviewing, deployments and applications over a longer period. This page presents only the 9-day schedule.",
+    q: "What is #83GLAI and why does it matter to me?",
+    a: "#83GLAI is a global initiative founded by Radhakrishna Thatavarti, Founder of OXYLOANS (an RBI-approved P2P NBFC), with a vision to bring 83 lending software companies onto one trusted platform. Through this 9-Day Job Program, you get exposure to real-world business challenges, AI applications and practical use cases inspired by the evolving BFSI ecosystem, helping you connect and apply directly to top lending tech organizations.",
   },
   {
-    q: "What will I learn in Days 1–6?",
-    a: "The plan covers 51 banking and lending use cases across Loan Origination (LOS), Financial Management (FMS) and Collections (CMS), with 8–9 use cases scheduled per day.",
+    q: "What will I learn in the 9-Days BFSI Job Program?",
+    a: "You will study 51 real-world banking and lending use cases covering Loan Origination (LOS), Finance Management (FMS), and Collections (CMS). You will also gain practical experience in full-stack development, deployment, troubleshooting, and career preparation.",
   },
   {
-    q: "What happens on Days 7 and 8?",
-    a: "You focus on Docker, GitHub Actions, AWS hosting, Nginx and SSL, followed by monitoring, application performance and recovery basics.",
+    q: "Will I build all 51 BFSI use cases?",
+    a: "You will understand all 51 use cases, but implement selected Loan Origination System (LOS) use cases in one integrated application. The goal is to build a working product rather than 51 separate applications.",
   },
   {
-    q: "What happens on Day 9?",
-    a: "You review your use-case architecture, participate in a technical mock interview, and improve your ATS-focused resume and LinkedIn job outreach.",
+    q: "Which technologies will I use?",
+    a: "You will use React to build screens and forms, Spring Boot for backend APIs and business logic, and PostgreSQL to store customer and loan data. You will also work with GitHub, deployment tools, and a mobile development approach such as React Native or Capacitor.",
   },
   {
-    q: "Is participation free?",
-    a: "The supplied program page describes the training as #NoCost and #FreeMentoring. Any enrollment conditions should be confirmed with the program team.",
+    q: "What will I build during Days 1–8?",
+    a: "You will progressively build one integrated Loan Origination System, including customer creation, loan product linking, co-applicants and guarantors, loan appraisal, risk analysis, loan assessment, recommendations, sanction letters, and customer responses.",
   },
   {
-    q: "Does completion guarantee a job?",
-    a: "No placement guarantee is stated in the supplied materials. This is practical preparation, mentoring and job application support—not a guaranteed job offer.",
+    q: "Will I deploy my application on web and mobile?",
+    a: "The program includes deploying the web application and building and testing Android and iOS versions. You will work on connectivity between the frontend, Spring Boot APIs, and PostgreSQL database. Mobile development requires a suitable framework and build environment.",
+  },
+  {
+    q: "What should I complete before Day 1?",
+    a: "Prepare your Java, Node.js, React, Spring Boot, PostgreSQL, IDE, GitHub, and API testing environments. Set up deployment accounts, choose a mobile development approach, and create a starter project with a working API connected to your frontend and database.",
+  },
+  {
+    q: "How will this program help me prepare for BFSI technology jobs?",
+    a: "You will build a project-based portfolio, publish your GitHub and live application links, share development progress on LinkedIn, document problems and solutions, research #83GLAI BFSI product companies, and prepare for relevant job applications.",
+  },
+  {
+    q: "Is this program free, and does it guarantee a job?",
+    a: "The program landing page describes no-cost mentoring. The supplied materials do not establish a job-placement guarantee. The program focuses on practical skills, a demonstrable project, technical assessment, and career readiness.",
   },
 ];
 const Arrow = () => (
@@ -321,27 +306,10 @@ const Arrow = () => (
     />
   </svg>
 );
-const Check = () => (
-  <svg
-    width="17"
-    height="17"
-    viewBox="0 0 24 24"
-    fill="none"
-    aria-hidden="true"
-  >
-    <path
-      d="m5 12 4 4L19 6"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 export default function NineDaysJobProgramPlan({
   brandName = "9-Days Job Program",
-  headline = "9-Days Job Program",
-  subheadline = "Build and explain 51 banking workflows, learn cloud deployment essentials, and prepare your project portfolio for technical interviews.",
+  headline = "Build Real BFSI Products. Deploy Them. Get Job-Ready.",
+  subheadline = "In 9 focused days, understand 51 BFSI use cases, build one integrated full-stack Loan Origination System using selected workflows, deploy it for web and mobile, and create a portfolio for BFSI technology roles.",
   cta = {
     primaryLabel: "Join the 9-Days Program",
     secondaryLabel: "Explore Curriculum",
@@ -477,11 +445,11 @@ export default function NineDaysJobProgramPlan({
     <div className="nine-program min-h-screen w-full overflow-x-clip bg-[#f6fbf7] text-slate-900 antialiased">
       <style>{`
       .nine-program{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-        .nine-program .nine-hero-visual{isolation:isolate;min-width:0}
-        .nine-program .nine-hero-picture{border:2px solid #b9e5d0;padding:5px;background:#ffffff;box-shadow:0 18px 46px -35px rgba(0,75,57,.24);transition:transform .35s ease,box-shadow .35s ease}
-        @media(hover:hover){.nine-program .nine-hero-picture:hover{transform:translateY(-3px);box-shadow:0 24px 55px -36px rgba(0,75,57,.34)}}
-        @media(max-width:1023px){.nine-program .nine-hero-visual{max-width:650px;margin-inline:auto}}
-        @media(max-width:640px){.nine-program .nine-hero-picture{border-radius:16px;box-shadow:0 10px 28px -24px rgba(0,75,57,.22)}}
+        .nine-program .nine-hero-visual{isolation:isolate;min-width:0;width:100%}
+        .nine-program .nine-hero-picture{border:2px solid #b9e5d0;padding:6px;background:#ffffff;box-shadow:0 20px 48px -30px rgba(0,75,57,.26);transition:transform .35s ease,box-shadow .35s ease}
+        @media(hover:hover){.nine-program .nine-hero-picture:hover{transform:translateY(-3px);box-shadow:0 26px 58px -32px rgba(0,75,57,.36)}}
+        @media(max-width:1023px){.nine-program .nine-hero-visual{max-width:700px;margin-inline:auto}}
+        @media(max-width:640px){.nine-program .nine-hero-picture{border-radius:18px;padding:4px;box-shadow:0 10px 28px -24px rgba(0,75,57,.22)}}
       .nine-program .glass{position:relative;background:linear-gradient(145deg,rgba(255,255,255,.99),rgba(245,250,255,.92));border:1px solid #e0eaf8;box-shadow:0 12px 35px -23px rgba(30,69,140,.28),inset 0 1px rgba(255,255,255,1)}
       .nine-program .glass:before{content:"";position:absolute;pointer-events:none;inset:0 0 auto;height:40%;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.65),transparent);opacity:.65}
       .nine-program .glass>*{position:relative}
@@ -505,8 +473,9 @@ export default function NineDaysJobProgramPlan({
       @keyframes oxy-marquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
       .nine-program .oxy-marquee-track{display:flex;width:max-content;animation:oxy-marquee 100s linear infinite;will-change:transform}
       .nine-program .oxy-marquee-outer:hover .oxy-marquee-track,.nine-program .oxy-marquee-outer:focus-within .oxy-marquee-track{animation-play-state:paused}
-      .nine-program .oxy-logo-link{min-width:145px}
-      @media(min-width:640px){.nine-program .oxy-logo-link{min-width:190px}}
+      .nine-program .oxy-logo-link{min-width:160px}
+      @media(min-width:640px){.nine-program .oxy-logo-link{min-width:210px}}
+      @media(min-width:1024px){.nine-program .oxy-logo-link{min-width:240px}}
       @media(prefers-reduced-motion:reduce){.nine-program *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
     `}</style>
       {toast && (
@@ -559,6 +528,12 @@ export default function NineDaysJobProgramPlan({
             >
               Curriculum
             </button>
+            {/* <button
+              onClick={() => scrollTo("83glai")}
+              className="hover:text-[#068855]"
+            >
+              #83GLAI
+            </button> */}
             <button
               onClick={() => scrollTo("benefits")}
               className="hover:text-[#068855]"
@@ -583,11 +558,14 @@ export default function NineDaysJobProgramPlan({
         </div>
       </header>
       <main id="top">
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#e8f5eb] via-[#f8fffa] to-[#e1f3e8] pb-12 pt-12 sm:pb-16 sm:pt-16">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#e8f5eb] via-[#f8fffa] to-[#e1f3e8] py-8 sm:py-10 lg:py-12">
           <div className="pointer-events-none absolute -right-36 -top-40 h-96 w-96 rounded-full bg-sky-100/70 blur-3xl" />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.12fr_.88fr] lg:px-8">
+          <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-[1.02fr_1fr] lg:gap-10 lg:px-8">
             <div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <span className="rounded-full border border-emerald-300 bg-emerald-100/90 px-3 py-1 text-xs font-bold text-[#068855]">
+                  #83GLAI Initiative
+                </span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
                   No-cost mentoring
                 </span>
@@ -598,8 +576,16 @@ export default function NineDaysJobProgramPlan({
                   Career focused
                 </span>
               </div>
-              <h1 className="mt-6 max-w-3xl text-[clamp(2.15rem,5vw,4rem)] font-extrabold leading-[1.13] tracking-tight text-[#153c2c]">
-                {headline.includes("banking-tech") ? (
+              <h1 className="mt-4 max-w-3xl text-[clamp(1.95rem,4.5vw,3.4rem)] font-extrabold leading-[1.15] tracking-tight text-[#153c2c] sm:mt-5">
+                {headline.includes("Deploy Them.") ? (
+                  <>
+                    Build Real BFSI Products.{" "}
+                    <span className="bg-gradient-to-r from-[#00a65d] to-[#008d74] bg-clip-text text-transparent">
+                      Deploy Them.
+                    </span>{" "}
+                    Get Job-Ready.
+                  </>
+                ) : headline.includes("banking-tech") ? (
                   <>
                     {headline.split("banking-tech")[0]}
                     <span className="bg-gradient-to-r from-[#00a65d] to-[#008d74] bg-clip-text text-transparent">
@@ -611,14 +597,14 @@ export default function NineDaysJobProgramPlan({
                   headline
                 )}
               </h1>
-              <p className="mt-5 max-w-xl text-[15px] leading-7 text-slate-600 sm:text-lg">
+              <p className="mt-3.5 max-w-xl text-[15px] leading-7 text-slate-600 sm:mt-4 sm:text-base lg:text-[17px]">
                 {subheadline}
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-5 flex flex-col gap-3 sm:mt-6 sm:flex-row">
                 <button
                   onClick={handleJoinProgram}
                   disabled={joining}
-                  className="gloss-btn inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-bold text-white disabled:opacity-60"
+                  className="gloss-btn inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold text-white disabled:opacity-60 sm:min-h-12 sm:px-6"
                 >
                   {joining
                     ? "Submitting…"
@@ -627,77 +613,62 @@ export default function NineDaysJobProgramPlan({
                 </button>
                 <button
                   onClick={() => scrollTo("roadmap")}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[#bfe9d1] bg-white px-6 text-sm font-bold text-[#087b4c] shadow-sm transition hover:border-[#37c987] hover:bg-[#e8f8ee]"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#bfe9d1] bg-white px-5 text-sm font-bold text-[#087b4c] shadow-sm transition hover:border-[#37c987] hover:bg-[#e8f8ee] sm:min-h-12 sm:px-6"
                 >
                   {cta.secondaryLabel || "Explore Curriculum"}
                   <Arrow />
                 </button>
               </div>
-              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-600">
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600">
-                    <Check />
-                  </span>
-                  Hands-on use cases
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600">
-                    <Check />
-                  </span>
-                  Mock interview practice
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600">
-                    <Check />
-                  </span>
-                  Portfolio-focused
-                </span>
-              </div>
             </div>
-            <div className="nine-hero-visual relative mx-auto w-full max-w-[620px] lg:ml-auto">
+            <div className="nine-hero-visual relative mx-auto w-full max-w-[680px] lg:max-w-none lg:ml-auto">
               <img
                 src={headerImageUrl || hero}
-                alt="9-Days Job Program: banking use cases, cloud deployment and interview preparation"
+                alt="9-Days Job Program: BFSI use cases, full-stack product development, deployment and interview preparation"
                 loading="eager"
                 decoding="async"
-                className="nine-hero-picture block h-auto w-full rounded-[20px] object-contain sm:rounded-[26px]"
+                className="nine-hero-picture block h-auto w-full rounded-[22px] object-contain sm:rounded-[28px]"
               />
             </div>
           </div>
-          <div className="mx-auto mt-10 grid max-w-7xl grid-cols-2 gap-3 px-4 sm:gap-4 sm:px-6 lg:grid-cols-4 lg:px-8">
+          <div className="mx-auto mt-7 grid max-w-7xl grid-cols-2 gap-2.5 px-4 sm:mt-9 sm:gap-4 sm:px-6 lg:grid-cols-4 lg:px-8">
             {[
               {
-                number: "9",
-                name: "Focused days",
-                detail: "Structured daily plan",
+                number: "01",
+                name: "BFSI Learning",
+                detail: "Understand all 51 BFSI use cases.",
               },
               {
-                number: "51",
-                name: "BFSI use cases",
-                detail: "LOS • FMS • Collections",
+                number: "02",
+                name: "Practical Development",
+                detail:
+                  "Implement selected use cases in one integrated application.",
               },
               {
-                number: "2",
-                name: "Cloud & DevOps days",
-                detail: "Docker • CI/CD • AWS",
+                number: "03",
+                name: "Full-Stack Deployment",
+                detail:
+                  "Deploy the web app and build Android and iOS versions.",
               },
               {
-                number: "1:1",
-                name: "Mock interview",
-                detail: "Career-readiness review",
+                number: "04",
+                name: "Career Readiness",
+                detail:
+                  "GitHub, LinkedIn, #83GLAI network & job applications.",
               },
             ].map((x) => (
               <div
                 key={x.name}
-                className="glass glass-hover rounded-2xl p-4 sm:p-5"
+                className="glass glass-hover flex flex-col justify-between rounded-2xl p-3.5 sm:p-4.5"
               >
-                <div className="text-3xl font-extrabold tracking-tight text-[#068855]">
-                  {x.number}
+                <div>
+                  <div className="text-2xl font-extrabold tracking-tight text-[#068855] sm:text-3xl">
+                    {x.number}
+                  </div>
+                  <div className="mt-1.5 text-sm font-bold text-slate-900 sm:text-base">
+                    {x.name}
+                  </div>
                 </div>
-                <div className="mt-2 text-sm font-bold text-slate-900 sm:text-base">
-                  {x.name}
-                </div>
-                <div className="mt-1 text-xs text-slate-500 sm:text-sm">
+                <div className="mt-1 text-xs text-slate-500 sm:text-[13px]">
                   {x.detail}
                 </div>
               </div>
@@ -706,29 +677,27 @@ export default function NineDaysJobProgramPlan({
         </section>
         <section
           id="roadmap"
-          className="relative overflow-hidden bg-[#e5f3e9] py-16 sm:py-24"
+          className="relative overflow-hidden bg-[#e5f3e9] py-10 sm:py-14 lg:py-16"
         >
           <div className="pointer-events-none absolute -top-20 right-[-120px] h-[290px] w-[290px] rounded-full border-[36px] border-[#d0eddc] opacity-70" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
-              <span className="inline-flex rounded-full border border-[#b5e7c9] bg-white/80 px-4 py-1.5 text-xs font-extrabold uppercase tracking-[.14em] text-[#087f4a]">
-                Your 9-day journey
+              <span className="inline-flex rounded-full border border-[#b5e7c9] bg-white/80 px-3.5 py-1 text-xs font-extrabold uppercase tracking-[.14em] text-[#087f4a] sm:px-4 sm:py-1.5">
+                YOUR 9-STEP JOURNEY
               </span>
 
-              <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#153c2c] sm:text-4xl lg:text-5xl">
-                One connected path. Nine days of progress.
+              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#153c2c] sm:mt-4 sm:text-3xl lg:text-4xl">
+                Set Up. Understand. Build. Deploy. Get Job-Ready.
               </h2>
 
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#4b695b] sm:text-base">
-                Start with lending workflows, connect your skills to real
-                deployment practices, and finish with an interview-ready story.
-                Select any day to explore the plan.
+              <p className="mx-auto mt-2.5 max-w-2xl text-xs leading-6 text-[#4b695b] sm:mt-3 sm:text-sm sm:leading-7">
+                Start by setting up your frontend, backend, mobile and database environments. Explore 51 real-world BFSI use cases, build and deploy an integrated Loan Origination System, showcase your project, and prepare for BFSI technology careers.
               </p>
             </div>
 
-            <div className="relative mx-auto mt-11 max-w-7xl">
-              {/* Desktop: serpentine green connections; mobile uses vertical line */}
+            <div className="relative mx-auto mt-7 max-w-7xl sm:mt-9">
+              {/* Desktop: connected path flowing 1->2->3, then down to 4->5->6, then down to 7->8->9; mobile uses vertical line */}
 
               <svg
                 className="pointer-events-none absolute inset-0 hidden h-full w-full lg:block"
@@ -738,7 +707,7 @@ export default function NineDaysJobProgramPlan({
                 aria-hidden="true"
               >
                 <path
-                  d="M 150 110 C 300 110 290 110 540 110 S 850 110 915 110 Q 1030 110 1030 205 Q 1030 340 915 340 H 150 Q 45 340 45 445 Q 45 580 150 580 H 915"
+                  d="M 175 98 L 905 98 Q 1060 98 1060 165 Q 1060 233 995 233 L 85 233 Q 20 233 20 300 Q 20 370 175 370 L 905 370 Q 1060 370 1060 437 Q 1060 504 995 504 L 85 504 Q 20 504 20 572 Q 20 640 175 640 L 905 640"
                   stroke="#00bd70"
                   strokeWidth="5"
                   strokeLinecap="round"
@@ -746,11 +715,32 @@ export default function NineDaysJobProgramPlan({
                 />
 
                 <path
-                  d="M 150 110 C 300 110 290 110 540 110 S 850 110 915 110 Q 1030 110 1030 205 Q 1030 340 915 340 H 150 Q 45 340 45 445 Q 45 580 150 580 H 915"
+                  d="M 175 98 L 905 98 Q 1060 98 1060 165 Q 1060 233 995 233 L 85 233 Q 20 233 20 300 Q 20 370 175 370 L 905 370 Q 1060 370 1060 437 Q 1060 504 995 504 L 85 504 Q 20 504 20 572 Q 20 640 175 640 L 905 640"
                   stroke="#83eeb7"
                   strokeWidth="1.5"
                   strokeDasharray="7 13"
                 />
+
+                {/* Directional arrow indicators */}
+                {/* Row 1: Day 1 -> Day 2 -> Day 3 */}
+                <polygon points="353,92 363,98 353,104" fill="#00bd70" />
+                <polygon points="718,92 728,98 718,104" fill="#00bd70" />
+
+                {/* Transition Row 1 to Row 2: sweep left across gap, then enter Day 4 */}
+                <polygon points="545,227 535,233 545,239" fill="#00bd70" />
+                <polygon points="72,364 82,370 72,376" fill="#00bd70" />
+
+                {/* Row 2: Day 4 -> Day 5 -> Day 6 */}
+                <polygon points="353,364 363,370 353,376" fill="#00bd70" />
+                <polygon points="718,364 728,370 718,376" fill="#00bd70" />
+
+                {/* Transition Row 2 to Row 3: sweep left across gap, then enter Day 7 */}
+                <polygon points="545,498 535,504 545,510" fill="#00bd70" />
+                <polygon points="72,634 82,640 72,646" fill="#00bd70" />
+
+                {/* Row 3: Day 7 -> Day 8 -> Day 9 */}
+                <polygon points="353,634 363,640 353,646" fill="#00bd70" />
+                <polygon points="718,634 728,640 718,646" fill="#00bd70" />
               </svg>
 
               <div className="pointer-events-none absolute bottom-5 left-[21px] top-5 w-[3px] rounded-full bg-[#0cc87a] lg:hidden" />
@@ -765,7 +755,7 @@ export default function NineDaysJobProgramPlan({
                       key={d.day}
                       onClick={() => setSelectedDay(d.day)}
                       aria-pressed={selected}
-                      className={`journey-tile group relative min-h-[165px] rounded-[22px] border p-5 text-left transition-all duration-300 sm:p-6 ${selected ? "border-[#00b969] bg-white shadow-[0_18px_48px_-24px_rgba(0,144,79,.46)] ring-[3px] ring-[#00c678]/15" : "border-[#c8e8d6] bg-white/95 shadow-[0_12px_34px_-23px_rgba(9,99,64,.26)] hover:-translate-y-1 hover:border-[#00ba70] hover:shadow-[0_22px_43px_-24px_rgba(0,132,78,.36)]"}`}
+                      className={`journey-tile group relative min-h-[155px] rounded-[20px] border p-4 text-left transition-all duration-300 sm:min-h-[165px] sm:rounded-[22px] sm:p-5 ${selected ? "border-[#00b969] bg-white shadow-[0_18px_48px_-24px_rgba(0,144,79,.46)] ring-[3px] ring-[#00c678]/15" : "border-[#c8e8d6] bg-white/95 shadow-[0_12px_34px_-23px_rgba(9,99,64,.26)] hover:-translate-y-1 hover:border-[#00ba70] hover:shadow-[0_22px_43px_-24px_rgba(0,132,78,.36)]"}`}
                     >
                       {/* <span
                         className={`absolute -left-[46px] top-6 flex h-[32px] w-[32px] items-center justify-center rounded-full border-[3px] border-white text-[11px] font-extrabold shadow-md lg:-left-3 lg:-top-4 ${selected ? "bg-[#00bd71] text-white" : "bg-[#d4f8e5] text-[#057848]"}`}
@@ -775,19 +765,15 @@ export default function NineDaysJobProgramPlan({
 
                       <div className="flex items-start justify-between gap-3">
                         <span className="text-[11px] font-extrabold uppercase tracking-[.13em] text-[#079451]">
-                          Day {String(d.day).padStart(2, "0")}
+                          Step {String(d.day).padStart(2, "0")}
                         </span>
-
-                        {/* <span
-                          className={`h-2.5 w-2.5 shrink-0 rounded-full ${d.day <= 6 ? "bg-[#00c378]" : d.day <= 8 ? "bg-[#ff88d6]" : "bg-[#fbbd4b]"}`}
-                        /> */}
                       </div>
 
                       <h3 className="mt-3 text-[16px] font-extrabold leading-snug text-[#153e2b] sm:text-lg">
                         {d.title}
                       </h3>
 
-                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#527264] sm:text-sm">
+                      <p className="mt-2 line-clamp-3 text-xs leading-5 text-[#527264] sm:text-sm">
                         {d.summary}
                       </p>
 
@@ -795,6 +781,11 @@ export default function NineDaysJobProgramPlan({
                         <span className="text-xs font-bold text-[#087a4c]">
                           {d.count ? `${d.count} use cases` : d.category}
                         </span>
+                        {d.topics && d.topics.length > 0 && (
+                          <span className="text-[11px] text-slate-400 truncate max-w-[150px]">
+                            {d.topics.slice(0, 2).join(", ")}
+                          </span>
+                        )}
                       </div>
                     </button>
                   );
@@ -803,35 +794,35 @@ export default function NineDaysJobProgramPlan({
             </div>
           </div>
         </section>
+       
         <section
           id="benefits"
-          className="border-y border-slate-200/60 bg-white/80 py-14 sm:py-20"
+          className="border-y border-slate-200/60 bg-white/80 py-9 sm:py-12 lg:py-14"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <span className="text-xs font-extrabold uppercase tracking-[.18em] text-[#068855]">
-              Practical learning
+              Why join the program
             </span>
-            <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-[#153c2c] sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#153c2c] sm:mt-2.5 sm:text-3xl lg:text-4xl">
               Practical skills you can demonstrate.
             </h2>
-            <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-              Build skills through practical banking workflows, deployment
-              fundamentals, interview preparation and clear project
-              documentation.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-2.5 sm:text-base sm:leading-7">
+              Build skills through practical BFSI workflows, web &amp; mobile
+              deployment, real-world problem solving, and career preparation.
             </p>
-            <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid gap-3.5 sm:mt-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {advantages.map((x) => (
                 <div
                   key={x.title}
-                  className="glass glass-hover rounded-[22px] p-6"
+                  className="glass glass-hover rounded-[20px] p-4.5 sm:p-5"
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#d3efdf] bg-[#e8f8ee] text-sm font-extrabold text-[#068855]">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#d3efdf] bg-[#e8f8ee] text-xs font-extrabold text-[#068855] sm:h-11 sm:w-11 sm:text-sm">
                     {x.icon}
                   </span>
-                  <h3 className="mt-4 text-lg font-bold text-slate-900">
+                  <h3 className="mt-3.5 text-base font-bold text-slate-900 sm:text-lg">
                     {x.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-1.5 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
                     {x.desc}
                   </p>
                 </div>
@@ -841,22 +832,22 @@ export default function NineDaysJobProgramPlan({
         </section>
         <section
           id="ecosystem"
-          className="overflow-hidden border-y border-[#deebe2] bg-white py-12 sm:py-16"
+          className="overflow-hidden border-y border-[#deebe2] bg-white py-8 sm:py-10 lg:py-12"
         >
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
             <span className="text-xs font-extrabold uppercase tracking-[.16em] text-[#068855]">
               One connected network
             </span>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#153c2c] sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#153c2c] sm:mt-2.5 sm:text-3xl lg:text-4xl">
               Explore the OXY Ecosystem
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            <p className="mx-auto mt-2 max-w-2xl text-xs leading-6 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-7">
               Discover the companies and technology platforms across our growing
               ecosystem.
             </p>
           </div>
           <div
-            className="oxy-marquee-outer relative mx-auto mt-8 w-full max-w-[1600px] overflow-hidden sm:mt-10"
+            className="oxy-marquee-outer relative mx-auto mt-6 w-full max-w-[1600px] overflow-hidden sm:mt-8"
             style={{
               maskImage:
                 "linear-gradient(to right, transparent, black 7%, black 93%, transparent)",
@@ -875,34 +866,34 @@ export default function NineDaysJobProgramPlan({
                   title={company.name}
                   tabIndex={index < companies.length ? 0 : -1}
                   aria-hidden={index >= companies.length ? true : undefined}
-                  className="oxy-logo-link mx-4 flex shrink-0 items-center justify-center rounded-2xl px-3 py-3 transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 sm:mx-6 md:mx-8 md:px-5"
+                  className="oxy-logo-link mx-3 flex shrink-0 items-center justify-center rounded-2xl px-3 py-2.5 transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 sm:mx-5 sm:px-4 md:mx-7 md:px-5"
                 >
                   <img
                     src={company.src}
                     alt={index < companies.length ? `${company.name} logo` : ""}
                     loading="lazy"
                     draggable={false}
-                    className="h-12 w-auto max-w-[130px] object-contain sm:h-16 sm:max-w-[170px] lg:h-20 lg:max-w-[210px]"
+                    className="h-14 w-auto max-w-[155px] object-contain sm:h-20 sm:max-w-[210px] lg:h-24 lg:max-w-[250px]"
                   />
                 </a>
               ))}
             </div>
           </div>
         </section>
-        <section id="faq" className="bg-[#f5fbf7] py-12 sm:py-20">
-          <div className="mx-auto grid w-full max-w-7xl min-w-0 items-start gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)] lg:gap-12 lg:px-8">
+        <section id="faq" className="bg-[#f5fbf7] py-9 sm:py-12 lg:py-14">
+          <div className="mx-auto grid w-full max-w-7xl min-w-0 items-start gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)] lg:gap-10 lg:px-8">
             <div className="min-w-0 lg:sticky lg:top-28">
-              <span className="inline-flex rounded-full border border-[#c5ead4] bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-[.12em] text-[#087b4c]">
+              <span className="inline-flex rounded-full border border-[#c5ead4] bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-[.12em] text-[#087b4c] sm:px-4 sm:py-1.5">
                 Need clarity?
               </span>
-              <h2 className="mt-5 max-w-md text-3xl font-extrabold leading-tight tracking-tight text-[#153c2c] sm:text-4xl">
+              <h2 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-[#153c2c] sm:mt-4 sm:text-3xl lg:text-4xl">
                 Frequently asked questions
               </h2>
-              <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600 sm:text-base">
+              <p className="mt-2.5 max-w-sm text-xs leading-6 text-slate-600 sm:mt-3 sm:text-sm sm:leading-7">
                 Everything you need to know about the 9-days job program, from
                 the company curriculum, training and career preparation.
               </p>
-              <div className="mx-auto mt-5 w-full max-w-[260px] sm:max-w-[330px] lg:mx-0 lg:max-w-[430px]">
+              <div className="mx-auto mt-4 w-full max-w-[220px] sm:max-w-[280px] lg:mx-0 lg:max-w-[360px]">
                 <img
                   src="https://i.ibb.co/Z6zGxWDZ/Thoughtful-Woman-and-Giant-Question-Mark.png"
                   alt="Woman thinking about questions on the 9-Day Job Program"
@@ -915,11 +906,11 @@ export default function NineDaysJobProgramPlan({
                 />
               </div>
             </div>
-            <div className="min-w-0 space-y-3">
+            <div className="min-w-0 space-y-2.5 sm:space-y-3">
               {faqs.map((f, i) => (
                 <div
                   key={f.q}
-                  className={`faq-item overflow-hidden rounded-2xl border bg-white transition-all duration-200 ${faqOpen === i ? "border-[#80d7a6] shadow-[0_13px_34px_-22px_rgba(0,128,76,.28)]" : "border-[#dfebe4] hover:border-[#b8ddc7]"}`}
+                  className={`faq-item overflow-hidden rounded-xl border bg-white transition-all duration-200 sm:rounded-2xl ${faqOpen === i ? "border-[#80d7a6] shadow-[0_13px_34px_-22px_rgba(0,128,76,.28)]" : "border-[#dfebe4] hover:border-[#b8ddc7]"}`}
                 >
                   <h3>
                     <button
@@ -928,7 +919,7 @@ export default function NineDaysJobProgramPlan({
                       aria-controls={`faq-answer-${i}`}
                       aria-expanded={faqOpen === i}
                       onClick={() => setFaqOpen(faqOpen === i ? null : i)}
-                      className="flex min-h-[64px] w-full items-center justify-between gap-3 px-4 py-4 text-left text-[13px] font-bold leading-6 text-[#183d2b] sm:min-h-[72px] sm:gap-4 sm:px-6 sm:text-base"
+                      className="flex min-h-[54px] w-full items-center justify-between gap-3 px-3.5 py-3 text-left text-[13px] font-bold leading-5 text-[#183d2b] sm:min-h-[62px] sm:gap-4 sm:px-5 sm:py-3.5 sm:text-base sm:leading-6"
                     >
                       <span className="flex min-w-0 items-start gap-2.5 sm:gap-3">
                         <span className="mt-[1px] text-xs font-extrabold text-[#0a965c]">
@@ -937,7 +928,7 @@ export default function NineDaysJobProgramPlan({
                         {f.q}
                       </span>
                       <span
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl transition-all duration-200 ${faqOpen === i ? "rotate-45 bg-[#04995d] text-white" : "bg-[#ebf8f0] text-[#087b4c]"}`}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lg transition-all duration-200 sm:h-9 sm:w-9 sm:rounded-xl sm:text-xl ${faqOpen === i ? "rotate-45 bg-[#04995d] text-white" : "bg-[#ebf8f0] text-[#087b4c]"}`}
                         aria-hidden="true"
                       >
                         +
@@ -950,7 +941,7 @@ export default function NineDaysJobProgramPlan({
                     aria-labelledby={`faq-question-${i}`}
                     hidden={faqOpen !== i}
                   >
-                    <p className="border-t border-[#e9f2eb] px-5 pb-6 pt-4 text-sm leading-7 text-slate-600 sm:px-6 sm:text-[15px]">
+                    <p className="border-t border-[#e9f2eb] px-4 pb-4 pt-3 text-xs leading-6 text-slate-600 sm:px-5 sm:pb-5 sm:pt-3.5 sm:text-sm sm:leading-7">
                       {f.a}
                     </p>
                   </div>
@@ -960,31 +951,32 @@ export default function NineDaysJobProgramPlan({
           </div>
         </section>
       </main>
-      <footer className="bg-[#f0f9f3] py-9">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+      <footer className="bg-[#f0f9f3] py-6 sm:py-7">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
           <div>
             <img
               src={logo}
               alt={brandName}
-              className="h-11 w-auto max-w-[200px] object-contain"
+              className="h-10 w-auto max-w-[180px] object-contain sm:h-11 sm:max-w-[200px]"
             />
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-1.5 text-xs text-slate-500">
               Focused BFSI learning, engineering practice and career
               preparation.
             </p>
           </div>
-          <div className="flex flex-wrap gap-4 text-sm font-semibold text-slate-600">
+          <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600 sm:text-sm">
             <button
               onClick={() => scrollTo("roadmap")}
               className="hover:text-[#068855]"
             >
               Curriculum
             </button>
+            
             <button
               onClick={() => scrollTo("benefits")}
               className="hover:text-[#068855]"
             >
-              Benefits
+              Why join
             </button>
             <button
               onClick={() => scrollTo("faq")}
@@ -997,7 +989,7 @@ export default function NineDaysJobProgramPlan({
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[#068855]"
-            >
+             >
               ASKOXY.AI
             </a>
           </div>

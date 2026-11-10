@@ -1456,13 +1456,12 @@ const handleWriteToUsSubmitButton = async () => {
     <div className="min-h-screen bg-white">
       {!isLoggedInUser && <Header1 />}
 
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,21,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(25,158,11,0.08),transparent_30%)] pointer-events-none" />
-
+      <div className="relative overflow-hidden bg-white">
         <style>
           {`
 
             .creatorRewardsBar {
+              background: #ffffff;
               border-radius: 0;
               box-shadow: none;
             }
@@ -1646,7 +1645,7 @@ const handleWriteToUsSubmitButton = async () => {
           }}
         >
           <div className="mx-auto max-w-7xl ">
-            <div className="creatorRewardsBar mb-5 w-full  px-4 py-4 sm:px-6 sm:py-5">
+            <div className="creatorRewardsBar mb-5 w-full bg-white px-4 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 flex-1 text-left">
                   <h2 className="m-0 text-[22px] font-bold leading-tight text-[#0f172a] sm:text-[28px] lg:text-[32px]">
@@ -1656,7 +1655,7 @@ const handleWriteToUsSubmitButton = async () => {
                   <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#475569] sm:text-[15px] lg:text-[16px]">
                     Write your blog and earn exciting rewards. Share your ideas with
                     the world and start earning{" "}
-                    <span className="font-semibold bg-gradient-to-r from-[#f59e0b] to-[#facc15] bg-clip-text text-transparent">
+                    <span className="font-semibold text-amber-600">
                       BMV Coins 💰
                     </span>
                     .
