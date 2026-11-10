@@ -27,6 +27,12 @@ const PLATFORM_ACCENT: Record<
   Platform,
   { dot: string; text: string; border: string; hoverBg: string }
 > = {
+  TVRADHAKRISHNA: {
+    dot: "bg-purple-500",
+    text: "text-purple-600",
+    border: "border-purple-600",
+    hoverBg: "hover:bg-purple-50/60",
+  },
   OXYLOANS: {
     dot: "bg-blue-400",
     text: "text-blue-600",
@@ -51,6 +57,18 @@ const PLATFORM_ACCENT: Record<
     border: "border-orange-600",
     hoverBg: "hover:bg-orange-50/60",
   },
+  OXYFINSERV: {
+    dot: "bg-teal-400",
+    text: "text-teal-600",
+    border: "border-teal-600",
+    hoverBg: "hover:bg-teal-50/60",
+  },
+  OXYJOURNEYS: {
+    dot: "bg-rose-400",
+    text: "text-rose-600",
+    border: "border-rose-600",
+    hoverBg: "hover:bg-rose-50/60",
+  },
   STUDYABROAD: {
     dot: "bg-cyan-400",
     text: "text-cyan-600",
@@ -68,6 +86,12 @@ const PLATFORM_ACCENT: Record<
     text: "text-emerald-600",
     border: "border-emerald-600",
     hoverBg: "hover:bg-emerald-50/60",
+  },
+  DEFAULT: {
+    dot: "bg-slate-500",
+    text: "text-slate-600",
+    border: "border-slate-600",
+    hoverBg: "hover:bg-slate-50/60",
   },
 };
 

@@ -1,16 +1,21 @@
 import React, { useState } from "react";
 import { Input, Button, message, Spin, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { RiSearchLine, RiHistoryLine, RiPlayCircleLine } from "react-icons/ri";
+import {
+  RiSearchLine,
+  RiHistoryLine,
+  RiPlayCircleLine,
+  RiHeadphoneLine,
+} from "react-icons/ri";
 import dayjs from "dayjs";
 import { getCallHistory, getTranscriptByNumber } from "./api";
 import type { CallHistoryItem, CallDetail } from "./types";
-import TranscriptModal from "./components/TranscriptModal";
+import TranscriptModal, { CallMeta } from "./components/TranscriptModal";
 import VoiceAdminLayout from "./components/VoiceAdminLayout";
 
 const normalizeCallerNumber = (raw: string): string => {
   let digits = raw.trim().replace(/\D/g, "");
-  if (digits.length === 12) {
+  if (digits.length === 12 && digits.startsWith("91")) {
     digits = digits.slice(-10);
   }
   if (!digits.startsWith("0")) {
@@ -28,10 +33,8 @@ const CallHistory: React.FC = () => {
 
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [transcriptLoading, setTranscriptLoading] = useState(false);
-  const [transcriptDetail, setTranscriptDetail] = useState<CallDetail | null>(
-    null,
-  );
-  const [transcriptFor, setTranscriptFor] = useState<string | null>(null);
+  const [modalMeta, setModalMeta] = useState<CallMeta | null>(null);
+  const [modalTranscript, setModalTranscript] = useState<any>(null);
 
   const handleSearch = async () => {
     if (!number.trim()) {
@@ -54,19 +57,69 @@ const CallHistory: React.FC = () => {
     }
   };
 
-  const handleViewLatestTranscript = async (callerNumber: string) => {
+  const handleViewCall = async (record: CallHistoryItem) => {
+    const meta: CallMeta = {
+      callerNumber: record.callerNumber,
+      phoneNumber: record.phoneNumber || record.callerNumber,
+      platform: record.platform || "TVRADHAKRISHNA",
+      callDirection: record.callDirection,
+      callScenario: record.callScenario,
+      purpose: record.purpose || record.callPurpose || record.callScenario,
+      summary: record.summary || record.callSummary,
+      timestamp: record.date || record.timestamp,
+      date: record.date,
+      recordingUrl: record.recordingUrl,
+      disposition: record.disposition,
+      customerSentiment: record.customerSentiment,
+      nextFollowup: record.nextFollowupAt || record.nextFollowup,
+      promisedPaymentDate: record.promisedPaymentDate,
+    };
+
+    setModalMeta(meta);
     setTranscriptOpen(true);
+
+    const existingTranscript =
+      record.transcript ||
+      record.conversation ||
+      (record as any).rawTranscript;
+
+    if (
+      existingTranscript &&
+      (Array.isArray(existingTranscript)
+        ? existingTranscript.length > 0
+        : String(existingTranscript).trim().length > 0)
+    ) {
+      setModalTranscript(existingTranscript);
+      setTranscriptLoading(false);
+      return;
+    }
+
     setTranscriptLoading(true);
-    setTranscriptFor(callerNumber);
     try {
-      const detail = await getTranscriptByNumber(callerNumber);
-      setTranscriptDetail(detail);
+      const detail: CallDetail = await getTranscriptByNumber(record.callerNumber);
+      if (detail && detail.transcript) {
+        setModalTranscript(detail.transcript);
+        if (!meta.summary && detail.summary) {
+          setModalMeta((prev) => (prev ? { ...prev, summary: detail.summary } : prev));
+        }
+        if (!meta.recordingUrl && detail.recordingUrl) {
+          setModalMeta((prev) => (prev ? { ...prev, recordingUrl: detail.recordingUrl } : prev));
+        }
+      } else {
+        setModalTranscript([]);
+      }
     } catch (err) {
-      message.error("Failed to load transcript for this number.");
-      setTranscriptOpen(false);
+      setModalTranscript([]);
     } finally {
       setTranscriptLoading(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setTranscriptOpen(false);
+    setModalMeta(null);
+    setModalTranscript(null);
+    setTranscriptLoading(false);
   };
 
   const columns: ColumnsType<CallHistoryItem> = [
@@ -74,7 +127,7 @@ const CallHistory: React.FC = () => {
       title: "Direction",
       dataIndex: "callDirection",
       key: "callDirection",
-      width: 130,
+      width: 120,
       render: (v) => (
         <Tag
           className="!rounded-full !px-3 !py-1 !font-semibold !text-xs"
@@ -89,35 +142,66 @@ const CallHistory: React.FC = () => {
       dataIndex: "date",
       key: "date",
       render: (v) => (
-        <span className="text-slate-600">
-          {dayjs(v).format("DD MMM YYYY, hh:mm A")}
+        <span className="text-slate-600 text-xs">
+          {v ? dayjs(v).format("DD MMM YYYY, hh:mm A") : "—"}
         </span>
       ),
-      // sorter: (a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf(),
-      // defaultSortOrder: "descend",
+    },
+    {
+      title: "Platform",
+      dataIndex: "platform",
+      key: "platform",
+      render: (v) =>
+        v ? (
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-white text-[#b8860b] border border-amber-200">
+            {v}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">TVRADHAKRISHNA</span>
+        ),
     },
     {
       title: "Purpose",
-      dataIndex: "purpose",
       key: "purpose",
-      render: (v) => <span className="text-slate-700">{v || "—"}</span>,
+      render: (_, record) => {
+        const p = record.purpose || record.callPurpose || record.callScenario;
+        return <span className="text-slate-700 text-xs">{p || "General Inquiry"}</span>;
+      },
     },
     {
       title: "Summary",
-      dataIndex: "summary",
       key: "summary",
       ellipsis: true,
-      render: (v) => <span className="text-slate-600">{v || "—"}</span>,
+      render: (_, record) => {
+        const s = record.summary || record.callSummary;
+        return <span className="text-slate-600 text-xs">{s || "—"}</span>;
+      },
+    },
+    {
+      title: "Recording",
+      key: "recording",
+      width: 110,
+      render: (_, record) =>
+        record.recordingUrl ? (
+          <Tag
+            color="gold"
+            className="!rounded-full !px-2.5 !py-0.5 !text-xs !font-medium inline-flex items-center gap-1"
+          >
+            <RiHeadphoneLine /> Audio
+          </Tag>
+        ) : (
+          <span className="text-gray-400 text-xs">—</span>
+        ),
     },
     {
       title: "Actions",
       key: "actions",
-      width: 170,
+      width: 100,
       render: (_, record) => (
         <Button
           size="small"
           icon={<RiPlayCircleLine />}
-          onClick={() => handleViewLatestTranscript(record.callerNumber)}
+          onClick={() => handleViewCall(record)}
           className="!rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 !font-medium"
         >
           View
@@ -139,7 +223,7 @@ const CallHistory: React.FC = () => {
               Call History Lookup
             </h2>
             <p className="text-slate-500 text-xs mt-0.5">
-              Search every past call for a specific number
+              Search every past call, summary, voice recording, and conversation turns for a specific number
             </p>
           </div>
         </div>
@@ -154,7 +238,7 @@ const CallHistory: React.FC = () => {
           <div className="flex gap-2 max-w-md mx-auto">
             <Input
               size="large"
-              placeholder="Enter caller number, e.g. 9876123123"
+              placeholder="Enter caller number, e.g. 09849257032 or 9849257032"
               value={number}
               onChange={(e) => setNumber(e.target.value)}
               onPressEnter={handleSearch}
@@ -181,11 +265,11 @@ const CallHistory: React.FC = () => {
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-amber-50/50 to-white flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <h3 className="text-base font-semibold text-slate-900 whitespace-nowrap">
-                History for {searchedNumber}
+                History for {searchedNumber} ({history?.length || 0} calls found)
               </h3>
               <div className="flex gap-2 w-full md:w-auto md:max-w-sm">
                 <Input
-                  placeholder="Enter caller number, e.g. 9849257032"
+                  placeholder="Enter caller number, e.g. 09849257032"
                   value={number}
                   onChange={(e) => setNumber(e.target.value)}
                   onPressEnter={handleSearch}
@@ -208,7 +292,7 @@ const CallHistory: React.FC = () => {
             </div>
             <Table
               rowKey={(record, idx) =>
-                `${record.callerNumber}-${record.date}-${idx}`
+                `${record.callerNumber}-${record.date || record.timestamp}-${idx}`
               }
               columns={columns}
               dataSource={history || []}
@@ -229,22 +313,10 @@ const CallHistory: React.FC = () => {
 
       <TranscriptModal
         open={transcriptOpen}
-        onClose={() => setTranscriptOpen(false)}
+        onClose={handleCloseModal}
         loading={transcriptLoading}
-        meta={
-          transcriptDetail
-            ? {
-                callerNumber: transcriptDetail.callerNumber,
-                platform: transcriptDetail.platform,
-                callDirection: transcriptDetail.callDirection,
-                purpose: transcriptDetail.purpose,
-                summary: transcriptDetail.summary,
-                timestamp: transcriptDetail.date,
-                recordingUrl: transcriptDetail.recordingUrl,
-              }
-            : { callerNumber: transcriptFor || "" }
-        }
-        transcript={transcriptDetail?.transcript}
+        meta={modalMeta}
+        transcript={modalTranscript}
       />
     </VoiceAdminLayout>
   );

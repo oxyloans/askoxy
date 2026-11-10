@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { DatePicker, Button, message, Table, Tooltip } from "antd";
+import { DatePicker, Button, message, Table, Tooltip, Tag } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
@@ -11,8 +11,9 @@ import {
   RiCloseCircleFill,
   RiLoader4Line,
   RiPulseLine,
+  RiHeadphoneLine,
 } from "react-icons/ri";
-import { getScheduledCalls } from "./api";
+import { getScheduledCalls, getTranscriptByNumber } from "./api";
 import type { ScheduledCallItem, ScheduledCallsResponse } from "./types";
 import TranscriptModal from "./components/TranscriptModal";
 import VoiceAdminLayout from "./components/VoiceAdminLayout";
@@ -90,7 +91,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
       className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap ${s.bg} ${s.text} ${s.border}`}
     >
       {s.icon}
-      {status.replace(/_/g, " ")}
+      {status ? status.replace(/_/g, " ") : "UNKNOWN"}
     </span>
   );
 };
@@ -113,7 +114,7 @@ const AttemptChips: React.FC<{ call: ScheduledCallItem }> = ({ call }) => {
             title={
               <div className="text-xs leading-relaxed">
                 <div>
-                  Scheduled: {dayjs(a.scheduledAt).format("DD MMM, hh:mm:ss A")}
+                  Scheduled: {a.scheduledAt ? dayjs(a.scheduledAt).format("DD MMM, hh:mm:ss A") : "—"}
                 </div>
                 {a.answeredAt && (
                   <div>
@@ -136,10 +137,10 @@ const AttemptChips: React.FC<{ call: ScheduledCallItem }> = ({ call }) => {
                 {a.attemptNumber}
               </span>
               <span className={`text-[11px] font-semibold whitespace-nowrap ${as.text}`}>
-                {a.status.replace(/_/g, " ")}
+                {a.status ? a.status.replace(/_/g, " ") : "Attempt"}
               </span>
               <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                {dayjs(a.scheduledAt).format("hh:mm A")}
+                {a.scheduledAt ? dayjs(a.scheduledAt).format("hh:mm A") : ""}
               </span>
             </div>
           </Tooltip>
@@ -154,6 +155,8 @@ const ScheduledCalls: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ScheduledCallsResponse | null>(null);
   const [selected, setSelected] = useState<ScheduledCallItem | null>(null);
+  const [modalTranscript, setModalTranscript] = useState<any>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const fetchData = async (start: Dayjs, end: Dayjs) => {
     setLoading(true);
@@ -182,6 +185,50 @@ const ScheduledCalls: React.FC = () => {
   const answered = calls.filter((c) => c.finalStatus === "ANSWERED").length;
   const pending = calls.length - inProgress - answered;
 
+  const handleSelectCall = async (record: ScheduledCallItem) => {
+    setSelected(record);
+    const existing =
+      record.callRecording?.transcript ||
+      record.callRecording?.conversation ||
+      record.liveConversation ||
+      record.transcript ||
+      record.conversation;
+
+    if (
+      existing &&
+      (Array.isArray(existing)
+        ? existing.length > 0
+        : String(existing).trim().length > 0)
+    ) {
+      setModalTranscript(existing);
+      return;
+    }
+
+    if (record.phoneNumber) {
+      setModalLoading(true);
+      try {
+        const detail = await getTranscriptByNumber(record.phoneNumber);
+        if (detail && detail.transcript) {
+          setModalTranscript(detail.transcript);
+        } else {
+          setModalTranscript(record.callRecording?.rawTranscript || []);
+        }
+      } catch (e) {
+        setModalTranscript(record.callRecording?.rawTranscript || []);
+      } finally {
+        setModalLoading(false);
+      }
+    } else {
+      setModalTranscript(record.callRecording?.rawTranscript || []);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelected(null);
+    setModalTranscript(null);
+    setModalLoading(false);
+  };
+
   const columns: ColumnsType<ScheduledCallItem> = [
     {
       title: "Caller Number",
@@ -199,7 +246,7 @@ const ScheduledCalls: React.FC = () => {
       dataIndex: "scenario",
       key: "scenario",
       render: (v) => (
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-200 whitespace-nowrap">
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-50 to-white text-[#b8860b] border border-amber-200 whitespace-nowrap">
           {scenarioLabel(v)}
         </span>
       ),
@@ -209,7 +256,7 @@ const ScheduledCalls: React.FC = () => {
       dataIndex: "followUpReason",
       key: "followUpReason",
       render: (v) => (
-        <span className="text-gray-600">{v ? v.replace(/_/g, " ") : "—"}</span>
+        <span className="text-gray-600 text-xs">{v ? v.replace(/_/g, " ") : "—"}</span>
       ),
     },
     {
@@ -219,37 +266,73 @@ const ScheduledCalls: React.FC = () => {
       render: (v) => <StatusBadge status={v} />,
     },
     {
+      title: "Summary",
+      key: "summary",
+      ellipsis: true,
+      render: (_, record) => {
+        const s =
+          record.callRecording?.callSummary ||
+          record.callRecording?.summary ||
+          (record as any).summary ||
+          record.followUpReason;
+        return <span className="text-gray-600 text-xs">{s || "—"}</span>;
+      },
+    },
+    {
+      title: "Recording",
+      key: "recording",
+      width: 110,
+      render: (_, record) => {
+        const rec = record.callRecording?.recordingUrl || (record as any).recordingUrl;
+        return rec ? (
+          <Tag
+            color="gold"
+            className="!rounded-full !px-2.5 !py-0.5 !text-xs !font-medium inline-flex items-center gap-1"
+          >
+            <RiHeadphoneLine /> Audio
+          </Tag>
+        ) : (
+          <span className="text-gray-400 text-xs">—</span>
+        );
+      },
+    },
+    {
       title: "Attempts",
       key: "attempts",
       render: (_, record) => <AttemptChips call={record} />,
     },
     {
-      title: "Next Retry",
-      dataIndex: "nextRetryAt",
-      key: "nextRetryAt",
-      render: (v) =>
-        v ? (
-          <span className="text-gray-500">
-            {dayjs(v).format("DD MMM YYYY, hh:mm A")}
+      title: "Next Follow-up",
+      key: "nextFollowup",
+      render: (_, record) => {
+        const followup =
+          record.nextFollowupAt ||
+          record.nextFollowup ||
+          record.callbackRequestedAt ||
+          record.nextRetryAt;
+        return followup ? (
+          <span className="text-slate-800 font-medium text-xs whitespace-nowrap">
+            {dayjs(followup).format("DD MMM YYYY, hh:mm A")}
           </span>
         ) : (
-          <span className="text-gray-400">—</span>
-        ),
+          <span className="text-gray-400 text-xs">—</span>
+        );
+      },
     },
     {
-      title: "",
+      title: "Actions",
       key: "actions",
-      render: (_, record) =>
-        record.callRecording ? (
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => setSelected(record)}
-            className="!rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 !font-medium"
-          >
-            View
-          </Button>
-        ) : null,
+      width: 90,
+      render: (_, record) => (
+        <Button
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => handleSelectCall(record)}
+          className="!rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 !font-medium"
+        >
+          View
+        </Button>
+      ),
     },
   ];
 
@@ -264,7 +347,7 @@ const ScheduledCalls: React.FC = () => {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Scheduled Calls
+                Scheduled Calls & Follow-ups
               </h2>
             </div>
           </div>
@@ -291,7 +374,7 @@ const ScheduledCalls: React.FC = () => {
               <div className="text-xl sm:text-2xl font-semibold text-slate-600">
                 {pending}
               </div>
-              <div className="text-slate-500 text-[11px] sm:text-xs mt-1">Other</div>
+              <div className="text-slate-500 text-[11px] sm:text-xs mt-1">Pending/Other</div>
             </div>
           </div>
         </div>
@@ -340,21 +423,55 @@ const ScheduledCalls: React.FC = () => {
 
       <TranscriptModal
         open={!!selected}
-        onClose={() => setSelected(null)}
+        onClose={handleCloseModal}
+        loading={modalLoading}
         meta={
-          selected?.callRecording
+          selected
             ? {
-                callerNumber: selected.callRecording.callerNumber,
-                platform: selected.callRecording.platform,
-                callDirection: selected.callRecording.callDirection,
-                purpose: selected.callRecording.callPurpose,
-                summary: selected.callRecording.callSummary,
-                timestamp: selected.callRecording.timestamp,
-                recordingUrl: selected.callRecording.recordingUrl,
+                callerNumber:
+                  selected.callRecording?.callerNumber || selected.phoneNumber,
+                phoneNumber: selected.phoneNumber,
+                platform:
+                  selected.callRecording?.platform ||
+                  selected.platform ||
+                  "OXYLOANS",
+                callDirection:
+                  selected.callRecording?.callDirection || "OUTBOUND",
+                purpose:
+                  selected.callRecording?.callPurpose ||
+                  selected.callRecording?.purpose ||
+                  scenarioLabel(selected.scenario),
+                summary:
+                  selected.callRecording?.callSummary ||
+                  selected.callRecording?.summary ||
+                  (selected as any).summary ||
+                  selected.followUpReason,
+                timestamp:
+                  selected.callRecording?.timestamp ||
+                  selected.callRecording?.date ||
+                  selected.nextFollowupAt ||
+                  selected.nextRetryAt,
+                recordingUrl:
+                  selected.callRecording?.recordingUrl ||
+                  (selected as any).recordingUrl,
+                nextFollowup:
+                  selected.nextFollowupAt ||
+                  selected.nextFollowup ||
+                  selected.callbackRequestedAt ||
+                  selected.nextRetryAt,
+                disposition:
+                  selected.disposition ||
+                  (selected.callRecording as any)?.disposition,
+                customerSentiment:
+                  selected.customerSentiment ||
+                  (selected.callRecording as any)?.customerSentiment,
+                promisedPaymentDate:
+                  selected.promisedPaymentDate ||
+                  (selected.callRecording as any)?.promisedPaymentDate,
               }
             : null
         }
-        transcript={selected?.callRecording?.transcript}
+        transcript={modalTranscript}
       />
     </VoiceAdminLayout>
   );

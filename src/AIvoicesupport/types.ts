@@ -3,25 +3,33 @@
 export type CallDirection = "INBOUND" | "OUTBOUND";
 
 export const PLATFORMS = [
+  "TVRADHAKRISHNA",
   "OXYLOANS",
   "ASKOXY",
   "OXYGOLD",
   "OXYBRICK",
+  "OXYFINSERV",
+  "OXYJOURNEYS",
   "STUDYABROAD",
   "OXYBFSAI",
   "OXYGLOBAL",
+  "DEFAULT",
 ] as const;
 
 export type Platform = (typeof PLATFORMS)[number];
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
+  TVRADHAKRISHNA: "TV Radha Krishna",
   OXYLOANS: "OxyLoans",
   ASKOXY: "AskOxy.ai",
   OXYGOLD: "OxyGold",
-  OXYBRICK: "OxyBrick",
+  OXYBRICK: "OxyBricks",
+  OXYFINSERV: "OxyFinServ",
+  OXYJOURNEYS: "OxyJourneys",
   STUDYABROAD: "Study Abroad",
   OXYBFSAI: "OxyBFSAI",
   OXYGLOBAL: "OxyGlobal.tech",
+  DEFAULT: "Default (Global)",
 };
 
 export type InstructionDirection = "inbound" | "outbound";
@@ -48,16 +56,29 @@ export interface CallDetail {
 export interface CallListItem {
   id: number;
   callerNumber: string;
+  phoneNumber?: string;
   platform: string | null;
   callDirection: CallDirection;
   callScenario: string | null;
-  callSummary: string;
-  callPurpose: string;
+  callSummary?: string;
+  summary?: string;
+  callPurpose?: string;
+  purpose?: string;
   revenueGenerated: boolean;
   revenueDetails: string;
-  timestamp: string;
-  recordingUrl: string;
-  transcript: TranscriptMessage[];
+  timestamp?: string;
+  date?: string;
+  recordingUrl?: string;
+  transcript?: TranscriptMessage[] | string;
+  conversation?: TranscriptMessage[] | string;
+  rawTranscript?: string;
+  nextFollowup?: string | null;
+  nextFollowupAt?: string | null;
+  callbackRequestedAt?: string | null;
+  disposition?: string | null;
+  customerSentiment?: string | null;
+  promisedPaymentDate?: string | null;
+  talkDurationSeconds?: number | null;
 }
 
 export interface CallsResponse {
@@ -71,15 +92,28 @@ export interface CallsResponse {
 
 export interface CallHistoryItem {
   callerNumber: string;
+  phoneNumber?: string;
   platform: string | null;
   callDirection: CallDirection;
   callScenario: string | null;
   date: string;
+  timestamp?: string;
   summary: string;
+  callSummary?: string;
   purpose: string;
+  callPurpose?: string;
   revenueGenerated: boolean;
   revenueDetails: string;
-  recordingUrl: string;
+  recordingUrl?: string;
+  transcript?: TranscriptMessage[] | string;
+  conversation?: TranscriptMessage[] | string;
+  rawTranscript?: string;
+  nextFollowup?: string | null;
+  nextFollowupAt?: string | null;
+  callbackRequestedAt?: string | null;
+  disposition?: string | null;
+  customerSentiment?: string | null;
+  promisedPaymentDate?: string | null;
 }
 
 export interface AgentInstruction {
@@ -218,26 +252,42 @@ export interface ScheduledCallAttempt {
 export interface ScheduledCallRecording {
   id: number;
   callerNumber: string;
+  phoneNumber?: string;
   platform: string | null;
   callDirection: CallDirection;
   callScenario: string | null;
-  callSummary: string;
-  callPurpose: string;
+  callSummary?: string;
+  summary?: string;
+  callPurpose?: string;
+  purpose?: string;
   revenueGenerated: boolean;
   revenueDetails: string;
-  timestamp: string;
-  recordingUrl: string;
-  transcript: TranscriptMessage[];
+  timestamp?: string;
+  date?: string;
+  recordingUrl?: string;
+  transcript?: TranscriptMessage[] | string;
+  conversation?: TranscriptMessage[] | string;
+  rawTranscript?: string;
 }
 
 export interface ScheduledCallItem {
   phoneNumber: string;
+  platform?: string | null;
   scenario: OutboundScenario | string;
   followUpReason: string | null;
   finalStatus: ScheduledCallStatus;
   nextRetryAt: string | null;
+  nextFollowup?: string | null;
+  nextFollowupAt?: string | null;
+  callbackRequestedAt?: string | null;
+  disposition?: string | null;
+  customerSentiment?: string | null;
+  promisedPaymentDate?: string | null;
   attempts: ScheduledCallAttempt[];
   callRecording: ScheduledCallRecording | null;
+  liveConversation?: TranscriptMessage[] | string | null;
+  transcript?: TranscriptMessage[] | string | null;
+  conversation?: TranscriptMessage[] | string | null;
 }
 
 export interface ScheduledCallsResponse {

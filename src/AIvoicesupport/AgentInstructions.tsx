@@ -37,13 +37,17 @@ const { TextArea } = Input;
 type ContentSelection = "system" | "greeting" | OutboundScenario;
 
 const PLATFORM_GRADIENTS: Record<Platform, string> = {
+  TVRADHAKRISHNA: "from-purple-500 to-indigo-600",
   OXYLOANS: "from-blue-400 to-blue-500",
   ASKOXY: "from-violet-400 to-violet-500",
   OXYGOLD: "from-amber-400 to-amber-500",
   OXYBRICK: "from-orange-400 to-orange-500",
+  OXYFINSERV: "from-teal-400 to-teal-500",
+  OXYJOURNEYS: "from-rose-400 to-rose-500",
   STUDYABROAD: "from-cyan-400 to-cyan-500",
   OXYBFSAI: "from-pink-400 to-pink-500",
   OXYGLOBAL: "from-emerald-400 to-emerald-500",
+  DEFAULT: "from-gray-500 to-slate-600",
 };
 
 const SCENARIO_COLORS: Record<OutboundScenario, string> = {

@@ -9,22 +9,28 @@ import {
   RiBarChartLine,
   RiPieChartLine,
   RiListCheck2,
+  RiHeadphoneLine,
 } from "react-icons/ri";
-import { getInboundCalls, getOutboundCalls } from "./api";
+import { getInboundCalls, getOutboundCalls, getTranscriptByNumber } from "./api";
 import type { CallsResponse } from "./types";
 import { PLATFORMS, PLATFORM_LABELS } from "./types";
 import VoiceAdminLayout from "./components/VoiceAdminLayout";
+import TranscriptModal from "./components/TranscriptModal";
 
 const API_DATE_FORMAT = "DD-MM-YYYY";
 
 const PLATFORM_DOT_COLORS: Record<string, string> = {
+  TVRADHAKRISHNA: "bg-gradient-to-br from-purple-400 to-indigo-500",
   OXYLOANS: "bg-gradient-to-br from-blue-300 to-blue-400",
   ASKOXY: "bg-gradient-to-br from-violet-300 to-violet-400",
   OXYGOLD: "bg-gradient-to-br from-amber-300 to-amber-400",
   OXYBRICK: "bg-gradient-to-br from-orange-300 to-orange-400",
+  OXYFINSERV: "bg-gradient-to-br from-teal-300 to-teal-400",
+  OXYJOURNEYS: "bg-gradient-to-br from-rose-300 to-rose-400",
   STUDYABROAD: "bg-gradient-to-br from-cyan-300 to-cyan-400",
   OXYBFSAI: "bg-gradient-to-br from-pink-300 to-pink-400",
   OXYGLOBAL: "bg-gradient-to-br from-emerald-300 to-emerald-400",
+  DEFAULT: "bg-gradient-to-br from-gray-400 to-slate-500",
 };
 const KPI_ICON_BG: Record<string, string> = {
   "Inbound Calls Today":
@@ -36,10 +42,13 @@ const KPI_ICON_BG: Record<string, string> = {
 };
 
 type CallLike = {
-  timestamp: string;
-  callDirection: string;
+  timestamp?: string;
+  date?: string;
+  callDirection?: string;
   callPurpose?: string;
   callSummary?: string;
+  purpose?: string;
+  summary?: string;
 };
 
 /** Group calls into 24 hourly buckets and trim to the hours that actually have activity. */
@@ -47,7 +56,10 @@ function useHourlyBuckets(calls: CallLike[]) {
   return useMemo(() => {
     const counts = Array.from({ length: 24 }, () => 0);
     calls.forEach((c) => {
-      counts[dayjs(c.timestamp).hour()] += 1;
+      const time = c.timestamp || c.date;
+      if (time) {
+        counts[dayjs(time).hour()] += 1;
+      }
     });
     const active = counts
       .map((count, hour) => ({ hour, count }))
@@ -122,9 +134,12 @@ const CombinedHourlyChart: React.FC<{ calls: CallLike[] }> = ({ calls }) => {
       outbound: 0,
     }));
     calls.forEach((c) => {
-      const hour = dayjs(c.timestamp).hour();
-      if (c.callDirection === "INBOUND") counts[hour].inbound += 1;
-      else counts[hour].outbound += 1;
+      const time = c.timestamp || c.date;
+      if (time) {
+        const hour = dayjs(time).hour();
+        if (c.callDirection === "INBOUND") counts[hour].inbound += 1;
+        else counts[hour].outbound += 1;
+      }
     });
     const withHour = counts.map((b, hour) => ({ ...b, hour }));
     const active = withHour.filter((b) => b.inbound + b.outbound > 0);
@@ -259,7 +274,13 @@ const TopPurposesList: React.FC<{ calls: CallLike[]; barColor: string }> = ({
   const ranked = useMemo(() => {
     const tally = new Map<string, number>();
     calls.forEach((c) => {
-      const label = (c.callPurpose || c.callSummary || "Uncategorized").trim();
+      const label = (
+        c.callPurpose ||
+        c.purpose ||
+        c.callSummary ||
+        c.summary ||
+        "Uncategorized"
+      ).trim();
       tally.set(label, (tally.get(label) ?? 0) + 1);
     });
     return Array.from(tally.entries())
@@ -316,6 +337,47 @@ const Dashboard: React.FC = () => {
   const [inbound, setInbound] = useState<CallsResponse | null>(null);
   const [outbound, setOutbound] = useState<CallsResponse | null>(null);
   const [error, setError] = useState(false);
+  const [selectedCall, setSelectedCall] = useState<any | null>(null);
+  const [modalTranscript, setModalTranscript] = useState<any>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  const handleSelectRecentCall = async (item: any) => {
+    setSelectedCall(item);
+    const existing = item.transcript || item.conversation;
+    if (
+      existing &&
+      (Array.isArray(existing)
+        ? existing.length > 0
+        : String(existing).trim().length > 0)
+    ) {
+      setModalTranscript(existing);
+      return;
+    }
+    const phone = item.callerNumber || item.phoneNumber;
+    if (phone) {
+      setModalLoading(true);
+      try {
+        const detail = await getTranscriptByNumber(phone);
+        if (detail && detail.transcript) {
+          setModalTranscript(detail.transcript);
+        } else {
+          setModalTranscript(item.rawTranscript || []);
+        }
+      } catch (e) {
+        setModalTranscript(item.rawTranscript || []);
+      } finally {
+        setModalLoading(false);
+      }
+    } else {
+      setModalTranscript(item.rawTranscript || []);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedCall(null);
+    setModalTranscript(null);
+    setModalLoading(false);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -566,7 +628,8 @@ const Dashboard: React.FC = () => {
                 recentCalls.map((item) => (
                   <div
                     key={item.id}
-                    className="p-4 flex items-center justify-between hover:bg-gray-50"
+                    onClick={() => handleSelectRecentCall(item)}
+                    className="p-4 flex items-center justify-between hover:bg-amber-50/50 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Tag
@@ -578,16 +641,21 @@ const Dashboard: React.FC = () => {
                         {item.callDirection}
                       </Tag>
                       <div>
-                        <div className="font-medium text-gray-900 text-sm">
-                          {item.callerNumber}
+                        <div className="font-medium text-gray-900 text-sm flex items-center gap-2">
+                          <span>{item.callerNumber || item.phoneNumber}</span>
+                          {item.recordingUrl && (
+                            <Tag color="gold" className="!rounded-full !px-1.5 !text-[10px] inline-flex items-center gap-0.5">
+                              <RiHeadphoneLine /> Audio
+                            </Tag>
+                          )}
                         </div>
                         <div className="text-gray-500 text-xs">
-                          {item.callPurpose || item.callSummary}
+                          {item.callPurpose || item.purpose || item.callSummary || item.summary}
                         </div>
                       </div>
                     </div>
                     <div className="text-gray-400 text-xs whitespace-nowrap ml-3">
-                      {dayjs(item.timestamp).format("hh:mm A")}
+                      {dayjs(item.timestamp || item.date).format("hh:mm A")}
                     </div>
                   </div>
                 ))
@@ -638,6 +706,31 @@ const Dashboard: React.FC = () => {
           Couldn't load today's call data. Please refresh the page.
         </div>
       )}
+
+      <TranscriptModal
+        open={!!selectedCall}
+        onClose={handleCloseModal}
+        loading={modalLoading}
+        meta={
+          selectedCall
+            ? {
+                callerNumber: selectedCall.callerNumber || selectedCall.phoneNumber || "",
+                phoneNumber: selectedCall.phoneNumber || selectedCall.callerNumber || "",
+                platform: selectedCall.platform,
+                callDirection: selectedCall.callDirection,
+                callScenario: selectedCall.callScenario,
+                purpose: selectedCall.callPurpose || selectedCall.purpose,
+                summary: selectedCall.callSummary || selectedCall.summary,
+                timestamp: selectedCall.timestamp || selectedCall.date,
+                recordingUrl: selectedCall.recordingUrl,
+                nextFollowup: selectedCall.nextFollowupAt || selectedCall.nextFollowup,
+                disposition: selectedCall.disposition,
+                customerSentiment: selectedCall.customerSentiment,
+              }
+            : null
+        }
+        transcript={modalTranscript}
+      />
     </VoiceAdminLayout>
   );
 };
