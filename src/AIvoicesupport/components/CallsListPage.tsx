@@ -49,9 +49,9 @@ const CallsListPage: React.FC<CallsListPageProps> = ({ direction }) => {
 
   const columns: ColumnsType<CallListItem> = [
     {
-      title: "Caller Number",
-      dataIndex: "callerNumber",
-      key: "callerNumber",
+      title: "Phone Number",
+      dataIndex: "phoneNumber",
+      key: "phoneNumber",
       render: (v) => <span className="font-medium text-gray-900">{v}</span>,
     },
     {
