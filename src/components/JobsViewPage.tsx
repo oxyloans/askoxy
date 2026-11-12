@@ -72,14 +72,29 @@ const looksLikeMarkdown = (text: string) =>
   /^#{1,6}\s|\*\*.+\*\*|^\s*[-*]\s+|^>\s|\[.+\]\(.+\)/m.test(text);
 
 
-const JobViewPage: React.FC = () => {
+interface JobViewPageProps {
+  forcedCompany?: string;
+  isAskOxyPage?: boolean;
+}
+
+const JobViewPage: React.FC<JobViewPageProps> = ({
+  forcedCompany,
+  isAskOxyPage,
+}) => {
   const [showResumeModal, setShowResumeModal] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
   const { id: urlId, company } = useParams<{ id: string; company: string }>();
   const id = urlId === "default" ? null : urlId || location.state?.id;
-  const currentCompany = company || "ALL";
+  const isDedicatedAskOxy =
+    Boolean(isAskOxyPage) ||
+    forcedCompany === "ASKOXY_AI" ||
+    location.pathname.includes("askoxyjobs") ||
+    location.pathname.includes("askoxy-jobs");
+  const currentCompany = isDedicatedAskOxy
+    ? "ASKOXY_AI"
+    : forcedCompany || company || "ALL";
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -734,7 +749,9 @@ const JobViewPage: React.FC = () => {
       navigate("/whatsapplogin");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/viewjobdetails/${jobId}/${currentCompany}`,
+        isDedicatedAskOxy
+          ? `/main/askoxyjobs/${jobId}`
+          : `/main/viewjobdetails/${jobId}/${currentCompany}`,
       );
       return;
     }
@@ -826,7 +843,12 @@ const JobViewPage: React.FC = () => {
     });
     setSearchTerm("");
 
-    if (currentCompany !== "ALL") {
+    if (isDedicatedAskOxy) {
+      const token = localStorage.getItem("accessToken");
+      const userId = localStorage.getItem("userId");
+      const prefix = token && userId ? "/main/askoxyjobs" : "/askoxyjobs";
+      navigate(prefix);
+    } else if (currentCompany !== "ALL") {
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       const prefix =
@@ -882,7 +904,9 @@ const JobViewPage: React.FC = () => {
       navigate("/whatsapplogin");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/viewjobdetails${selectedJob ? `/${selectedJob.id}/${currentCompany}` : ""}`,
+        isDedicatedAskOxy
+          ? `/main/askoxyjobs${selectedJob ? `/${selectedJob.id}` : ""}`
+          : `/main/viewjobdetails${selectedJob ? `/${selectedJob.id}/${currentCompany}` : ""}`,
       );
     }
     if (
@@ -961,16 +985,33 @@ const JobViewPage: React.FC = () => {
       navigate("/whatsapplogin");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/viewjobdetails/${job.id}/${currentCompany}`,
+        isDedicatedAskOxy
+          ? `/main/askoxyjobs/${job.id}`
+          : `/main/viewjobdetails/${job.id}/${currentCompany}`,
       );
       sessionStorage.setItem("redirectJobId", job.id);
       return;
     }
-    const pathPrefix = "/main/viewjobdetails";
-    navigate(`${pathPrefix}/${job.id}/${currentCompany}`);
+    const token = localStorage.getItem("accessToken");
+    const pathPrefix = isDedicatedAskOxy
+      ? token && userId
+        ? "/main/askoxyjobs"
+        : "/askoxyjobs"
+      : token && userId
+        ? "/main/viewjobdetails"
+        : "/viewjobdetails";
+
+    navigate(
+      isDedicatedAskOxy
+        ? `${pathPrefix}/${job.id}`
+        : `${pathPrefix}/${job.id}/${currentCompany}`,
+    );
     setSelectedJob(job);
     setTimeout(() => {
-      jobDetailsPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      jobDetailsPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 50);
   };
 
@@ -1023,15 +1064,17 @@ const JobViewPage: React.FC = () => {
             />
           </div>
         </div>
-        <div className="flex justify-center items-center px-4 pb-3">
-          <div
-            className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
-          >
-            <span className="text-base font-semibold text-gray-700 text-center">
-              {job.companyName}
-            </span>
+        {!isDedicatedAskOxy && (
+          <div className="flex justify-center items-center px-4 pb-3">
+            <div
+              className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
+            >
+              <span className="text-base font-semibold text-gray-700 text-center">
+                {job.companyName}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
         <div className="px-4 pb-1">
           <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-3">
             {job.jobTitle}
@@ -1405,11 +1448,21 @@ const JobViewPage: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center py-4 mb-4 mt-6 gap-6 px-2">
           <div className="flex-1">
             <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-purple-900 leading-tight">
-              Find Your Next{" "}
-              <span className="text-purple-900">Opportunity</span>
+              {isDedicatedAskOxy ? (
+                <>
+                  Careers at <span className="text-blue-600">AskOxy.AI</span> 🚀
+                </>
+              ) : (
+                <>
+                  Find Your Next{" "}
+                  <span className="text-purple-900">Opportunity</span>
+                </>
+              )}
             </h1>
             <p className="text-base md:text-lg text-gray-600 font-medium mt-1">
-              Discover jobs that match your skills.
+              {isDedicatedAskOxy
+                ? "Explore open positions at AskOxy.AI."
+                : "Discover jobs that match your skills."}
             </p>
           </div>
           <div className="shrink-0">
@@ -1429,40 +1482,58 @@ const JobViewPage: React.FC = () => {
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-blue-500 pointer-events-none" />
 
-              <select
-                value={currentCompany}
-                onChange={(e) => {
-                  const token = localStorage.getItem("accessToken");
-                  const userId = localStorage.getItem("userId");
+              {isDedicatedAskOxy ? (
+                <div className="w-full flex items-center justify-between rounded-lg border-2 border-blue-500 bg-blue-50/70 py-2 pl-9 pr-3 font-semibold text-blue-900 shadow-sm">
+                  <span>AskOxy.AI</span>
+                  
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={currentCompany}
+                    onChange={(e) => {
+                      const token = localStorage.getItem("accessToken");
+                      const userId = localStorage.getItem("userId");
 
-                  const prefix =
-                    token && userId
-                      ? "/main/viewjobdetails"
-                      : "/viewjobdetails";
+                      const prefix =
+                        token && userId
+                          ? "/main/viewjobdetails"
+                          : "/viewjobdetails";
 
-                  navigate(`${prefix}/default/${e.target.value}`);
-                }}
-                className="
-      w-full appearance-none cursor-pointer rounded-lg
-      border-2 border-blue-500 bg-white
-      py-2 pl-9 pr-9 font-medium text-gray-800
-      shadow-[0_0_0_3px_rgba(59,130,246,0.18)]
-      animate-pulse transition-colors
-      hover:border-blue-600
-      focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300
-    "
-              >
-                <option value="ALL">All Companies Jobs</option>
+                      navigate(`${prefix}/default/${e.target.value}`);
+                    }}
+                    className="
+          w-full appearance-none cursor-pointer rounded-lg
+          border-2 border-blue-500 bg-white
+          py-2 pl-9 pr-9 font-medium text-gray-800
+          shadow-[0_0_0_3px_rgba(59,130,246,0.18)]
+          animate-pulse transition-colors
+          hover:border-blue-600
+          focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300
+        "
+                  >
+                    <option value="ALL">All Companies Jobs</option>
 
-                {Object.entries(companyNames)
-                  .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([label, value]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4 pointer-events-none" />
+                    {Object.entries(companyNames)
+                      .filter(([label, value]) => {
+                        const v = (value || "").toUpperCase();
+                        const l = (label || "").toUpperCase();
+                        return (
+                          v !== "ASKOXY_AI" &&
+                          !v.includes("ASKOXY") &&
+                          !l.includes("ASKOXY")
+                        );
+                      })
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([label, value]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4 pointer-events-none" />
+                </>
+              )}
             </div>
 
             <div className="relative">
@@ -1597,7 +1668,13 @@ const JobViewPage: React.FC = () => {
                       const accessToken = localStorage.getItem("accessToken");
                       const userId = localStorage.getItem("userId");
                       setSelectedJob(null);
-                      if (accessToken && userId) {
+                      if (isDedicatedAskOxy) {
+                        const prefix =
+                          accessToken && userId
+                            ? "/main/askoxyjobs"
+                            : "/askoxyjobs";
+                        navigate(prefix);
+                      } else if (accessToken && userId) {
                         navigate(
                           `/main/viewjobdetails/default/${currentCompany}`,
                         );
@@ -1631,7 +1708,13 @@ const JobViewPage: React.FC = () => {
                     const accessToken = localStorage.getItem("accessToken");
                     const userId = localStorage.getItem("userId");
                     setSelectedJob(null);
-                    if (accessToken && userId) {
+                    if (isDedicatedAskOxy) {
+                      const prefix =
+                        accessToken && userId
+                          ? "/main/askoxyjobs"
+                          : "/askoxyjobs";
+                      navigate(prefix);
+                    } else if (accessToken && userId) {
                       navigate(`/main/viewjobdetails/default/${currentCompany}`);
                     } else {
                       navigate(`/viewjobdetails/default/${currentCompany}`);
@@ -1652,7 +1735,9 @@ const JobViewPage: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-800">
                   Available Positions at{" "}
                   <span className="text-blue-600 capitalize">
-                    {currentCompany?.toLowerCase()}
+                    {currentCompany === "ASKOXY_AI"
+                      ? "AskOxy.AI"
+                      : currentCompany?.toLowerCase()}
                   </span>
                 </h2>
                 <div className="text-sm text-gray-600">

@@ -190,7 +190,7 @@ const FMSRoutes9Days: React.FC = () => {
 
   const handleBackToPlan = () => {
     const day = sessionStorage.getItem("nineDaysSelectedDay") || "1";
-    navigate(`/ninedaysinside?day=${day}&view=${type || currentMode}`);
+    navigate(`/ninedaysdayworkflow?day=${day}`);
   };
 
   // Enhanced question selection with better UX

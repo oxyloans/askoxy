@@ -56,6 +56,7 @@ const LEAGUE_JOURNEY_ACCESS_KEY = "leagueJourneyAccess";
 const LENDER_JOURNEY_ROUTE = "/main/lenderjourney";
 const LEAGUE_JOURNEYS_ROUTE = "/main/dashboard/leaguejourneys";
 const SERVICES_ROUTE = "/main/dashboard/myservices";
+const ADVOCATE_CAMPAIGN_ID = "657ae22a-47bd-43d6-8da7-8c6b11025388";
 
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -426,6 +427,21 @@ const CampaignDetails: React.FC = () => {
     if (submitclicks) setIsRoleModalOpen(true);
   };
 
+  const isAdvocateCampaign = campaign
+    ? campaign.campaignId === ADVOCATE_CAMPAIGN_ID
+    : campaignId === ADVOCATE_CAMPAIGN_ID ||
+      campaignId === ADVOCATE_CAMPAIGN_ID.slice(-4);
+
+  const redirectToRegister = (redirectPath: string) => {
+    sessionStorage.setItem("redirectPath", redirectPath);
+    if (isAdvocateCampaign) {
+      sessionStorage.setItem("primaryType", "ADVOCATE");
+      navigate("/whatsappregister?primaryType=ADVOCATE");
+    } else {
+      navigate("/whatsappregister");
+    }
+  };
+
   const handleSubmitClick = () => {
     sessionStorage.setItem("submitclicks", "true");
     if (campaign?.campaignType) {
@@ -434,7 +450,6 @@ const CampaignDetails: React.FC = () => {
 
     if (!userId) {
       message.warning("Please login to submit your interest.");
-      navigate("/whatsappregister");
       const redirect =
         campaign?.campainInputType === "BLOG"
           ? `/main/blog/${campaign?.campaignId?.slice(-4) || ""}/${slugify(
@@ -443,7 +458,7 @@ const CampaignDetails: React.FC = () => {
           : `/main/services/${campaign?.campaignId?.slice(-4) || ""}/${slugify(
               campaign?.campaignType || "",
             )}`;
-      sessionStorage.setItem("redirectPath", redirect);
+      redirectToRegister(redirect);
       return;
     }
 
@@ -486,9 +501,7 @@ const CampaignDetails: React.FC = () => {
   const handleEmployeeInterest = async () => {
     if (!userId) {
       message.warning("Please login to submit your interest.");
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
+      redirectToRegister(
         `/main/services/${campaign?.campaignId?.slice(-4) || ""}/${slugify(
           campaign?.campaignType || "",
         )}`,

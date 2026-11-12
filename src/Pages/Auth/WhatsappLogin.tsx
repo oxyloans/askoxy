@@ -155,7 +155,7 @@ const WhatsappLogin: React.FC = () => {
     useState<boolean>(true);
   const [showEriceAlert, setShowEriceAlert] = useState<boolean>(false);
   const [primaryType, setPrimaryType] = useState<
-    "CUSTOMER" | "STUDENT" | "AGENT"
+    "CUSTOMER" | "STUDENT" | "AGENT" | "ADVOCATE"
   >("CUSTOMER");
   const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
 
@@ -280,12 +280,12 @@ const WhatsappLogin: React.FC = () => {
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     // UPDATED: Include AGENT in detectedPrimaryType type
-    let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" = "CUSTOMER";
+    let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" | "ADVOCATE" = "CUSTOMER";
 
     // UPDATED: Handle primaryType for AGENT similar to STUDENT
-    const urlPrimaryType = queryParams.get("primaryType");
-    if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
-      detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT";
+    const urlPrimaryType = queryParams.get("primaryType")?.toUpperCase();
+    if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT" || urlPrimaryType === "ADVOCATE") {
+      detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT" | "ADVOCATE";
     } else if (
       queryParams.get("from") === "studyabroad" ||
       location.state?.from?.includes("/studyabroad") ||
@@ -543,7 +543,7 @@ const WhatsappLogin: React.FC = () => {
           setShowSuccessPopup(true);
           setMessage("This number is not registered. Please register now.");
           const registerPath =
-            primaryType === "STUDENT" || primaryType === "AGENT"
+            primaryType === "STUDENT" || primaryType === "AGENT" || primaryType === "ADVOCATE"
               ? `/whatsappregister?primaryType=${primaryType}`
               : "/whatsappregister";
           setTimeout(() => navigate(registerPath), 1000);
@@ -861,7 +861,7 @@ const WhatsappLogin: React.FC = () => {
 
   const handleRegisterRedirectClick = () => {
     const registerUrl =
-      primaryType === "STUDENT" || primaryType === "AGENT"
+      primaryType === "STUDENT" || primaryType === "AGENT" || primaryType === "ADVOCATE"
         ? `/whatsappregister?primaryType=${primaryType}`
         : "/whatsappregister";
     navigate(registerUrl);
@@ -885,7 +885,9 @@ const WhatsappLogin: React.FC = () => {
                 ? "Login to Study Abroad"
                 : primaryType === "AGENT"
                   ? "Login to Bharat AI Store"
-                  : "Login to ASKOXY.AI"}
+                  : primaryType === "ADVOCATE"
+                    ? "Login as Advocate"
+                    : "Login to ASKOXY.AI"}
             </h2>
           </div>
 
@@ -903,7 +905,7 @@ const WhatsappLogin: React.FC = () => {
             <button
               onClick={() => {
                 const loginPath =
-                  primaryType === "STUDENT" || primaryType === "AGENT"
+                  primaryType === "STUDENT" || primaryType === "AGENT" || primaryType === "ADVOCATE"
                     ? `/whatsapplogin?primaryType=${primaryType}`
                     : "/whatsapplogin";
                 navigate(loginPath);

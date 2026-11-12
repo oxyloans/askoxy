@@ -226,7 +226,7 @@ export default function NineDaysUseCaseNavigation({
 
   const backToPlan = () => {
     const day = currentDay || sessionStorage.getItem(NINE_DAYS_DAY_KEY) || "1";
-    navigate(`/ninedaysinside?day=${day}&view=${mode}`);
+    navigate(`/ninedaysdayworkflow?day=${day}`);
   };
 
   // Helper to trigger start of next day when a day's use cases are all finished
@@ -236,7 +236,7 @@ export default function NineDaysUseCaseNavigation({
       localStorage.getItem("job_program_enrollment_id") ||
       "304553fb-14cc-4656-a67d-de4a13ee1288";
 
-    const directUrl = `${BASE_URL}/marketing-service/campgin/job-program/start?dayNumber=${nextDayNum}&enrollmentId=${encodeURIComponent(
+    const directUrl = `http://65.0.147.157:9229/api/marketing-service/campgin/job-program/start?dayNumber=${nextDayNum}&enrollmentId=${encodeURIComponent(
       eId,
     )}`;
     const fallbackUrl = `${BASE_URL}/marketing-service/campgin/job-program/start?dayNumber=${nextDayNum}&enrollmentId=${encodeURIComponent(
@@ -300,7 +300,7 @@ export default function NineDaysUseCaseNavigation({
       localStorage.getItem("job_program_day_progress_id") ||
       "006e4f60-ea5d-4777-b6f7-9d3bf1007900";
 
-    const directUrl = `${BASE_URL}/marketing-service/campgin/job-program/update/${encodeURIComponent(
+    const directUrl = `http://65.0.147.157:9229/api/marketing-service/campgin/job-program/update/${encodeURIComponent(
       activeDayProgressId,
     )}/${encodeURIComponent(ucCode)}`;
     const fallbackUrl = `${BASE_URL}/marketing-service/campgin/job-program/update/${encodeURIComponent(
@@ -427,7 +427,7 @@ export default function NineDaysUseCaseNavigation({
           title:
             "🎉 Congratulations! You have completed all 51 Banking Use Cases!",
         });
-        navigate(`/ninedaysinside?day=7&view=${mode}`);
+        navigate("/ninedaysdayworkflow?day=9");
       }
     } else {
       Toast.fire({
@@ -444,13 +444,6 @@ export default function NineDaysUseCaseNavigation({
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          {/* <button
-            onClick={backToPlan}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100 sm:text-sm"
-          >
-            ← 9-Days Portal
-          </button> */}
-
           <div
             className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1"
             aria-label="Select view type"

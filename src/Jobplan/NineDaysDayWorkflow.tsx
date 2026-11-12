@@ -1,15 +1,68 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
+import BASE_URL from "../Config";
 import {
   NINE_DAYS_USE_CASES,
   NineDaysUseCaseItem,
   getUseCaseCode,
+  parseUseCaseNumbers,
 } from "./nineDaysUseCasesData";
 import { stopTokenRefresh } from "../utils/tokenRefresh";
 
 const NINE_DAYS_LOGO = "https://i.ibb.co/39rQT8TW/9-Days-Job-Program-Logo-1.png";
 const STORAGE_UNLOCKED_DAY = "nine_days_workflow_unlocked_day";
 const STORAGE_COMPLETED_UCS_PREFIX = "nine_days_workflow_completed_day_";
+const STORAGE_ENROLLMENT_ID = "job_program_enrollment_id";
+const STORAGE_DAY_PROGRESS_ID = "job_program_day_progress_id";
+
+// Primary and fallback backend endpoints for Job Program APIs
+const JOB_PROGRAM_DIRECT_BASE =
+  "http://65.0.147.157:9229/api/marketing-service/campgin/job-program";
+const JOB_PROGRAM_FALLBACK_BASE =
+  `${BASE_URL}/marketing-service/campgin/job-program`;
+
+const getResolvedUserId = (): string => {
+  return (
+    localStorage.getItem("userId") ||
+    localStorage.getItem("customerId") ||
+    localStorage.getItem("user_id") ||
+    sessionStorage.getItem("userId") ||
+    sessionStorage.getItem("userid") ||
+    "292b5593-d938-42c2-8daa-6494c4096cf1"
+  );
+};
+
+async function callJobProgramApi<T>(
+  endpoint: string,
+  method: "GET" | "POST" = "GET",
+  body?: any
+): Promise<T | null> {
+  const isHttps =
+    typeof window !== "undefined" && window.location.protocol === "https:";
+  const urls = isHttps
+    ? [`${JOB_PROGRAM_FALLBACK_BASE}${endpoint}`, `${JOB_PROGRAM_DIRECT_BASE}${endpoint}`]
+    : [`${JOB_PROGRAM_DIRECT_BASE}${endpoint}`, `${JOB_PROGRAM_FALLBACK_BASE}${endpoint}`];
+
+  for (const url of urls) {
+    try {
+      const res =
+        method === "POST"
+          ? await axios.post<T>(url, body, {
+              headers: { Accept: "application/json" },
+              timeout: 10000,
+            })
+          : await axios.get<T>(url, {
+              headers: { Accept: "application/json" },
+              timeout: 10000,
+            });
+      if (res?.data) return res.data;
+    } catch (err: any) {
+      console.warn(`[JobProgram API] ${method} ${url} failed:`, err?.response?.data || err.message);
+    }
+  }
+  return null;
+}
 
 export interface DayMetaInfo {
   day: number;
@@ -88,7 +141,7 @@ export const DAY_METADATA: DayMetaInfo[] = [
   },
   {
     day: 9,
-    title: "Full Banking AI Integration, Assessment & Certification",
+    title: "Full Banking AI Integration, Assessment ",
     subtitle: "Complete 51 Use-Case Banking Project Build with AI Tools, Cloud Deployment & Final Assessment",
     category: "Final Capstone",
     badge: "Capstone",
@@ -106,19 +159,39 @@ export default function NineDaysDayWorkflow() {
     initialDayFromUrl >= 1 && initialDayFromUrl <= 9 ? initialDayFromUrl : 1
   );
 
-  // Highest unlocked day (persisted in localStorage, defaults to 1)
+  // Highest unlocked day (persisted in localStorage, strictly controlled by API)
   const [unlockedDay, setUnlockedDay] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_UNLOCKED_DAY);
     const parsed = saved ? parseInt(saved, 10) : 1;
     return parsed >= 1 && parsed <= 9 ? parsed : 1;
   });
 
-  // Track completed use cases for each day (stored as array of strings like "UC-01", "UC-02", etc.)
+  // Enrollment ID
+  const [enrollmentId, setEnrollmentId] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_ENROLLMENT_ID) || "";
+  });
+
+  // Day record IDs returned by start API or dashboard API (dayNumber -> id)
+  const [dayRecordIds, setDayRecordIds] = useState<Record<number, string>>(() => {
+    const map: Record<number, string> = {};
+    for (let d = 1; d <= 9; d++) {
+      const rec = localStorage.getItem(`job_program_day_record_${d}`);
+      if (rec) map[d] = rec;
+    }
+    return map;
+  });
+
+  // Day progress percentages from API (dayNumber -> progress number 0..100)
+  const [dayProgress, setDayProgress] = useState<Record<number, number>>({});
+
+  // Track completed use cases for each day (stored as array of strings like ["UC-01", "UC-02"])
   const [completedMap, setCompletedMap] = useState<Record<number, string[]>>(() => {
     const map: Record<number, string[]> = {};
     for (let d = 1; d <= 9; d++) {
       try {
-        const raw = localStorage.getItem(`${STORAGE_COMPLETED_UCS_PREFIX}${d}`);
+        const raw =
+          localStorage.getItem(`job_program_completed_ucs_day_${d}`) ||
+          localStorage.getItem(`${STORAGE_COMPLETED_UCS_PREFIX}${d}`);
         map[d] = raw ? JSON.parse(raw) : [];
       } catch {
         map[d] = [];
@@ -126,6 +199,11 @@ export default function NineDaysDayWorkflow() {
     }
     return map;
   });
+
+  // Loading & notification states
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState<boolean>(true);
+  const [isStartingDay, setIsStartingDay] = useState<boolean>(false);
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
 
   // Currently expanded/opened use case
   const [expandedUseCaseId, setExpandedUseCaseId] = useState<number | null>(null);
@@ -135,18 +213,217 @@ export default function NineDaysDayWorkflow() {
     "understand" | "generate" | "run" | "deploy" | "publish"
   >("understand");
 
-  // Copy notification state
+  // Copy notification states
   const [copiedPromptId, setCopiedPromptId] = useState<number | null>(null);
+  const [copiedPostId, setCopiedPostId] = useState<number | null>(null);
+
+  const activeDayRef = useRef(activeDay);
+  activeDayRef.current = activeDay;
 
   // Filter use cases for active day
   const dayUseCases = useMemo(() => {
     return NINE_DAYS_USE_CASES.filter((uc) => uc.day === activeDay);
   }, [activeDay]);
 
-  const activeDayCompleted = completedMap[activeDay] || [];
-  const isAllDayUseCasesCompleted =
-    dayUseCases.length > 0 &&
-    dayUseCases.every((uc) => activeDayCompleted.includes(getUseCaseCode(uc.id - 1)));
+  const activeDayCompleted = useMemo(
+    () => completedMap[activeDay] || [],
+    [completedMap, activeDay]
+  );
+
+  // Helper to check if a specific use case in the active day is completed
+  const isUseCaseCompleted = useCallback(
+    (indexInDay: number, globalUcId: number): boolean => {
+      const perDayCode = getUseCaseCode(indexInDay);
+      const globalCode = getUseCaseCode(globalUcId - 1);
+      return (
+        activeDayCompleted.includes(perDayCode) ||
+        activeDayCompleted.includes(globalCode)
+      );
+    },
+    [activeDayCompleted]
+  );
+
+  const isAllDayUseCasesCompleted = useMemo(() => {
+    return (
+      dayUseCases.length > 0 &&
+      dayUseCases.every((uc, idx) => isUseCaseCompleted(idx, uc.id))
+    );
+  }, [dayUseCases, isUseCaseCompleted]);
+
+  // 1. On Mount: Call Dashboard API to strictly sync unlocked days, enrollment, and completed use cases
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDashboard = async () => {
+      const resolvedUserId = getResolvedUserId();
+      if (!resolvedUserId) {
+        setIsLoadingDashboard(false);
+        return;
+      }
+
+      setIsLoadingDashboard(true);
+      try {
+        const d: any = await callJobProgramApi(
+          `/dashboard?userId=${encodeURIComponent(resolvedUserId)}`,
+          "GET"
+        );
+
+        if (!isMounted || !d) return;
+
+        if (d.status === "USER_NOT_FOUND") {
+          console.warn("[JobProgram] User enrollment not found on backend.");
+          return;
+        }
+
+        // Save enrollmentId if returned
+        if (d.enrollmentId) {
+          setEnrollmentId(d.enrollmentId);
+          localStorage.setItem(STORAGE_ENROLLMENT_ID, d.enrollmentId);
+        }
+
+        // Strictly enforce API unlocked day: max(currentDay, daysCompleted + 1)
+        // User requested: "akkada day enata ave unlock chey remain g unlock cheyakku this api handled day ok"
+        const apiUnlockedDay = Math.max(
+          d.currentDay || 1,
+          (d.daysCompleted || 0) + 1,
+          1
+        );
+        const safeUnlocked = Math.min(Math.max(apiUnlockedDay, 1), 9);
+        setUnlockedDay(safeUnlocked);
+        localStorage.setItem(STORAGE_UNLOCKED_DAY, String(safeUnlocked));
+
+        // If active day exceeds unlocked day, adjust to unlocked day
+        setActiveDay((prev) => (prev > safeUnlocked ? safeUnlocked : prev));
+
+        // Parse days array returned from dashboard API
+        if (Array.isArray(d.days)) {
+          const recMap: Record<number, string> = {};
+          const progMap: Record<number, number> = {};
+          const compMap: Record<number, string[]> = {};
+
+          d.days.forEach((dayItem: any) => {
+            const dayNum = dayItem?.dayNumber;
+            if (!dayNum) return;
+
+            if (dayItem.id) {
+              recMap[dayNum] = dayItem.id;
+              localStorage.setItem(`job_program_day_record_${dayNum}`, dayItem.id);
+            }
+            if (typeof dayItem.progress === "number") {
+              progMap[dayNum] = dayItem.progress;
+            }
+
+            // Extract useCaseNumbers (e.g. "UC-01,UC-02,UC-03")
+            if (dayItem.useCaseNumbers) {
+              const parsed = parseUseCaseNumbers(dayItem.useCaseNumbers);
+              if (parsed.length > 0) {
+                compMap[dayNum] = parsed;
+                localStorage.setItem(
+                  `${STORAGE_COMPLETED_UCS_PREFIX}${dayNum}`,
+                  JSON.stringify(parsed)
+                );
+                localStorage.setItem(
+                  `job_program_completed_ucs_day_${dayNum}`,
+                  JSON.stringify(parsed)
+                );
+              }
+            }
+          });
+
+          setDayRecordIds((prev) => ({ ...prev, ...recMap }));
+          setDayProgress((prev) => ({ ...prev, ...progMap }));
+          setCompletedMap((prev) => ({ ...prev, ...compMap }));
+
+          // Save active day progress id if available
+          const currentActiveDay = Math.min(activeDayRef.current, safeUnlocked);
+          if (recMap[currentActiveDay]) {
+            localStorage.setItem(STORAGE_DAY_PROGRESS_ID, recMap[currentActiveDay]);
+          }
+        }
+      } catch (err) {
+        console.warn("[JobProgram] Dashboard sync error:", err);
+      } finally {
+        if (isMounted) setIsLoadingDashboard(false);
+      }
+    };
+
+    fetchDashboard();
+
+    const handleFocus = () => {
+      fetchDashboard();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  // 2. Ensure Day Started: Call start API if day record is not yet created
+  const ensureDayStarted = useCallback(
+    async (dayNum: number, enrollIdToUse?: string): Promise<string | null> => {
+      if (dayNum > 8) return null; // Day 9 is Capstone
+      if (dayRecordIds[dayNum]) {
+        localStorage.setItem(STORAGE_DAY_PROGRESS_ID, dayRecordIds[dayNum]);
+        return dayRecordIds[dayNum];
+      }
+
+      const eId =
+        enrollIdToUse ||
+        enrollmentId ||
+        localStorage.getItem(STORAGE_ENROLLMENT_ID) ||
+        "";
+      if (!eId) return null;
+
+      setIsStartingDay(true);
+      try {
+        const startRes: any = await callJobProgramApi(
+          `/start?dayNumber=${dayNum}&enrollmentId=${encodeURIComponent(eId)}`,
+          "POST"
+        );
+
+        if (startRes) {
+          if (startRes.status === "DAY_LOCKED") {
+            setStatusNotice(
+              startRes.message || `Day ${dayNum} is locked. Current day is ${startRes.currentDay || 1}.`
+            );
+            return null;
+          }
+
+          const dayRecId = startRes.id || startRes.data?.id;
+          if (dayRecId) {
+            setDayRecordIds((prev) => ({ ...prev, [dayNum]: dayRecId }));
+            localStorage.setItem(`job_program_day_record_${dayNum}`, dayRecId);
+            localStorage.setItem(STORAGE_DAY_PROGRESS_ID, dayRecId);
+
+            if (startRes.data?.useCaseNumbers) {
+              const parsed = parseUseCaseNumbers(startRes.data.useCaseNumbers);
+              if (parsed.length > 0) {
+                setCompletedMap((prev) => ({ ...prev, [dayNum]: parsed }));
+                localStorage.setItem(
+                  `${STORAGE_COMPLETED_UCS_PREFIX}${dayNum}`,
+                  JSON.stringify(parsed)
+                );
+              }
+            }
+            if (typeof startRes.data?.progress === "number") {
+              setDayProgress((prev) => ({
+                ...prev,
+                [dayNum]: startRes.data.progress,
+              }));
+            }
+            return dayRecId;
+          }
+        }
+      } catch (err) {
+        console.warn(`[JobProgram] Failed to start Day ${dayNum}:`, err);
+      } finally {
+        setIsStartingDay(false);
+      }
+      return null;
+    },
+    [dayRecordIds, enrollmentId]
+  );
 
   // Auto-expand first use case when switching days
   useEffect(() => {
@@ -163,43 +440,30 @@ export default function NineDaysDayWorkflow() {
     setSearchParams({ day: String(activeDay) }, { replace: true });
   }, [activeDay, setSearchParams]);
 
-  const handleSelectDay = (day: number) => {
-    if (day <= unlockedDay) {
-      setActiveDay(day);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+  // When active day changes, ensure it is started on backend
+  useEffect(() => {
+    if (activeDay <= 8 && activeDay <= unlockedDay) {
+      ensureDayStarted(activeDay);
+    }
+  }, [activeDay, unlockedDay, ensureDayStarted]);
+
+  // Handle Day Selection Tab Click
+  const handleSelectDay = async (day: number) => {
+    if (day > unlockedDay) {
+      setStatusNotice(
+        `🔒 Day ${day} is currently locked. Complete the earlier banking use cases to unlock it.`
+      );
+      setTimeout(() => setStatusNotice(null), 4000);
+      return;
+    }
+    setActiveDay(day);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (day <= 8) {
+      await ensureDayStarted(day);
     }
   };
 
-  const handleToggleCompleteUseCase = (uc: NineDaysUseCaseItem, code: string) => {
-    setCompletedMap((prev) => {
-      const currentList = prev[activeDay] || [];
-      const updatedList = currentList.includes(code)
-        ? currentList.filter((c) => c !== code)
-        : [...currentList, code];
-
-      const newMap = { ...prev, [activeDay]: updatedList };
-      localStorage.setItem(
-        `${STORAGE_COMPLETED_UCS_PREFIX}${activeDay}`,
-        JSON.stringify(updatedList)
-      );
-
-      // If all use cases of activeDay are completed, automatically unlock next day
-      if (
-        dayUseCases.length > 0 &&
-        dayUseCases.every((u) => updatedList.includes(getUseCaseCode(u.id - 1)))
-      ) {
-        const nextDay = Math.min(activeDay + 1, 9);
-        if (nextDay > unlockedDay) {
-          setUnlockedDay(nextDay);
-          localStorage.setItem(STORAGE_UNLOCKED_DAY, String(nextDay));
-        }
-      }
-
-      return newMap;
-    });
-  };
-
-  const handleStartNextDay = () => {
+  const handleStartNextDay = async () => {
     const nextDay = activeDay + 1;
     if (nextDay <= 9) {
       if (nextDay > unlockedDay) {
@@ -208,27 +472,71 @@ export default function NineDaysDayWorkflow() {
       }
       setActiveDay(nextDay);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      if (nextDay <= 8) {
+        await ensureDayStarted(nextDay);
+      }
     }
   };
 
-  const handleCopyPrompt = (uc: NineDaysUseCaseItem) => {
-    const promptText = `Generate production-ready full-stack code for BFSI Banking Use Case: "${uc.title}" (${uc.description}).
-Requirements:
-1. React 18 frontend component with responsive form, Tailwind CSS, validation, and loading states.
-2. Spring Boot 3 REST API Controller, Service, and Repository with transaction management and audit logs.
-3. PostgreSQL DDL schema with primary key, timestamps, foreign keys, and status constraints.
-4. Clean folder architecture and Postman API test requests.`;
+  const handleOpenBusinessView = (uc: NineDaysUseCaseItem) => {
+    sessionStorage.setItem("nineDaysSelectedDay", String(activeDay));
+    sessionStorage.setItem("nineDaysPlanViewType", "business");
+    sessionStorage.setItem(
+      "nineDaysPlanUseCases",
+      JSON.stringify(
+        NINE_DAYS_USE_CASES.map((u) => ({
+          day: u.day,
+          useCaseId: u.path,
+          title: u.title,
+          module: u.module,
+        }))
+      )
+    );
+    navigate(`/${uc.module}/${uc.path}/business`);
+  };
+
+  const handleCopyPrompt = (uc: NineDaysUseCaseItem, ucCode: string) => {
+    const promptText = `Generate production-ready full-stack code for BFSI Banking Use Case [${ucCode}]: "${uc.title}" (${uc.description}).
+
+Architecture & Tech Stack Requirements:
+1. React 18 Frontend Component:
+   - Modern responsive UI with Tailwind CSS and accessible form controls.
+   - Comprehensive client-side validations (PAN / Aadhaar / account number format checks).
+   - Async loading states, clean error handling, and toast alerts.
+2. Spring Boot 3 REST API Backend:
+   - Standard MVC architecture: Controller (@RestController), Service (@Service), Repository (@Repository).
+   - Transaction management (@Transactional) and Maker-Checker role-based approval check.
+   - Global exception handling (@ControllerAdvice) returning standard ProblemDetail JSON.
+3. PostgreSQL Database Schema:
+   - DDL SQL script with UUID primary keys, foreign key constraints, and created_at/updated_at audit columns.
+   - Indexes on frequently queried lookup keys (customer_id, loan_account_no).
+4. Testing & Verification:
+   - Provide Postman cURL command with realistic JSON payload and expected HTTP 200 response body.`;
 
     navigator.clipboard.writeText(promptText);
     setCopiedPromptId(uc.id);
     setTimeout(() => setCopiedPromptId(null), 2500);
   };
 
-  const handleShareLinkedIn = (uc: NineDaysUseCaseItem) => {
+  const handleCopyPostText = (uc: NineDaysUseCaseItem, ucCode: string) => {
+    const postText = `🚀 Day ${activeDay} Milestone: Just built and verified BFSI Banking Use Case ${ucCode} - "${uc.title}" in the #83GLAI 9-Days Job Program!
+
+💡 Core Banking Context: ${uc.description}.
+🛠️ Tech Stack: React 18, Spring Boot 3, PostgreSQL, Tailwind CSS, REST APIs.
+🔒 Verification: Complete audit logs, KYC/deduplication checks, and maker-checker validation.
+
+Looking forward to completing the remaining use cases and Capstone build!
+
+#83GLAI #FullStack #Fintech #CoreBanking #SoftwareEngineering #ASKOXY_AI`;
+
+    navigator.clipboard.writeText(postText);
+    setCopiedPostId(uc.id);
+    setTimeout(() => setCopiedPostId(null), 2500);
+  };
+
+  const handleShareLinkedIn = (uc: NineDaysUseCaseItem, ucCode: string) => {
     const text = encodeURIComponent(
-      `Excited to share my progress in the 9-Days Job Program! Just built and verified Use Case ${getUseCaseCode(
-        uc.id - 1
-      )}: "${uc.title}" (${uc.description}).\n\nFull-Stack implementation with React, Spring Boot, and PostgreSQL.\n\n#83GLAI #FullStack #Fintech #BFSI #ASKOXY_AI`
+      `🚀 Day ${activeDay} Milestone: Just built and verified BFSI Banking Use Case ${ucCode} - "${uc.title}" in the #83GLAI 9-Days Job Program!\n\n💡 Core Banking Context: ${uc.description}.\n🛠️ Tech Stack: React 18, Spring Boot 3, PostgreSQL, Tailwind CSS.\n🔒 Verification: Complete audit logs and maker-checker workflows.\n\n#83GLAI #FullStack #Fintech #CoreBanking #SoftwareEngineering #ASKOXY_AI`
     );
     const url = `https://www.linkedin.com/feed/?shareActive=true&text=${text}`;
     window.open(url, "_blank", "noopener,noreferrer");
@@ -247,60 +555,67 @@ Requirements:
 
   const currentMeta = DAY_METADATA[activeDay - 1] || DAY_METADATA[0];
 
-  // Total completed across all 8 days
-  const totalCompletedCount = useMemo(() => {
-    let count = 0;
-    for (let d = 1; d <= 8; d++) {
-      count += (completedMap[d] || []).length;
+  // Active day's progress: prefer backend progress percentage if recorded, else calculate
+  const activeDayProgressPercent = useMemo(() => {
+    if (typeof dayProgress[activeDay] === "number" && dayProgress[activeDay] > 0) {
+      return Math.min(dayProgress[activeDay], 100);
     }
-    return count;
-  }, [completedMap]);
+    if (dayUseCases.length === 0) return 0;
+    return Math.min(
+      Math.round((activeDayCompleted.length / dayUseCases.length) * 100),
+      100
+    );
+  }, [dayProgress, activeDay, dayUseCases, activeDayCompleted]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 antialiased font-sans selection:bg-emerald-100 selection:text-emerald-900">
       {/* ========================================================================= */}
-      {/* 1. TOP HEADER & BRANDING                                                 */}
+      {/* 1. TOP HEADER & BRANDING (Exact match with business view page)            */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-xs backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-16 md:h-20 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/ninedaysjobprogramplan")}
-              className="flex items-center gap-2 focus:outline-none transition opacity-95 hover:opacity-100"
+              className="flex items-center gap-2 focus:outline-none transition group"
               title="Return to 9-Days Job Program overview"
             >
               <img
                 src={NINE_DAYS_LOGO}
                 alt="9-Days Job Program Logo"
-                className="h-9 w-auto max-w-[160px] object-contain sm:h-10"
+                className="h-10 md:h-12 transition-transform group-hover:scale-105"
               />
             </button>
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-0.5 text-xs font-black text-[#068855]">
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-[#068855]">
               Day {activeDay} of 9: {currentMeta.category}
             </span>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden md:inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600">
-              Total Progress: <strong className="text-emerald-700 font-extrabold">{totalCompletedCount} / 51 Use Cases</strong>
-            </span>
             <button
               type="button"
               onClick={() => navigate("/ninedaysinside")}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 transition"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 transition"
             >
-              ← Prerequisites
+              ← Setup &amp; Prereqs
             </button>
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-bold text-red-600 shadow-xs transition hover:border-red-300 hover:bg-red-100 hover:text-red-700"
+              className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 shadow-xs transition hover:border-red-300 hover:bg-red-100 hover:text-red-700"
             >
               Log Out
             </button>
           </div>
         </div>
       </header>
+
+      {/* Floating Status Notification Toast */}
+      {statusNotice && (
+        <div className="sticky top-14 z-30 bg-emerald-700 text-white px-4 py-2 text-center text-xs font-black shadow-md transition-all animate-in fade-in duration-200">
+          {statusNotice}
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 2. DAY SELECTOR TABS (Days 1 to 8 + Day 9 Capstone)                       */}
@@ -310,10 +625,12 @@ Requirements:
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {DAY_METADATA.map((dm) => {
               const isSelected = activeDay === dm.day;
+              // Strictly locked if day > unlockedDay
               const isLocked = dm.day > unlockedDay;
               const completedCount = (completedMap[dm.day] || []).length;
               const totalInDay = dm.useCaseCount;
-              const isDayFinished = totalInDay > 0 && completedCount >= totalInDay;
+              const isDayFinished =
+                totalInDay > 0 && completedCount >= totalInDay;
 
               return (
                 <button
@@ -330,6 +647,11 @@ Requirements:
                       ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
                       : "bg-white text-slate-700 border border-slate-200 hover:border-emerald-300 hover:bg-slate-50"
                   }`}
+                  title={
+                    isLocked
+                      ? `Day ${dm.day} is locked. Complete Day ${unlockedDay} to unlock.`
+                      : `Open Day ${dm.day}`
+                  }
                 >
                   <span
                     className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
@@ -345,11 +667,13 @@ Requirements:
                     {isDayFinished ? "✓" : dm.day}
                   </span>
                   <span>Day {dm.day}</span>
-                  {isLocked && <span className="text-[10px]">🔒</span>}
+                  {isLocked && <span className="text-[11px]">🔒</span>}
                   {totalInDay > 0 && !isLocked && (
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
-                        isSelected ? "bg-emerald-800 text-emerald-100" : "bg-slate-100 text-slate-500"
+                        isSelected
+                          ? "bg-emerald-800 text-emerald-100"
+                          : "bg-slate-100 text-slate-500"
                       }`}
                     >
                       {completedCount}/{totalInDay}
@@ -369,7 +693,7 @@ Requirements:
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-white">
                   Day {activeDay} Curriculum
                 </span>
@@ -377,8 +701,19 @@ Requirements:
                   {currentMeta.badge} Module
                 </span>
                 <span className="rounded-full bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[11px] font-extrabold text-emerald-800">
-                  {currentMeta.useCaseCount > 0 ? `${currentMeta.useCaseCount} Use Cases` : "Final Capstone"}
+                  {currentMeta.useCaseCount > 0
+                    ? `${currentMeta.useCaseCount} Use Cases`
+                    : "Final Capstone"}
                 </span>
+                {isStartingDay && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 animate-pulse">
+                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    Syncing Day {activeDay} with server...
+                  </span>
+                )}
               </div>
               <h1 className="mt-2 text-2xl font-black text-[#143d2c] sm:text-3xl">
                 Day {activeDay}: {currentMeta.title}
@@ -390,26 +725,28 @@ Requirements:
 
             {/* Day Progress Meter (Days 1 - 8) */}
             {activeDay <= 8 && (
-              <div className="w-full sm:w-72 rounded-2xl border border-emerald-200 bg-white p-4 shadow-xs shrink-0">
+              <div className="w-full sm:w-80 rounded-2xl border border-emerald-200 bg-white p-4 shadow-xs shrink-0">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span>Day {activeDay}: {activeDayCompleted.length} of {dayUseCases.length} Done</span>
-                  <span className="text-emerald-700 font-black">
-                    {dayUseCases.length > 0
-                      ? Math.round((activeDayCompleted.length / dayUseCases.length) * 100)
-                      : 0}%
+                  <span className="font-extrabold text-[#143d2c]">
+                    Day {activeDay} Progress
+                  </span>
+                  <span className="text-emerald-700 font-black text-sm">
+                    {activeDayProgressPercent}%
                   </span>
                 </div>
                 <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200">
                   <div
                     className="h-full bg-gradient-to-r from-emerald-500 to-[#00b96e] transition-all duration-300"
                     style={{
-                      width: `${
-                        dayUseCases.length > 0
-                          ? (activeDayCompleted.length / dayUseCases.length) * 100
-                          : 0
-                      }%`,
+                      width: `${activeDayProgressPercent}%`,
                     }}
                   />
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                  <span>{activeDayCompleted.length} of {dayUseCases.length} Use Cases Done</span>
+                  <span className="text-emerald-700 font-bold">
+                    {isLoadingDashboard ? "Syncing..." : "Dashboard API"}
+                  </span>
                 </div>
 
                 {isAllDayUseCasesCompleted && (
@@ -419,7 +756,9 @@ Requirements:
                     className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-[#00a65d] px-3.5 py-2 text-xs font-black text-white shadow-sm hover:from-emerald-700 hover:to-emerald-600 transition"
                   >
                     <span>
-                      {activeDay < 8 ? `Start Day ${activeDay + 1} →` : "Proceed to Day 9 Capstone →"}
+                      {activeDay < 8
+                        ? `Start Day ${activeDay + 1} →`
+                        : "Proceed to Day 9 Capstone →"}
                     </span>
                   </button>
                 )}
@@ -430,29 +769,29 @@ Requirements:
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. DAYS 1 TO 8: USE CASE WORKFLOW ACCORDION                              */}
+      {/* 4. DAYS 1 TO 8: IN-PLACE USE CASE WORKFLOW ACCORDION                     */}
       {/* ========================================================================= */}
       {activeDay <= 8 ? (
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <span className="text-[11px] font-black uppercase tracking-wider text-[#068855]">
-                Scheduled Banking Workflows
+                Core Banking Workflows ({dayUseCases.length} Total Today)
               </span>
               <h2 className="text-lg font-black text-[#143d2c] sm:text-xl">
-                Select a Use Case to Open and Execute the 5 Action Stages
+                Open each Use Case and execute the 5 In-Place Stages
               </h2>
             </div>
-            <span className="text-xs font-bold text-slate-500">
-              {dayUseCases.length} Use Cases Today
+            <span className="text-xs font-extrabold text-slate-500">
+              Day {activeDay} · {activeDayCompleted.length}/{dayUseCases.length} Completed
             </span>
           </div>
 
           {/* Use Case Accordion List */}
           <div className="space-y-4">
             {dayUseCases.map((uc, index) => {
-              const ucCode = getUseCaseCode(uc.id - 1);
-              const isCompleted = activeDayCompleted.includes(ucCode);
+              const ucCode = getUseCaseCode(index);
+              const isCompleted = isUseCaseCompleted(index, uc.id);
               const isExpanded = expandedUseCaseId === uc.id;
 
               return (
@@ -468,7 +807,9 @@ Requirements:
                 >
                   {/* Header Row */}
                   <div
-                    onClick={() => setExpandedUseCaseId(isExpanded ? null : uc.id)}
+                    onClick={() =>
+                      setExpandedUseCaseId(isExpanded ? null : uc.id)
+                    }
                     className="flex cursor-pointer items-center justify-between gap-4 p-5 sm:p-6"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -483,7 +824,7 @@ Requirements:
                       </span>
 
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs font-black text-emerald-700">
                             {ucCode}
                           </span>
@@ -495,7 +836,7 @@ Requirements:
                           </span>
                           {isCompleted && (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.2 text-[10px] font-black uppercase text-emerald-800 border border-emerald-200">
-                              Completed
+                              ✓ Completed
                             </span>
                           )}
                         </div>
@@ -508,28 +849,25 @@ Requirements:
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggleCompleteUseCase(uc, ucCode);
+                          handleOpenBusinessView(uc);
                         }}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                          isCompleted
-                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
-                            : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
-                        }`}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-[#00a65d] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:from-emerald-700 hover:to-emerald-600 transition"
+                        title="View Use Case"
                       >
-                        {isCompleted ? "✓ Done" : "Mark Done"}
+                        <span>View Use Case ↗</span>
                       </button>
-                      <span className="text-slate-400 text-base font-bold">
+                      <span className="text-slate-400 text-sm font-bold ml-1">
                         {isExpanded ? "▲" : "▼"}
                       </span>
                     </div>
                   </div>
 
-                  {/* Expanded View with 5 Action Stages */}
+                  {/* Expanded View with Clean 5 In-Place Action Stages */}
                   {isExpanded && (
                     <div className="border-t border-slate-100 p-5 sm:p-7 bg-[#fbfdfc] rounded-b-3xl space-y-6">
                       {/* Stage Selector Tabs */}
@@ -560,214 +898,284 @@ Requirements:
                         })}
                       </div>
 
-                      {/* STAGE 1: UNDERSTAND USE CASE */}
+                      {/* ================================================================= */}
+                      {/* STAGE 1: UNDERSTAND USE CASE (Clean, short summary & View Use Case) */}
+                      {/* ================================================================= */}
                       {activeStageTab === "understand" && (
                         <div className="space-y-4">
-                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-                            <h4 className="text-sm font-black text-slate-900 sm:text-base">
-                              Business Overview &amp; Requirements
-                            </h4>
-                            <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                              {uc.description}. In a banking environment, this workflow handles critical KYC, audit controls, validation against core banking systems (CBS), and status transition checks.
-                            </p>
-
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2 text-xs">
-                              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                                <span className="font-bold text-slate-800 block">Banking Rules:</span>
-                                <span className="text-slate-600 mt-1 block">
-                                  Strict field validation, PAN/Aadhaar deduplication checks, and maker-checker approval audit logs.
+                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="space-y-1.5 max-w-2xl">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-black text-emerald-700">
+                                  {ucCode}
+                                </span>
+                                <span className="text-xs font-bold text-slate-400">
+                                  (#{uc.id} of 51)
+                                </span>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[10px] font-black uppercase text-slate-600">
+                                  {uc.moduleLabel}
                                 </span>
                               </div>
-                              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                                <span className="font-bold text-slate-800 block">Core CBS Integration:</span>
-                                <span className="text-slate-600 mt-1 block">
-                                  Emits transactional events, updates customer loan master tables, and generates audit sequence ID.
-                                </span>
-                              </div>
+                              <h4 className="text-base font-black text-slate-900 sm:text-lg">
+                                {uc.title}
+                              </h4>
+                              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                                {uc.description}
+                              </p>
                             </div>
-                          </div>
 
-                          <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
-                              onClick={() => navigate(`/${uc.module}/${uc.path}/business`)}
-                              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition"
+                              onClick={() => handleOpenBusinessView(uc)}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-[#00a65d] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-sm hover:from-emerald-700 hover:to-emerald-600 transition shrink-0"
                             >
-                              <span>💼 Launch Business View ↗</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/${uc.module}/${uc.path}/system`)}
-                              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
-                            >
-                              <span>⚙️ Launch System View ↗</span>
+                              <span>View Use Case ↗</span>
                             </button>
                           </div>
                         </div>
                       )}
 
-                      {/* STAGE 2: GENERATE CODE */}
+                      {/* ================================================================= */}
+                      {/* STAGE 2: GENERATE CODE (AI Prompt + Copy Button)                 */}
+                      {/* ================================================================= */}
                       {activeStageTab === "generate" && (
                         <div className="space-y-4">
-                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-black text-slate-900 sm:text-base">
-                                AI Prompt for Full-Stack Implementation
-                              </h4>
+                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div>
+                                <h4 className="text-sm font-black text-slate-900 sm:text-base">
+                                  Full-Stack AI Implementation Prompt
+                                </h4>
+                                <p className="text-xs text-slate-500 font-medium">
+                                  Copy this prompt directly into Gemini, ChatGPT, Claude, or Cursor to generate production code.
+                                </p>
+                              </div>
                               <button
                                 type="button"
-                                onClick={() => handleCopyPrompt(uc)}
-                                className="rounded-lg bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition"
+                                onClick={() => handleCopyPrompt(uc, ucCode)}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition shrink-0"
                               >
-                                {copiedPromptId === uc.id ? "✓ Copied!" : "Copy Prompt"}
+                                <span>{copiedPromptId === uc.id ? "✓ Copied!" : "📋 Copy Prompt"}</span>
                               </button>
                             </div>
 
-                            <p className="mt-1 text-xs text-slate-500 font-medium">
-                              Copy this prompt directly into Gemini, ChatGPT, or Claude to generate production-ready code.
-                            </p>
-
-                            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-900 p-4 font-mono text-xs text-emerald-300 leading-relaxed select-all">
-                              Generate production-ready full-stack code for BFSI Use Case: &quot;{uc.title}&quot; ({uc.description}).<br />
-                              Requirements:<br />
-                              1. React 18 frontend component with responsive form, Tailwind CSS, validation, and loading states.<br />
-                              2. Spring Boot 3 REST API Controller, Service, and Repository with transaction management and error handling.<br />
-                              3. PostgreSQL DDL schema with primary key, timestamps, constraints, and audit columns.<br />
-                              4. Clean folder structure and Postman test curl requests.
+                            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs text-emerald-400 leading-relaxed overflow-x-auto select-all">
+                              Generate production-ready full-stack code for BFSI Banking Use Case [{ucCode}]: &quot;{uc.title}&quot; ({uc.description}).<br /><br />
+                              Architecture &amp; Tech Stack Requirements:<br />
+                              1. React 18 Frontend Component:<br />
+                              &nbsp;&nbsp;- Modern responsive UI with Tailwind CSS and form validations.<br />
+                              &nbsp;&nbsp;- PAN / Aadhaar / mobile deduplication checks, error banners, and loading states.<br />
+                              2. Spring Boot 3 REST API Backend:<br />
+                              &nbsp;&nbsp;- Controller (@RestController), Service (@Service), Repository (@Repository).<br />
+                              &nbsp;&nbsp;- @Transactional, Maker-Checker authorization, and audit log persistence.<br />
+                              3. PostgreSQL Database Schema:<br />
+                              &nbsp;&nbsp;- DDL SQL script with primary keys, foreign keys, and audit timestamps.<br />
+                              4. Postman API Test Requests &amp; cURL Commands.
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {/* STAGE 3: RUN CODE */}
+                      {/* ================================================================= */}
+                      {/* STAGE 3: RUN CODE (Spring Boot, React, DB, Postman)              */}
+                      {/* ================================================================= */}
                       {activeStageTab === "run" && (
                         <div className="space-y-4">
-                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs">
                             <h4 className="text-sm font-black text-slate-900 sm:text-base">
-                              Run &amp; Test Locally
+                              Local Execution &amp; Testing Instructions
                             </h4>
 
-                            <div className="space-y-2 text-xs">
-                              <span className="font-bold text-slate-700 block">1. Start Spring Boot Backend:</span>
-                              <code className="block rounded-lg bg-slate-100 border border-slate-200 p-2 font-mono text-slate-800">
-                                ./mvnw spring-boot:run
-                              </code>
-
-                              <span className="font-bold text-slate-700 block mt-2">2. Start React Frontend:</span>
-                              <code className="block rounded-lg bg-slate-100 border border-slate-200 p-2 font-mono text-slate-800">
-                                npm run dev
-                              </code>
-
-                              <span className="font-bold text-slate-700 block mt-2">3. Test in Postman:</span>
-                              <p className="text-slate-600 font-medium">
-                                Send a POST request to <code className="bg-slate-100 px-1 py-0.5 rounded">http://localhost:8080/api/v1/{uc.path}</code> with sample JSON payload and verify HTTP 200 OK response.
+                            {/* Step 1: DB */}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-1.5">
+                              <span className="font-bold text-slate-900 block flex items-center gap-1.5">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] text-white font-black">1</span>
+                                PostgreSQL Database Setup &amp; Migration
+                              </span>
+                              <p className="text-slate-600">
+                                Run the DDL schema in pgAdmin or terminal to create the database table and indexes:
                               </p>
+                              <pre className="rounded-lg bg-slate-900 p-2.5 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+{`psql -U postgres -d bfsi_core -c "CREATE TABLE IF NOT EXISTS ${uc.path.replace(/-/g, "_")} (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id VARCHAR(64) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);"`}
+                              </pre>
                             </div>
-                          </div>
 
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/${uc.module}/${uc.path}/system`)}
-                              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition"
-                            >
-                              <span>Open System Test Interface ↗</span>
-                            </button>
+                            {/* Step 2: Spring Boot */}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-1.5">
+                              <span className="font-bold text-slate-900 block flex items-center gap-1.5">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] text-white font-black">2</span>
+                                Start Spring Boot REST API Backend (Port 8080)
+                              </span>
+                              <pre className="rounded-lg bg-slate-900 p-2.5 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+{`# Linux / macOS
+./mvnw spring-boot:run
+
+# Windows PowerShell
+.\\mvnw.cmd spring-boot:run`}
+                              </pre>
+                            </div>
+
+                            {/* Step 3: React Frontend */}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-1.5">
+                              <span className="font-bold text-slate-900 block flex items-center gap-1.5">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] text-white font-black">3</span>
+                                Start React Frontend (Port 5173 / 3000)
+                              </span>
+                              <pre className="rounded-lg bg-slate-900 p-2.5 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+{`npm install
+npm run dev`}
+                              </pre>
+                            </div>
+
+                            {/* Step 4: Postman API Test */}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-1.5">
+                              <span className="font-bold text-slate-900 block flex items-center gap-1.5">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] text-white font-black">4</span>
+                                Postman / cURL API Test Request
+                              </span>
+                              <pre className="rounded-lg bg-slate-900 p-2.5 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+{`curl -X POST "http://localhost:8080/api/v1/${uc.path}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"customerId": "CUST-98721", "status": "INITIATED"}'`}
+                              </pre>
+                              <span className="text-[11px] font-semibold text-emerald-700 block">
+                                Expected Response: HTTP 200 OK with status: &quot;SUCCESS&quot; and reference ID.
+                              </span>
+                            </div>
                           </div>
                         </div>
                       )}
 
-                      {/* STAGE 4: DEPLOYMENT */}
+                      {/* ================================================================= */}
+                      {/* STAGE 4: DEPLOYMENT (Vercel, Docker, Mobile APK)                 */}
+                      {/* ================================================================= */}
                       {activeStageTab === "deploy" && (
                         <div className="space-y-4">
                           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3 text-xs sm:text-sm">
                             <h4 className="text-sm font-black text-slate-900 sm:text-base">
-                              Production Deployment Steps
+                              Production Cloud &amp; Mobile Deployment Steps
                             </h4>
 
-                            <div className="space-y-2.5 text-slate-600 font-medium">
-                              <div className="flex items-start gap-2">
-                                <span className="font-bold text-emerald-700">1.</span>
-                                <span><strong>Frontend:</strong> Commit to GitHub repository and trigger continuous deployment via Vercel.</span>
+                            <div className="space-y-3 text-slate-600 font-medium">
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex items-start gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs">
+                                  1
+                                </span>
+                                <div>
+                                  <strong className="text-slate-900 block">Web Frontend to Vercel:</strong>
+                                  <span className="text-xs">
+                                    Commit your code to GitHub, connect the repository to Vercel, set your environment variable <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800">VITE_API_URL</code>, and deploy live.
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex items-start gap-2">
-                                <span className="font-bold text-emerald-700">2.</span>
-                                <span><strong>Backend:</strong> Deploy Docker container or JAR to Render, Railway, or AWS EC2 with environment secrets.</span>
+
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex items-start gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
+                                  2
+                                </span>
+                                <div>
+                                  <strong className="text-slate-900 block">Spring Boot Backend Container:</strong>
+                                  <span className="text-xs">
+                                    Package backend JAR with <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800">mvn clean package</code>, build Docker image, and deploy to AWS ECS, Render, or Railway with database connection strings.
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex items-start gap-2">
-                                <span className="font-bold text-emerald-700">3.</span>
-                                <span><strong>Mobile App:</strong> Run Expo EAS build <code className="bg-slate-100 px-1 py-0.5 rounded text-xs font-mono">eas build -p android</code> or Capacitor build for native APK.</span>
+
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex items-start gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-white font-bold text-xs">
+                                  3
+                                </span>
+                                <div>
+                                  <strong className="text-slate-900 block">Mobile APK Build (Expo EAS / Capacitor):</strong>
+                                  <span className="text-xs">
+                                    Build your Android APK using <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800 font-mono">eas build -p android --profile preview</code> or Capacitor native sync to test on real devices.
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {/* STAGE 5: PUBLISH LINKED #83GLAI COMPANIES */}
+                      {/* ================================================================= */}
+                      {/* STAGE 5: PUBLISH LINKED #83GLAI                                  */}
+                      {/* ================================================================= */}
                       {activeStageTab === "publish" && (
                         <div className="space-y-4">
                           <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-5 shadow-xs space-y-3">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-black text-slate-900 sm:text-base">
-                                Publish &amp; Link #83GLAI Hiring Partner Companies
-                              </h4>
-                              <span className="rounded-full bg-blue-100 border border-blue-200 px-2.5 py-0.5 text-[11px] font-black text-blue-800">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div>
+                                <h4 className="text-sm font-black text-slate-900 sm:text-base">
+                                  Publish &amp; Link #83GLAI Hiring Partner Companies
+                                </h4>
+                                <p className="text-xs text-slate-600 font-medium">
+                                  Engineering managers and recruiters across 83+ partner companies monitor #83GLAI for hiring.
+                                </p>
+                              </div>
+                              <span className="rounded-full bg-blue-100 border border-blue-200 px-2.5 py-0.5 text-[11px] font-black text-blue-800 self-start sm:self-auto">
                                 #83GLAI Official
                               </span>
                             </div>
 
-                            <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                              Share your verified use case implementation, architecture diagram, and GitHub commit on LinkedIn with the official hashtag <strong className="text-blue-800">#83GLAI</strong>. Recruiters and engineering leaders from 83+ partner companies actively monitor this hashtag to hire top performers.
-                            </p>
-
                             <div className="rounded-xl border border-blue-200 bg-white p-4 font-mono text-xs text-slate-800 leading-relaxed select-all">
-                              🚀 Just completed BFSI Use Case {ucCode}: &quot;{uc.title}&quot; in the #83GLAI 9-Days Job Program!<br /><br />
-                              💡 Tech Stack: React 18, Spring Boot 3, PostgreSQL, Tailwind CSS.<br />
-                              🔗 Built full maker-checker approval workflows, REST APIs, and database migrations.<br /><br />
-                              #83GLAI #FullStack #Fintech #SoftwareEngineering #ASKOXY_AI
+                              🚀 Day {activeDay} Milestone: Just built and verified BFSI Banking Use Case {ucCode} - &quot;{uc.title}&quot; in the #83GLAI 9-Days Job Program!<br /><br />
+                              💡 Core Banking Context: {uc.description}.<br />
+                              🛠️ Tech Stack: React 18, Spring Boot 3, PostgreSQL, Tailwind CSS.<br />
+                              🔒 Verification: Complete audit logs and maker-checker workflows.<br /><br />
+                              #83GLAI #FullStack #Fintech #CoreBanking #SoftwareEngineering #ASKOXY_AI
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleShareLinkedIn(uc)}
-                              className="inline-flex items-center gap-2 rounded-xl bg-[#0a66c2] px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#084e96] transition"
-                            >
-                              <span>Share on LinkedIn with #83GLAI ↗</span>
-                            </button>
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleShareLinkedIn(uc, ucCode)}
+                                className="inline-flex items-center gap-2 rounded-xl bg-[#0a66c2] px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#084e96] transition"
+                              >
+                                <span>Share on LinkedIn with #83GLAI ↗</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyPostText(uc, ucCode)}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                              >
+                                <span>{copiedPostId === uc.id ? "✓ Post Copied!" : "📋 Copy Post Text"}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}
 
-                      {/* Bottom Done Checkbox */}
-                      <div className="flex items-center justify-between border-t border-slate-200 pt-4">
-                        <label className="flex items-center gap-2.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isCompleted}
-                            onChange={() => handleToggleCompleteUseCase(uc, ucCode)}
-                            className="h-5 w-5 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                          />
-                          <span className="text-xs font-bold text-slate-800">
-                            {isCompleted
-                              ? "Completed (All 5 stages verified)"
-                              : "Mark this use case completed"}
-                          </span>
-                        </label>
+                      {/* Bottom Action Area (Only Next Use Case navigation; View Use Case kept strictly at header row & Understand stage) */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                        <div className="text-xs font-medium text-slate-600">
+                          {isCompleted ? (
+                            <span className="text-emerald-700 font-extrabold inline-flex items-center gap-1.5">
+                              <span>✓</span> Use Case completed and verified on backend.
+                            </span>
+                          ) : (
+                            <span>
+                              Click &quot;View Use Case ↗&quot; above to verify the workflow and complete this use case.
+                            </span>
+                          )}
+                        </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!isCompleted) handleToggleCompleteUseCase(uc, ucCode);
-                            // Open next use case in active day if available
-                            if (index + 1 < dayUseCases.length) {
+                        {index + 1 < dayUseCases.length && (
+                          <button
+                            type="button"
+                            onClick={() => {
                               setExpandedUseCaseId(dayUseCases[index + 1].id);
                               setActiveStageTab("understand");
-                            }
-                          }}
-                          className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition"
-                        >
-                          {index + 1 < dayUseCases.length ? "Save & Next Use Case →" : "Save Use Case"}
-                        </button>
+                            }}
+                            className="w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                          >
+                            <span>Next Use Case →</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -802,7 +1210,9 @@ Requirements:
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-[#00a65d] px-7 py-3 text-sm font-black text-white shadow-md hover:from-emerald-700 hover:to-emerald-600 transition"
                 >
                   <span>
-                    {activeDay < 8 ? `Start Day ${activeDay + 1} →` : "Proceed to Day 9 Capstone →"}
+                    {activeDay < 8
+                      ? `Start Day ${activeDay + 1} →`
+                      : "Proceed to Day 9 Capstone →"}
                   </span>
                 </button>
               </div>
@@ -820,10 +1230,10 @@ Requirements:
                 Day 9 Final Capstone
               </span>
               <h2 className="mt-2 text-2xl font-black text-[#143d2c] sm:text-3xl">
-                Build Complete 51 Use-Case Banking Application &amp; Certification
+                Build Complete 51 Use-Case Banking Application 
               </h2>
               <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium max-w-3xl">
-                You have systematically understood, generated code for, tested, and published all 51 core banking workflows across LOS, FMS, and CMS. Assemble your unified production repository and submit for certification.
+                You have systematically understood, generated code for, tested, and published all 51 core banking workflows across LOS, FMS, and CMS. 
               </p>
             </div>
 
@@ -833,7 +1243,9 @@ Requirements:
                 <span className="text-xs font-bold text-emerald-700 block uppercase tracking-wider">
                   LOS (Days 1 &amp; 2)
                 </span>
-                <h4 className="text-base font-black text-slate-900 mt-1">14 Origination Use Cases</h4>
+                <h4 className="text-base font-black text-slate-900 mt-1">
+                  14 Origination Use Cases
+                </h4>
                 <p className="text-xs text-slate-600 mt-1">
                   Customer ID, KYC, appraisal, sanctions, repayment schedules, and credit check.
                 </p>
@@ -843,7 +1255,9 @@ Requirements:
                 <span className="text-xs font-bold text-amber-700 block uppercase tracking-wider">
                   FMS (Days 3, 4, 5, 6)
                 </span>
-                <h4 className="text-base font-black text-slate-900 mt-1">25 Servicing &amp; Ops Use Cases</h4>
+                <h4 className="text-base font-black text-slate-900 mt-1">
+                  25 Servicing &amp; Ops Use Cases
+                </h4>
                 <p className="text-xs text-slate-600 mt-1">
                   PDC printing, NPA grading/provisioning, knock-offs, settlements, EOD/BOD, and deferrals.
                 </p>
@@ -853,7 +1267,9 @@ Requirements:
                 <span className="text-xs font-bold text-purple-700 block uppercase tracking-wider">
                   CMS (Days 7 &amp; 8)
                 </span>
-                <h4 className="text-base font-black text-slate-900 mt-1">12 Delinquency Use Cases</h4>
+                <h4 className="text-base font-black text-slate-900 mt-1">
+                  12 Delinquency Use Cases
+                </h4>
                 <p className="text-xs text-slate-600 mt-1">
                   Delinquent case allocation, queue management, contact records, and legal recovery.
                 </p>

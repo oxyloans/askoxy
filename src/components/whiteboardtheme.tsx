@@ -61,7 +61,7 @@ const Whiteboardtheme: React.FC = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+      const redirectPath = "/main/askoxyjobs";
       if (userId) {
         navigate(redirectPath);
       } else {

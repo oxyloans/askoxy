@@ -113,7 +113,7 @@ const RadhAIPage: React.FC = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+      const redirectPath = "/main/askoxyjobs";
 
       if (userId) {
         navigate(redirectPath);
@@ -183,7 +183,7 @@ const RadhAIPage: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) return null;
@@ -414,7 +414,7 @@ const RadhAIPage: React.FC = () => {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-10">
           <div className="flex items-center gap-3">
             <img
-              onClick={()=>navigate("/")}
+              onClick={() => navigate("/")}
               src={ASKOXYLOGO1}
               alt="Walk-in Interview"
               className="hidden h-10 w-auto cursor-pointer object-contain sm:block sm:h-14 lg:h-16"
@@ -683,8 +683,7 @@ const RadhAIPage: React.FC = () => {
 
           <div className="mb-8 mt-12 text-center">
             <h2 className="text-3xl font-black leading-tight sm:text-4xl">
-              radhAI as{" "}
-              <span className="text-cyan-300">Regulatory Expert</span>
+              radhAI as <span className="text-cyan-300">Regulatory Expert</span>
             </h2>
 
             <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
@@ -698,7 +697,6 @@ const RadhAIPage: React.FC = () => {
           </div>
         </div>
       </section>
-
 
       <section className="relative z-10 px-4 pb-20 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-7xl rounded-[34px] border border-cyan-300/20 bg-white/[0.045] p-7 text-center shadow-[0_0_70px_rgba(0,245,255,0.12)] backdrop-blur-xl sm:p-10 lg:p-14">

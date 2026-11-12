@@ -92,7 +92,7 @@ const AIInterviewLanding: React.FC = () => {
   };
 
   const handleWalkInAction = () => {
-    const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+    const redirectPath = "/main/askoxyjobs";
 
     if (isLoggedIn) {
       navigate(redirectPath);
@@ -213,7 +213,7 @@ const AIInterviewLanding: React.FC = () => {
               <button
                 type="button"
                 // onClick={() => setIsWalkInModalOpen(true)}
-                     onClick={() => navigate("/radhai")}
+                onClick={() => navigate("/radhai")}
                 className="flex h-[82px] w-[82px] translate-x-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95 sm:h-[112px] sm:w-[112px] sm:translate-x-7 lg:h-[140px] lg:w-[140px] lg:translate-x-10"
                 aria-label="View walk-in interview steps"
               >

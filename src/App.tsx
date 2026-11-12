@@ -170,6 +170,7 @@ const GoldLandingPage = lazy(() => import("./components/GoldLandingPage"));
 const JPLLandingPage = lazy(() => import("./components/JPL/JPLLandingPage"));
 const BroadRidgeJobsPage = lazy(() => import("./components/BroadRidgepage"));
 const JobViewPage = lazy(() => import("./components/JobsViewPage"));
+const AskOxyJobsPage = lazy(() => import("./components/AskOxyJobsPage"));
 const JobAnalysisResult = lazy(() => import("./components/JobAnalysisResult"));
 const ExamPage = lazy(() => import("./components/ExamPage"));
 const ExamQuestionPage = lazy(() => import("./components/ExamQuestionPage"));
@@ -1032,6 +1033,8 @@ const App: React.FC = () => {
       "/techmahindra/jobs",
       "/allcompanies/jobs",
       "/broadridge/jobs",
+      "/askoxyjobs",
+      "/askoxy-jobs",
       "blog/:id/:type",
       "/credera/jobs",
       "/jpl",
@@ -1472,6 +1475,10 @@ const App: React.FC = () => {
                 path="viewjobdetails/:id/:company"
                 element={<JobViewPage />}
               />
+              <Route path="askoxyjobs" element={<AskOxyJobsPage />} />
+              <Route path="askoxyjobs/:id" element={<AskOxyJobsPage />} />
+              <Route path="askoxy-jobs" element={<AskOxyJobsPage />} />
+              <Route path="askoxy-jobs/:id" element={<AskOxyJobsPage />} />
               <Route path="caserviceitems" element={<CAServicesItems />} />
               <Route path="metroLogin" element={<MetroLogin />} />
               <Route
@@ -2416,6 +2423,10 @@ const App: React.FC = () => {
                   path="viewjobdetails/:id/:company"
                   element={<JobViewPage />}
                 />
+                <Route path="askoxyjobs" element={<AskOxyJobsPage />} />
+                <Route path="askoxyjobs/:id" element={<AskOxyJobsPage />} />
+                <Route path="askoxy-jobs" element={<AskOxyJobsPage />} />
+                <Route path="askoxy-jobs/:id" element={<AskOxyJobsPage />} />
                 <Route path="job-program" element={<JobProgramDashboard />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="writetous" element={<WriteToUs />} />

@@ -1,13 +1,5 @@
 import React from "react";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   OXY Group Companies — infinite CSS marquee logo strip
-   • Slow, continuous right-to-left scroll on ALL screen sizes
-   • Track duplicated for a seamless, gap-free loop
-   • Edge-fade mask for a polished look
-   • Pauses on hover / focus for accessibility
-   • Fully responsive logo sizes (h-10 mobile → h-16 desktop)
-───────────────────────────────────────────────────────────────────────────── */
 
 const logos = [
   {
@@ -25,11 +17,11 @@ const logos = [
     name: "OXYBRICKS.WORLD",
     href: "https://oxybricks.world/",
   },
-  // {
-  //   src: "https://i.ibb.co/XxJJRXx5/jun-logo.png",
-  //   name: "OXY JOURNEYS",
-  //   href: "https://www.oxyjourneys.com/"
-  // },
+  {
+    src: "https://i.ibb.co/XxJJRXx5/jun-logo.png",
+    name: "OXY JOURNEYS",
+    href: "https://www.oxyjourneys.com/"
+  },
   {
     src: "https://i.ibb.co/gb9bNnTZ/oxygoldlogo-bk.png",
     name: "OXYGOLD.AI",

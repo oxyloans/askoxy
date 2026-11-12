@@ -520,11 +520,12 @@ export default function NineDaysJobProgramPlan({
           </button>
           <nav
             aria-label="Page navigation"
-            className="hidden items-center gap-6 text-sm font-semibold text-slate-600 md:flex"
+            className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex lg:gap-6"
           >
             <button
+              type="button"
               onClick={() => scrollTo("roadmap")}
-              className="hover:text-[#068855]"
+              className="whitespace-nowrap hover:text-[#068855]"
             >
               Curriculum
             </button>
@@ -535,14 +536,26 @@ export default function NineDaysJobProgramPlan({
               #83GLAI
             </button> */}
             <button
+              type="button"
               onClick={() => scrollTo("benefits")}
-              className="hover:text-[#068855]"
+              className="whitespace-nowrap hover:text-[#068855]"
             >
               Why join
             </button>
             <button
+              type="button"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                scrollTo("ecosystem");
+              }}
+              className="whitespace-nowrap border-0 bg-transparent focus:outline-none hover:text-[#068855]"
+            >
+              Our Platforms
+            </button>
+            <button
+              type="button"
               onClick={() => scrollTo("faq")}
-              className="hover:text-[#068855]"
+              className="whitespace-nowrap hover:text-[#068855]"
             >
               FAQs
             </button>
@@ -832,7 +845,7 @@ export default function NineDaysJobProgramPlan({
         </section>
         <section
           id="ecosystem"
-          className="overflow-hidden border-y border-[#deebe2] bg-white py-8 sm:py-10 lg:py-12"
+          className="overflow-hidden bg-white py-8 sm:py-10 lg:py-12"
         >
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
             <span className="text-xs font-extrabold uppercase tracking-[.16em] text-[#068855]">
@@ -973,12 +986,21 @@ export default function NineDaysJobProgramPlan({
             </button>
             
             <button
+              type="button"
               onClick={() => scrollTo("benefits")}
               className="hover:text-[#068855]"
             >
               Why join
             </button>
             <button
+              type="button"
+              onClick={() => scrollTo("ecosystem")}
+              className="hover:text-[#068855]"
+            >
+              Our Platforms
+            </button>
+            <button
+              type="button"
               onClick={() => scrollTo("faq")}
               className="hover:text-[#068855]"
             >

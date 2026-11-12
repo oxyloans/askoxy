@@ -13,6 +13,7 @@ import {
   Clock,
   Lock,
   CreditCard,
+  ShoppingCart,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -396,6 +397,16 @@ const SubscriptionCard: React.FC<{
                       </span>
                     </div>
                   </li>
+                  <li className="flex items-start">
+  <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
+    <ShoppingCart size={16} />
+  </div>
+  <div className="ml-2">
+    <span className="text-sm font-bold text-purple-700">
+      Redeemable only for rice & groceries
+    </span>
+  </div>
+</li>
                 </>
               ) : (
                 <>
@@ -407,6 +418,16 @@ const SubscriptionCard: React.FC<{
                       Instant wallet credit
                     </span>
                   </li>
+                  <li className="flex items-start">
+  <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
+    <ShoppingCart size={16} />
+  </div>
+  <div className="ml-2">
+    <span className="text-sm font-bold text-gray-600">
+      Redeemable only for rice & groceries
+    </span>
+  </div>
+</li>
                 </>
               )}
             </ul>

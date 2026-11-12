@@ -284,6 +284,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaBriefcase size={16} />,
         },
         {
+          to: "/main/askoxyjobs",
+          label: "AskOxy Jobs",
+          icon: <FaRobot size={16} />,
+        },
+        {
           to: "/main/appliedjobs",
           label: "My Job Applications",
           icon: <FaRegCheckCircle size={16} />,

@@ -151,7 +151,7 @@ const HiringPages: React.FC = () => {
   }, [searchTerm]);
 
   const handleApplyNow = (jobId: string) => {
-    const redirectPath = `/main/viewjobdetails/${jobId}/ASKOXY_AI`;
+    const redirectPath = `/main/askoxyjobs/${jobId}`;
 
     if (userId) {
       navigate(redirectPath);
