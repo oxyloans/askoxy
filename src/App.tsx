@@ -821,6 +821,9 @@ const VoiceAdminScheduled = lazy(
 const VoiceAdminInstructions = lazy(
   () => import("./AIvoicesupport/AgentInstructions"),
 );
+const VoiceAdminSelfLearning = lazy(
+  () => import("./AIvoicesupport/SelfLearningKnowledge"),
+);
 const MakeACall = lazy(() => import("./AIvoicesupport/components/makeacall"));
 const VoiceAdminLogin = lazy(() => import("./AIvoicesupport/Login"));
 
@@ -2525,6 +2528,10 @@ const App: React.FC = () => {
               <Route
                 path="/voiceadmin/instructions"
                 element={<VoiceAdminInstructions />}
+              />
+              <Route
+                path="/voiceadmin/selflearning"
+                element={<VoiceAdminSelfLearning />}
               />
               <Route path="/voiceadmin/makeacall" element={<MakeACall />} />
 

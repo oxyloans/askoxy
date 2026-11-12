@@ -24,6 +24,7 @@ export const NAV_ITEMS = [
   { key: "scheduled", label: "Scheduled Calls", icon: RiCalendarScheduleLine },
   { key: "history", label: "Call History", icon: RiHistoryLine },
   { key: "instructions", label: "Agent Instructions", icon: RiSettings4Line },
+  { key: "selflearning", label: "Self-Learning Knowledge", icon: RiRobot2Line },
   { key: "makeacall", label: "Make a Call", icon: RiAddCircleLine },
 ] as const;
 

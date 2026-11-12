@@ -11,6 +11,9 @@ import type {
   OutboundCallRequest,
   OutboundCallResponse,
   ScheduledCallsResponse,
+  CustomerKnowledgeGap,
+  DynamicKnowledgeEntry,
+  KnowledgeGapStatus,
 } from "./types";
 import BASE_URL from "../Config";
 
@@ -156,6 +159,120 @@ export const placeOutboundCall = async (
   const { data } = await client.post<OutboundCallResponse>(
     "/outbound/call",
     req,
+  );
+  return data;
+};
+
+// ── Autonomous Self-Learning & Dynamic Knowledge APIs ────────────────────────
+
+/** Fetch customer knowledge gaps (unanswered / fallback queries from calls). */
+export const getKnowledgeGaps = async (
+  platform?: string,
+  status?: KnowledgeGapStatus,
+): Promise<CustomerKnowledgeGap[]> => {
+  const { data } = await client.get<CustomerKnowledgeGap[]>(
+    "/admin/self-learning/gaps",
+    { params: { platform: platform === "ALL" ? undefined : platform, status } },
+  );
+  return data;
+};
+
+/** Fetch active dynamically learned knowledge entries. */
+export const getActiveKnowledgeEntries = async (
+  platform?: string,
+): Promise<DynamicKnowledgeEntry[]> => {
+  const { data } = await client.get<DynamicKnowledgeEntry[]>(
+    "/admin/self-learning/entries",
+    { params: { platform: platform === "ALL" ? undefined : platform } },
+  );
+  return data;
+};
+
+/** Approve and publish a knowledge gap into live voice AI calls. */
+export const approveKnowledgeGap = async (
+  gapId: number,
+  answer?: string,
+  teluguAnswer?: string,
+): Promise<{ status: string; message: string; entry: DynamicKnowledgeEntry }> => {
+  const { data } = await client.post(
+    `/admin/self-learning/approve/${gapId}`,
+    { answer, teluguAnswer },
+  );
+  return data;
+};
+
+/** Reject a knowledge gap. */
+export const rejectKnowledgeGap = async (
+  gapId: number,
+): Promise<{ status: string; message: string }> => {
+  const { data } = await client.post(
+    `/admin/self-learning/reject/${gapId}`,
+  );
+  return data;
+};
+
+/** Create a dynamic knowledge entry directly. */
+export const createDirectKnowledgeEntry = async (
+  payload: {
+    platform: string;
+    intentKey: string;
+    queryMatchPatterns: string;
+    verifiedAnswer: string;
+    teluguAnswer?: string;
+  },
+): Promise<{ status: string; message: string; entry: DynamicKnowledgeEntry }> => {
+  const { data } = await client.post(
+    "/admin/self-learning/create",
+    payload,
+  );
+  return data;
+};
+
+/** Update an existing dynamic knowledge entry in live calls. */
+export const updateKnowledgeEntry = async (
+  id: number,
+  payload: {
+    platform?: string;
+    intentKey?: string;
+    queryMatchPatterns?: string;
+    verifiedAnswer?: string;
+    teluguAnswer?: string;
+    active?: boolean;
+  },
+): Promise<{ status: string; message: string; entry: DynamicKnowledgeEntry }> => {
+  const { data } = await client.put(
+    `/admin/self-learning/entries/${id}`,
+    payload,
+  );
+  return data;
+};
+
+/** Delete a dynamic knowledge entry. */
+export const deleteKnowledgeEntry = async (
+  id: number,
+): Promise<{ status: string; message: string }> => {
+  const { data } = await client.delete(
+    `/admin/self-learning/entries/${id}`,
+  );
+  return data;
+};
+
+/** Test AI Knowledge Match in real-time. */
+export const testKnowledgeMatch = async (payload: {
+  platform: string;
+  query: string;
+  language?: "english" | "telugu";
+}): Promise<{
+  matched: boolean;
+  intentKey?: string;
+  matchedKeywords?: string;
+  spokenAnswer: string;
+  confidence: number;
+  entry?: DynamicKnowledgeEntry;
+}> => {
+  const { data } = await client.post(
+    "/admin/self-learning/test",
+    payload,
   );
   return data;
 };

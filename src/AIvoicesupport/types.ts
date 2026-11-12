@@ -296,3 +296,38 @@ export interface ScheduledCallsResponse {
   totalCalls: number;
   calls: ScheduledCallItem[];
 }
+
+// ── Autonomous Self-Learning & Continuous Knowledge Types ───────────────────
+
+export type KnowledgeGapStatus = "PENDING" | "AUTO_LEARNED" | "APPROVED" | "REJECTED";
+
+export interface CustomerKnowledgeGap {
+  id: number;
+  streamSid: string;
+  callerNumber: string | null;
+  platform: string;
+  rawCallerQuestion: string;
+  callerIntent: string;
+  detectedTrigger: string;
+  suggestedAnswer: string | null;
+  occurrenceCount: number;
+  confidenceScore: number;
+  status: KnowledgeGapStatus;
+  sourceUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DynamicKnowledgeEntry {
+  id: number;
+  platform: string;
+  intentKey: string;
+  queryMatchPatterns: string;
+  verifiedAnswer: string;
+  teluguAnswer?: string | null;
+  active: boolean;
+  usageCount: number;
+  learnedFromGapId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
