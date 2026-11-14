@@ -6,12 +6,18 @@
 
 // export default BASE_URL;
 
-const userType = localStorage.getItem("userType") || "live";
+// const userType = localStorage.getItem("userType") || "live";
 
-const BASE_URL =
-  userType === "live"
-    ? "https://meta.oxyloans.com/api"
-    : "https://meta.oxyglobal.tech/api";
+// const BASE_URL =
+//   userType === "live"
+//     ? "https://meta.oxyloans.com/api"
+//     : "https://meta.oxyglobal.tech/api";
+
+
+
+const BASE_URL = "https://meta.oxyloans.com/api";
+
+// export default BASE_URL;
 
 const DEFAULT_CART_AGENT_BASE = `${BASE_URL}/cart-service/agent`;
 

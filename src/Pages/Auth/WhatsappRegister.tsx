@@ -821,8 +821,11 @@ if (primaryType === "AGENT") {
         err.response?.data?.error ||
         "Invalid OTP. Please try again.";
 
-      // Only redirect away for 409 (already registered), never for OTP errors
-      if (err.response?.status === 409) {
+      // A 409 can also represent an invalid OTP; redirect only for duplicate accounts.
+      if (
+        err.response?.status === 409 &&
+        msg.toLowerCase().includes("already registered")
+      ) {
         setOtpError(msg);
         const loginUrl =
           hasCustomPrimaryType(primaryType)
@@ -1163,7 +1166,7 @@ if (primaryType === "AGENT") {
                   </div>
 
                   {otpError && (
-                    <p className="animate-fadeIn flex items-center gap-1 text-sm text-red-600">
+                    <p className="animate-fadeIn w-full text-center text-sm text-red-600">
                       {otpError}
                     </p>
                   )}
