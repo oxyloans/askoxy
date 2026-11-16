@@ -17,6 +17,7 @@ const ExamResultsPage: React.FC = () => {
   const state = location.state as any;
   const userId = localStorage.getItem("userId");
   const { examData, answers, jobId, fileUrl, atsScoreHistoryId } = state || {};
+  const from = state?.from || sessionStorage.getItem("examSourceUrl");
 
   const [result, setResult] = useState<any>(null);
   const navigate = useNavigate();
@@ -204,7 +205,11 @@ const ExamResultsPage: React.FC = () => {
                 sessionStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
                 localStorage.setItem(`atsScoreHistoryId_${jobId}`, String(atsScoreHistoryId));
               }
-              navigate(`/main/viewjobdetails/${jobId}/ALL`, {
+              const targetUrl =
+                from && !from.includes("/exam")
+                  ? from
+                  : `/main/viewjobdetails/${jobId}/ALL`;
+              navigate(targetUrl, {
                 state: {
                   openApplyModal: true,
                   id: jobId,
@@ -218,7 +223,13 @@ const ExamResultsPage: React.FC = () => {
           </button>
         ) : (
           <button
-            onClick={() => navigate("/main/viewjobdetails/default/ALL", { replace: true })}
+            onClick={() => {
+              const fallbackUrl =
+                from && !from.includes("/exam")
+                  ? from
+                  : "/main/viewjobdetails/default/ALL";
+              navigate(fallbackUrl, { replace: true });
+            }}
             className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg text-white"
           >
             🔍 Go to Job Details

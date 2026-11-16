@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Building2, CheckCircle2, Clock3, MapPin, Search } from "lucide-react";
 import { message } from "antd";
 import BASE_URL, { uploadurlwithId } from "../Config";
+import WalkInInterviewStepsModal from "../components/WalkInInterviewStepsModal";
 
 interface Job {
   id: string;
@@ -89,6 +90,8 @@ const HiringPages: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
+  const [stepsModalOpen, setStepsModalOpen] = useState(false);
+  const [stepsModalJobId, setStepsModalJobId] = useState<string | undefined>(undefined);
 
   const userId = localStorage.getItem("userId");
 
@@ -154,7 +157,8 @@ const HiringPages: React.FC = () => {
     const redirectPath = `/main/askoxyjobs/${jobId}`;
 
     if (userId) {
-      navigate(redirectPath);
+      setStepsModalJobId(jobId);
+      setStepsModalOpen(true);
       return;
     }
 
@@ -225,9 +229,11 @@ const HiringPages: React.FC = () => {
           <div className="truncate whitespace-nowrap text-sm text-gray-600">
             📍 Loc: {job.jobLocations || "Not specified"}
           </div>
-          <div className="truncate whitespace-nowrap text-sm text-gray-600">
-            ⏰ Exp: {job.experience || "Not specified"}
-          </div>
+          {job.experience && job.experience.trim() && job.experience.toLowerCase() !== "null" && job.experience.toLowerCase() !== "undefined" && (
+            <div className="truncate whitespace-nowrap text-sm text-gray-600">
+              ⏰ Exp: {job.experience}
+            </div>
+          )}
         </div>
 
         <div className="mt-auto flex justify-center px-4 pb-5">
@@ -258,6 +264,7 @@ const HiringPages: React.FC = () => {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4">
       <div className="mx-auto max-w-8xl px-2 sm:px-4 lg:px-6">
         <div className="mb-4 mt-6 flex flex-col items-center justify-between gap-6 px-2 py-4 md:flex-row">
@@ -364,6 +371,16 @@ const HiringPages: React.FC = () => {
         )}
       </div>
     </div>
+
+    <WalkInInterviewStepsModal
+      isOpen={stepsModalOpen}
+      onClose={() => setStepsModalOpen(false)}
+      jobId={stepsModalJobId}
+      onActionClick={() => {
+        if (stepsModalJobId) navigate(`/main/askoxyjobs/${stepsModalJobId}`);
+      }}
+    />
+    </>
   );
 };
 

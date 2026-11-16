@@ -571,6 +571,21 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
       if (examPassed) {
         setIsModalOpen(true);
       } else {
+        const token = localStorage.getItem("accessToken");
+        const currentJobId = selectedJob.id;
+        const sourceUrl = isDedicatedAskOxy
+          ? currentJobId
+            ? `${token && userId ? "/main/askoxyjobs" : "/askoxyjobs"}/${currentJobId}`
+            : window.location.pathname.includes("askoxy")
+              ? window.location.pathname + window.location.search
+              : `${token && userId ? "/main/askoxyjobs" : "/askoxyjobs"}`
+          : window.location.pathname.startsWith("/viewjobdetails") ||
+              window.location.pathname.startsWith("/main/viewjobdetails")
+            ? window.location.pathname + window.location.search
+            : `${token && userId ? "/main/viewjobdetails" : "/viewjobdetails"}/${currentJobId}/${currentCompany}`;
+
+        sessionStorage.setItem("examSourceUrl", sourceUrl);
+        sessionStorage.setItem("lastExamSourceType", isDedicatedAskOxy ? "askoxy" : "jobs");
         setShowResumeModal(true);
       }
     }
@@ -817,6 +832,21 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
     }
 
     // Exam status is false or not yet taken -> open ResumeUploadModal
+    const token = localStorage.getItem("accessToken");
+    const currentJobId = jobId || selectedJob?.id || "";
+    const sourceUrl = isDedicatedAskOxy
+      ? currentJobId
+        ? `${token && userId ? "/main/askoxyjobs" : "/askoxyjobs"}/${currentJobId}`
+        : window.location.pathname.includes("askoxy")
+          ? window.location.pathname + window.location.search
+          : `${token && userId ? "/main/askoxyjobs" : "/askoxyjobs"}`
+      : window.location.pathname.startsWith("/viewjobdetails") ||
+          window.location.pathname.startsWith("/main/viewjobdetails")
+        ? window.location.pathname + window.location.search
+        : `${token && userId ? "/main/viewjobdetails" : "/viewjobdetails"}/${currentJobId}/${currentCompany}`;
+
+    sessionStorage.setItem("examSourceUrl", sourceUrl);
+    sessionStorage.setItem("lastExamSourceType", isDedicatedAskOxy ? "askoxy" : "jobs");
     setShowResumeModal(true);
   };
 
@@ -1089,9 +1119,11 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
           <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
             📍 Loc: {job.jobLocations}
           </div>
-          <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
-            ⏰ Exp: {job.experience}
-          </div>
+          {job.experience && job.experience.trim() && job.experience.toLowerCase() !== "null" && job.experience.toLowerCase() !== "undefined" && (
+            <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+              ⏰ Exp: {job.experience}
+            </div>
+          )}
         </div>
         <div className="px-4 pb-5 mt-auto flex justify-center">
           {appliedJobIds.has(job.id) ? (
@@ -1968,6 +2000,12 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
           }
           companyName={
             selectedJob?.companyName || applyselectedJob?.companyName || ""
+          }
+          sourceUrl={
+            sessionStorage.getItem("examSourceUrl") ||
+            (window.location.pathname.includes("/exam")
+              ? "/"
+              : window.location.pathname + window.location.search)
           }
         />
       )}

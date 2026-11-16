@@ -13,6 +13,7 @@ type Props = {
   jobId: string;
   jobDesignation: string;
   companyName: string;
+  sourceUrl?: string;
 };
 
 const ResumeUploadModal: React.FC<Props> = ({
@@ -23,6 +24,7 @@ const ResumeUploadModal: React.FC<Props> = ({
   jobId,
   jobDesignation,
   companyName,
+  sourceUrl,
 }) => {
   const [fileList, setFileList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -164,6 +166,21 @@ const ResumeUploadModal: React.FC<Props> = ({
         setStatusText("Eligible! Starting your exam... 🎯");
         message.success("You are eligible for the exam!");
 
+        const effectiveSourceUrl =
+          sourceUrl ||
+          sessionStorage.getItem("examSourceUrl") ||
+          (window.location.pathname.includes("/exam")
+            ? "/"
+            : window.location.pathname + window.location.search);
+
+        if (
+          effectiveSourceUrl &&
+          effectiveSourceUrl !== "/" &&
+          !effectiveSourceUrl.includes("/exam")
+        ) {
+          sessionStorage.setItem("examSourceUrl", effectiveSourceUrl);
+        }
+
         // ⏳ Small delay for UX
         setTimeout(() => {
           navigate("/main/exam", {
@@ -179,12 +196,28 @@ const ResumeUploadModal: React.FC<Props> = ({
               matchScore: atsRes.data?.data?.matchScore,
               atsScoreHistoryId,
               fileUrl,
+              from: effectiveSourceUrl,
             },
           });
         }, 1500);
       } else {
         setStatusText("Not eligible. Redirecting...");
         message.warning(atsRes.data?.message || "You are not eligible.");
+
+        const effectiveSourceUrl =
+          sourceUrl ||
+          sessionStorage.getItem("examSourceUrl") ||
+          (window.location.pathname.includes("/exam")
+            ? "/"
+            : window.location.pathname + window.location.search);
+
+        if (
+          effectiveSourceUrl &&
+          effectiveSourceUrl !== "/" &&
+          !effectiveSourceUrl.includes("/exam")
+        ) {
+          sessionStorage.setItem("examSourceUrl", effectiveSourceUrl);
+        }
 
         setTimeout(() => {
           navigate("/main/job-analysis-result", {
@@ -193,6 +226,7 @@ const ResumeUploadModal: React.FC<Props> = ({
               jobId,
               jobDesignation,
               companyName,
+              from: effectiveSourceUrl,
             },
           });
         }, 1500);

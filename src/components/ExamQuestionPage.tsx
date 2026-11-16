@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { message } from "antd";
+import Swal from "sweetalert2";
 
 interface ExamDto {
   question: string;
@@ -43,7 +44,21 @@ const ExamQuestionPage: React.FC = () => {
   const companyName = state?.companyName;
   const matchScore = state?.matchScore;
   const jobId = state?.jobId;
+  if (jobId) sessionStorage.setItem("lastExamJobId", jobId);
   const fileUrl=state?.fileUrl;
+  const from = state?.from || sessionStorage.getItem("examSourceUrl");
+
+  useEffect(() => {
+    if (from && !from.includes("/exam")) {
+      sessionStorage.setItem("examSourceUrl", from);
+    }
+  }, [from]);
+
+  useEffect(() => {
+    if (examData && !sessionStorage.getItem("examData")) {
+      sessionStorage.setItem("examData", JSON.stringify(examData));
+    }
+  }, [examData]);
 
   const qIndex = parseInt(questionNumber ?? "1", 10) - 1;
   const question = examData?.questions?.[qIndex];
@@ -60,24 +75,85 @@ const ExamQuestionPage: React.FC = () => {
   const answersRef = useRef(answers);
   const qIndexRef = useRef(qIndex);
   const totalQRef = useRef(totalQ);
+  const fromRef = useRef(from);
+  const jobIdRef = useRef(jobId);
 
   useEffect(() => { questionRef.current = question; }, [question]);
   useEffect(() => { answersRef.current = answers; }, [answers]);
   useEffect(() => { qIndexRef.current = qIndex; }, [qIndex]);
   useEffect(() => { totalQRef.current = totalQ; }, [totalQ]);
+  useEffect(() => { fromRef.current = from; }, [from]);
+  useEffect(() => { jobIdRef.current = jobId; }, [jobId]);
+
+  const confirmLeaveExam = useCallback(() => {
+    Swal.fire({
+      title: "Leave Exam?",
+      text: "You are about to leave the exam. If you go back, your exam session will be terminated. Please stay on this page to complete your exam.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Leave Exam",
+      cancelButtonText: "Stay",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      reverseButtons: true,
+      allowOutsideClick: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sessionStorage.removeItem("examData");
+        sessionStorage.removeItem("answers");
+
+        const returnUrl = fromRef.current || sessionStorage.getItem("examSourceUrl");
+        sessionStorage.removeItem("examSourceUrl");
+
+        if (returnUrl && !returnUrl.includes("/exam")) {
+          navigate(returnUrl, { replace: true });
+          return;
+        }
+
+        const fallbackJobId = jobIdRef.current || sessionStorage.getItem("lastExamJobId");
+        const token = localStorage.getItem("accessToken");
+        const uid = localStorage.getItem("userId");
+        const isAskOxy =
+          sessionStorage.getItem("lastExamSourceType") === "askoxy" ||
+          window.location.pathname.includes("askoxy");
+
+        if (isAskOxy) {
+          const prefix = token && uid ? "/main/askoxyjobs" : "/askoxyjobs";
+          if (fallbackJobId) {
+            navigate(`${prefix}/${fallbackJobId}`, { replace: true });
+          } else {
+            navigate(prefix, { replace: true });
+          }
+          return;
+        }
+
+        const prefix = token && uid ? "/main/viewjobdetails" : "/viewjobdetails";
+        if (fallbackJobId) {
+          navigate(`${prefix}/${fallbackJobId}/ALL`, { replace: true });
+        } else {
+          navigate(
+            token && uid
+              ? "/main/viewjobdetails/default/ALL"
+              : "/viewjobdetails/default/ALL",
+            { replace: true }
+          );
+        }
+      }
+    });
+  }, [navigate]);
 
   // 🔒 Block browser back AND forward navigation during exam
   useEffect(() => {
-    // Push two entries so both back and forward are trapped
-    window.history.pushState(null, "", window.location.href);
-    window.history.pushState(null, "", window.location.href);
+    window.history.pushState({ isExamTrap: true }, "", window.location.href);
+
     const handlePopState = () => {
-      window.history.pushState(null, "", window.location.href);
-      message.warning("You cannot navigate away during the exam.");
+      window.history.pushState({ isExamTrap: true }, "", window.location.href);
+      confirmLeaveExam();
     };
+
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [questionNumber]);
+  }, [confirmLeaveExam]);
 
   // 🚀 ADVANCE FUNCTION
   const advance = useCallback((chosenKeys: string[]) => {
@@ -114,16 +190,48 @@ const ExamQuestionPage: React.FC = () => {
     setTimeout(() => {
       if (nextQ > totalQRef.current) {
         navigate("/main/exam/results", {
-          state: { examData, jobDesignation, companyName, matchScore, answers: newAnswers, jobId,fileUrl,atsScoreHistoryId},
+          replace: true,
+          state: {
+            examData,
+            jobDesignation,
+            companyName,
+            matchScore,
+            answers: newAnswers,
+            jobId,
+            fileUrl,
+            atsScoreHistoryId,
+            from: from || sessionStorage.getItem("examSourceUrl"),
+          },
         });
       } else {
         navigate(`/main/exam/question/${nextQ}`, {
-          state: { examData, jobDesignation, companyName, matchScore, answers: newAnswers, jobId ,fileUrl,atsScoreHistoryId},
+          replace: true,
+          state: {
+            examData,
+            jobDesignation,
+            companyName,
+            matchScore,
+            answers: newAnswers,
+            jobId,
+            fileUrl,
+            atsScoreHistoryId,
+            from: from || sessionStorage.getItem("examSourceUrl"),
+          },
         });
       }
     }, 200);
 
-  }, [navigate, examData, jobDesignation, companyName, matchScore]);
+  }, [
+    navigate,
+    examData,
+    jobDesignation,
+    companyName,
+    matchScore,
+    jobId,
+    fileUrl,
+    atsScoreHistoryId,
+    from,
+  ]);
 
   // ⏱️ TIMER
   useEffect(() => {
@@ -168,22 +276,44 @@ const ExamQuestionPage: React.FC = () => {
   const isLastQuestion = qIndex + 1 === totalQ;
   const handleSubmit = () => advance(selected);
 
-  // ❌ SAFETY
-  if (!examData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-slate-800 bg-white">
-        Loading exam...
-      </div>
-    );
-  }
+  // ❌ SAFETY — exam data lost (back/forward navigation)
+  useEffect(() => {
+    if (!examData) {
+      const returnUrl = from || sessionStorage.getItem("examSourceUrl");
+      if (returnUrl && !returnUrl.includes("/exam")) {
+        sessionStorage.removeItem("examSourceUrl");
+        navigate(returnUrl, { replace: true });
+        return;
+      }
+      const fallbackJobId = jobId || sessionStorage.getItem("lastExamJobId");
+      const token = localStorage.getItem("accessToken");
+      const uid = localStorage.getItem("userId");
+      const isAskOxy =
+        sessionStorage.getItem("lastExamSourceType") === "askoxy" ||
+        window.location.pathname.includes("askoxy");
 
-  if (!question) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-slate-800 bg-white">
-        Invalid question
-      </div>
-    );
-  }
+      if (isAskOxy) {
+        const prefix = token && uid ? "/main/askoxyjobs" : "/askoxyjobs";
+        if (fallbackJobId) {
+          navigate(`${prefix}/${fallbackJobId}`, { replace: true });
+        } else {
+          navigate(prefix, { replace: true });
+        }
+        return;
+      }
+
+      const prefix = token && uid ? "/main/viewjobdetails" : "/viewjobdetails";
+      if (fallbackJobId) {
+        navigate(`${prefix}/${fallbackJobId}/ALL`, { replace: true });
+      } else {
+        navigate(token && uid ? "/main/viewjobdetails/default/ALL" : "/viewjobdetails/default/ALL", { replace: true });
+      }
+    }
+  }, [examData, from, jobId, navigate]);
+
+  if (!examData) return null;
+
+  if (!question) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-4">
@@ -194,13 +324,23 @@ const ExamQuestionPage: React.FC = () => {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
 
         <div className="flex flex-wrap gap-2 justify-between items-center mb-3">
-          <span className="bg-blue-50/80 border border-blue-200 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-            Question {qIndex + 1} / {totalQ}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="bg-blue-50/80 border border-blue-200 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+              Question {qIndex + 1} / {totalQ}
+            </span>
 
-          <span className="bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm">
-            {question.type === "single" ? "Single Choice" : "Multiple Choice"}
-          </span>
+            <span className="bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm">
+              {question.type === "single" ? "Single Choice" : "Multiple Choice"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={confirmLeaveExam}
+            className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-semibold px-2.5 py-1 rounded-lg border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            Leave Exam
+          </button>
         </div>
 
         <h2 className="text-lg font-semibold leading-snug text-slate-800 tracking-wide">

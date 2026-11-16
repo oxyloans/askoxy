@@ -37,6 +37,7 @@ const JobAnalysisResult: React.FC = () => {
   const state = location.state as any;
 
   const { atsData, jobId, jobDesignation, companyName } = state || {};
+  const from = state?.from || sessionStorage.getItem("examSourceUrl");
 
   const [examData, setExamData] = useState<any>(null);
   const [examStatus, setExamStatus] = useState<string | null>(
@@ -128,6 +129,9 @@ const JobAnalysisResult: React.FC = () => {
     if (!atsData) return;
 
     if (isEligible && atsData?.examStarted && examResponseId) {
+      if (from && !from.includes("/exam")) {
+        sessionStorage.setItem("examSourceUrl", from);
+      }
       navigate("/main/exam", {
         replace: true,
         state: {
@@ -138,6 +142,7 @@ const JobAnalysisResult: React.FC = () => {
           jobDesignation,
           companyName,
           matchScore,
+          from,
         },
       });
     }

@@ -31,7 +31,16 @@ const ExamPage: React.FC = () => {
     matchScore,
     jobId,
     fileUrl,
+    from: stateFrom,
   } = state || {};
+
+  const from = stateFrom || sessionStorage.getItem("examSourceUrl");
+
+  useEffect(() => {
+    if (from && !from.includes("/exam")) {
+      sessionStorage.setItem("examSourceUrl", from);
+    }
+  }, [from]);
 
   const [examData, setExamData] = useState<any>(null);
   const [examStatus, setExamStatus] = useState<ExamStatus>("polling");
@@ -49,7 +58,9 @@ const ExamPage: React.FC = () => {
       navigate("/whatsapplogin");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/viewjobdetails/${jobId}/${companyName}`,
+        from && !from.includes("/exam")
+          ? from
+          : `/main/viewjobdetails/${jobId}/${companyName}`,
       );
       return;
     }
@@ -143,7 +154,12 @@ const ExamPage: React.FC = () => {
         return;
       }
 
+      if (examData) {
+        sessionStorage.setItem("examData", JSON.stringify(examData));
+      }
+
       navigate(`/main/exam/question/1`, {
+        replace: true,
         state: {
           examData,
           jobDesignation,
@@ -153,6 +169,7 @@ const ExamPage: React.FC = () => {
           jobId,
           fileUrl,
           atsScoreHistoryId: newAtsScoreHistoryId, // 🔹 updated id passed forward
+          from: from || sessionStorage.getItem("examSourceUrl"),
         },
       });
     } catch (err) {
@@ -233,8 +250,8 @@ const ExamPage: React.FC = () => {
           </p>
           <div className="bg-white border border-slate-200 rounded-2xl p-5 text-left space-y-3 shadow-sm">
             {[
-              "Analyzing job requirements",
-              "Matching your skill profile",
+              // "Analyzing job requirements",
+              // "Matching your skill profile",
               "Generating custom questions",
               "Finalizing difficulty levels",
             ].map((step, i) => (
@@ -274,7 +291,14 @@ const ExamPage: React.FC = () => {
           </p>
           <Button
             size="large"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              const returnUrl = from || sessionStorage.getItem("examSourceUrl");
+              if (returnUrl && !returnUrl.includes("/exam")) {
+                navigate(returnUrl, { replace: true });
+              } else {
+                navigate(-1);
+              }
+            }}
             className="!bg-indigo-600 !border-0 !text-white !rounded-2xl !font-bold !h-12 !px-8"
           >
             Go Back

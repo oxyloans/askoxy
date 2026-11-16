@@ -18,6 +18,7 @@ interface WalkInInterviewStepsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onActionClick?: () => void;
+  jobId?: string;
 }
 
 type StepStage = "Exam" | "Post-Exam";
@@ -114,8 +115,30 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
   isOpen,
   onClose,
   onActionClick,
+  jobId,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
+
+  const urlJobIdMatch =
+    typeof window !== "undefined"
+      ? window.location.pathname.match(/\/(?:askoxyjobs|askoxy-jobs)\/([a-zA-Z0-9_-]+)/)
+      : null;
+  const effectiveJobId = jobId || urlJobIdMatch?.[1];
+
+  // When jobId is present, hide first 2 steps (Choose Company + Explore Jobs)
+  const isJobSpecific = Boolean(effectiveJobId);
+  const visibleSteps = (isJobSpecific ? STEPS_DATA.slice(2) : STEPS_DATA).map(
+    (step, index) => ({
+      ...step,
+      num: String(index + 1).padStart(2, "0"),
+    }),
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveStep(0);
+    }
+  }, [isOpen, effectiveJobId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -126,7 +149,7 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
       if (event.key === "Escape") onClose();
       if (event.key === "ArrowRight")
         setActiveStep((current) =>
-          Math.min(current + 1, STEPS_DATA.length - 1),
+          Math.min(current + 1, visibleSteps.length - 1),
         );
       if (event.key === "ArrowLeft")
         setActiveStep((current) => Math.max(current - 1, 0));
@@ -137,7 +160,7 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, visibleSteps.length]);
 
   const handleAction = () => {
     onClose();
@@ -199,12 +222,12 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
                 </p>
               </div>
               <span className="shrink-0 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-                {STEPS_DATA.length} steps
+                {visibleSteps.length} steps
               </span>
             </div>
 
             <div className="grid grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
-              {STEPS_DATA.map((step, index) => {
+              {visibleSteps.map((step, index) => {
                 const isActive = activeStep === index;
                 const desktopGridPosition =
                   index === 4
@@ -232,23 +255,17 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
                       <div className="flex items-start gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                            {step.stage ? (
-                              <span
-                                className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
-                                  step.stage === "Exam"
-                                    ? "bg-cyan-50 text-cyan-700"
-                                    : "bg-emerald-50 text-emerald-700"
-                                }`}
-                              >
-                                {step.stage}
-                              </span>
-                            ) : (
-                              <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                                Step {index + 1}
-                              </span>
-                            )}
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                                isActive
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200"
+                              }`}
+                            >
+                              Step {index + 1}
+                            </span>
                             <span className="text-[11px] font-semibold text-slate-400">
-                              {index + 1} of {STEPS_DATA.length}
+                              {index + 1} of {visibleSteps.length}
                             </span>
                           </div>
                           <span className="block text-[13px] font-bold leading-5 text-slate-900">
@@ -260,7 +277,7 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
                         </div>
                       </div>
                     </button>
-                    {index < STEPS_DATA.length - 1 && (
+                    {index < visibleSteps.length - 1 && (
                       <div
                         className={`pointer-events-none absolute z-10 flex items-center justify-center text-indigo-500 ${
                           index % 2 === 1
