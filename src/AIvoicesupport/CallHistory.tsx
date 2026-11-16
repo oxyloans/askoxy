@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Input, Button, message, Spin, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -8,8 +8,9 @@ import {
   RiHeadphoneLine,
 } from "react-icons/ri";
 import dayjs from "dayjs";
-import { getCallHistory, getTranscriptByNumber } from "./api";
-import type { CallHistoryItem, CallDetail } from "./types";
+import { getCallHistory } from "./api";
+import { getTranscriptForCall } from "./transcript";
+import type { CallHistoryItem } from "./types";
 import TranscriptModal, { CallMeta } from "./components/TranscriptModal";
 import VoiceAdminLayout from "./components/VoiceAdminLayout";
 
@@ -35,6 +36,7 @@ const CallHistory: React.FC = () => {
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [modalMeta, setModalMeta] = useState<CallMeta | null>(null);
   const [modalTranscript, setModalTranscript] = useState<any>(null);
+  const transcriptRequest = useRef(0);
 
   const handleSearch = async () => {
     if (!number.trim()) {
@@ -58,6 +60,7 @@ const CallHistory: React.FC = () => {
   };
 
   const handleViewCall = async (record: CallHistoryItem) => {
+    const requestId = ++transcriptRequest.current;
     const meta: CallMeta = {
       callerNumber: record.callerNumber,
       phoneNumber: record.phoneNumber || record.callerNumber,
@@ -74,48 +77,22 @@ const CallHistory: React.FC = () => {
       nextFollowup: record.nextFollowupAt || record.nextFollowup,
       promisedPaymentDate: record.promisedPaymentDate,
     };
-
     setModalMeta(meta);
     setTranscriptOpen(true);
-
-    const existingTranscript =
-      record.transcript ||
-      record.conversation ||
-      (record as any).rawTranscript;
-
-    if (
-      existingTranscript &&
-      (Array.isArray(existingTranscript)
-        ? existingTranscript.length > 0
-        : String(existingTranscript).trim().length > 0)
-    ) {
-      setModalTranscript(existingTranscript);
-      setTranscriptLoading(false);
-      return;
-    }
-
+    setModalTranscript(null);
     setTranscriptLoading(true);
     try {
-      const detail: CallDetail = await getTranscriptByNumber(record.callerNumber);
-      if (detail && detail.transcript) {
-        setModalTranscript(detail.transcript);
-        if (!meta.summary && detail.summary) {
-          setModalMeta((prev) => (prev ? { ...prev, summary: detail.summary } : prev));
-        }
-        if (!meta.recordingUrl && detail.recordingUrl) {
-          setModalMeta((prev) => (prev ? { ...prev, recordingUrl: detail.recordingUrl } : prev));
-        }
-      } else {
-        setModalTranscript([]);
-      }
-    } catch (err) {
-      setModalTranscript([]);
+      const turns = await getTranscriptForCall(record);
+      if (requestId === transcriptRequest.current) setModalTranscript(turns);
+    } catch {
+      if (requestId === transcriptRequest.current) setModalTranscript([]);
     } finally {
-      setTranscriptLoading(false);
+      if (requestId === transcriptRequest.current) setTranscriptLoading(false);
     }
   };
 
   const handleCloseModal = () => {
+    transcriptRequest.current += 1;
     setTranscriptOpen(false);
     setModalMeta(null);
     setModalTranscript(null);

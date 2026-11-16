@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Spin, Card, Tag, Empty, Row, Col, Statistic } from "antd";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -11,11 +11,12 @@ import {
   RiListCheck2,
   RiHeadphoneLine,
 } from "react-icons/ri";
-import { getInboundCalls, getOutboundCalls, getTranscriptByNumber } from "./api";
+import { getInboundCalls, getOutboundCalls } from "./api";
 import type { CallsResponse } from "./types";
 import { PLATFORMS, PLATFORM_LABELS } from "./types";
 import VoiceAdminLayout from "./components/VoiceAdminLayout";
 import TranscriptModal from "./components/TranscriptModal";
+import { getTranscriptForCall } from "./transcript";
 
 const API_DATE_FORMAT = "DD-MM-YYYY";
 
@@ -340,40 +341,25 @@ const Dashboard: React.FC = () => {
   const [selectedCall, setSelectedCall] = useState<any | null>(null);
   const [modalTranscript, setModalTranscript] = useState<any>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const transcriptRequest = useRef(0);
 
   const handleSelectRecentCall = async (item: any) => {
+    const requestId = ++transcriptRequest.current;
     setSelectedCall(item);
-    const existing = item.transcript || item.conversation;
-    if (
-      existing &&
-      (Array.isArray(existing)
-        ? existing.length > 0
-        : String(existing).trim().length > 0)
-    ) {
-      setModalTranscript(existing);
-      return;
-    }
-    const phone = item.callerNumber || item.phoneNumber;
-    if (phone) {
-      setModalLoading(true);
-      try {
-        const detail = await getTranscriptByNumber(phone);
-        if (detail && detail.transcript) {
-          setModalTranscript(detail.transcript);
-        } else {
-          setModalTranscript(item.rawTranscript || []);
-        }
-      } catch (e) {
-        setModalTranscript(item.rawTranscript || []);
-      } finally {
-        setModalLoading(false);
-      }
-    } else {
-      setModalTranscript(item.rawTranscript || []);
+    setModalTranscript(null);
+    setModalLoading(true);
+    try {
+      const turns = await getTranscriptForCall(item);
+      if (requestId === transcriptRequest.current) setModalTranscript(turns);
+    } catch {
+      if (requestId === transcriptRequest.current) setModalTranscript([]);
+    } finally {
+      if (requestId === transcriptRequest.current) setModalLoading(false);
     }
   };
 
   const handleCloseModal = () => {
+    transcriptRequest.current += 1;
     setSelectedCall(null);
     setModalTranscript(null);
     setModalLoading(false);

@@ -40,6 +40,9 @@ export interface TranscriptMessage {
 }
 
 export interface CallDetail {
+  id?: number;
+  conversation?: TranscriptMessage[] | string;
+  rawTranscript?: string;
   callerNumber: string;
   platform: string | null;
   callDirection: CallDirection;
@@ -91,6 +94,7 @@ export interface CallsResponse {
 }
 
 export interface CallHistoryItem {
+  id?: number;
   callerNumber: string;
   phoneNumber?: string;
   platform: string | null;

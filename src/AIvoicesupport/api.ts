@@ -18,6 +18,7 @@ import type {
 import BASE_URL from "../Config";
 
 export const VOICE_API_BASE = `${BASE_URL}/vibecode-service`;
+// export const VOICE_API_BASE = `http://localhost:9876/api/vibecode-service`;
 
 const client = axios.create({
   baseURL: VOICE_API_BASE,
@@ -31,6 +32,12 @@ export const getTranscriptByNumber = async (
   const { data } = await client.get<CallDetail>(
     `/get-Trascript/${encodeURIComponent(callerNumber)}`,
   );
+  return data;
+};
+
+/** Full details for the specific recording selected in a history page. */
+export const getCallById = async (recordingId: number): Promise<CallDetail> => {
+  const { data } = await client.get<CallDetail>(`/calls/${recordingId}`);
   return data;
 };
 
@@ -163,9 +170,6 @@ export const placeOutboundCall = async (
   return data;
 };
 
-// ── Autonomous Self-Learning & Dynamic Knowledge APIs ────────────────────────
-
-/** Fetch customer knowledge gaps (unanswered / fallback queries from calls). */
 export const getKnowledgeGaps = async (
   platform?: string,
   status?: KnowledgeGapStatus,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input, Button, message, Skeleton, Select } from "antd";
 import {
   RiSettings4Line,
@@ -72,6 +72,7 @@ const AgentInstructions: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const loadRequest = useRef(0);
 
   const isScenario = (v: ContentSelection): v is OutboundScenario =>
     (OUTBOUND_SCENARIOS as readonly string[]).includes(v);
@@ -81,7 +82,9 @@ const AgentInstructions: React.FC = () => {
     d: InstructionDirection,
     sel: ContentSelection,
   ) => {
+    const requestId = ++loadRequest.current;
     setLoading(true);
+    setDirty(false);
     try {
       let res;
       if (sel === "system") {
@@ -91,19 +94,23 @@ const AgentInstructions: React.FC = () => {
       } else {
         res = await getOutboundGreeting(p, sel as OutboundScenario);
       }
+      if (requestId !== loadRequest.current) return;
       setContent(res.content || "");
       setUpdatedAt(res.updatedAt);
       setDirty(false);
     } catch (err) {
+      if (requestId !== loadRequest.current) return;
+      setUpdatedAt(undefined);
       message.error("Failed to load instructions for this selection.");
       setContent("");
     } finally {
-      setLoading(false);
+      if (requestId === loadRequest.current) setLoading(false);
     }
   };
 
   useEffect(() => {
     load(platform, direction, selection);
+    return () => { loadRequest.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform, direction, selection]);
 
@@ -212,6 +219,7 @@ const AgentInstructions: React.FC = () => {
             return (
               <button
                 key={p}
+                disabled={saving}
                 onClick={() => setPlatform(p)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
                   active
@@ -233,6 +241,7 @@ const AgentInstructions: React.FC = () => {
             </div>
             <Select
               value={direction}
+              disabled={saving}
               onChange={(v) => {
                 setDirection(v);
                 setSelection("system");
@@ -266,6 +275,7 @@ const AgentInstructions: React.FC = () => {
             </div>
             <Select
               value={selection}
+              disabled={saving}
               onChange={(v) => setSelection(v)}
               style={{ width: 260 }}
               size="large"
@@ -291,6 +301,7 @@ const AgentInstructions: React.FC = () => {
           <div className="flex gap-2">
             <Button
               icon={<RiRefreshLine />}
+              disabled={loading || saving}
               onClick={() => load(platform, direction, selection)}
               className="!rounded-lg"
             >
@@ -301,7 +312,7 @@ const AgentInstructions: React.FC = () => {
               icon={<RiSaveLine />}
               onClick={handleSave}
               loading={saving}
-              disabled={!dirty}
+              disabled={!dirty || loading || !content.trim()}
               className="!rounded-lg !border-none !font-semibold"
               style={{
                 background: dirty
@@ -320,6 +331,7 @@ const AgentInstructions: React.FC = () => {
             <>
               <TextArea
                 value={content}
+                disabled={saving}
                 onChange={(e) => {
                   setContent(e.target.value);
                   setDirty(true);

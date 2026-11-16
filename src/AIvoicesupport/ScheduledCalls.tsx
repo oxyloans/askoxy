@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DatePicker, Button, message, Table, Tooltip, Tag } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -13,8 +13,9 @@ import {
   RiPulseLine,
   RiHeadphoneLine,
 } from "react-icons/ri";
-import { getScheduledCalls, getTranscriptByNumber } from "./api";
+import { getScheduledCalls } from "./api";
 import type { ScheduledCallItem, ScheduledCallsResponse } from "./types";
+import { getTranscriptForCall } from "./transcript";
 import TranscriptModal from "./components/TranscriptModal";
 import VoiceAdminLayout from "./components/VoiceAdminLayout";
 import { OUTBOUND_SCENARIO_LABELS } from "./types";
@@ -157,6 +158,7 @@ const ScheduledCalls: React.FC = () => {
   const [selected, setSelected] = useState<ScheduledCallItem | null>(null);
   const [modalTranscript, setModalTranscript] = useState<any>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const transcriptRequest = useRef(0);
 
   const fetchData = async (start: Dayjs, end: Dayjs) => {
     setLoading(true);
@@ -186,44 +188,29 @@ const ScheduledCalls: React.FC = () => {
   const pending = calls.length - inProgress - answered;
 
   const handleSelectCall = async (record: ScheduledCallItem) => {
+    const requestId = ++transcriptRequest.current;
     setSelected(record);
-    const existing =
-      record.callRecording?.transcript ||
-      record.callRecording?.conversation ||
-      record.liveConversation ||
-      record.transcript ||
-      record.conversation;
-
-    if (
-      existing &&
-      (Array.isArray(existing)
-        ? existing.length > 0
-        : String(existing).trim().length > 0)
-    ) {
-      setModalTranscript(existing);
-      return;
-    }
-
-    if (record.phoneNumber) {
-      setModalLoading(true);
-      try {
-        const detail = await getTranscriptByNumber(record.phoneNumber);
-        if (detail && detail.transcript) {
-          setModalTranscript(detail.transcript);
-        } else {
-          setModalTranscript(record.callRecording?.rawTranscript || []);
-        }
-      } catch (e) {
-        setModalTranscript(record.callRecording?.rawTranscript || []);
-      } finally {
-        setModalLoading(false);
-      }
-    } else {
-      setModalTranscript(record.callRecording?.rawTranscript || []);
+    setModalTranscript(null);
+    setModalLoading(true);
+    try {
+      const turns = await getTranscriptForCall(
+        record.finalStatus === "IN_PROGRESS" || record.finalStatus === "INITIATED"
+          ? undefined
+          : record.callRecording,
+        record.liveConversation,
+        record.transcript,
+        record.conversation,
+      );
+      if (requestId === transcriptRequest.current) setModalTranscript(turns);
+    } catch {
+      if (requestId === transcriptRequest.current) setModalTranscript([]);
+    } finally {
+      if (requestId === transcriptRequest.current) setModalLoading(false);
     }
   };
 
   const handleCloseModal = () => {
+    transcriptRequest.current += 1;
     setSelected(null);
     setModalTranscript(null);
     setModalLoading(false);

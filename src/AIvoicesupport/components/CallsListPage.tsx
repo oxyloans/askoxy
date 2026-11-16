@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DatePicker, Table, Button, message, Tag } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -8,14 +8,15 @@ import {
   RiPhoneFindLine,
   RiHeadphoneLine,
 } from "react-icons/ri";
-import { getInboundCalls, getOutboundCalls, getTranscriptByNumber } from "../api";
+import { getInboundCalls, getOutboundCalls } from "../api";
 import type { CallListItem, CallsResponse } from "../types";
+import { getTranscriptForCall } from "../transcript";
 import TranscriptModal from "./TranscriptModal";
 import VoiceAdminLayout from "./VoiceAdminLayout";
 
 const { RangePicker } = DatePicker;
 const API_DATE_FORMAT = "DD-MM-YYYY";
-
+  
 interface CallsListPageProps {
   direction: "inbound" | "outbound";
 }
@@ -27,6 +28,7 @@ const CallsListPage: React.FC<CallsListPageProps> = ({ direction }) => {
   const [selected, setSelected] = useState<CallListItem | null>(null);
   const [modalTranscript, setModalTranscript] = useState<any>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const transcriptRequest = useRef(0);
 
   const isInbound = direction === "inbound";
   const HeaderIcon = isInbound ? RiPhoneLine : RiPhoneFindLine;
@@ -54,39 +56,22 @@ const CallsListPage: React.FC<CallsListPageProps> = ({ direction }) => {
   }, [direction]);
 
   const handleSelectCall = async (record: CallListItem) => {
+    const requestId = ++transcriptRequest.current;
     setSelected(record);
-    const existing = record.transcript || (record as any).conversation;
-    if (
-      existing &&
-      (Array.isArray(existing)
-        ? existing.length > 0
-        : String(existing).trim().length > 0)
-    ) {
-      setModalTranscript(existing);
-      return;
-    }
-
-    const phone = record.callerNumber || record.phoneNumber;
-    if (phone) {
-      setModalLoading(true);
-      try {
-        const detail = await getTranscriptByNumber(phone);
-        if (detail && detail.transcript) {
-          setModalTranscript(detail.transcript);
-        } else {
-          setModalTranscript(record.rawTranscript || []);
-        }
-      } catch (e) {
-        setModalTranscript(record.rawTranscript || []);
-      } finally {
-        setModalLoading(false);
-      }
-    } else {
-      setModalTranscript(record.rawTranscript || []);
+    setModalTranscript(null);
+    setModalLoading(true);
+    try {
+      const turns = await getTranscriptForCall(record);
+      if (requestId === transcriptRequest.current) setModalTranscript(turns);
+    } catch {
+      if (requestId === transcriptRequest.current) setModalTranscript([]);
+    } finally {
+      if (requestId === transcriptRequest.current) setModalLoading(false);
     }
   };
 
   const handleCloseModal = () => {
+    transcriptRequest.current += 1;
     setSelected(null);
     setModalTranscript(null);
     setModalLoading(false);
