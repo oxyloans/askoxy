@@ -20,7 +20,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import BASE_URL,{uploadurlwithId} from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
-import { Button, message, Select } from "antd";
+import { Button, message, Select, Pagination } from "antd";
 import JobApplicationModal from "./JobApplyModal";
 import ResumeUploadModal from "./ResumeUploadModal";
 import ReactMarkdown from "react-markdown";
@@ -126,10 +126,27 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
     companyName: string;
     jobId?: string;
   } | null>(null);
-  const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
+  const [displayedJobsCount, setDisplayedJobsCount] = useState(50);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [totalElements, setTotalElements] = useState<number>(0);
   const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>(
     {},
   );
+
+  const getCompanyLogoUrl = (logo: string | null | undefined): string => {
+    if (!logo) {
+      return "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+    }
+    // If the user selected a specific company (all-jobs-by-name API), use uploadurlwithId
+    if (currentCompany !== "ALL" && currentCompany !== "AI Jobs") {
+      if (logo.startsWith("http://") || logo.startsWith("https://")) {
+        return logo;
+      }
+      return `${uploadurlwithId}${logo.startsWith("/") ? "" : "/"}${logo}`;
+    }
+    // For remaining (ALL / getalljobsbypagenation API), use job.companyLogo directly
+    return logo;
+  };
 
   const cleanLocation = (location: string): string => {
     if (!location) return "";
@@ -526,7 +543,8 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
   };
 
   useEffect(() => {
-    fetchJobs(currentCompany);
+    setCurrentPage(0);
+    fetchJobs(currentCompany, 0);
   }, [currentCompany]);
 
   useEffect(() => {
@@ -593,15 +611,15 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
 
   useEffect(() => {
     filterJobs();
-    setDisplayedJobsCount(20);
+    setDisplayedJobsCount(50);
   }, [jobs, searchTerm, filters]);
 
-  const fetchJobs = async (compName: string) => {
+  const fetchJobs = async (compName: string, page: number = 0) => {
     setLoading(true);
     try {
       let url = "";
       if (compName === "ALL") {
-        url = `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`;
+        url = `${BASE_URL}/marketing-service/campgin/getalljobsbypagenation?page=${page}&size=50`;
       } else if (compName === "AI Jobs") {
         url = `${BASE_URL}/marketing-service/campgin/get-ai-jobs`;
       } else {
@@ -610,9 +628,23 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
 
       const response = await fetch(url);
       const data = await response.json();
-      const jobsArray = Array.isArray(data) ? data : [];
+      const jobsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.content)
+        ? data.content
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
       const activeJobs = jobsArray.filter((job: Job) => job.jobStatus === true);
       setJobs(activeJobs);
+      setTotalElements(
+        typeof data?.totalElements === "number"
+          ? data.totalElements
+          : activeJobs.length,
+      );
+      setCurrentPage(
+        typeof data?.currentPage === "number" ? data.currentPage : page,
+      );
 
       if (id) {
         const matchedJob = activeJobs.find((job: Job) => job.id === id);
@@ -628,6 +660,14 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (currentCompany === "ALL") {
+      fetchJobs(currentCompany, newPage);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const filterJobs = () => {
@@ -1080,10 +1120,7 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
         <div className="pt-6 pb-4 flex justify-center">
           <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
             <img
-              src={
-                `${uploadurlwithId}${job.companyLogo}` ||
-                "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
-              }
+              src={getCompanyLogoUrl(job.companyLogo)}
               className="w-40 h-20 object-contain transition-transform duration-300"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -1184,10 +1221,7 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center md:items-start gap-5">
               <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 bg-white border border-gray-100 rounded-xl p-2 flex items-center justify-center shadow-sm">
                 <img
-                  src={
-                    `${uploadurlwithId}${job.companyLogo}` ||
-                    "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
-                  }
+                  src={getCompanyLogoUrl(job.companyLogo)}
                   alt={job.companyName}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -1773,34 +1807,63 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
                   </span>
                 </h2>
                 <div className="text-sm text-gray-600">
-                  Showing {Math.min(displayedJobsCount, filteredJobs.length)} of{" "}
-                  {filteredJobs.length} jobs
+                  Showing{" "}
+                  {currentCompany === "ALL"
+                    ? filteredJobs.length === 0
+                      ? "0"
+                      : `${currentPage * 50 + 1} - ${Math.min((currentPage + 1) * 50, totalElements || filteredJobs.length)}`
+                    : filteredJobs.length === 0
+                      ? "0"
+                      : `${currentPage * 50 + 1} - ${Math.min((currentPage + 1) * 50, filteredJobs.length)}`}{" "}
+                  of{" "}
+                  {currentCompany === "ALL"
+                    ? totalElements || filteredJobs.length
+                    : filteredJobs.length}{" "}
+                  jobs
                 </div>
               </div>
             </div>
 
-            <motion.div
-              className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
-                userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
-              } gap-0`}
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {filteredJobs.slice(0, displayedJobsCount).map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </motion.div>
+            {(() => {
+              const pagedJobs =
+                currentCompany === "ALL"
+                  ? filteredJobs
+                  : filteredJobs.slice(
+                      currentPage * 50,
+                      (currentPage + 1) * 50,
+                    );
 
-            {filteredJobs.length > displayedJobsCount && (
-              <div className="text-center mt-8">
-                <button
-                  onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
-                  className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-8 py-2.5 rounded-lg font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 border border-indigo-100"
+              return (
+                <motion.div
+                  className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+                    userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+                  } gap-0`}
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  Load More Jobs ({filteredJobs.length - displayedJobsCount}{" "}
-                  remaining)
-                </button>
+                  {pagedJobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </motion.div>
+              );
+            })()}
+
+            {(currentCompany === "ALL"
+              ? totalElements > 50
+              : filteredJobs.length > 50) && (
+              <div className="flex justify-center items-center my-8">
+                <Pagination
+                  current={currentPage + 1}
+                  pageSize={50}
+                  total={
+                    currentCompany === "ALL"
+                      ? totalElements
+                      : filteredJobs.length
+                  }
+                  showSizeChanger={false}
+                  onChange={(page) => handlePageChange(page - 1)}
+                />
               </div>
             )}
           </>
@@ -1847,7 +1910,7 @@ const JobViewPage: React.FC<JobViewPageProps> = ({
                 {remainingJobs.length > displayedJobsCount && (
                   <div className="text-center mt-8">
                     <button
-                      onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
+                      onClick={() => setDisplayedJobsCount((prev) => prev + 50)}
                       className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-8 py-2.5 rounded-lg font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 border border-indigo-100"
                     >
                       Load More Jobs (

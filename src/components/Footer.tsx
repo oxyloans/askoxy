@@ -202,7 +202,33 @@ const Footer: React.FC = () => {
               Contact Us
             </h3>
 
-            <div className="space-y-3">
+            {/* 📞 Toll Free Helpline */}
+            <div className="rounded-xl bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/40 border border-emerald-200 p-3 shadow-sm">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  Toll Free Helpline
+                </span>
+                <span className="text-[10px] font-bold bg-emerald-200/70 text-emerald-900 px-2 py-0.5 rounded-full whitespace-nowrap">
+                  24/7 · 365 Days Available
+                </span>
+              </div>
+              <a
+                href="tel:04041897778"
+                className="flex items-center gap-2 text-base sm:text-lg font-black text-slate-900 hover:text-emerald-700 transition-colors"
+              >
+                <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
+                040 4189 7778
+              </a>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                24/7 · 365 Days Available
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-1">
               {contactInfo
                 .filter((info) => info.type !== "phone")
                 .map((info, index) => (

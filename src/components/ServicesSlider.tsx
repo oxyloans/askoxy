@@ -211,7 +211,7 @@ const ServicesSlider: React.FC = () => {
         headers.authorization = `Bearer ${accessToken}`;
       }
       const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
+        `${BASE_URL}/marketing-service/campgin/getalljobsbypagenation?page=0&size=50`,
         {
           method: "GET",
           headers,

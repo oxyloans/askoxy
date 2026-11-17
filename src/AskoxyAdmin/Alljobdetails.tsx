@@ -18,27 +18,27 @@ import {
   InputNumber,
   Row,
   Col,
-  Upload,
+
 } from "antd";
 import {
   EditOutlined,
-  EyeOutlined,
+
   ExclamationCircleOutlined,
-  UploadOutlined,
+
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { confirm } = Modal;
 const { Option } = Select;
 const { TextArea } = Input;
 
 interface Job {
   id: string;
-  companyLogo?: string; // Made optional to handle null/undefined
+  companyLogo?: string; 
   jobTitle?: string;
   jobDesignation?: string;
   companyName?: string;
