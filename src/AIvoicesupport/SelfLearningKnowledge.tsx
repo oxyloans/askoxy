@@ -10,17 +10,26 @@ import {
   Popconfirm,
   message,
   Switch,
+  Flex,
+  ConfigProvider,
+  Typography,
 } from "antd";
+import type { ModalProps, ThemeConfig } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  CloseOutlined,
+  ExclamationCircleFilled,
+  EyeOutlined,
+} from "@ant-design/icons";
 import {
   RiRobot2Line,
   RiAddLine,
   RiRefreshLine,
   RiSearchLine,
   RiEditLine,
-  RiDeleteBinLine,
   RiCheckboxCircleLine,
-  RiCloseLine,
   RiQuestionLine,
 } from "react-icons/ri";
 import dayjs from "dayjs";
@@ -43,6 +52,89 @@ import {
 
 const { TextArea } = Input;
 
+type KnowledgeDetails =
+  | { kind: "entry"; record: DynamicKnowledgeEntry }
+  | { kind: "gap"; record: CustomerKnowledgeGap };
+
+const previewText = (value?: string | null) => (value || "").replace(/\s+/g, " ").trim();
+const compactText = (value?: string | null, limit = 80) => {
+  const text = previewText(value);
+  return text.length > limit ? `${text.slice(0, limit).trimEnd()}...` : text || "—";
+};
+
+const KNOWLEDGE_THEME: ThemeConfig = {
+  components: {
+    Button: {
+      colorPrimary: "#946b08",
+      colorPrimaryHover: "#805b06",
+      colorPrimaryActive: "#654506",
+      colorError: "#be123c",
+      colorErrorHover: "#9f1239",
+      colorErrorBg: "#fff5f6",
+      colorErrorBgHover: "#ffe4e9",
+      controlHeight: 38,
+      controlHeightSM: 32,
+      borderRadius: 9,
+      fontWeight: 600,
+      primaryShadow: "0 2px 4px rgb(148 107 8 / 14%)",
+      defaultBg: "#ffffff",
+      defaultColor: "#475569",
+      defaultBorderColor: "#e2e8f0",
+    },
+    Table: {
+      headerBg: "#fffbeb",
+      headerColor: "#1e293b",
+      rowHoverBg: "#fffbeb",
+      cellFontSizeSM: 13,
+      cellPaddingBlockSM: 8,
+      cellPaddingInlineSM: 8,
+    },
+  },
+};
+
+const COPY_CLASSES = "min-w-0 max-w-full whitespace-pre-wrap break-normal [overflow-wrap:anywhere] leading-[1.65]";
+const ROW_CLASSES = "flex min-w-0 flex-wrap items-center justify-between gap-4";
+const ACTION_BUTTON_CLASSES = "min-w-0 max-w-full flex-1 !h-8 !gap-1 !px-2 !text-xs [&_.anticon]:shrink-0 [&_.anticon]:!text-[13px]";
+const TABLE_CLASSES = "knowledge-table min-w-0 max-w-full [&_.ant-table-cell]:!align-middle [&_.ant-table-cell]:!overflow-hidden [&_.ant-table-cell]:!whitespace-nowrap [&_.ant-table-cell]:!text-[13px] [&_.ant-table-cell]:!leading-5";
+const TABS_CLASSES = [
+  "knowledge-tabs min-w-0 max-w-full",
+  "[&_.ant-tabs-content-holder]:min-w-0 [&_.ant-tabs-tabpane]:min-w-0 [&_.ant-tabs-tabpane]:max-w-full",
+  "[&>.ant-tabs-nav_.ant-tabs-nav-list]:w-full [&>.ant-tabs-nav_.ant-tabs-tab]:!m-0",
+  "[&>.ant-tabs-nav_.ant-tabs-tab]:min-w-0 [&>.ant-tabs-nav_.ant-tabs-tab]:flex-1",
+  "[&>.ant-tabs-nav_.ant-tabs-tab]:justify-center [&>.ant-tabs-nav_.ant-tabs-tab]:px-2 [&>.ant-tabs-nav_.ant-tabs-tab]:py-3",
+  "[&>.ant-tabs-nav_.ant-tabs-tab-btn]:whitespace-normal [&>.ant-tabs-nav_.ant-tabs-tab-btn]:text-center",
+  "[&>.ant-tabs-nav_.ant-tabs-tab-btn]:leading-normal [&>.ant-tabs-nav_.ant-tabs-tab-btn]:[overflow-wrap:anywhere]",
+].join(" ");
+const CONFIRM_CLASSES = [
+  "knowledge-action-confirm max-w-[min(320px,calc(100vw-24px))]",
+  "[&_.ant-popover-inner]:!rounded-xl [&_.ant-popover-inner]:border [&_.ant-popover-inner]:border-slate-100",
+  "[&_.ant-popover-inner]:!p-4 [&_.ant-popover-inner]:!shadow-xl [&_.ant-popconfirm-description]:leading-relaxed",
+  "[&_.ant-popconfirm-buttons_.ant-btn]:!rounded-lg [&_.ant-popconfirm-buttons_.ant-btn]:!h-8",
+  "[&_.ant-popconfirm-buttons_.ant-btn]:!px-3 [&_.ant-popconfirm-buttons_.ant-btn]:!text-xs",
+].join(" ");
+const EDITOR_MODAL_PROPS: Pick<ModalProps, "className" | "classNames" | "footer" | "okButtonProps" | "cancelButtonProps"> = {
+  className: "knowledge-editor-modal !top-4 !max-w-[calc(100vw-24px)] pb-4 [overflow-wrap:anywhere]",
+  classNames: {
+    content: "!flex !max-h-[calc(100vh-32px)] !flex-col supports-[height:100dvh]:!max-h-[calc(100dvh-32px)] max-sm:!p-4",
+    header: "!shrink-0 !pr-6",
+    body: [
+      "min-h-0 overflow-y-auto break-normal ![overflow-wrap:anywhere]",
+      "[&_.ant-tag]:max-w-full [&_.ant-tag]:whitespace-normal [&_.ant-tag]:[overflow-wrap:anywhere]",
+      "max-sm:[&_.ant-input]:!text-base max-sm:[&_.ant-select-selection-item]:!text-base",
+      "max-sm:[&_.ant-select-selection-search-input]:!text-base",
+    ].join(" "),
+    footer: "!shrink-0",
+  },
+  footer: (_, { OkBtn, CancelBtn }) => (
+    <Flex gap={8} justify="flex-end" className="flex-col-reverse sm:flex-row [&_.ant-btn+.ant-btn]:!ms-0">
+      <CancelBtn />
+      <OkBtn />
+    </Flex>
+  ),
+  okButtonProps: { className: "max-sm:!w-full max-sm:!min-h-10" },
+  cancelButtonProps: { className: "max-sm:!w-full max-sm:!min-h-10" },
+};
+
 export const SelfLearningKnowledge: React.FC = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>("ALL");
   const [activeTab, setActiveTab] = useState<string>("gaps");
@@ -55,6 +147,8 @@ export const SelfLearningKnowledge: React.FC = () => {
   const [entries, setEntries] = useState<DynamicKnowledgeEntry[]>([]);
   const [entriesLoading, setEntriesLoading] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>("");
+  const [usageSort, setUsageSort] = useState<"ascend" | "descend" | null>(null);
+  const [viewingDetails, setViewingDetails] = useState<KnowledgeDetails | null>(null);
 
   // Modal 1: Review & Edit Answer Before Approving
   const [reviewModalVisible, setReviewModalVisible] = useState<boolean>(false);
@@ -241,230 +335,153 @@ export const SelfLearningKnowledge: React.FC = () => {
   };
 
   const filteredEntries = useMemo(() => {
-    if (!searchFilter.trim()) return entries;
-    const lower = searchFilter.toLowerCase();
-    return entries.filter(
+    const lower = searchFilter.trim().toLowerCase();
+    const matchingEntries = lower ? entries.filter(
       (e) =>
         e.intentKey.toLowerCase().includes(lower) ||
         e.queryMatchPatterns.toLowerCase().includes(lower) ||
         e.verifiedAnswer.toLowerCase().includes(lower) ||
         (e.teluguAnswer && e.teluguAnswer.toLowerCase().includes(lower)),
-    );
-  }, [entries, searchFilter]);
+    ) : [...entries];
+    if (usageSort) {
+      matchingEntries.sort((a, b) => usageSort === "ascend"
+        ? (a.usageCount || 0) - (b.usageCount || 0)
+        : (b.usageCount || 0) - (a.usageCount || 0));
+    }
+    return matchingEntries;
+  }, [entries, searchFilter, usageSort]);
 
-  // Tab 1 Columns: Pending Caller Questions
+  const renderCellPreview = (value: string | null | undefined, details: KnowledgeDetails, label: string) => (
+    <Button
+      type="link"
+      size="small"
+      icon={<EyeOutlined className="!text-xs" />}
+      onClick={() => setViewingDetails(details)}
+      aria-label={label}
+      title={label}
+      className="knowledge-cell-preview !flex !h-auto !w-full !min-w-0 !justify-start !gap-1 !p-0 !text-left !text-[13px]"
+    >
+      <span className="block min-w-0 flex-1 truncate">{compactText(value)}</span>
+    </Button>
+  );
+
+  const renderGapActions = (record: CustomerKnowledgeGap) => (
+    <Flex gap={6} align="center" className="knowledge-actions min-w-0 w-full">
+      <Button
+        type="primary"
+        size="small"
+        icon={<EditOutlined />}
+        onClick={() => openReviewModal(record)}
+        title="Review and edit answer"
+        className={ACTION_BUTTON_CLASSES}
+      >
+        Review
+      </Button>
+      <Popconfirm
+        title="Dismiss Question"
+        description="Remove this inquiry from review?"
+        onConfirm={() => handleReject(record.id)}
+        okText="Dismiss"
+        cancelText="Cancel"
+        placement="top"
+        rootClassName={CONFIRM_CLASSES}
+        icon={<ExclamationCircleFilled className="!text-[#b8860b]" />}
+      >
+        <Button
+          size="small"
+          icon={<CloseOutlined />}
+          className={`${ACTION_BUTTON_CLASSES} !bg-slate-50 !text-slate-600 hover:!bg-slate-100`}
+        >
+          Dismiss
+        </Button>
+      </Popconfirm>
+    </Flex>
+  );
+
+  const renderEntryActions = (entry: DynamicKnowledgeEntry) => (
+    <Flex gap={6} align="center" className="knowledge-actions knowledge-entry-actions min-w-0 w-full">
+      <Button
+        type="primary"
+        size="small"
+        icon={<EditOutlined />}
+        onClick={() => openEditEntryModal(entry)}
+        className={ACTION_BUTTON_CLASSES}
+      >
+        Edit
+      </Button>
+      <Popconfirm
+        title="Delete knowledge entry?"
+        description="This answer will be removed from live AI calls."
+        onConfirm={() => handleDeleteEntry(entry.id)}
+        okText="Delete"
+        cancelText="Cancel"
+        okButtonProps={{ danger: true, type: "primary" }}
+        placement="top"
+        rootClassName={CONFIRM_CLASSES}
+        icon={<ExclamationCircleFilled className="!text-rose-600" />}
+      >
+        <Button
+          size="small"
+          danger
+          color="danger"
+          variant="filled"
+          icon={<DeleteOutlined />}
+          className={`${ACTION_BUTTON_CLASSES} !border-rose-200 hover:!border-rose-300 focus-visible:!outline-rose-600`}
+        >
+          Delete
+        </Button>
+      </Popconfirm>
+    </Flex>
+  );
+
+  const renderPlatform = (platform: string) => (
+    <Tag color="gold" className="!m-0 !inline-block max-w-full truncate !rounded-full !px-2 !text-[11px]">
+      {compactText(platform, 30)}
+    </Tag>
+  );
+
   const gapColumns: ColumnsType<CustomerKnowledgeGap> = [
-    {
-      title: "Frequency",
-      dataIndex: "occurrenceCount",
-      key: "occurrenceCount",
-      width: 110,
-      render: (count: number) => (
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-white text-[#b8860b] border border-amber-200 whitespace-nowrap">
-          {count} {count > 1 ? "callers" : "caller"}
-        </span>
-      ),
-    },
-    {
-      title: "Caller's Question",
-      key: "question",
-      render: (_, record) => (
-        <div className="py-1">
-          <div className="font-semibold text-slate-900 text-xs leading-relaxed">
-            "{record.rawCallerQuestion}"
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5 flex-wrap">
-            <span>Topic: <strong className="text-slate-600">{record.callerIntent}</strong></span>
-            <span>•</span>
-            <span>{record.createdAt ? dayjs(record.createdAt).format("DD MMM, hh:mm A") : "—"}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Platform",
-      dataIndex: "platform",
-      key: "platform",
-      width: 130,
-      render: (v: string) => (
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-white text-[#b8860b] border border-amber-200 whitespace-nowrap">
-          {v || "TVRADHAKRISHNA"}
-        </span>
-      ),
-    },
-    {
-      title: "AI Suggested Answer",
-      dataIndex: "suggestedAnswer",
-      key: "suggestedAnswer",
-      render: (ans: string) => (
-        <div className="text-slate-600 text-xs leading-relaxed max-w-md">
-          {ans || "—"}
-        </div>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "action",
-      width: 170,
-      fixed: "right",
-      render: (_, record) => (
-        <div className="flex items-center gap-2">
-          <Button
-            size="small"
-            icon={<RiEditLine />}
-            onClick={() => openReviewModal(record)}
-            className="!rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 !font-medium text-xs whitespace-nowrap"
-          >
-            Review & Edit
-          </Button>
-          <Popconfirm
-            title="Dismiss Question"
-            description="Remove this inquiry from review?"
-            onConfirm={() => handleReject(record.id)}
-            okText="Dismiss"
-            cancelText="Cancel"
-          >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<RiCloseLine />}
-              className="text-xs"
-            >
-              Dismiss
-            </Button>
-          </Popconfirm>
-        </div>
-      ),
-    },
+    { title: "Platform", dataIndex: "platform", width: 130, ellipsis: { showTitle: false },
+      render: (platform: string) => renderPlatform(platform || "TVRADHAKRISHNA") },
+    { title: "Caller question", key: "question", width: 260, ellipsis: { showTitle: false },
+      render: (_, record) => renderCellPreview(record.rawCallerQuestion, { kind: "gap", record }, "View full question") },
+    { title: "Suggested answer", key: "answer", width: 324, ellipsis: { showTitle: false },
+      render: (_, record) => renderCellPreview(record.suggestedAnswer, { kind: "gap", record }, "View full suggestion") },
+    { title: "Asked", dataIndex: "occurrenceCount", width: 66, align: "center" },
+    { title: "Actions", key: "actions", width: 180, align: "center",
+      render: (_, record) => renderGapActions(record) },
   ];
 
-  // Tab 2 Columns: Live Active Knowledge Library
   const entryColumns: ColumnsType<DynamicKnowledgeEntry> = [
-    {
-      title: "Platform",
-      dataIndex: "platform",
-      key: "platform",
-      width: 130,
-      render: (v: string) => (
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-white text-[#b8860b] border border-amber-200 whitespace-nowrap">
-          {v}
-        </span>
-      ),
-    },
-    {
-      title: "Topic Intent",
-      dataIndex: "intentKey",
-      key: "intentKey",
-      width: 150,
-      render: (v: string) => (
-        <span className="font-mono text-xs font-semibold text-slate-800">
-          {v}
-        </span>
-      ),
-    },
-    {
-      title: "Trigger Keywords",
-      dataIndex: "queryMatchPatterns",
-      key: "queryMatchPatterns",
-      width: 200,
-      render: (patterns: string) => (
-        <span className="text-xs text-slate-600 leading-relaxed">
-          {patterns || "—"}
-        </span>
-      ),
-    },
-    {
-      title: "Verified Answers",
-      key: "answers",
-      render: (_, record) => (
-        <div className="flex flex-col gap-1 text-xs py-1 leading-relaxed max-w-md">
-          <div>
-            <strong className="text-slate-800">EN: </strong>
-            <span className="text-slate-600">{record.verifiedAnswer}</span>
-          </div>
-          {record.teluguAnswer && (
-            <div>
-              <strong className="text-amber-800">TE: </strong>
-              <span className="text-slate-600">{record.teluguAnswer}</span>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Calls Used",
-      dataIndex: "usageCount",
-      key: "usageCount",
-      width: 100,
-      sorter: (a, b) => a.usageCount - b.usageCount,
-      render: (count: number) => (
-        <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">
-          {count || 0} calls
-        </span>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "active",
-      key: "active",
-      width: 90,
-      render: (active: boolean) =>
-        active ? (
-          <Tag color="gold" className="!rounded-full !px-2.5 !py-0.5 !text-xs !font-medium">
-            Active
-          </Tag>
-        ) : (
-          <Tag className="!rounded-full !px-2.5 !py-0.5 !text-xs text-gray-400">
-            Paused
-          </Tag>
-        ),
-    },
-    {
-      title: "Actions",
-      key: "action",
-      width: 120,
-      fixed: "right",
-      render: (_, record) => (
-        <div className="flex items-center gap-1.5">
-          <Button
-            size="small"
-            icon={<RiEditLine />}
-            onClick={() => openEditEntryModal(record)}
-            className="!rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 !font-medium text-xs whitespace-nowrap"
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Delete Knowledge"
-            description="Delete this entry from live calls?"
-            onConfirm={() => handleDeleteEntry(record.id)}
-            okText="Delete"
-            cancelText="Cancel"
-          >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<RiDeleteBinLine />}
-              className="text-xs"
-            />
-          </Popconfirm>
-        </div>
-      ),
-    },
+    { title: "Topic", dataIndex: "intentKey", width: 160, ellipsis: { showTitle: false },
+      render: (topic: string) => <span className="block truncate font-mono text-xs font-semibold">{compactText(topic, 40)}</span> },
+    { title: "Platform", dataIndex: "platform", width: 130, ellipsis: { showTitle: false },
+      render: (platform: string) => renderPlatform(platform) },
+    { title: "Keywords", dataIndex: "queryMatchPatterns", width: 180, ellipsis: { showTitle: false },
+      render: (keywords: string) => <span className="block truncate">{compactText(keywords, 60)}</span> },
+    { title: "Verified answer", key: "answer", width: 162, ellipsis: { showTitle: false },
+      render: (_, record) => renderCellPreview(record.verifiedAnswer || record.teluguAnswer, { kind: "entry", record }, "View full answer") },
+    { title: "Calls", dataIndex: "usageCount", width: 72, align: "center",
+      sorter: (a, b) => (a.usageCount || 0) - (b.usageCount || 0), sortOrder: usageSort,
+      render: (count: number) => count || 0 },
+    { title: "Status", dataIndex: "active", width: 76,
+      render: (active: boolean) => <Tag color={active ? "gold" : undefined} className="!m-0 !rounded-full !px-2 !text-[11px]">{active ? "Active" : "Paused"}</Tag> },
+    { title: "Actions", key: "actions", width: 180, align: "center",
+      render: (_, record) => renderEntryActions(record) },
   ];
 
   return (
+    <ConfigProvider theme={KNOWLEDGE_THEME}>
     <VoiceAdminLayout activeKey="selflearning">
+      <div className="self-learning-knowledge min-w-0 [container-type:inline-size] [overflow-wrap:anywhere]">
       {/* ── Intro Hero (Standard Light Gradient Theme) ─────────────────────── */}
       <div className="bg-gradient-to-r from-amber-50 via-white to-white rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-100 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className={ROW_CLASSES}>
+          <div className="flex min-w-0 flex-[1_1_340px] items-start gap-3">
             <div className="p-2.5 bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg shadow-sm shrink-0">
               <RiRobot2Line className="text-[#b8860b] text-xl" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold text-slate-900">
                 Self-Learning Knowledge
               </h2>
@@ -475,14 +492,14 @@ export const SelfLearningKnowledge: React.FC = () => {
           </div>
 
           {/* KPI Summary Cards */}
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3">
-            <div className="text-center bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-lg px-4 sm:px-6 py-2.5 sm:py-3 min-w-[100px]">
+          <div className="grid min-w-0 max-w-[320px] flex-[1_1_240px] grid-cols-2 gap-3">
+            <div className="text-center bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-lg px-3 sm:px-5 py-2.5 sm:py-3 min-w-0">
               <div className="text-xl sm:text-2xl font-semibold text-slate-900">
                 {gaps.length}
               </div>
               <div className="text-slate-500 text-xs mt-0.5">Pending Review</div>
             </div>
-            <div className="text-center bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-lg px-4 sm:px-6 py-2.5 sm:py-3 min-w-[100px]">
+            <div className="text-center bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-lg px-3 sm:px-5 py-2.5 sm:py-3 min-w-0">
               <div className="text-xl sm:text-2xl font-semibold text-slate-900">
                 {entries.length}
               </div>
@@ -493,13 +510,14 @@ export const SelfLearningKnowledge: React.FC = () => {
       </div>
 
       {/* ── Filter & Action Bar ────────────────────────────────────────────── */}
-      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs font-medium text-slate-600">Platform:</span>
+      <div className={`${ROW_CLASSES} mb-4 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-4`}>
+        <div className="flex min-w-0 flex-[1_1_340px] flex-wrap items-center gap-3 [@container(max-width:560px)]:grid [@container(max-width:560px)]:grid-cols-[minmax(0,1fr)_auto] [@container(max-width:560px)]:basis-full">
+          <span className="text-xs font-medium text-slate-600 [@container(max-width:560px)]:col-span-full">Platform:</span>
           <Select
             value={selectedPlatform}
             onChange={setSelectedPlatform}
-            className="w-44 sm:w-48 text-xs"
+            className="min-w-0 max-w-[240px] flex-[1_1_140px] [@container(max-width:560px)]:w-full [@container(max-width:560px)]:max-w-none"
+            aria-label="Filter by platform"
             options={[
               { value: "ALL", label: "All Platforms" },
               ...PLATFORMS.map((p) => ({
@@ -521,26 +539,22 @@ export const SelfLearningKnowledge: React.FC = () => {
         </div>
 
         {/* Accessible Add New Answer Button */}
-        <div>
+        <div className="min-w-0 max-w-full [@container(max-width:560px)]:w-full">
           <Button
             type="primary"
             icon={<RiAddLine />}
             onClick={() => setCreateModalVisible(true)}
-            className="w-full sm:w-auto text-xs"
-            style={{
-              background: "linear-gradient(to right, #c9a24b, #b8860b)",
-              border: "none",
-              fontWeight: 500,
-            }}
+            className="[@container(max-width:560px)]:w-full"
           >
             Teach AI a New Answer
           </Button>
         </div>
       </div>
 
-      {/* ── Main Tabbed Content & Table Container ──────────────────────────── */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 overflow-hidden">
+      {/* ── Knowledge tables ──────────────────────────────────────────────── */}
+      <div className="min-w-0 max-w-full rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
         <Tabs
+          className={TABS_CLASSES}
           activeKey={activeTab}
           onChange={setActiveTab}
           items={[
@@ -565,22 +579,28 @@ export const SelfLearningKnowledge: React.FC = () => {
                       <Button
                         icon={<RiAddLine />}
                         onClick={() => setCreateModalVisible(true)}
-                        className="!rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 text-xs font-medium"
+                        className="!h-auto min-h-10 max-w-full whitespace-normal !rounded-full !border-amber-200 !bg-amber-50 !text-[#b8860b] hover:!bg-amber-100 hover:!border-amber-300 text-xs font-medium"
                       >
                         Teach AI a New Answer Directly
                       </Button>
                     </div>
                   ) : (
-                    <Table
+                    <div className="min-w-0 max-w-full">
+                    <p className="mb-2 text-xs text-slate-500 [@container(min-width:1000px)]:hidden">
+                      Scroll horizontally to see all columns.
+                    </p>
+                    <Table<CustomerKnowledgeGap>
                       rowKey="id"
+                      size="small"
                       loading={gapsLoading}
                       columns={gapColumns}
                       dataSource={gaps}
-                      pagination={{ pageSize: 10, showSizeChanger: false }}
-                      scroll={{ x: 800 }}
-                      bordered
-                      className="[&_.ant-table-thead_th]:!bg-amber-50 [&_.ant-table-thead_th]:!text-slate-800 [&_.ant-table-thead_th]:!font-semibold [&_.ant-table-tbody_td]:!text-slate-700 [&_.ant-table-tbody_tr:hover_td]:!bg-amber-50/40 text-xs"
+                      tableLayout="fixed"
+                      scroll={{ x: 960 }}
+                      pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true, responsive: true, showLessItems: true }}
+                      className={TABLE_CLASSES}
                     />
+                    </div>
                   )}
                 </div>
               ),
@@ -594,35 +614,156 @@ export const SelfLearningKnowledge: React.FC = () => {
               ),
               children: (
                 <div className="pt-2 flex flex-col gap-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                  <div className={ROW_CLASSES}>
                     <span className="text-xs text-slate-500">
                       Live verified answers spoken during calls
                     </span>
+                    <div className="flex min-w-0 max-w-full flex-[1_1_320px] flex-wrap justify-end gap-2 [@container(max-width:560px)]:w-full [@container(max-width:560px)]:max-w-none">
                     <Input
                       prefix={<RiSearchLine className="text-gray-400" />}
                       placeholder="Search knowledge by topic or words..."
                       value={searchFilter}
                       onChange={(e) => setSearchFilter(e.target.value)}
-                      className="w-full sm:w-72 rounded-md text-xs"
+                      className="min-w-0 max-w-[360px] flex-[1_1_240px] [@container(max-width:560px)]:w-full [@container(max-width:560px)]:max-w-none max-sm:[&_input]:!text-base"
+                      aria-label="Search knowledge"
                       allowClear
                     />
+                    <div className="min-w-0 max-w-[200px] flex-[1_1_160px] [@container(max-width:560px)]:w-full [@container(max-width:560px)]:max-w-none">
+                      <Select<"default" | "ascend" | "descend">
+                        aria-label="Sort knowledge by usage"
+                        value={usageSort || "default"}
+                        onChange={(value) => setUsageSort(value === "default" ? null : value)}
+                        options={[
+                          { value: "default", label: "Default order" },
+                          { value: "descend", label: "Most used first" },
+                          { value: "ascend", label: "Least used first" },
+                        ]}
+                        className="w-full"
+                      />
+                    </div>
+                    </div>
                   </div>
-                  <Table
+                  <div className="min-w-0 max-w-full">
+                  <p className="mb-2 text-xs text-slate-500 [@container(min-width:1000px)]:hidden">
+                    Scroll horizontally to see all columns.
+                  </p>
+                  <Table<DynamicKnowledgeEntry>
                     rowKey="id"
+                    size="small"
                     loading={entriesLoading}
                     columns={entryColumns}
                     dataSource={filteredEntries}
-                    pagination={{ pageSize: 10, showSizeChanger: false }}
-                    scroll={{ x: 850 }}
-                    bordered
-                    className="[&_.ant-table-thead_th]:!bg-amber-50 [&_.ant-table-thead_th]:!text-slate-800 [&_.ant-table-thead_th]:!font-semibold [&_.ant-table-tbody_td]:!text-slate-700 [&_.ant-table-tbody_tr:hover_td]:!bg-amber-50/40 text-xs"
+                    tableLayout="fixed"
+                    scroll={{ x: 960 }}
+                    onChange={(_, __, sorter) => setUsageSort(Array.isArray(sorter) ? null : sorter.order || null)}
+                    pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true, responsive: true, showLessItems: true }}
+                    locale={{ emptyText: "No matching knowledge entries" }}
+                    className={TABLE_CLASSES}
                   />
+                  </div>
                 </div>
               ),
             },
           ]}
         />
       </div>
+
+      <Modal
+        {...EDITOR_MODAL_PROPS}
+        className={`${EDITOR_MODAL_PROPS.className} knowledge-details-modal`}
+        title={viewingDetails?.kind === "entry" ? "Verified answer" : "Question details"}
+        open={viewingDetails !== null}
+        onCancel={() => setViewingDetails(null)}
+        width={960}
+        destroyOnClose
+        footer={
+          <Button
+            type="primary"
+            onClick={() => setViewingDetails(null)}
+            className="max-sm:!w-full max-sm:!min-h-10"
+          >
+            Close
+          </Button>
+        }
+      >
+        {viewingDetails && (
+          <div className="space-y-4 py-1">
+            <Flex gap={8} align="center" wrap>
+              <Tag color="gold" className="!m-0 !rounded-full">
+                {viewingDetails.record.platform || "TVRADHAKRISHNA"}
+              </Tag>
+              <Typography.Text className="line-clamp-2 min-w-0 font-mono !text-xs !text-slate-500">
+                {viewingDetails.kind === "entry" ? viewingDetails.record.intentKey : viewingDetails.record.callerIntent}
+              </Typography.Text>
+            </Flex>
+
+            {viewingDetails.kind === "entry" ? (
+              <>
+                <Tabs
+                  size="small"
+                  defaultActiveKey={!viewingDetails.record.verifiedAnswer && viewingDetails.record.teluguAnswer ? "telugu" : "english"}
+                  className="knowledge-answer-languages min-w-0 [&_.ant-tabs-tabpane]:min-w-0"
+                  items={[
+                    {
+                      key: "english",
+                      label: "English",
+                      children: (
+                        <Typography.Paragraph className={`knowledge-full-answer !mb-0 !text-sm ${COPY_CLASSES}`}>
+                          {viewingDetails.record.verifiedAnswer || "No English answer available."}
+                        </Typography.Paragraph>
+                      ),
+                    },
+                    ...(viewingDetails.record.teluguAnswer ? [{
+                      key: "telugu",
+                      label: "Telugu",
+                      children: (
+                        <Typography.Paragraph className={`knowledge-full-answer !mb-0 !text-sm ${COPY_CLASSES}`}>
+                          {viewingDetails.record.teluguAnswer}
+                        </Typography.Paragraph>
+                      ),
+                    }] : []),
+                  ]}
+                />
+                <div className="space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-4">
+                  <div>
+                    <h3 className="mb-1 text-xs font-semibold text-slate-500">Topic</h3>
+                    <div className={`font-mono text-xs ${COPY_CLASSES}`}>{viewingDetails.record.intentKey}</div>
+                  </div>
+                  <div>
+                    <h3 className="mb-1 text-xs font-semibold text-slate-500">Trigger keywords</h3>
+                    <div className={`knowledge-full-keywords text-sm ${COPY_CLASSES}`}>
+                      {viewingDetails.record.queryMatchPatterns || "—"}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                  <h3 className="mb-2 text-xs font-semibold text-slate-500">Caller's question</h3>
+                  <Typography.Paragraph className={`knowledge-full-question !mb-0 !text-sm ${COPY_CLASSES}`}>
+                    {viewingDetails.record.rawCallerQuestion}
+                  </Typography.Paragraph>
+                </div>
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-slate-700">AI suggested answer</h3>
+                  <Typography.Paragraph className={`knowledge-full-answer !mb-0 !text-sm ${COPY_CLASSES}`}>
+                    {viewingDetails.record.suggestedAnswer || "No suggested answer yet."}
+                  </Typography.Paragraph>
+                </div>
+                <div>
+                  <h3 className="mb-1 text-xs font-semibold text-slate-500">Topic</h3>
+                  <div className={`font-mono text-xs ${COPY_CLASSES}`}>{viewingDetails.record.callerIntent}</div>
+                </div>
+                <Typography.Text type="secondary" className="!text-xs">
+                  Asked {viewingDetails.record.occurrenceCount} times
+                  {viewingDetails.record.createdAt ? ` · ${dayjs(viewingDetails.record.createdAt).format("DD MMM YYYY, hh:mm A")}` : ""}
+                </Typography.Text>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* ── MODAL 1: Review & Edit Answer Before Approving ────────────────── */}
       <Modal
@@ -639,15 +780,8 @@ export const SelfLearningKnowledge: React.FC = () => {
         onCancel={() => setReviewModalVisible(false)}
         confirmLoading={approving}
         okText="Approve for Live Calls"
-        okButtonProps={{
-          style: {
-            background: "linear-gradient(to right, #c9a24b, #b8860b)",
-            border: "none",
-            fontWeight: 500,
-          },
-        }}
+        {...EDITOR_MODAL_PROPS}
         width={620}
-        style={{ maxWidth: "95vw" }}
       >
         {selectedGap && (
           <div className="space-y-4 py-3">
@@ -655,7 +789,7 @@ export const SelfLearningKnowledge: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-500 uppercase block mb-0.5">
                 Caller's Question:
               </span>
-              <p className="text-xs sm:text-sm font-semibold text-slate-900 leading-snug">
+              <p className={`${COPY_CLASSES} text-sm font-semibold text-slate-900`}>
                 "{selectedGap.rawCallerQuestion}"
               </p>
               <div className="flex items-center gap-2 mt-2 text-xs text-slate-500 flex-wrap">
@@ -709,26 +843,19 @@ export const SelfLearningKnowledge: React.FC = () => {
         onCancel={() => setEditEntryModalVisible(false)}
         confirmLoading={updating}
         okText="Save Changes"
-        okButtonProps={{
-          style: {
-            background: "linear-gradient(to right, #c9a24b, #b8860b)",
-            border: "none",
-            fontWeight: 500,
-          },
-        }}
+        {...EDITOR_MODAL_PROPS}
         width={600}
-        style={{ maxWidth: "95vw" }}
       >
         {editingEntry && (
           <div className="space-y-4 py-3">
-            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <div className={`${COPY_CLASSES} flex-1`}>
                 <span className="text-xs text-slate-500 block">Topic Intent:</span>
                 <span className="font-mono text-sm font-semibold text-slate-800">
                   {editingEntry.intentKey}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs font-medium text-slate-600">Active:</span>
                 <Switch
                   checked={editActive}
@@ -790,15 +917,8 @@ export const SelfLearningKnowledge: React.FC = () => {
         onCancel={() => setCreateModalVisible(false)}
         confirmLoading={creating}
         okText="Publish to Live Calls"
-        okButtonProps={{
-          style: {
-            background: "linear-gradient(to right, #c9a24b, #b8860b)",
-            border: "none",
-            fontWeight: 500,
-          },
-        }}
+        {...EDITOR_MODAL_PROPS}
         width={600}
-        style={{ maxWidth: "95vw" }}
       >
         <div className="space-y-4 py-3">
           <div>
@@ -867,7 +987,9 @@ export const SelfLearningKnowledge: React.FC = () => {
           </div>
         </div>
       </Modal>
+      </div>
     </VoiceAdminLayout>
+    </ConfigProvider>
   );
 };
 

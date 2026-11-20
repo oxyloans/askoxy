@@ -19,6 +19,11 @@ import TranscriptModal from "./components/TranscriptModal";
 import { getTranscriptForCall } from "./transcript";
 
 const API_DATE_FORMAT = "DD-MM-YYYY";
+const CALL_DIRECTION_COLORS = {
+  INBOUND: "#059669",
+  OUTBOUND: "#ea580c",
+  EMPTY: "#cbd5e1",
+} as const;
 
 const PLATFORM_DOT_COLORS: Record<string, string> = {
   TVRADHAKRISHNA: "bg-gradient-to-br from-purple-400 to-indigo-500",
@@ -98,7 +103,7 @@ const HourlyBarChart: React.FC<{
         {buckets.map((b) => (
           <div
             key={b.hour}
-            className="flex-1 flex flex-col justify-end items-center group relative"
+            className="h-full flex-1 flex flex-col justify-end items-center group relative"
           >
             <div className="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-medium text-slate-700 bg-white border border-gray-100 shadow-sm rounded px-1.5 py-0.5 whitespace-nowrap z-10">
               {b.count} call{b.count !== 1 ? "s" : ""}
@@ -171,7 +176,7 @@ const CombinedHourlyChart: React.FC<{ calls: CallLike[] }> = ({ calls }) => {
           return (
             <div
               key={b.hour}
-              className="flex-1 flex flex-col justify-end items-center group relative"
+              className="h-full flex-1 flex flex-col justify-end items-center group relative"
             >
               <div className="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-medium text-slate-700 bg-white border border-gray-100 shadow-sm rounded px-1.5 py-0.5 whitespace-nowrap z-10">
                 {total} call{total !== 1 ? "s" : ""}
@@ -184,11 +189,11 @@ const CombinedHourlyChart: React.FC<{ calls: CallLike[] }> = ({ calls }) => {
                 }}
               >
                 <div
-                  className="w-full bg-gradient-to-t from-blue-400 to-blue-300"
+                  className="w-full bg-gradient-to-t from-emerald-600 to-emerald-400"
                   style={{ height: `${inboundPct}%` }}
                 />
                 <div
-                  className="w-full bg-gradient-to-t from-violet-400 to-violet-300"
+                  className="w-full bg-gradient-to-t from-orange-600 to-orange-400"
                   style={{ height: `${100 - inboundPct}%` }}
                 />
               </div>
@@ -208,10 +213,10 @@ const CombinedHourlyChart: React.FC<{ calls: CallLike[] }> = ({ calls }) => {
       </div>
       <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-blue-400" /> Inbound
+          <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600" /> Inbound
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-violet-400" /> Outbound
+          <span className="w-2.5 h-2.5 rounded-sm bg-orange-600" /> Outbound
         </span>
       </div>
     </div>
@@ -235,13 +240,19 @@ const DirectionDonut: React.FC<{ inbound: number; outbound: number }> = ({
       className="relative flex items-center justify-center"
       style={{ width: size, height: size }}
     >
-      <svg width={size} height={size} className="-rotate-90">
+      <svg
+        width={size}
+        height={size}
+        className="-rotate-90"
+        role="img"
+        aria-label={`Inbound ${inbound} calls; outbound ${outbound} calls`}
+      >
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#ede9fe"
+          stroke={total ? CALL_DIRECTION_COLORS.OUTBOUND : CALL_DIRECTION_COLORS.EMPTY}
           strokeWidth={stroke}
         />
         {total > 0 && (
@@ -250,7 +261,7 @@ const DirectionDonut: React.FC<{ inbound: number; outbound: number }> = ({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#60a5fa"
+            stroke={CALL_DIRECTION_COLORS.INBOUND}
             strokeWidth={stroke}
             strokeDasharray={`${inboundDash} ${circumference - inboundDash}`}
             strokeLinecap="butt"
@@ -472,14 +483,14 @@ const Dashboard: React.FC = () => {
                 />
                 <div className="space-y-2.5 text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
                     <span className="text-slate-500 w-16">Inbound</span>
                     <span className="font-semibold text-slate-900">
                       {inbound?.totalCalls ?? 0}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-violet-300" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-600" />
                     <span className="text-slate-500 w-16">Outbound</span>
                     <span className="font-semibold text-slate-900">
                       {outbound?.totalCalls ?? 0}
@@ -501,12 +512,12 @@ const Dashboard: React.FC = () => {
               <SectionHeader
                 icon={<RiPhoneLine />}
                 title="Inbound Calls by Hour"
-                accent="text-blue-400"
+                accent="text-emerald-600"
               />
               <HourlyBarChart
                 calls={inboundCalls}
-                barFrom="from-blue-400"
-                barTo="to-blue-300"
+                barFrom="from-emerald-600"
+                barTo="to-emerald-400"
               />
             </Card>
           </Col>
@@ -518,12 +529,12 @@ const Dashboard: React.FC = () => {
               <SectionHeader
                 icon={<RiPhoneFindLine />}
                 title="Outbound Calls by Hour"
-                accent="text-violet-400"
+                accent="text-orange-600"
               />
               <HourlyBarChart
                 calls={outboundCalls}
-                barFrom="from-violet-400"
-                barTo="to-violet-300"
+                barFrom="from-orange-600"
+                barTo="to-orange-400"
               />
             </Card>
           </Col>
@@ -539,9 +550,9 @@ const Dashboard: React.FC = () => {
               <SectionHeader
                 icon={<RiListCheck2 />}
                 title="Top Inbound Call Reasons"
-                accent="text-blue-400"
+                accent="text-emerald-600"
               />
-              <TopPurposesList calls={inboundCalls} barColor="bg-blue-400" />
+              <TopPurposesList calls={inboundCalls} barColor="bg-emerald-600" />
             </Card>
           </Col>
           <Col xs={24} lg={12}>
@@ -552,9 +563,9 @@ const Dashboard: React.FC = () => {
               <SectionHeader
                 icon={<RiListCheck2 />}
                 title="Top Outbound Call Reasons"
-                accent="text-violet-400"
+                accent="text-orange-600"
               />
-              <TopPurposesList calls={outboundCalls} barColor="bg-violet-400" />
+              <TopPurposesList calls={outboundCalls} barColor="bg-orange-600" />
             </Card>
           </Col>
         </Row>
