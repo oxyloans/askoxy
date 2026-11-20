@@ -175,6 +175,7 @@ const Footer = () => {
           {/* Contact (FIXED: text color) */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
+
             <address className="not-italic text-sm space-y-3">
               <div className="flex items-start gap-2">
                 <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
@@ -190,17 +191,28 @@ const Footer = () => {
                   Station, Hyderabad, Telangana 500049
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+              <div className="flex items-center flex-wrap gap-x-1.5 gap-y-1.5">
+                <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0 mr-0.5" />
+                <a
+                  href="tel:04041897778"
+                  className="inline-flex items-center gap-1 font-extrabold text-slate-900 bg-amber-100 hover:bg-amber-200 text-xs sm:text-sm px-2 py-0.5 rounded-full border border-amber-300 transition-colors duration-200 whitespace-nowrap"
+                  title="Toll Free: 040 4189 7778"
+                >
+                  <span>040 4189 7778</span>
+                  <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded-full">
+                    Toll Free
+                  </span>
+                </a>
+                <span className="text-gray-400">,</span>
                 <a
                   href="tel:+918143271103"
                   className="hover:text-cyan-400 transition"
                 >
                   +91 81432 71103
                 </a>
-                {","}
+                <span className="text-gray-400">,</span>
                 <a
-                  href="tel:+91+91 89196 36330"
+                  href="tel:+918919636330"
                   className="hover:text-cyan-400 transition"
                 >
                   +91 89196 36330

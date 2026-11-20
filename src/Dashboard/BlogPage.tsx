@@ -10,7 +10,6 @@ import {
   FileTextOutlined,
   UserOutlined,
   PlusOutlined,
-  TrophyOutlined,
   EditOutlined,
 } from "@ant-design/icons";
 import axiosInstance from "../utils/axiosInstance";
@@ -361,8 +360,15 @@ const BlogsPage: React.FC = () => {
   };
   const isLoggedInUser = Boolean(userId);
   const visibleTabs: TabKey[] = isLoggedInUser
-    ? ["MY", "ALL", "GAMES"]
-    : ["ALL", "GAMES"];
+    ? ["MY", "ALL"]
+    : ["ALL"];
+
+  useEffect(() => {
+    if (activeTab === "GAMES") {
+      setActiveTab("ALL");
+      setCurrentPage(1);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (!isLoggedInUser && activeTab === "MY") {
@@ -763,7 +769,7 @@ const BlogsPage: React.FC = () => {
             <div className="bpHeaderText">
               <h1 className="bpTitle">Explore Blogs &amp; Share Your Ideas</h1>
               <p className="bpSubtitle">
-                Read trending stories, discover IPL content, and publish your
+                Read trending stories, discover insightful content, and publish your
                 own thoughts.
               </p>
             </div>

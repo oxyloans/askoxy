@@ -475,8 +475,16 @@ export default function ArticlePage() {
   const s = a?.summary;
   const oa = a?.opportunityAssessment;
   const opportunityByKey = oa as unknown as Record<string, Opportunity> | undefined;
-  const hasPeople = (a?.people?.length ?? 0) > 0;
-  const hasCompanies = (a?.companies?.length ?? 0) > 0;
+  const validPeople = (a?.people ?? []).filter(
+    (p) => !!p && (Boolean(p.name?.trim()) || Boolean(p.designation?.trim()) || Boolean(p.company?.trim()))
+  );
+
+  const validCompanies = (a?.companies ?? []).filter(
+    (comp) => !!comp && (Boolean(comp.name?.trim()) || Boolean(comp.website?.trim()))
+  );
+
+  const hasPeople = validPeople.length > 0;
+  const hasCompanies = validCompanies.length > 0;
   const stakeholders = a?.stakeholderPerspectives ?? [];
   const activeStakeholder = stakeholders[activePerspIdx];
   const topOpps = opportunityEntries.slice(0, 3);
@@ -822,13 +830,17 @@ export default function ArticlePage() {
                     <div className="rounded-xl border border-slate-200 bg-white p-4 min-w-0">
                       <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">People</h3>
                       <div className="space-y-3">
-                        {a!.people!.map((p, i) => (
-                          <div key={i} className="flex flex-col gap-1.5 border-t border-slate-100 pt-3 first:border-0 first:pt-0">
-                            <p className="text-sm font-semibold text-slate-800 break-words">{p.name}</p>
-                            <p className="text-xs text-slate-500 break-words">{[p.designation, p.company].filter(Boolean).join(", ")}</p>
-                            {p.linkedin && <LinkedInBtn href={p.linkedin} size="sm" />}
-                          </div>
-                        ))}
+                        {validPeople.map((p, i) => {
+                          const displayName = p.name?.trim() || [p.designation, p.company].filter(Boolean).join(" - ") || "Unknown";
+                          const subText = [p.designation, p.company].filter(Boolean).join(", ");
+                          return (
+                            <div key={i} className="flex flex-col gap-1.5 border-t border-slate-100 pt-3 first:border-0 first:pt-0">
+                              <p className="text-sm font-semibold text-slate-800 break-words">{displayName}</p>
+                              {subText && <p className="text-xs text-slate-500 break-words">{subText}</p>}
+                              {p.linkedin && <LinkedInBtn href={p.linkedin} size="sm" />}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -836,7 +848,7 @@ export default function ArticlePage() {
                     <div className="rounded-xl border border-slate-200 bg-white p-4 min-w-0">
                       <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">Organizations</h3>
                       <div className="space-y-3">
-                        {a!.companies!.map((c2, i) => (
+                        {validCompanies.map((c2, i) => (
                           <div key={i} className="border-t border-slate-100 pt-3 first:border-0 first:pt-0">
                             <p className="text-sm font-semibold text-slate-800 break-words">{c2.name}</p>
                             {c2.website && (
@@ -884,18 +896,23 @@ export default function ArticlePage() {
               <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">People Involved</h3>
                 <div className="space-y-2.5">
-                  {a!.people!.slice(0, 3).map((p, i) => (
-                    <div key={i} className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-bold shrink-0">
-                        {p.name[0]}
+                  {validPeople.slice(0, 3).map((p, i) => {
+                    const displayName = p.name?.trim() || [p.designation, p.company].filter(Boolean).join(" - ") || "Unknown";
+                    const initial = (p.name?.trim() || p.designation?.trim() || p.company?.trim() || "?").charAt(0).toUpperCase() || "?";
+                    const subText = p.designation || p.company || "";
+                    return (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-bold shrink-0">
+                          {initial}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-800 truncate">{displayName}</p>
+                          {subText && <p className="text-[11px] text-slate-500 truncate">{subText}</p>}
+                        </div>
+                        {p.linkedin && <LinkedInBtn href={p.linkedin} size="sm" />}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{p.designation || p.company}</p>
-                      </div>
-                      {p.linkedin && <LinkedInBtn href={p.linkedin} size="sm" />}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -1,119 +1,252 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "./Header";
-import ServicesSlider from "./ServicesSlider";
-import FreeGPTs from "./FreeGPTs";
-import OXYGroupCompanies from "./OXYGroupCompanies";
-import Footer from "./Footer";
-import OurPeople from "./OurTeam";
-import PdfPages from "./Presentation";
-import UnicornGrid from "./SuperOurApp";
-import AwardPage from "./Award";
-import FreeAiBook from "./FreeAiBook";
-import BMVCoinPromo from "./BMVCoinPromo";
 import Whiteboardtheme from "./whiteboardtheme";
-import RadhAISection from "./radhAIsection";
-import PartnerSection from "./PartnerSection";
-import WalkInInterviewStepsModal from "./WalkInInterviewStepsModal";
 import { PhoneCall } from "lucide-react";
 
+// Below-the-fold components lazy-loaded for peak Lighthouse Speed Index & TBT
+const OXYGroupCompanies = lazy(() => import("./OXYGroupCompanies"));
+const UnicornGrid = lazy(() => import("./SuperOurApp"));
+const FreeAiBook = lazy(() => import("./FreeAiBook"));
+const ServicesSlider = lazy(() => import("./ServicesSlider"));
+const RadhAISection = lazy(() => import("./radhAIsection"));
+const BMVCoinPromo = lazy(() => import("./BMVCoinPromo"));
+const FreeGPTs = lazy(() => import("./FreeGPTs"));
+const AwardPage = lazy(() => import("./Award"));
+const PartnerSection = lazy(() => import("./PartnerSection"));
+const OurPeople = lazy(() => import("./OurTeam"));
+const PdfPages = lazy(() => import("./Presentation"));
+const Footer = lazy(() => import("./Footer"));
+const WalkInInterviewStepsModal = lazy(
+  () => import("./WalkInInterviewStepsModal")
+);
+
 const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
+
+// Minimal placeholder during deferred loading to preserve layout stability (zero CLS)
+const SectionPlaceholder: React.FC<{ minHeight?: string }> = ({
+  minHeight = "260px",
+}) => (
+  <div
+    style={{ minHeight }}
+    className="w-full flex items-center justify-center opacity-0 pointer-events-none"
+    aria-hidden="true"
+  />
+);
+
+// Viewport-aware deferred loader: mounts sections ~400px before reaching viewport
+const LazySection: React.FC<{
+  children: React.ReactNode;
+  minHeight?: string;
+  fallbackDelay?: number;
+}> = ({ children, minHeight = "240px", fallbackDelay = 3000 }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!("IntersectionObserver" in window)) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "400px 0px" }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    // Idle fallback ensures everything loads seamlessly even without scroll
+    const fallbackTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, fallbackDelay);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimer);
+    };
+  }, [fallbackDelay]);
+
+  return (
+    <div ref={containerRef} style={{ minHeight: isVisible ? undefined : minHeight }}>
+      {isVisible ? (
+        <Suspense fallback={<SectionPlaceholder minHeight={minHeight} />}>
+          {children}
+        </Suspense>
+      ) : (
+        <SectionPlaceholder minHeight={minHeight} />
+      )}
+    </div>
+  );
+};
 
 const CurrentLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div className="relative z-[1] overflow-x-hidden bg-white">
       <Header />
 
       <main className="overflow-visible pt-[60px]">
+        {/* Above-the-fold Hero Section: renders synchronously for instant FCP and LCP */}
         <section className="relative z-[1]">
           <Whiteboardtheme />
         </section>
 
+        {/* Below-the-fold Sections: lazy-loaded with intersection observer */}
         <section className="relative z-[1]">
-          <OXYGroupCompanies />
+          <LazySection minHeight="140px" fallbackDelay={1200}>
+            <OXYGroupCompanies />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <UnicornGrid />
+          <LazySection minHeight="450px" fallbackDelay={1800}>
+            <UnicornGrid />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <FreeAiBook />
+          <LazySection minHeight="400px" fallbackDelay={2200}>
+            <FreeAiBook />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <ServicesSlider />
+          <LazySection minHeight="500px" fallbackDelay={2600}>
+            <ServicesSlider />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <RadhAISection />
+          <LazySection minHeight="380px" fallbackDelay={3000}>
+            <RadhAISection />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <BMVCoinPromo />
+          <LazySection minHeight="320px" fallbackDelay={3400}>
+            <BMVCoinPromo />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <FreeGPTs />
+          <LazySection minHeight="260px" fallbackDelay={3800}>
+            <FreeGPTs />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <AwardPage />
-        </section>
-        <section className="relative z-[1]">
-          <PartnerSection />
-        </section>
-
-        <section className="relative z-[1]">
-          <OurPeople />
+          <LazySection minHeight="420px" fallbackDelay={4200}>
+            <AwardPage />
+          </LazySection>
         </section>
 
         <section className="relative z-[1]">
-          <PdfPages />
+          <LazySection minHeight="360px" fallbackDelay={4600}>
+            <PartnerSection />
+          </LazySection>
         </section>
 
-        <Footer />
+        <section className="relative z-[1]">
+          <LazySection minHeight="400px" fallbackDelay={5000}>
+            <OurPeople />
+          </LazySection>
+        </section>
+
+        <section className="relative z-[1]">
+          <LazySection minHeight="420px" fallbackDelay={5400}>
+            <PdfPages />
+          </LazySection>
+        </section>
+
+        <LazySection minHeight="360px" fallbackDelay={5800}>
+          <Footer />
+        </LazySection>
       </main>
 
-      {/* Floating Toll Free Helpline Button (Direct Phone Call) */}
+      {/* Floating Toll Free Helpline Button */}
       <div
-        className="fixed bottom-4 left-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:left-4 md:left-5"
+        className={`fixed bottom-4 left-3 z-[9999] transition-all duration-300 sm:bottom-5 sm:left-4 md:left-5 ${
+          isScrolled
+            ? "pointer-events-none translate-y-4 opacity-0"
+            : "pointer-events-auto translate-y-0 opacity-100"
+        }`}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <a
           href="tel:04041897778"
-          className="group flex items-center gap-2 sm:gap-2.5 rounded-full bg-white/95 backdrop-blur-md pl-1.5 pr-3.5 py-1.5 sm:pl-2 sm:pr-4 sm:py-2 text-slate-800 shadow-xl shadow-emerald-950/15 border border-emerald-400 hover:border-emerald-500 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+          className="relative group flex items-center rounded-full bg-[#120f28]/95 backdrop-blur-md p-1 sm:pl-2 sm:pr-5 sm:py-2 text-white shadow-2xl shadow-purple-950/60 border border-purple-400/30 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
           aria-label="Call Toll Free Helpline 040 4189 7778 (24/7 · 365 Days Available)"
           title="Toll Free Helpline: 040 4189 7778 (24/7 · 365 Days Available)"
         >
-          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-500 text-white shadow-md shadow-emerald-600/30 shrink-0 group-hover:rotate-12 transition-transform">
-            <PhoneCall className="h-4 w-4 sm:h-5 sm:w-5" />
+          {/* Peach/Orange circular phone icon */}
+          <div className="flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[#fde3cf] text-[#9a3412] shadow-sm shrink-0 group-hover:rotate-12 transition-transform">
+            <PhoneCall className="h-5 w-5" />
           </div>
-          <div className="flex flex-col text-left leading-tight">
+
+          {/* Text block: hidden on mobile (< sm), visible on sm and up */}
+          <div className="hidden sm:flex flex-col text-left leading-tight sm:ml-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                Toll Free
-              </span>
-              <span className="relative flex h-1.5 w-1.5">
+              <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-100">
+                TOLL FREE HELPLINE
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold text-cyan-400">
+                • 24/7
               </span>
             </div>
-            <span className="text-xs sm:text-sm font-black text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors">
+
+            <span className="text-sm sm:text-base font-extrabold text-white tracking-wide">
               040 4189 7778
             </span>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-slate-500 whitespace-nowrap">
-              24/7 · 365 Days Available
-            </span>
+          </div>
+
+          {/* Floating Tooltip on hover for mobile view */}
+          <div className="sm:hidden absolute bottom-full left-0 mb-2 pointer-events-none opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-200 z-50">
+            <div className="flex flex-col whitespace-nowrap rounded-xl bg-[#120f28]/95 px-3 py-1.5 text-white shadow-xl border border-purple-400/40 backdrop-blur-md">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                </span>
+                <span className="text-[10px] font-bold text-slate-100 uppercase tracking-wider">
+                  TOLL FREE • 24/7
+                </span>
+              </div>
+              <span className="text-xs font-black text-white">040 4189 7778</span>
+            </div>
           </div>
         </a>
       </div>
 
-      {/* Floating "We Are Hiring" button visible throughout the entire landing page on scroll */}
+      {/* Floating "We Are Hiring" button */}
       <div
         className="fixed bottom-4 right-1 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:right-2 md:right-4"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -128,19 +261,26 @@ const CurrentLandingPage: React.FC = () => {
           <img
             src={ASK_OXY_ICON_URL}
             alt="We are hiring"
-            className="h-12 w-auto select-none sm:h-14 md:h-16 lg:h-20"
+            className="h-11 w-auto select-none sm:h-14 md:h-16 lg:h-20"
             draggable={false}
             loading="lazy"
             decoding="async"
+            width="80"
+            height="80"
           />
         </button>
       </div>
 
-      <WalkInInterviewStepsModal
-        isOpen={isWalkInModalOpen}
-        onClose={() => setIsWalkInModalOpen(false)}
-        onActionClick={() => navigate("/wearehiring")}
-      />
+      {/* Modal loaded only when open */}
+      {isWalkInModalOpen && (
+        <Suspense fallback={null}>
+          <WalkInInterviewStepsModal
+            isOpen={isWalkInModalOpen}
+            onClose={() => setIsWalkInModalOpen(false)}
+            onActionClick={() => navigate("/wearehiring")}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

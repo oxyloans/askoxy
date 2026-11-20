@@ -263,8 +263,29 @@ let rankingsCache: Promise<ApiResponse> | null = null;
 function loadRankings(): Promise<ApiResponse> {
   if (!rankingsCache) {
     rankingsCache = fetch(API_URL)
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .catch(e => { rankingsCache = null; throw e; });
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        try {
+          if (data && (data.data || data.spend)) {
+            sessionStorage.setItem("rankings_task_spend", JSON.stringify(data));
+          }
+        } catch {}
+        return data;
+      })
+      .catch(e => {
+        try {
+          const cached = sessionStorage.getItem("rankings_task_spend");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && (parsed.data || parsed.spend)) return parsed;
+          }
+        } catch {}
+        rankingsCache = null;
+        throw e;
+      });
   }
   return rankingsCache;
 }

@@ -31,8 +31,9 @@ import Footer from "../components/Footer";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import AddressUpdateModal from "./AddressUpdate";
+import { calculateDeliveryFee } from "./DeliveryFee";
 
 interface OrderAddress {
   flatNo: string;
@@ -110,6 +111,8 @@ interface OrderDetailsResponse {
   dayOfWeek?: string;
   expectedDeliveryDate?: string;
   isFromExchangeTab?: boolean;
+  extraDeliveryFee?: number;
+  originalPaidAmount?: number;
 }
 
 const MyOrders: React.FC = () => {
@@ -553,7 +556,40 @@ const MyOrders: React.FC = () => {
         (order) => order.orderStatus !== "7"
       );
 
-      return filteredOrders;
+      // Merge locally cached updated delivery fees if any
+      let cachedFees: Record<
+        string,
+        {
+          deliveryFee: number;
+          grandTotal: number;
+          extraDeliveryFee?: number;
+          originalPaidAmount?: number;
+          orderAddress?: any;
+        }
+      > = {};
+      try {
+        cachedFees = JSON.parse(localStorage.getItem("updated_order_fees") || "{}");
+      } catch (e) {
+        console.error("Error reading cached order fees:", e);
+      }
+
+      const mergedOrders = filteredOrders.map((order) => {
+        if (cachedFees[order.orderId]) {
+          return {
+            ...order,
+            deliveryFee: cachedFees[order.orderId].deliveryFee ?? order.deliveryFee,
+            grandTotal: cachedFees[order.orderId].grandTotal ?? order.grandTotal,
+            extraDeliveryFee: cachedFees[order.orderId].extraDeliveryFee,
+            originalPaidAmount: cachedFees[order.orderId].originalPaidAmount,
+            ...(cachedFees[order.orderId].orderAddress
+              ? { orderAddress: cachedFees[order.orderId].orderAddress }
+              : {}),
+          };
+        }
+        return order;
+      });
+
+      return mergedOrders;
     } catch (error) {
       console.error("Error fetching orders:", error);
       message.error("Failed to fetch orders.");
@@ -804,6 +840,26 @@ const MyOrders: React.FC = () => {
         if (orderData.orderStatus === "4" && !orderData.feedback) {
           const feedbackData = await fetchOrderFeedbackData(orderId);
           orderData.feedback = feedbackData;
+        }
+
+        // Merge locally cached updated delivery fee if any
+        try {
+          const cachedFees = JSON.parse(
+            localStorage.getItem("updated_order_fees") || "{}"
+          );
+          if (cachedFees[orderId]) {
+            orderData.deliveryFee =
+              cachedFees[orderId].deliveryFee ?? orderData.deliveryFee;
+            orderData.grandTotal =
+              cachedFees[orderId].grandTotal ?? orderData.grandTotal;
+            orderData.extraDeliveryFee = cachedFees[orderId].extraDeliveryFee;
+            orderData.originalPaidAmount = cachedFees[orderId].originalPaidAmount;
+            if (cachedFees[orderId].orderAddress) {
+              orderData.orderAddress = cachedFees[orderId].orderAddress;
+            }
+          }
+        } catch (e) {
+          console.error("Error reading cached order fees in details:", e);
         }
 
         setSelectedOrder(orderData);
@@ -2047,9 +2103,111 @@ const MyOrders: React.FC = () => {
         message.error(
           "Unable to find location coordinates. Please check the address."
         );
+        setIsAddressUpdating(false);
         return;
       }
 
+      // Calculate items amount to check delivery fee
+      const itemsAmount =
+        selectedOrder.subTotal && selectedOrder.subTotal > 0
+          ? selectedOrder.subTotal
+          : selectedOrder.orderItems && selectedOrder.orderItems.length > 0
+          ? selectedOrder.orderItems.reduce(
+              (sum, item) =>
+                sum +
+                item.quantity * (item.singleItemPrice || item.price || 0),
+              0
+            )
+          : Math.max(
+              0,
+              (selectedOrder.grandTotal || 0) - (selectedOrder.deliveryFee || 0)
+            );
+
+      // Calculate dynamic delivery fee for the new coordinates
+      let newDeliveryFee = selectedOrder.deliveryFee || 0;
+      let feeDifference = 0;
+      try {
+        const feeResult = await calculateDeliveryFee(
+          coordinates.lat,
+          coordinates.lng,
+          itemsAmount
+        );
+
+        if (feeResult.fee === null && !feeResult.canPlaceOrder) {
+          message.error(
+            feeResult.note || "Delivery is not available for this location."
+          );
+          setIsAddressUpdating(false);
+          return;
+        }
+
+        if (feeResult.fee !== null) {
+          newDeliveryFee = feeResult.fee;
+          const oldDeliveryFee = selectedOrder.deliveryFee || 0;
+          feeDifference = newDeliveryFee - oldDeliveryFee;
+        }
+      } catch (err) {
+        console.warn("Could not calculate dynamic delivery fee, keeping current fee:", err);
+      }
+
+      const newGrandTotal = Math.max(
+        0,
+        (selectedOrder.grandTotal || 0) + feeDifference
+      );
+
+      // For Online Payment orders (paymentType === 2) when delivery fee increases:
+      // Show confirmation popup asking customer to confirm paying the difference at delivery
+      if (selectedOrder.paymentType === 2 && feeDifference > 0) {
+        setIsAddressUpdating(false);
+        Modal.confirm({
+          title: "Additional Delivery Fee Required",
+          content: `Your order was already paid online. Because the new address is farther, the delivery fee increases by ₹${Math.round(
+            feeDifference
+          )} (Total delivery fee: ₹${Math.round(
+            newDeliveryFee
+          )}). You will need to pay this additional ₹${Math.round(
+            feeDifference
+          )} to the delivery person upon delivery (COD). Do you agree to proceed?`,
+          okText: "Agree & Update Address",
+          cancelText: "Cancel",
+          okButtonProps: {
+            style: { backgroundColor: "#9333ea", borderColor: "#9333ea", color: "#ffffff" },
+          },
+          onOk: async () => {
+            await executeAddressUpdate(
+              newDeliveryFee,
+              feeDifference,
+              newGrandTotal,
+              coordinates
+            );
+          },
+        });
+        return;
+      }
+
+      // Otherwise proceed directly
+      await executeAddressUpdate(
+        newDeliveryFee,
+        feeDifference,
+        newGrandTotal,
+        coordinates
+      );
+    } catch (error) {
+      console.error("Error in handleUpdateAddress:", error);
+      message.error("Failed to update address. Please try again.");
+      setIsAddressUpdating(false);
+    }
+  };
+
+  const executeAddressUpdate = async (
+    newDeliveryFee: number,
+    feeDifference: number,
+    newGrandTotal: number,
+    coordinates: { lat: number; lng: number }
+  ) => {
+    if (!selectedOrder) return;
+    try {
+      setIsAddressUpdating(true);
       const token = localStorage.getItem("token");
       const requestBody = {
         address: addressFormData.address,
@@ -2062,6 +2220,10 @@ const MyOrders: React.FC = () => {
         orderId: selectedOrder.orderId,
         pincode: parseInt(addressFormData.pincode),
         residenceName: addressFormData.residenceName,
+        deliveryFee: newDeliveryFee,
+        deliveryBoyFee: newDeliveryFee,
+        grandTotal: newGrandTotal,
+        amount: newGrandTotal,
       };
 
       await customerApi.patch(
@@ -2069,21 +2231,70 @@ const MyOrders: React.FC = () => {
         requestBody
       );
 
-      setAddressUpdateSuccess(true);
-      message.success("Address updated successfully!");
+      const updatedOrderAddress = {
+        flatNo: addressFormData.flatNo,
+        landMark: addressFormData.landMark,
+        address: addressFormData.address,
+        pincode: parseInt(addressFormData.pincode),
+      };
 
-      // Update the selected order's address in the state
+      const isOnline = selectedOrder.paymentType === 2;
+      const extraDeliveryFee =
+        isOnline && feeDifference > 0 ? feeDifference : undefined;
+      const originalPaidAmount =
+        isOnline && feeDifference > 0
+          ? selectedOrder.originalPaidAmount || selectedOrder.grandTotal
+          : undefined;
+
+      // Cache updated fee & address in localStorage so page reloads retain it
+      try {
+        const cachedFees = JSON.parse(
+          localStorage.getItem("updated_order_fees") || "{}"
+        );
+        cachedFees[selectedOrder.orderId] = {
+          deliveryFee: newDeliveryFee,
+          grandTotal: newGrandTotal,
+          extraDeliveryFee,
+          originalPaidAmount,
+          orderAddress: updatedOrderAddress,
+        };
+        localStorage.setItem("updated_order_fees", JSON.stringify(cachedFees));
+      } catch (e) {
+        console.error("Error caching updated order fees:", e);
+      }
+
+      setAddressUpdateSuccess(true);
+      if (isOnline && feeDifference > 0) {
+        message.success(
+          `Address updated! Additional delivery fee of ₹${Math.round(
+            feeDifference
+          )} to be paid at delivery.`
+        );
+      } else if (isOnline && feeDifference < 0) {
+        message.success(
+          `Address updated! ₹${Math.round(
+            Math.abs(feeDifference)
+          )} will be credited to your AskOxy wallet.`
+        );
+      } else if (feeDifference !== 0) {
+        message.success(
+          `Address updated! Delivery fee changed to ₹${Math.round(newDeliveryFee)}.`
+        );
+      } else {
+        message.success("Address updated successfully!");
+      }
+
+      // Update the selected order's address and delivery fee in the state
       setSelectedOrder((prev) =>
         prev
           ? {
-            ...prev,
-            orderAddress: {
-              flatNo: addressFormData.flatNo,
-              landMark: addressFormData.landMark,
-              address: addressFormData.address,
-              pincode: parseInt(addressFormData.pincode),
-            },
-          }
+              ...prev,
+              deliveryFee: newDeliveryFee,
+              grandTotal: newGrandTotal,
+              extraDeliveryFee,
+              originalPaidAmount,
+              orderAddress: updatedOrderAddress,
+            }
           : prev
       );
 
@@ -2092,14 +2303,13 @@ const MyOrders: React.FC = () => {
         prevOrders.map((order) =>
           order.orderId === selectedOrder.orderId
             ? {
-              ...order,
-              orderAddress: {
-                flatNo: addressFormData.flatNo,
-                landMark: addressFormData.landMark,
-                address: addressFormData.address,
-                pincode: parseInt(addressFormData.pincode),
-              },
-            }
+                ...order,
+                deliveryFee: newDeliveryFee,
+                grandTotal: newGrandTotal,
+                extraDeliveryFee,
+                originalPaidAmount,
+                orderAddress: updatedOrderAddress,
+              }
             : order
         )
       );
@@ -2345,6 +2555,13 @@ const MyOrders: React.FC = () => {
                       </span>
                       <span className="text-xs sm:text-sm font-medium">
                         {order.paymentType === 2 ? "Online" : "COD"}
+                        {order.paymentType === 2 &&
+                          order.extraDeliveryFee &&
+                          order.extraDeliveryFee > 0 && (
+                            <span className="ml-1 text-[11px] text-amber-600 font-semibold">
+                              (+₹{Math.round(order.extraDeliveryFee)} COD)
+                            </span>
+                          )}
                       </span>
                     </div>
                     {order.orderStatus !== "6" && order.orderStatus !== "7" && (
@@ -3059,6 +3276,35 @@ const MyOrders: React.FC = () => {
                           : "Cash on Delivery"}
                       </span>
                     </div>
+
+                    {selectedOrder.paymentType === 2 &&
+                      selectedOrder.extraDeliveryFee &&
+                      selectedOrder.extraDeliveryFee > 0 && (
+                        <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs space-y-1.5">
+                          <div className="flex justify-between text-gray-700">
+                            <span>Already Paid Online:</span>
+                            <span className="font-medium">
+                              ₹
+                              {Math.round(
+                                Number(
+                                  selectedOrder.originalPaidAmount ||
+                                    selectedOrder.grandTotal -
+                                      selectedOrder.extraDeliveryFee
+                                )
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-amber-800 font-semibold pt-1 border-t border-amber-200">
+                            <span>To Pay at Delivery (Extra Fee):</span>
+                            <span className="text-sm">
+                              ₹{Math.round(Number(selectedOrder.extraDeliveryFee))}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-amber-600">
+                            * Due to address change to a farther location, please pay this extra delivery fee to the delivery person.
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </div>
 

@@ -104,7 +104,7 @@ function getWordColors(category: string | null): string[] {
 // e.g. "Artificial Content Platform" → "#ACP"
 function getCategoryShortForm(category: string | null): string {
   if (!category) return "XX";
-  return category.trim().split(/\s+/).map(w => w[0].toUpperCase()).join("");
+  return (category || "XX").trim().split(/\s+/).filter(Boolean).map(w => (w?.[0] || "").toUpperCase()).join("");
 }
 
 // Badge bg = first word colour; kept for the pill badge

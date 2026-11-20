@@ -13,11 +13,36 @@ function formatDate(dateStr: string | null) {
 }
 
 const ANTHROPIC_IMG = "https://i.ibb.co/qFrMxbgw/Chat-GPT-Image-Sep-28-2026-05-24-08-PM.png";
+const OPENAI_IMG = "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80";
+
+function getFallbackImg(source: string) {
+  return source.toLowerCase() === "openai" ? OPENAI_IMG : ANTHROPIC_IMG;
+}
+
+function sortExternalArticlesByLatest(items: ExternalNewsArticle[]): ExternalNewsArticle[] {
+  return [...items].sort((a, b) => {
+    const timeA = a.publishedDate && !isNaN(Date.parse(a.publishedDate))
+      ? Date.parse(a.publishedDate)
+      : a.fetchedAt && !isNaN(Date.parse(a.fetchedAt))
+      ? Date.parse(a.fetchedAt)
+      : 0;
+    const timeB = b.publishedDate && !isNaN(Date.parse(b.publishedDate))
+      ? Date.parse(b.publishedDate)
+      : b.fetchedAt && !isNaN(Date.parse(b.fetchedAt))
+      ? Date.parse(b.fetchedAt)
+      : 0;
+    if (timeA && timeB) return timeB - timeA;
+    if (timeB && !timeA) return 1;
+    if (timeA && !timeB) return -1;
+    return 0;
+  });
+}
 
 export default function ExternalNewsList({ sourceName }: { sourceName: string }) {
   const PAGE_SIZE = 15;
   const [articles, setArticles] = useState<ExternalNewsArticle[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "empty">("loading");
+  const [errorMsg, setErrorMsg] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
@@ -33,13 +58,13 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
       try {
         const pageResponse = await api.getExternalNews(sourceName, pageIndex, PAGE_SIZE);
         if (cancelled) return;
-        setArticles(pageResponse.content);
+        setArticles(sortExternalArticlesByLatest(pageResponse.content));
         setTotal(pageResponse.totalElements);
         setHasMore(!pageResponse.last);
         setPage(pageIndex);
         setStatus(pageResponse.content.length ? "ready" : "empty");
-      } catch {
-        if (!cancelled) setStatus("error");
+      } catch (err: any) {
+        if (!cancelled) { setErrorMsg(err?.message || "Unknown error"); setStatus("error"); }
       }
     };
 
@@ -61,7 +86,7 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
     try {
       await api.refreshExternalNews(sourceName);
       const pageResponse = await api.getExternalNews(sourceName, 0, PAGE_SIZE);
-      setArticles(pageResponse.content);
+      setArticles(sortExternalArticlesByLatest(pageResponse.content));
       setTotal(pageResponse.totalElements);
       setHasMore(!pageResponse.last);
       setPage(0);
@@ -78,7 +103,7 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
     try {
       const nextPage = page + 1;
       const pageResponse = await api.getExternalNews(sourceName, nextPage, PAGE_SIZE);
-      setArticles((prev) => [...prev, ...pageResponse.content]);
+      setArticles((prev) => sortExternalArticlesByLatest([...prev, ...pageResponse.content]));
       setHasMore(!pageResponse.last);
       setPage(nextPage);
     } catch {
@@ -95,7 +120,12 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
   }
 
   if (status === "error") {
-    return <div className="mt-10 text-sm font-mono text-ink-faint">Couldn't load news right now.</div>;
+    return (
+      <div className="mt-10 text-sm font-mono text-ink-faint">
+        Couldn't load news right now.
+        {errorMsg && <span className="block text-xs text-red-400 mt-1">{errorMsg}</span>}
+      </div>
+    );
   }
 
   if (status === "empty") {
@@ -110,7 +140,7 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
             Latest news
           </h2>
           <p className="text-xs text-ink mt-2">
-            Showing {articles.length} {articles.length === 1 ? "article" : "articles"} from {sourceName}.
+            Showing {articles.length} {articles.length === 1 ? "article" : "articles"} from {sourceName.toLowerCase() === "openai" ? "OpenAI" : sourceName}.
           </p>
         </div>
 
@@ -142,15 +172,15 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
             >
               <div className="relative h-44 overflow-hidden">
                 <img
-                  src={article.imageUrl || ANTHROPIC_IMG}
+                  src={article.imageUrl || getFallbackImg(sourceName)}
                   alt={article.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = ANTHROPIC_IMG; }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = getFallbackImg(sourceName); }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <span className={`absolute top-2 left-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow ${c.badge}`}>
-                  {article.category || sourceName}
+                  {article.category || (sourceName.toLowerCase() === "openai" ? "OpenAI" : sourceName)}
                 </span>
                 <span className="absolute bottom-2 right-2 text-[10px] font-medium text-white/80">
                   {formatDate(article.publishedDate)}

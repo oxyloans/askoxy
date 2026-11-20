@@ -72,15 +72,41 @@
       />
     </noscript>
     <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans&display=swap"
+    />
+    <link
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
-    <!-- Material Icons -->
+    <!-- Material Icons (non render-blocking) -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet"
+      />
+    </noscript>
 
     <!-- ✅ Bootstrap CSS (only one valid version) -->
     <!-- <link
@@ -96,44 +122,44 @@
       src="https://www.googletagmanager.com/gtag/js?id=G-7F5MXCYZ7W"
     ></script>
 
-    <script src="https://accounts.google.com/gsi/client" async></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Cashfree SDK: deferred so it never blocks HTML parsing -->
     <script src="https://sdk.cashfree.com/js/v3/cashfree.js" defer></script>
-   <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1097599176380584');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1097599176380584&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
-<!-- new -->
-<!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1568709441527846');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1568709441527846&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
+
+    <!-- Meta Pixel Code (Optimized: single loader, deferred to idle to protect TBT & SI) -->
+    <script>
+      (function() {
+        var initPixel = function() {
+          if (window.fbq) return;
+          var n = window.fbq = function() {
+            n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+          };
+          if (!window._fbq) window._fbq = n;
+          n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+          var t = document.createElement('script');
+          t.async = true;
+          t.src = 'https://connect.facebook.net/en_US/fbevents.js';
+          var s = document.getElementsByTagName('script')[0];
+          s.parentNode.insertBefore(t, s);
+          fbq('init', '1097599176380584');
+          fbq('init', '1568709441527846');
+          fbq('track', 'PageView');
+        };
+
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(initPixel, { timeout: 2500 });
+        } else {
+          window.addEventListener('load', function() {
+            setTimeout(initPixel, 1000);
+          });
+        }
+      })();
+    </script>
+    <noscript>
+      <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1097599176380584&ev=PageView&noscript=1" />
+      <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1568709441527846&ev=PageView&noscript=1" />
+    </noscript>
+    <!-- End Meta Pixel Code -->
 
     <script>
       window.dataLayer = window.dataLayer || [];

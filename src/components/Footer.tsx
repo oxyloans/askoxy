@@ -116,6 +116,11 @@ const Footer: React.FC = () => {
     },
     {
       icon: <Phone className="h-4 w-4 mb-1" />,
+      content: "040 4189 7778",
+      type: "phone",
+    },
+    {
+      icon: <Phone className="h-4 w-4 mb-1" />,
       content: "+91 81432 71103",
       type: "phone",
     },
@@ -202,32 +207,6 @@ const Footer: React.FC = () => {
               Contact Us
             </h3>
 
-            {/* 📞 Toll Free Helpline */}
-            <div className="rounded-xl bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/40 border border-emerald-200 p-3 shadow-sm">
-              <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  Toll Free Helpline
-                </span>
-                <span className="text-[10px] font-bold bg-emerald-200/70 text-emerald-900 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  24/7 · 365 Days Available
-                </span>
-              </div>
-              <a
-                href="tel:04041897778"
-                className="flex items-center gap-2 text-base sm:text-lg font-black text-slate-900 hover:text-emerald-700 transition-colors"
-              >
-                <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
-                040 4189 7778
-              </a>
-              <p className="text-[11px] text-slate-600 mt-0.5">
-                24/7 · 365 Days Available
-              </p>
-            </div>
-
             <div className="space-y-3 pt-1">
               {contactInfo
                 .filter((info) => info.type !== "phone")
@@ -262,7 +241,7 @@ const Footer: React.FC = () => {
                   </div>
                 ))}
 
-              {/* ✅ Phones (side-by-side + single icon) */}
+              {/* ✅ Phones (side-by-side + single icon, comma-separated with Toll Free highlighted) */}
               {contactInfo.some((info) => info.type === "phone") && (
                 <div className="flex items-start gap-2">
                   <div
@@ -272,18 +251,38 @@ const Footer: React.FC = () => {
                     <Phone className="h-4 w-4 mb-1" />
                   </div>
 
-                  <div className="flex flex-wrap gap-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 pt-1">
                     {contactInfo
                       .filter((info) => info.type === "phone")
-                      .map((phone, index) => (
-                        <a
-                          key={index}
-                          href={`tel:${phone.content}`}
-                          className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200 whitespace-nowrap"
-                        >
-                          {phone.content}
-                        </a>
-                      ))}
+                      .map((phone, index, arr) => {
+                        const isTollFree = phone.content.includes("040 4189 7778");
+                        return (
+                          <span key={index} className="inline-flex items-center">
+                            {isTollFree ? (
+                              <a
+                                href={`tel:${phone.content.replace(/\s+/g, "")}`}
+                                className="inline-flex items-center gap-1 text-xs sm:text-sm font-extrabold text-slate-900 bg-amber-100 hover:bg-amber-200/90 px-2 py-0.5 rounded-full border border-amber-300 transition-colors duration-200 whitespace-nowrap shadow-xs"
+                                title="Toll Free: 040 4189 7778"
+                              >
+                                <span>{phone.content}</span>
+                                <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded-full">
+                                  Toll Free
+                                </span>
+                              </a>
+                            ) : (
+                              <a
+                                href={`tel:${phone.content.replace(/\s+/g, "")}`}
+                                className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200 whitespace-nowrap"
+                              >
+                                {phone.content}
+                              </a>
+                            )}
+                            {index < arr.length - 1 && (
+                              <span className="text-gray-500 text-xs sm:text-sm ml-1 mr-0.5">,</span>
+                            )}
+                          </span>
+                        );
+                      })}
                   </div>
                 </div>
               )}

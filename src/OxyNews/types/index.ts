@@ -197,3 +197,33 @@ export interface ExternalNewsArticle {
   content?: string | null;
   imageUrl: string | null;
 }
+
+export interface OpenAiNewsItem {
+  title: string;
+  description: string;
+  link: string;
+  category: string;
+  pubDate: string;
+}
+
+
+export interface OpenAiArticleBlock {
+  type: string;
+  text?: string;
+  content?: string;
+  value?: string;
+  url?: string;
+}
+
+export interface OpenAiArticleData {
+  url: string;
+  title?: string;
+  image?: string | null;
+  description?: string;
+  category?: string;
+  pubDate?: string;
+  fullContent?: boolean;
+  reason?: string | null;
+  count?: number;
+  blocks?: OpenAiArticleBlock[];
+}

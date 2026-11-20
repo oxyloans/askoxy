@@ -1,8 +1,8 @@
 // src/pages/ExternalArticlePage.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
-import type { ExternalNewsArticle } from "../types";
+import { api, formatOpenAiArticleBlocks, fetchOpenAiArticle } from "../lib/api";
+import type { ExternalNewsArticle, OpenAiArticleData } from "../types";
 
 
 function formatDate(dateStr: string | null) {
@@ -147,8 +147,22 @@ function linkifyContent(text: string) {
   return highlightSpecialWords(parts);
 }
 
+function cleanHtmlIfPresent(text: string): string {
+  if (/<[a-z][\s\S]*>/i.test(text)) {
+    return text
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, "\n\n## $1\n\n")
+      .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, "[$2]($1)")
+      .replace(/<[^>]+>/g, "");
+  }
+  return text;
+}
+
 function renderArticleContent(text: string) {
-  return text
+  const normalized = cleanHtmlIfPresent(text);
+  return normalized
     .split(/\r?\n\s*\r?\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)
@@ -189,7 +203,7 @@ function ArticleBodyStyles() {
     <style>{`
       .newspaper-body p { margin-bottom: 1.1em; }
       .newspaper-body h2 { margin-top: 2em; margin-bottom: 0.75em; }
-      .newspaper-body a {
+      .newspaper-body p a {
         color: #7c3aed;
         font-weight: 600;
         text-decoration: underline;
@@ -197,7 +211,7 @@ function ArticleBodyStyles() {
         text-underline-offset: 2px;
         word-break: break-all;
       }
-      .newspaper-body a:hover { color: #6d28d9; }
+      .newspaper-body p a:hover { color: #6d28d9; }
     `}</style>
   );
 }
@@ -212,6 +226,7 @@ export default function ExternalArticlePage() {
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [openAiData, setOpenAiData] = useState<OpenAiArticleData | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [sourceArticles, setSourceArticles] = useState<ExternalNewsArticle[]>([]);
   const [shareOpen, setShareOpen] = useState(false);
@@ -246,15 +261,45 @@ export default function ExternalArticlePage() {
             .catch(() => setHeroImage(null));
         }
 
-        if (found.content) {
+        if (found.content && sourceName.toLowerCase() !== "openai") {
           setContent(found.content);
           return;
         }
+
+        if (sourceName.toLowerCase() === "openai") {
+          if (found.content) {
+            setContent(found.content);
+          }
+          setContentLoading(true);
+          return fetchOpenAiArticle(found.url)
+            .then((data: OpenAiArticleData | null) => {
+              if (data) {
+                setOpenAiData(data);
+                if (data.image) setHeroImage(data.image);
+                if (data.title) {
+                  setArticle((prev) => prev ? { ...prev, title: data.title || prev.title } : prev);
+                }
+                const formatted = formatOpenAiArticleBlocks(data);
+                if (formatted && formatted.trim().length > 0) {
+                  setContent(formatted);
+                }
+              }
+            })
+            .catch((err: unknown) => {
+              console.warn("fetchOpenAiArticle failed:", err);
+            })
+            .finally(() => setContentLoading(false));
+        }
+
         setContentLoading(true);
         return api
-          .getExternalArticleContent(sourceName, Number(id))
-          .then((body) => setContent(body))
-          .catch(() => setContent(null))
+          .getExternalArticleContent(sourceName, Number(id), found.url)
+          .then((body) => {
+            if (body && body.trim().length > 0) {
+              setContent(body);
+            }
+          })
+          .catch(() => {})
           .finally(() => setContentLoading(false));
       })
       .catch(() => setError("Couldn't load this article."))
@@ -486,20 +531,61 @@ export default function ExternalArticlePage() {
       <div className="mt-10 max-w-6xl mx-auto">
         <main className="space-y-10">
           <section className="space-y-1 text-ink-soft">
-            {contentLoading ? (
-              <p className="text-sm font-mono text-ink-faint">Fetching full article…</p>
-            ) : content ? (
-              <div className="newspaper-body">{renderArticleContent(content)}</div>
-            ) : (
-              <div className="text-sm text-ink-faint">
-                <p>Couldn't load the full text for this article.</p>
-                <p className="mt-4">
-                  <a href={article.url} target="_blank" rel="noreferrer" className="text-royal underline">
-                    Read it on {hostnameOf(article.url)} instead ↗
-                  </a>
-                </p>
-              </div>
-            )}
+            {(() => {
+              const displayContent =
+                (content && content.trim().length > 0)
+                  ? content
+                  : openAiData
+                    ? (formatOpenAiArticleBlocks(openAiData) || openAiData.description || "")
+                    : (article?.content || "");
+
+              if (contentLoading && !displayContent) {
+                return <p className="text-sm font-mono text-ink-faint">Fetching full article…</p>;
+              }
+
+              if (displayContent) {
+                return (
+                  <div className="newspaper-body">
+                    {contentLoading && (
+                      <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 text-violet-700 text-xs font-medium animate-pulse">
+                        <span className="w-2 h-2 rounded-full bg-violet-500 animate-ping" />
+                        Fetching complete article text…
+                      </div>
+                    )}
+                    {openAiData && openAiData.fullContent === false && (
+                      <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 not-italic">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-amber-600 text-lg">ℹ️</span>
+                          <div className="text-xs text-amber-900 leading-relaxed font-sans">
+                            <span className="font-semibold">Article summary preview:</span> The full article is available on openai.com.
+                          </div>
+                        </div>
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-royal text-white text-xs font-semibold hover:bg-plum transition-colors shadow-sm font-sans"
+                        >
+                          Read Full Article on OpenAI ↗
+                        </a>
+                      </div>
+                    )}
+                    {renderArticleContent(displayContent)}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="text-sm text-ink-faint">
+                  <p>Couldn't load the full text for this article.</p>
+                  <p className="mt-4">
+                    <a href={article.url} target="_blank" rel="noreferrer" className="text-royal underline">
+                      Read it on {hostnameOf(article.url)} instead ↗
+                    </a>
+                  </p>
+                </div>
+              );
+            })()}
           </section>
 
         </main>

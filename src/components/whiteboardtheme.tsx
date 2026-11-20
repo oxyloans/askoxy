@@ -145,6 +145,9 @@ const Whiteboardtheme: React.FC = () => {
         alt="Active Jobs and Total Companies"
         className="h-full w-full select-none object-contain"
         draggable={false}
+        decoding="async"
+        width="196"
+        height="164"
       />
       {/* Counts remain available to assistive technology. */}
       <span className="sr-only">
@@ -302,6 +305,9 @@ const Whiteboardtheme: React.FC = () => {
                         src={LOANS_WALKIN_IMAGE_URL}
                         alt="Explore Silver Products"
                         className="h-full w-full object-contain"
+                        decoding="async"
+                        width="148"
+                        height="148"
                       />
                     </button>
                   </div>
@@ -309,6 +315,10 @@ const Whiteboardtheme: React.FC = () => {
                     src={arrow0}
                     alt=""
                     className="absolute bottom-0 left-1/2 h-[48px] w-[60px] -translate-x-1/2 object-contain"
+                    decoding="async"
+                    width="60"
+                    height="48"
+                    loading="lazy"
                   />
                 </div>
 
@@ -323,6 +333,10 @@ const Whiteboardtheme: React.FC = () => {
                     src={arrow1}
                     alt=""
                     className="absolute bottom-0 left-1/2 h-[48px] w-[60px] -translate-x-1/2 object-contain"
+                    decoding="async"
+                    width="60"
+                    height="48"
+                    loading="lazy"
                   />
                 </div>
               </div>
@@ -346,6 +360,9 @@ const Whiteboardtheme: React.FC = () => {
                       src={LOANS_WALKIN_IMAGE_URL}
                       alt="Explore Silver Products"
                       className="h-full w-full object-contain"
+                      decoding="async"
+                      width="196"
+                      height="164"
                     />
                   </button>
                 </div>
@@ -366,6 +383,10 @@ const Whiteboardtheme: React.FC = () => {
                     top: "62%",
                     width: "clamp(60px, 5.2vw, 88px)",
                   }}
+                  decoding="async"
+                  width="88"
+                  height="70"
+                  loading="lazy"
                 />
                 <img
                   src={arrow1}
@@ -376,6 +397,10 @@ const Whiteboardtheme: React.FC = () => {
                     top: "62%",
                     width: "clamp(60px, 5.2vw, 88px)",
                   }}
+                  decoding="async"
+                  width="88"
+                  height="70"
+                  loading="lazy"
                 />
               </div>
 
@@ -406,6 +431,7 @@ const Whiteboardtheme: React.FC = () => {
                         <motion.img
                           src={card.image}
                           alt={card.league}
+                          decoding="async"
                           className={`relative z-10 w-full object-contain ${card.big
                               ? "max-w-[118px] sm:max-w-[200px] md:max-w-[180px] lg:max-w-[305px]"
                               : "max-w-[106px] sm:max-w-[165px] md:max-w-[145px] lg:max-w-[224px]"

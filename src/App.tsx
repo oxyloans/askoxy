@@ -8,71 +8,83 @@ import { initEnhancedTracking } from "./utils/enhancedTracking";
 import { useTaskTokenExpiry } from "./utils/taskTokenManager";
 import { initGA, trackPage } from "./utils/analytics";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
-import SalariedBorrowerChatPage from "./components/SalariedBorrowerChatPage";
-import LenderHomePage from "./components/LenderHomepage";
-import CallingTeamCallbackRequests from "./AskoxyAdmin/CallingTeamCallbackRequests";
-import ATSResumeChecker from "./components/JPL/FreeATSResumeChecker";
-import ResumeAnalysisReport from "./components/JPL/ResumeAnalysisReport";
-import AwardsRewardsVideo from "./BharathAIStore/pages/AwardsRewardsVideo";
-import SovereignAIPage from "./components/SovereignAIPage";
-import PersonalDetailsPage from "./BusinessCard/PersonalDetailsPage";
-import EventImagesUploadPage from "./BusinessCard/EventImagesUploadPage";
-import UserEventDetailsListPage from "./BusinessCard/UserEventDetailsListPage";
-import ArticlePage from "./OxyNews/pages/ArticlePage";
-import ExplorePage from "./OxyNews/pages/ExplorePage";
-import ResourcePage from "./OxyNews/pages/ResourcePage";
-import ExternalArticlePage from "./OxyNews/pages/ExternalArticlePage";
-import RadhaiNewsPage from "./OxyNews/pages/RadhaiNewsPage";
-import OxyNewsHomePage from "./OxyNews/pages/OxyNewsHomePage";
-import OxyLayout from "./OxyNews/components/OxyLayout";
-import CompanyEmployeeLogin from "./Employee/CompanyEmployeeLogin";
-import EmployeeJobDashboard from "./Employee/EmployeeJobDashboard";
-import AddCompanyEmployee from "./AskoxyAdmin/AddCompanyEmployee";
-import EmployeesList from "./AskoxyAdmin/EmployeesList";
-import RotaryDataPage from "./AskoxyAdmin/RotaryData";
-import JourneysVsCampaignsVsInterestedUsers from "./AskoxyAdmin/JourneysVsCampaignsVsInterestedUsers";
-import EmployeeApplicationsComingSoon from "./Employee/EmployeeApplicationsComingSoon";
-import EmployeeJobComingSoon from "./Employee/EmployeeJobComingSoon";
-import JobPostForm from "./Employee/JobPostForm";
-import AddCompanyEmployeeNew from "./AskoxyAdmin/Addcompanyemployeenew";
-import ProductServiceManager from "./Dashboard/ProductServiceManager";
-import MyProductsServices from "./Dashboard/MyProductsServices";
-import MyCompanies from "./Dashboard/MyCompanies";
-import TaskDashboard from "./Taskmanagement/TaskDashboard";
-import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
-import Sep19LoansWalkIn from "./components/sep19walkin";
-import RBINewsPage from "./OxyNews/pages/RBINewsPage";
-import RiceContainerData from "./PartnerWeb/RiceContainerData";
-import JourneysPagewithoutlogin from "./components/Journeyspagewithoutlogin";
 
-import OxyLoansSummary from "./components/OxyLoansSummary";
-import AmfiReports from "./AskoxyAdmin/AmfiReports";
-import RadhaLinkedin from "./AskoxyAdmin/RadhaLinkedin";
-import SaNaukariRecords from "./AskoxyAdmin/SaNaukariRecords";
-import TahsildarRecords from "./AskoxyAdmin/TahsildarRecords";
-import ActiveMembership from "./AskoxyAdmin/ActiveMembership";
-import AmsLostCustomerData from "./AskoxyAdmin/AmsLostCustomerData";
-import SakshamData from "./AskoxyAdmin/SakshamData";
-import TieData from "./AskoxyAdmin/TieData";
-import TwoYearsServiceData from "./AskoxyAdmin/TwoYearsServiceData";
-import UnknownData from "./AskoxyAdmin/UnknownData";
-import NaukriRasData from "./AskoxyAdmin/NaukriRasData";
-import K2kFintechData from "./AskoxyAdmin/K2kFintechData";
-import NbfcData from "./AskoxyAdmin/NbfcData";
-import WamData from "./AskoxyAdmin/WamData";
-import OxyLoansReferralNetwork from "./components/OxyLoansReferralNetwork";
-import OxyLoansIntegration from "./components/OxyLoansIntegration";
-import EventDetails from "./AskoxyAdmin/EventDetails";
-import OxyLoansOverviewPage from "./components/OxyLoansOverview";
-import IRDAINewsPage from "./OxyNews/pages/IRDAINewsPage";
-import JobProgramDashboard from "./components/JobProgramDashboard";
-import NineDaysJobProgramPlan from "./Jobplan/NineDaysJobProgramPlan";
-import TopModelsByTask, {
-  ModelRankPage,
-  ProviderRankPage,
-  RankingsRoutes,
-} from "./OxyNews/components/TopModelsByTask";
-// import TaskBasedOnUserId from "./Taskmanagement/TasksBasedOnUserId";
+// ─── Route Components Converted to Lazy for Performance & Bundle Splitting ───
+const SalariedBorrowerChatPage = lazy(() => import("./components/SalariedBorrowerChatPage"));
+const LenderHomePage = lazy(() => import("./components/LenderHomepage"));
+const CallingTeamCallbackRequests = lazy(() => import("./AskoxyAdmin/CallingTeamCallbackRequests"));
+const ATSResumeChecker = lazy(() => import("./components/JPL/FreeATSResumeChecker"));
+const ResumeAnalysisReport = lazy(() => import("./components/JPL/ResumeAnalysisReport"));
+const AwardsRewardsVideo = lazy(() => import("./BharathAIStore/pages/AwardsRewardsVideo"));
+const SovereignAIPage = lazy(() => import("./components/SovereignAIPage"));
+const PersonalDetailsPage = lazy(() => import("./BusinessCard/PersonalDetailsPage"));
+const EventImagesUploadPage = lazy(() => import("./BusinessCard/EventImagesUploadPage"));
+const UserEventDetailsListPage = lazy(() => import("./BusinessCard/UserEventDetailsListPage"));
+const ArticlePage = lazy(() => import("./OxyNews/pages/ArticlePage"));
+const ExplorePage = lazy(() => import("./OxyNews/pages/ExplorePage"));
+const ResourcePage = lazy(() => import("./OxyNews/pages/ResourcePage"));
+const ExternalArticlePage = lazy(() => import("./OxyNews/pages/ExternalArticlePage"));
+const RadhaiNewsPage = lazy(() => import("./OxyNews/pages/RadhaiNewsPage"));
+const OxyNewsHomePage = lazy(() => import("./OxyNews/pages/OxyNewsHomePage"));
+const OxyLayout = lazy(() => import("./OxyNews/components/OxyLayout"));
+const CompanyEmployeeLogin = lazy(() => import("./Employee/CompanyEmployeeLogin"));
+const EmployeeJobDashboard = lazy(() => import("./Employee/EmployeeJobDashboard"));
+const AddCompanyEmployee = lazy(() => import("./AskoxyAdmin/AddCompanyEmployee"));
+const EmployeesList = lazy(() => import("./AskoxyAdmin/EmployeesList"));
+const RotaryDataPage = lazy(() => import("./AskoxyAdmin/RotaryData"));
+const JourneysVsCampaignsVsInterestedUsers = lazy(() => import("./AskoxyAdmin/JourneysVsCampaignsVsInterestedUsers"));
+const EmployeeApplicationsComingSoon = lazy(() => import("./Employee/EmployeeApplicationsComingSoon"));
+const EmployeeJobComingSoon = lazy(() => import("./Employee/EmployeeJobComingSoon"));
+const JobPostForm = lazy(() => import("./Employee/JobPostForm"));
+const AddCompanyEmployeeNew = lazy(() => import("./AskoxyAdmin/Addcompanyemployeenew"));
+const ProductServiceManager = lazy(() => import("./Dashboard/ProductServiceManager"));
+const MyProductsServices = lazy(() => import("./Dashboard/MyProductsServices"));
+const MyCompanies = lazy(() => import("./Dashboard/MyCompanies"));
+const TaskDashboard = lazy(() => import("./Taskmanagement/TaskDashboard"));
+const TaskBasedOnUserId = lazy(() => import("./Taskmanagement/TasksBasedOnUserId"));
+const Sep19LoansWalkIn = lazy(() => import("./components/sep19walkin"));
+const RBINewsPage = lazy(() => import("./OxyNews/pages/RBINewsPage"));
+const RiceContainerData = lazy(() => import("./PartnerWeb/RiceContainerData"));
+const JourneysPagewithoutlogin = lazy(() => import("./components/Journeyspagewithoutlogin"));
+
+const OxyLoansSummary = lazy(() => import("./components/OxyLoansSummary"));
+const AmfiReports = lazy(() => import("./AskoxyAdmin/AmfiReports"));
+const RadhaLinkedin = lazy(() => import("./AskoxyAdmin/RadhaLinkedin"));
+const SaNaukariRecords = lazy(() => import("./AskoxyAdmin/SaNaukariRecords"));
+const TahsildarRecords = lazy(() => import("./AskoxyAdmin/TahsildarRecords"));
+const ActiveMembership = lazy(() => import("./AskoxyAdmin/ActiveMembership"));
+const AmsLostCustomerData = lazy(() => import("./AskoxyAdmin/AmsLostCustomerData"));
+const SakshamData = lazy(() => import("./AskoxyAdmin/SakshamData"));
+const TieData = lazy(() => import("./AskoxyAdmin/TieData"));
+const TwoYearsServiceData = lazy(() => import("./AskoxyAdmin/TwoYearsServiceData"));
+const UnknownData = lazy(() => import("./AskoxyAdmin/UnknownData"));
+const NaukriRasData = lazy(() => import("./AskoxyAdmin/NaukriRasData"));
+const K2kFintechData = lazy(() => import("./AskoxyAdmin/K2kFintechData"));
+const NbfcData = lazy(() => import("./AskoxyAdmin/NbfcData"));
+const WamData = lazy(() => import("./AskoxyAdmin/WamData"));
+const OxyLoansReferralNetwork = lazy(() => import("./components/OxyLoansReferralNetwork"));
+const OxyLoansIntegration = lazy(() => import("./components/OxyLoansIntegration"));
+const EventDetails = lazy(() => import("./AskoxyAdmin/EventDetails"));
+const OxyLoansOverviewPage = lazy(() => import("./components/OxyLoansOverview"));
+const IRDAINewsPage = lazy(() => import("./OxyNews/pages/IRDAINewsPage"));
+const JobProgramDashboard = lazy(() => import("./components/JobProgramDashboard"));
+const NineDaysJobProgramPlan = lazy(() => import("./Jobplan/NineDaysJobProgramPlan"));
+const TopModelsByTask = lazy(() => import("./OxyNews/components/TopModelsByTask"));
+const ModelRankPage = lazy(() =>
+  import("./OxyNews/components/TopModelsByTask").then((m) => ({
+    default: m.ModelRankPage,
+  }))
+);
+const ProviderRankPage = lazy(() =>
+  import("./OxyNews/components/TopModelsByTask").then((m) => ({
+    default: m.ProviderRankPage,
+  }))
+);
+const RankingsRoutes = lazy(() =>
+  import("./OxyNews/components/TopModelsByTask").then((m) => ({
+    default: m.RankingsRoutes,
+  }))
+);
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -998,9 +1010,25 @@ const App: React.FC = () => {
   //   }, []);
 
   useEffect(() => {
-    initGA();
-    const cleanup = initEnhancedTracking();
-    return cleanup;
+    let cleanup: (() => void) | undefined;
+    const startTracking = () => {
+      initGA();
+      cleanup = initEnhancedTracking();
+    };
+
+    if ("requestIdleCallback" in window) {
+      const id = (window as any).requestIdleCallback(startTracking, { timeout: 2000 });
+      return () => {
+        (window as any).cancelIdleCallback(id);
+        if (cleanup) cleanup();
+      };
+    } else {
+      const timer = setTimeout(startTracking, 1000);
+      return () => {
+        clearTimeout(timer);
+        if (cleanup) cleanup();
+      };
+    }
   }, []);
 
   useEffect(() => {

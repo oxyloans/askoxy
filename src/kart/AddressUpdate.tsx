@@ -137,7 +137,7 @@ const AddressUpdateModal: React.FC<AddressUpdateModalProps> = ({
                 Address Updated Successfully
               </h3>
               <p className="text-gray-600 mb-6">
-                The address for your order has been updated.
+                The address and delivery fee for your order have been updated.
               </p>
               <button
                 onClick={() => setIsAddressUpdateModalOpen(false)}
@@ -273,6 +273,10 @@ const AddressUpdateModal: React.FC<AddressUpdateModalProps> = ({
                     placeholder="Enter residence name"
                   />
                 </div>
+              </div>
+
+              <div className="bg-purple-50 text-purple-700 text-xs px-3.5 py-2.5 rounded-lg border border-purple-100 flex items-center gap-2">
+                <span>📍 Note: Delivery fee will be automatically recalculated based on the new location distance.</span>
               </div>
 
               <div className="flex items-center justify-end gap-4 pt-4">
