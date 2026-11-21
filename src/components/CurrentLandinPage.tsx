@@ -94,17 +94,6 @@ const LazySection: React.FC<{
 const CurrentLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <div className="relative z-[1] overflow-x-hidden bg-white">
@@ -190,22 +179,18 @@ const CurrentLandingPage: React.FC = () => {
 
       {/* Floating Toll Free Helpline Button */}
       <div
-        className={`fixed bottom-4 left-3 z-[9999] transition-all duration-300 sm:bottom-5 sm:left-4 md:left-5 ${
-          isScrolled
-            ? "pointer-events-none translate-y-4 opacity-0"
-            : "pointer-events-auto translate-y-0 opacity-100"
-        }`}
+        className="fixed bottom-4 left-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:left-4 md:left-5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <a
           href="tel:04041897778"
-          className="relative group flex items-center rounded-full bg-[#120f28]/95 backdrop-blur-md p-1 sm:pl-2 sm:pr-5 sm:py-2 text-white shadow-2xl shadow-purple-950/60 border border-purple-400/30 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+          className="relative group flex items-center rounded-full bg-[#120f28]/95 backdrop-blur-md p-1.5 sm:pl-2 sm:pr-4 sm:py-2 text-white shadow-xl shadow-purple-950/60 border border-purple-400/30 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
           aria-label="Call Toll Free Helpline 040 4189 7778 (24/7 · 365 Days Available)"
           title="Toll Free Helpline: 040 4189 7778 (24/7 · 365 Days Available)"
         >
           {/* Peach/Orange circular phone icon */}
-          <div className="flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[#fde3cf] text-[#9a3412] shadow-sm shrink-0 group-hover:rotate-12 transition-transform">
-            <PhoneCall className="h-5 w-5" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fde3cf] text-[#9a3412] shadow-sm shrink-0 group-hover:rotate-12 transition-transform">
+            <PhoneCall className="h-4.5 w-4.5" />
           </div>
 
           {/* Text block: hidden on mobile (< sm), visible on sm and up */}
@@ -223,7 +208,7 @@ const CurrentLandingPage: React.FC = () => {
               </span>
             </div>
 
-            <span className="text-sm sm:text-base font-extrabold text-white tracking-wide">
+            <span className="text-xs sm:text-[14px] font-extrabold text-white tracking-wide">
               040 4189 7778
             </span>
           </div>
@@ -248,7 +233,7 @@ const CurrentLandingPage: React.FC = () => {
 
       {/* Floating "We Are Hiring" button */}
       <div
-        className="fixed bottom-4 right-1 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:right-2 md:right-4"
+        className="fixed bottom-4 right-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:right-4 md:right-5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <button
@@ -261,7 +246,7 @@ const CurrentLandingPage: React.FC = () => {
           <img
             src={ASK_OXY_ICON_URL}
             alt="We are hiring"
-            className="h-11 w-auto select-none sm:h-14 md:h-16 lg:h-20"
+            className="h-11 w-auto select-none sm:h-12 md:h-14 lg:h-16"
             draggable={false}
             loading="lazy"
             decoding="async"
