@@ -60,6 +60,9 @@ export default BASE_URL;
 export const resolveAskoxyUrl = (url?: string | null): string => {
   if (!url) return "";
   const cleanUrl = url.trim();
+  if (cleanUrl.includes("X-Amz-Signature") || cleanUrl.includes("X-Amz-Algorithm")) {
+    return cleanUrl;
+  }
   if (cleanUrl.includes("askoxy.s3.ap-south-1.amazonaws.com")) {
     return cleanUrl.replace("askoxy.s3.ap-south-1.amazonaws.com", ASKOXY_CDN_HOST);
   }

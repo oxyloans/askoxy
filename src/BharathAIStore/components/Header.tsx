@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { PhoneCall } from "lucide-react";
 import { useSearch } from "../context/SearchContext";
 import Logo from "../../assets/img/bharatAI.png";
 import Logo1 from "../../assets/img/logo1lion.png";
@@ -518,6 +519,9 @@ useEffect(() => {
               </button>
             </div>
 
+            {/* Toll Free Helpline */}
+           
+
             {/* Desktop CTA */}
             <button
               onClick={handleLogin}
@@ -597,6 +601,8 @@ useEffect(() => {
               >
                 {isLoading ? "Loading…" : "Create AI Agent"}
               </button>
+
+              
             </div>
           </div>
         </div>

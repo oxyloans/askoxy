@@ -95,7 +95,10 @@ const LeagueJourneysPage: React.FC = () => {
 
   const getImageUrl = (campaign: CampaignWithId): string => {
     const imagePath = String(
-      campaign.imageUrls?.[0]?.imageUrl || "",
+      campaign.imageUrls?.[0]?.imageUrl ||
+        campaign.imageUrl ||
+        (campaign as any)?.images?.[0]?.imageUrl ||
+        "",
     ).trim();
 
     if (!imagePath) {
@@ -104,6 +107,14 @@ const LeagueJourneysPage: React.FC = () => {
 
     if (/^https?:\/\//i.test(imagePath)) {
       return imagePath;
+    }
+
+    const hasNullPrefix =
+      imagePath.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") ||
+      imagePath.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    if (hasNullPrefix) {
+      const separator = imagePath.startsWith("/") ? "" : "/";
+      return `https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${imagePath}`;
     }
 
     const separator =

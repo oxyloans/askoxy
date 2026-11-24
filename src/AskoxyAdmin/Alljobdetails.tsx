@@ -3,14 +3,11 @@ import {
   Table,
   Button,
   Tag,
-  Space,
-  Avatar,
   Modal,
   message,
   Switch,
   Typography,
   Card,
-  Spin,
   Form,
   Input,
   Select,
@@ -18,13 +15,11 @@ import {
   InputNumber,
   Row,
   Col,
-
 } from "antd";
 import {
   EditOutlined,
-
   ExclamationCircleOutlined,
-
+  ReloadOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
@@ -38,7 +33,7 @@ const { TextArea } = Input;
 
 interface Job {
   id: string;
-  companyLogo?: string; 
+  companyLogo?: string;
   jobTitle?: string;
   jobDesignation?: string;
   companyName?: string;
@@ -97,23 +92,117 @@ const JobsAdminPage: React.FC = () => {
   const [countryCode, setCountryCode] = useState("+91");
   const [contactNumber, setContactNumber] = useState("");
 
+  const [distinctCompanies, setDistinctCompanies] = useState<
+    Record<string, string>
+  >({});
+  const [selectedCompany, setSelectedCompany] = useState<string>("ALL");
+  const [searchText, setSearchText] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [totalElements, setTotalElements] = useState<number>(0);
+
   useEffect(() => {
-    fetchJobs();
+    fetchDistinctCompanies();
+    fetchJobs(1, 50, "ALL");
   }, []);
 
-  const fetchJobs = async () => {
+  const fetchDistinctCompanies = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/distinct-company-names`,
+      );
+      const data =
+        response.data?.data || response.data?.response || response.data;
+      if (Array.isArray(data)) {
+        const compMap: Record<string, string> = {};
+        data.forEach((item: any) => {
+          if (typeof item === "string") {
+            compMap[item] = item;
+          } else if (item && typeof item === "object") {
+            const key = item.companyName || item.name || String(item);
+            compMap[key] = key;
+          }
+        });
+        setDistinctCompanies(compMap);
+      } else if (data && typeof data === "object") {
+        setDistinctCompanies(data);
+      }
+    } catch (error) {
+      console.error("Error fetching distinct companies:", error);
+    }
+  };
+
+  const fetchJobs = async (
+    page: number = currentPage,
+    size: number = pageSize,
+    company: string = selectedCompany,
+  ) => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`
-      );
-      setJobs(Array.isArray(response.data) ? response.data : []);
+      if (company && company !== "ALL") {
+        const response = await axios.get(
+          `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(company)}`,
+        );
+        const data =
+          response.data?.data || response.data?.response || response.data;
+        const jobList = Array.isArray(data)
+          ? data
+          : Array.isArray(response.data)
+            ? response.data
+            : [];
+        setJobs(jobList);
+        setTotalElements(jobList.length);
+        setCurrentPage(page);
+      } else {
+        const apiPage = Math.max(0, page - 1);
+        const response = await axios.get(
+          `${BASE_URL}/marketing-service/campgin/getalljobsbypagenation?page=${apiPage}&size=${size}`,
+        );
+        const data =
+          response.data?.data || response.data?.response || response.data;
+        const jobList = Array.isArray(data?.content)
+          ? data.content
+          : Array.isArray(response.data?.content)
+            ? response.data.content
+            : Array.isArray(data)
+              ? data
+              : [];
+        const total =
+          typeof data?.totalElements === "number"
+            ? data.totalElements
+            : typeof response.data?.totalElements === "number"
+              ? response.data.totalElements
+              : jobList.length;
+
+        setJobs(jobList);
+        setTotalElements(total);
+        setCurrentPage(page);
+        setPageSize(size);
+      }
     } catch (error) {
       console.error("Error fetching jobs:", error);
       message.error("Failed to load jobs. Please try again.");
       setJobs([]);
+      setTotalElements(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCompanyChange = (company: string) => {
+    setSelectedCompany(company);
+    setCurrentPage(1);
+    fetchJobs(1, pageSize, company);
+  };
+
+  const handleTableChange = (pagination: any) => {
+    const newPage = pagination.current || 1;
+    const newPageSize = pagination.pageSize || pageSize;
+    if (selectedCompany === "ALL") {
+      fetchJobs(newPage, newPageSize, "ALL");
+    } else {
+      setCurrentPage(newPage);
+      setPageSize(newPageSize);
     }
   };
 
@@ -121,7 +210,7 @@ const JobsAdminPage: React.FC = () => {
     confirm({
       title: "Confirm Status Change",
       icon: <ExclamationCircleOutlined />,
-      content: ` FullyQualifiedName you sure you want to ${
+      content: `Are you sure you want to ${
         currentStatus ? "deactivate" : "activate"
       } this job?`,
       okText: "Yes",
@@ -134,19 +223,23 @@ const JobsAdminPage: React.FC = () => {
             {
               id: jobId,
               jobStatus: currentStatus !== undefined ? !currentStatus : true,
-            }
+            },
           );
 
           setJobs((prevJobs) =>
             prevJobs.map((job) =>
               job.id === jobId
-                ? { ...job, jobStatus: currentStatus !== undefined ? !currentStatus : true }
-                : job
-            )
+                ? {
+                    ...job,
+                    jobStatus:
+                      currentStatus !== undefined ? !currentStatus : true,
+                  }
+                : job,
+            ),
           );
 
           message.success(
-            `Job ${currentStatus !== undefined && currentStatus ? "deactivated" : "activated"} successfully`
+            `Job ${currentStatus !== undefined && currentStatus ? "deactivated" : "activated"} successfully`,
           );
         } catch (error) {
           console.error("Error updating job status:", error);
@@ -164,14 +257,15 @@ const JobsAdminPage: React.FC = () => {
     // Parse qualifications safely
     let qualification = "";
     let qualificationPercentage = 0;
+    const rawQual = job.qualifications || (job as any).qualification || "";
 
-    if (job.qualifications && typeof job.qualifications === "string") {
-      const qualMatch = job.qualifications.match(/^(.*?)\s+above\s+(\d+)%$/);
+    if (rawQual && typeof rawQual === "string") {
+      const qualMatch = rawQual.match(/^(.*?)\s+above\s+(\d+)%$/);
       if (qualMatch) {
         qualification = qualMatch[1] || "";
         qualificationPercentage = parseInt(qualMatch[2]) || 0;
       } else {
-        qualification = job.qualifications;
+        qualification = rawQual;
       }
     }
 
@@ -186,14 +280,20 @@ const JobsAdminPage: React.FC = () => {
       companyName: job.companyName || "",
       industry: job.industry || "",
       jobLocations: job.jobLocations
-        ? job.jobLocations.split(",").map((loc) => loc.trim()).filter(Boolean)
+        ? job.jobLocations
+            .split(",")
+            .map((loc) => loc.trim())
+            .filter(Boolean)
         : [],
       jobType: job.jobType || "",
       workMode: job.workMode || "",
       description: job.description || "",
       benefits: job.benefits || "",
       skills: job.skills
-        ? job.skills.split(",").map((skill) => skill.trim()).filter(Boolean)
+        ? job.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean)
         : [],
       salaryMin: job.salaryMin ?? undefined,
       salaryMax: job.salaryMax ?? undefined,
@@ -215,26 +315,40 @@ const JobsAdminPage: React.FC = () => {
   const handleUpdateSubmit = async (formValues: FormValues) => {
     if (!currentJob) return;
 
+    if (!contactNumber.trim()) {
+      message.error("Please enter a valid contact number.");
+      return;
+    }
+
     const userId = localStorage.getItem("admin_uniquId") || "";
 
     try {
       setUpdateLoading(currentJob.id);
 
+      const locationsFormatted = Array.isArray(formValues.jobLocations)
+        ? formValues.jobLocations.filter(Boolean).join(",")
+        : formValues.jobLocations || "";
+
+      const skillsFormatted = Array.isArray(formValues.skills)
+        ? formValues.skills.filter(Boolean).join(",")
+        : formValues.skills || "";
+
       const payload = {
         id: currentJob.id,
-        applicationDeadLine: formValues.applicationDeadLine?.toISOString() ?? undefined,
+        applicationDeadLine:
+          formValues.applicationDeadLine?.toISOString() ?? undefined,
         jobTitle: formValues.jobTitle || "",
         jobDesignation: formValues.jobDesignation || "",
         companyName: formValues.companyName || "",
         industry: formValues.industry || "",
         userId: userId,
-        jobLocations: formValues.jobLocations?.filter(Boolean).join(",") || "",
+        jobLocations: locationsFormatted,
         jobType: formValues.jobType || "",
         workMode: formValues.workMode || "",
         description: formValues.description || "",
         benefits: formValues.benefits || "",
         jobStatus: isActive ?? true,
-        skills: formValues.skills?.filter(Boolean).join(",") || "",
+        skills: skillsFormatted,
         salaryMin: formValues.salaryMin ?? undefined,
         salaryMax: formValues.salaryMax ?? undefined,
         qualifications: formValues.qualificationPercentage
@@ -243,7 +357,7 @@ const JobsAdminPage: React.FC = () => {
         experience: Array.isArray(formValues.experience)
           ? formValues.experience.filter(Boolean).join(", ")
           : formValues.experience || "",
-        contactNumber: contactNumber || "",
+        contactNumber: contactNumber.trim(),
         countryCode: countryCode || "+91",
         companyLogo: formValues.companyLogo || "",
         companyEmail: formValues.companyEmail || "",
@@ -252,14 +366,14 @@ const JobsAdminPage: React.FC = () => {
 
       await axios.post(
         `${BASE_URL}/marketing-service/campgin/postajob`,
-        payload
+        payload,
       );
 
       form.resetFields();
       setIsUpdateModalVisible(false);
       setCurrentJob(null);
       message.success("Job updated successfully!");
-      fetchJobs();
+      fetchJobs(currentPage, pageSize, selectedCompany);
     } catch (error) {
       message.error("Failed to update job. Please try again.");
       console.error("Error updating job:", error);
@@ -276,44 +390,76 @@ const JobsAdminPage: React.FC = () => {
 
   const formatSalary = (
     min: number | null | undefined,
-    max: number | null | undefined
+    max: number | null | undefined,
   ) => {
-    if (min == null || max == null) {
+    const minVal = min != null ? Number(min) : NaN;
+    const maxVal = max != null ? Number(max) : NaN;
+    const hasMin = !isNaN(minVal) && minVal > 0;
+    const hasMax = !isNaN(maxVal) && maxVal > 0;
+
+    if (!hasMin && !hasMax) {
       return "Salary not disclosed";
     }
-    return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+    if (hasMin && hasMax) {
+      return `₹${minVal.toLocaleString("en-IN")} - ₹${maxVal.toLocaleString("en-IN")}`;
+    }
+    if (hasMin) {
+      return `₹${minVal.toLocaleString("en-IN")}+`;
+    }
+    return `Up to ₹${maxVal.toLocaleString("en-IN")}`;
   };
 
-  const formatDate = (timestamp?: number) => {
+  const formatDate = (timestamp?: number | string) => {
     if (!timestamp) {
-      return "N/A"; // Fallback for undefined/null timestamp
+      return "N/A";
     }
-    return new Date(timestamp).toLocaleDateString("en-IN", {
+    const num = Number(timestamp);
+    let date: Date;
+    if (!isNaN(num) && num > 0) {
+      // 10-digit unix seconds vs 13-digit milliseconds
+      const timeMs = num < 10000000000 ? num * 1000 : num;
+      date = new Date(timeMs);
+    } else {
+      date = new Date(timestamp);
+    }
+    if (isNaN(date.getTime())) {
+      return "N/A";
+    }
+    return date.toLocaleDateString("en-IN", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
+  const pagination = { current: currentPage, pageSize };
+
   const columns: ColumnsType<Job> = [
     {
+      title: "S.NO",
+      key: "serial",
+      align: "center",
+
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
+    {
       title: "Company",
-      dataIndex: "companyLogo",
       key: "company",
-      width: 220,
-      render: (logo: string | undefined, record: Job) => (
-        <div className="flex items-center space-x-2">
-          <Avatar
-            src={logo || undefined}
-            alt={record.companyName || "Unknown"}
-            size={40}
-            className="min-w-10"
+     
+      render: (_, record: Job) => (
+        <div>
+          <div
+            className="font-semibold text-sm text-gray-900"
+            title={record.companyName }
           >
-            {(record.companyName || "U")[0].toUpperCase()}
-          </Avatar>
-          <div className="hidden md:block">
-            <div className="font-medium text-sm">{record.companyName || "N/A"}</div>
-            <div className="text-sm text-gray-500">{record.industry || "N/A"}</div>
+            {record.companyName }
+          </div>
+          <div
+            className="text-xs text-gray-500"
+            title={record.industry || "N/A"}
+          >
+            {record.industry || "N/A"}
           </div>
         </div>
       ),
@@ -321,11 +467,13 @@ const JobsAdminPage: React.FC = () => {
     {
       title: "Position",
       key: "position",
-      width: 200,
-      render: (_, record: Job) => (
+      width: 280,
+      render: (_, record) => (
         <div>
-          <div className="font-medium text-sm mb-1">{record.jobTitle || "N/A"}</div>
-          <div className="text-sm text-gray-600 mb-1">{record.jobDesignation || "N/A"}</div>
+          <div className="font-medium text-sm mb-1">{record.jobTitle}</div>
+          <div className="text-sm text-gray-600 mb-1">
+            {record.jobDesignation}
+          </div>
           <div className="flex flex-wrap gap-1">
             <Tag color="blue">{record.jobType || "N/A"}</Tag>
             <Tag color="green">{record.workMode || "N/A"}</Tag>
@@ -336,8 +484,8 @@ const JobsAdminPage: React.FC = () => {
     {
       title: "Details",
       key: "details",
-      width: 180,
-      render: (_, record: Job) => (
+      width: 280,
+      render: (_, record) => (
         <div className="text-sm space-y-1 break-words whitespace-normal">
           <div>
             <strong>Location:</strong> {record.jobLocations || "N/A"}
@@ -356,21 +504,35 @@ const JobsAdminPage: React.FC = () => {
       title: "Skills",
       dataIndex: "skills",
       key: "skills",
-      width: 200,
-      render: (skills: string | undefined) => (
-        <div
-          className="text-sm max-w-[200px] max-h-[100px] overflow-y-auto text-gray-700 p-2 bg-gray-50 rounded [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          title={skills || ""}
-        >
-          {skills || "N/A"}
-        </div>
-      ),
+      width: 240,
+      render: (skills: string | string[] | undefined) => {
+        if (!skills) return <span className="text-gray-400">N/A</span>;
+        const skillList = Array.isArray(skills)
+          ? skills
+          : typeof skills === "string"
+            ? skills
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [];
+        if (skillList.length === 0)
+          return <span className="text-gray-400">N/A</span>;
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[220px] max-h-[90px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {skillList.map((skill, idx) => (
+              <Tag key={idx} color="geekblue" className="text-xs mr-0 mb-1">
+                {skill}
+              </Tag>
+            ))}
+          </div>
+        );
+      },
     },
     {
       title: "Company Details",
       key: "job_details",
       width: 240,
-      render: (record: Job) => (
+      render: (record) => (
         <div className="text-sm flex flex-col space-y-1 text-gray-700">
           {record.applicationDeadLine && (
             <div>
@@ -400,9 +562,32 @@ const JobsAdminPage: React.FC = () => {
       ),
     },
     {
+      title: "Posted Date",
+      key: "posted_date",
+      width: 160,
+      render: (_, record: Job) => (
+        <div className="text-xs space-y-1">
+          <div>
+            <span className="text-gray-500 font-medium">Created: </span>
+            <span className="text-gray-800 font-semibold block">
+              {formatDate(record.createdAt)}
+            </span>
+          </div>
+          {record.updatedAt && record.updatedAt !== record.createdAt && (
+            <div>
+              <span className="text-gray-400">Updated: </span>
+              <span className="text-gray-600 block">
+                {formatDate(record.updatedAt)}
+              </span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
       title: "Actions",
-      key: "actions",
-      width: 120,
+      key: "actions", 
+    
       render: (_, record: Job) => (
         <div className="flex flex-col gap-2">
           <Button
@@ -432,35 +617,102 @@ const JobsAdminPage: React.FC = () => {
     },
   ];
 
+  const filteredJobs = jobs.filter((job) => {
+    if (!searchText.trim()) return true;
+    const query = searchText.toLowerCase().trim();
+    return (
+      (job.jobTitle && job.jobTitle.toLowerCase().includes(query)) ||
+      (job.jobDesignation && job.jobDesignation.toLowerCase().includes(query)) ||
+      (job.companyName && job.companyName.toLowerCase().includes(query)) ||
+      (job.skills && job.skills.toLowerCase().includes(query)) ||
+      (job.jobLocations && job.jobLocations.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <Card>
-        <div className="mb-6">
-          <Title level={2} className="mb-2">
-            Jobs Management
-          </Title>
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <Title level={2} className="!mb-1">
+              Jobs Management
+            </Title>
+            <div className="text-sm text-gray-500">
+              Total Jobs:{" "}
+              <span className="font-semibold text-purple-700">
+                {totalElements}
+              </span>
+              {searchText.trim() && (
+                <span className="ml-2 text-blue-600">
+                  (Showing {filteredJobs.length} filtered)
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Input.Search
+              placeholder="Search title, designation, skills..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onSearch={(value) => setSearchText(value)}
+              allowClear
+              style={{ width: 260 }}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Company:
+              </span>
+              <Select
+                value={selectedCompany}
+                onChange={handleCompanyChange}
+                style={{ minWidth: 200 }}
+                placeholder="Select Company"
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                options={[
+                  { label: "All Companies", value: "ALL" },
+                  ...Object.entries(distinctCompanies).map(([label, val]) => ({
+                    label: label,
+                    value: val,
+                  })),
+                ]}
+              />
+            </div>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => fetchJobs(currentPage, pageSize, selectedCompany)}
+              loading={loading}
+              title="Refresh jobs"
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={jobs}
-            rowKey="id"
-            scroll={{ x: 1200 }}
-            pagination={{
-              pageSize: 50,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} jobs`,
-            }}
-            className="shadow-sm"
-          />
-        )}
+        <Table
+          columns={columns}
+          dataSource={filteredJobs}
+          rowKey="id"
+          scroll={{ x: true }}
+          loading={loading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: searchText.trim() ? filteredJobs.length : totalElements,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50", "100"],
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} of ${total} jobs`,
+          }}
+          onChange={handleTableChange}
+          className="shadow-sm"
+        />
       </Card>
 
       {/* Update Job Modal */}
@@ -477,9 +729,12 @@ const JobsAdminPage: React.FC = () => {
         onCancel={handleModalCancel}
         footer={null}
         width={900}
-        className="max-h-[90vh] overflow-y-auto"
         style={{
           top: 20,
+        }}
+        bodyStyle={{
+          maxHeight: "calc(90vh - 120px)",
+          overflowY: "auto",
         }}
       >
         <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-lg p-6 -m-6 mb-4">
@@ -744,7 +999,9 @@ const JobsAdminPage: React.FC = () => {
                       formatter={(value) =>
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
-                      parser={(value) => value!.replace(/₹\s?|(,*)/g, "")}
+                      parser={(value) =>
+                        (value ? value.replace(/₹\s?|(,*)/g, "") : "") as any
+                      }
                     />
                   </Form.Item>
                 </Col>
@@ -770,7 +1027,9 @@ const JobsAdminPage: React.FC = () => {
                       formatter={(value) =>
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
-                      parser={(value) => value!.replace(/₹\s?|(,*)/g, "")}
+                      parser={(value) =>
+                        (value ? value.replace(/₹\s?|(,*)/g, "") : "") as any
+                      }
                     />
                   </Form.Item>
                 </Col>
@@ -806,12 +1065,12 @@ const JobsAdminPage: React.FC = () => {
                     name="qualificationPercentage"
                   >
                     <InputNumber
-                      placeholder="Enter percentage"
+                      placeholder="Enter percentage (e.g. 70)"
                       style={{ width: "100%" }}
                       min={0}
                       max={100}
+                      addonAfter="%"
                       className="border-green-200 focus:border-green-400 hover:border-green-300"
-                      formatter={(value) => `${value}%`}
                     />
                   </Form.Item>
                 </Col>

@@ -177,6 +177,18 @@ const Footer: React.FC = () => {
                   support@askoxy.ai
                 </a>
               </p>
+              <p className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                <a
+                  href="tel:04041897778"
+                  className="hover:text-emerald-700 font-semibold text-emerald-700 flex items-center gap-1.5"
+                >
+                  040 4189 7778
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
+                    Toll Free · 24/7
+                  </span>
+                </a>
+              </p>
               {["+91 81432 71103", "+91 89196 36330"].map((phone) => (
                 <p key={phone} className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" aria-hidden="true" />

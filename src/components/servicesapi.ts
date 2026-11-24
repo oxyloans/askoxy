@@ -123,7 +123,15 @@ const resolveImageUrl = (url?: string): string => {
   if (!url) return "";
   const clean = url.trim();
   if (/^https?:\/\//i.test(clean)) return clean;
-  return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
+  const hasNullPrefix =
+    clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") ||
+    clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+  if (hasNullPrefix) {
+    const separator = clean.startsWith("/") ? "" : "/";
+    return `https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`;
+  }
+  const separator = clean.startsWith("/") ? "" : "/";
+  return `${uploadurlwithId}${separator}${clean}`;
 };
 
 const normalizeCampaign = (item: any): Campaign => {

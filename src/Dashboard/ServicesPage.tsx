@@ -273,6 +273,15 @@ const ServicesPage: React.FC = () => {
       .replace(/^-+|-+$/g, "")
       .slice(0, 30);
 
+  const getImageUrl = (campaign: any): string => {
+    const raw =
+      campaign?.imageUrls?.[0]?.imageUrl ||
+      campaign?.imageUrl ||
+      campaign?.images?.[0]?.imageUrl ||
+      "";
+    return buildMediaUrl(raw);
+  };
+
   const handleCampaignClick = (campaign: CampaignWithId) => {
     const inputType = String(
       (campaign as any).campainInputType || "",
@@ -280,20 +289,47 @@ const ServicesPage: React.FC = () => {
 
     if (inputType !== "SERVICE" && inputType !== "PRODUCT") return;
 
-    const detailPath = `/main/services/${campaign.campaignId.slice(
-      -4,
-    )}/${slugify(
+    const fullCampaignId =
+      campaign.campaignId ||
+      campaign.id ||
+      (campaign as any)._id ||
+      "";
+
+    const campaignSuffix =
+      fullCampaignId.length > 4 ? fullCampaignId.slice(-4) : fullCampaignId;
+
+    const campaignSlug = slugify(
       (campaign as any).campaignType ?? "service",
-    )}`;
+    );
+
+    const detailPath = `/main/services/${campaignSuffix}/${campaignSlug}`;
+
+    const returnTab =
+      activeTab === "PRODUCTS"
+        ? "/main/dashboard/myservices?tab=PRODUCTS"
+        : activeTab === "WE_ARE_HIRING"
+        ? "/main/dashboard/myservices?tab=WE_ARE_HIRING"
+        : "/main/dashboard/myservices";
+
+    const resolvedServiceType =
+      campaign.addServiceType ||
+      (inputType === "PRODUCT" ? "PRODUCT" : "SERVICE");
 
     navigate(detailPath, {
       state: {
-        campaignId: campaign.campaignId,
-        addServiceType: campaign.addServiceType,
-        from:
-          campaign.addServiceType === "LEAGUEJOURNEYS"
-            ? "/main/dashboard/leaguejourneys"
-            : "/main/dashboard/myservices",
+        campaignId: fullCampaignId,
+        addServiceType: resolvedServiceType,
+        campaign: {
+          ...campaign,
+          campaignId: fullCampaignId,
+          id: fullCampaignId,
+          addServiceType: resolvedServiceType,
+        },
+        journeyName:
+          (campaign as any).journeyName ||
+          (campaign as any).journeyObject?.journeyName ||
+          null,
+        from: returnTab,
       },
     });
   };
@@ -502,13 +538,13 @@ const ServicesPage: React.FC = () => {
                       onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="mb-2">
-                        {campaign.imageUrls?.[0]?.imageUrl && (
+                        {getImageUrl(campaign) ? (
                           <img
-                            src={campaign.imageUrls[0].imageUrl}
+                            src={getImageUrl(campaign)}
                             alt={campaign.campaignType}
                             className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
                           />
-                        )}
+                        ) : null}
                       </div>
                       <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}
@@ -544,13 +580,13 @@ const ServicesPage: React.FC = () => {
                       onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="mb-2">
-                        {campaign.imageUrls?.[0]?.imageUrl && (
+                        {getImageUrl(campaign) ? (
                           <img
-                            src={campaign.imageUrls[0].imageUrl}
+                            src={getImageUrl(campaign)}
                             alt={campaign.campaignType}
                             className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
                           />
-                        )}
+                        ) : null}
                       </div>
                       <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}
@@ -586,13 +622,13 @@ const ServicesPage: React.FC = () => {
                       onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="mb-2">
-                        {campaign.imageUrls?.[0]?.imageUrl && (
+                        {getImageUrl(campaign) ? (
                           <img
-                            src={campaign.imageUrls[0].imageUrl}
+                            src={getImageUrl(campaign)}
                             alt={campaign.campaignType}
                             className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
                           />
-                        )}
+                        ) : null}
                       </div>
                       <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}

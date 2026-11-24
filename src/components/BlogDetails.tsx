@@ -238,16 +238,17 @@ const BlogDetails: React.FC = () => {
     if (!path) return "";
     const clean = path.trim();
     if (/^https?:\/\//i.test(clean)) {
-      return resolveAskoxyUrl(clean);
+      return clean;
     }
-    const hasNullPrefix = clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") || clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    const hasNullPrefix =
+      clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") ||
+      clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
     if (hasNullPrefix) {
       const separator = clean.startsWith("/") ? "" : "/";
-      return resolveAskoxyUrl(`https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`);
-    } else {
-      const separator = clean.startsWith("/") ? "" : "/";
-      return resolveAskoxyUrl(`${uploadurlwithId}${separator}${clean}`);
+      return `https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`;
     }
+    const separator = clean.startsWith("/") ? "" : "/";
+    return `${uploadurlwithId}${separator}${clean}`;
   };
 
   const redirectToLogin = (redirectPath: string = BLOGS_DASHBOARD_PATH) => {
@@ -1011,22 +1012,27 @@ const handleWriteToUsSubmitButton = async () => {
   const renderCampaignCard = (campaign: any) => {
     const campaignId = getCampaignId(campaign);
 
-    const imageUrls: ImageItem[] = Array.isArray(campaign?.imageUrls)
+    const rawImages = Array.isArray(campaign?.imageUrls) && campaign.imageUrls.length > 0
       ? campaign.imageUrls
-          .map((img: any) =>
-            typeof img === "string" ? { imageUrl: img } : img
-          )
-          .filter(
-            (img: any) =>
-              img &&
-              typeof img.imageUrl === "string" &&
-              img.imageUrl.trim() !== ""
-          )
-      : campaign?.imageUrl &&
-        typeof campaign.imageUrl === "string" &&
-        campaign.imageUrl.trim() !== ""
-      ? [{ imageUrl: campaign.imageUrl }]
-      : [];
+      : Array.isArray(campaign?.images) && campaign.images.length > 0
+        ? campaign.images
+        : campaign?.imageUrl &&
+          typeof campaign.imageUrl === "string" &&
+          campaign.imageUrl.trim() !== ""
+          ? [{ imageUrl: campaign.imageUrl, status: true }]
+          : [];
+
+    const imageUrls: ImageItem[] = rawImages
+      .map((img: any) =>
+        typeof img === "string" ? { imageUrl: img, status: true } : img
+      )
+      .filter(
+        (img: any) =>
+          img &&
+          img.status !== false &&
+          typeof img.imageUrl === "string" &&
+          img.imageUrl.trim() !== ""
+      );
 
     const total = imageUrls.length;
     const currentIdx = currentMediaIndex[campaignId] || 0;

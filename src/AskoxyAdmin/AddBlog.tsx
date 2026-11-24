@@ -104,6 +104,7 @@ const AddBlog: React.FC = () => {
       campaignType: 255,
       campaignDescription: 10000,
       socialMediaCaption: 250,
+      campaignTypeAddBy: 100,
     };
 
     // Check if field has a limit and enforce it
@@ -118,6 +119,22 @@ const AddBlog: React.FC = () => {
       setCharCounts((prev) => ({ ...prev, [name]: value.length }));
     }
 
+    if (name === "campaignType") {
+      if (value.trim() === "") {
+        setNameErrorMessage("BLOG Name is required");
+      } else {
+        setNameErrorMessage("");
+      }
+    }
+
+    if (name === "campaignDescription") {
+      if (value.trim() === "") {
+        setDescErrorMessage("BLOG description is required");
+      } else {
+        setDescErrorMessage("");
+      }
+    }
+
     if (name === "socialMediaCaption") {
       if (value.length < 5) {
         setSocialMediaCaptionErrorMessage(
@@ -125,6 +142,14 @@ const AddBlog: React.FC = () => {
         );
       } else {
         setSocialMediaCaptionErrorMessage("");
+      }
+    }
+
+    if (name === "campaignTypeAddBy") {
+      if (value.trim() === "") {
+        setTypeErrorMessage("Blog Added By is required");
+      } else {
+        setTypeErrorMessage("");
       }
     }
   };
@@ -363,6 +388,11 @@ const AddBlog: React.FC = () => {
       isValid = false;
     }
 
+    if (formData.campaignTypeAddBy.trim() === "") {
+      setTypeErrorMessage("Blog Added By is required");
+      isValid = false;
+    }
+
     return isValid;
   };
 
@@ -382,7 +412,7 @@ const AddBlog: React.FC = () => {
                 htmlFor="campaignType"
                 className="block text-sm font-medium text-gray-700"
               >
-                Blog Name
+                Blog Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -409,7 +439,7 @@ const AddBlog: React.FC = () => {
                 htmlFor="campaignDescription"
                 className="block text-sm font-medium text-gray-700"
               >
-                Blog Description
+                Blog Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="campaignDescription"
@@ -436,7 +466,7 @@ const AddBlog: React.FC = () => {
                 htmlFor="socialMediaCaption"
                 className="block text-sm font-medium text-gray-700"
               >
-                Social Media Caption
+                Social Media Caption <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="socialMediaCaption"
@@ -643,19 +673,67 @@ const AddBlog: React.FC = () => {
                 htmlFor="campaignTypeAddBy"
                 className="block text-sm font-medium text-gray-700"
               >
-                Blog Added By
+                Blog Added By <span className="text-red-500">*</span>
               </label>
               {isHelpdeskSuperAdmin ? (
-                <select
-                  id="campaignTypeAddBy"
-                  name="campaignTypeAddBy"
-                  value={formData.campaignTypeAddBy}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="RADHA">RADHA</option>
-                </select>
+                <div className="space-y-2">
+                  <select
+                    id="campaignTypeAddBySelect"
+                    value={
+                      ["RAMA", "RADHA", "SRIDHAR"].includes(
+                        formData.campaignTypeAddBy,
+                      )
+                        ? formData.campaignTypeAddBy
+                        : formData.campaignTypeAddBy
+                        ? "OTHER"
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "OTHER") {
+                        setFormData((prev) => ({
+                          ...prev,
+                          campaignTypeAddBy: "",
+                        }));
+                        setTypeErrorMessage("Please enter user or person name");
+                      } else {
+                        setFormData((prev) => ({
+                          ...prev,
+                          campaignTypeAddBy: val,
+                        }));
+                        if (val.trim()) {
+                          setTypeErrorMessage("");
+                        } else {
+                          setTypeErrorMessage("Blog Added By is required");
+                        }
+                      }
+                    }}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="">Select Added By</option>
+                    <option value="RAMA">RAMA</option>
+                    <option value="RADHA">RADHA</option>
+                    <option value="SRIDHAR">SRIDHAR</option>
+                    <option value="OTHER">Other (Enter user or person name)</option>
+                  </select>
+
+                  {(!["RAMA", "RADHA", "SRIDHAR"].includes(
+                    formData.campaignTypeAddBy,
+                  ) ||
+                    formData.campaignTypeAddBy === "") && (
+                    <input
+                      type="text"
+                      id="campaignTypeAddBy"
+                      name="campaignTypeAddBy"
+                      value={formData.campaignTypeAddBy}
+                      onChange={handleInputChange}
+                      placeholder="Enter user or person name"
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  )}
+                </div>
               ) : (
                 <input
                   type="text"
@@ -668,13 +746,12 @@ const AddBlog: React.FC = () => {
                   required
                 />
               )}
+              {typeErrorMessage && (
+                <div className="text-red-500 text-sm mt-1">
+                  {typeErrorMessage}
+                </div>
+              )}
             </div>
-
-            {typeErrorMessage && (
-              <div className="text-red-500 text-sm mb-4">
-                {typeErrorMessage}
-              </div>
-            )}
 
             {errorMessage && (
               <div className="text-red-500 text-sm mb-4">{errorMessage}</div>

@@ -5,6 +5,7 @@ import { message, Modal, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Header1 from "./Header";
 
+import axios from "axios";
 import {
   fetchCampaigns,
   submitWriteToUsQuery,
@@ -12,6 +13,7 @@ import {
   submitInterest,
 } from "./servicesapi";
 import type { Campaign } from "./servicesapi";
+import BASE_URL, { uploadurlwithId } from "../Config";
 
 interface LeagueJourneyAccess {
   campaignId: string;
@@ -97,10 +99,39 @@ const CampaignDetails: React.FC = () => {
   const mediaScrollRef = useRef<HTMLDivElement | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
 
-  const mediaItems = campaign?.imageUrls ?? [];
+  const buildMediaUrl = (url: string) => {
+    if (!url) return "";
+    const clean = url.trim();
+    if (/^https?:\/\//i.test(clean)) return clean;
+    const hasNullPrefix =
+      clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") ||
+      clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    if (hasNullPrefix) {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return `https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`;
+    }
+    const separator = clean.startsWith("/") ? "" : "/";
+    return `${uploadurlwithId}${separator}${clean}`;
+  };
+
+  const mediaItems: any[] =
+    campaign && Array.isArray(campaign.imageUrls) && campaign.imageUrls.length > 0
+      ? campaign.imageUrls
+      : campaign && Array.isArray((campaign as any).images) && (campaign as any).images.length > 0
+        ? (campaign as any).images
+        : campaign?.imageUrl
+          ? [{ imageUrl: campaign.imageUrl, imageId: campaign.id || "main-img" }]
+          : [];
   const isHiringCampaign = campaign?.addServiceType === "WEAREHIRING";
 
+  const isFromServices = Boolean(
+    routeState.from &&
+      (routeState.from.includes("/myservices") ||
+        routeState.from.includes("/services")),
+  );
+
   const isJourney =
+    !isFromServices &&
     String(
       campaign?.addServiceType || routeState.addServiceType || "",
     ).toUpperCase() === "LEAGUEJOURNEYS";
@@ -114,6 +145,7 @@ const CampaignDetails: React.FC = () => {
     journeyCampaign?.journeyName,
     journeyCampaign?.journey_name,
     journeyCampaign?.leagueJourneyName,
+    (journeyCampaign as any)?.journeyObject?.journeyName,
     journeyCampaign?.journey?.journeyName,
     journeyCampaign?.journey?.name,
     journeyCampaign?.leagueJourney?.journeyName,
@@ -122,6 +154,7 @@ const CampaignDetails: React.FC = () => {
     routeCampaign?.journeyName,
     routeCampaign?.journey_name,
     routeCampaign?.leagueJourneyName,
+    (routeCampaign as any)?.journeyObject?.journeyName,
     routeCampaign?.journey?.journeyName,
     routeCampaign?.journey?.name,
     routeCampaign?.leagueJourney?.journeyName,
@@ -200,12 +233,144 @@ const CampaignDetails: React.FC = () => {
     const loadCampaign = async () => {
       setIsLoading(true);
       try {
-        const allCampaigns = await fetchCampaigns();
-        let foundCampaign = allCampaigns.find(
-          (c) => c.campaignId?.slice(-4) === campaignId,
-        );
+        let foundCampaign: any = null;
 
-        // If not found in main campaigns, search journey campaigns or route state
+        // 1. Resolve target full campaign ID if available from route state or URL
+        const stateCampaignId =
+          (routeState as any)?.campaignId ||
+          (routeState as any)?.campaign?.campaignId ||
+          "";
+
+        let targetId =
+          (stateCampaignId && stateCampaignId.length > 6 ? stateCampaignId : "") ||
+          (campaignId && campaignId.length > 6 ? campaignId : "");
+
+        // If targetId is not a full ID yet, try to find it in campaigns or journeys
+        if (!targetId && campaignId) {
+          if ((routeState as any)?.campaign?.campaignId) {
+            targetId = (routeState as any).campaign.campaignId;
+          } else {
+            try {
+              const allCampaigns = await fetchCampaigns();
+              const matched = allCampaigns.find(
+                (c) =>
+                  c.campaignId === campaignId ||
+                  c.campaignId?.slice(-4) === campaignId
+              );
+              if (matched?.campaignId) {
+                targetId = matched.campaignId;
+                foundCampaign = matched;
+              }
+            } catch (err) {
+              console.warn("fetchCampaigns lookup error:", err);
+            }
+
+            if (!targetId) {
+              try {
+                const res = await fetch(
+                  `${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`
+                );
+                const json = await res.json();
+                const journeyList = Array.isArray(json.data)
+                  ? json.data
+                  : json.status && Array.isArray(json.data)
+                    ? json.data
+                    : [];
+                if (Array.isArray(journeyList)) {
+                  for (const journey of journeyList) {
+                    const match = (journey.campaigns || []).find(
+                      (c: any) =>
+                        c.campaignId?.slice(-4) === campaignId ||
+                        c.campaignId === campaignId
+                    );
+                    if (match) {
+                      targetId = match.campaignId;
+                      foundCampaign = {
+                        ...match,
+                        journeyName: journey.journeyName || match.journeyName,
+                        addServiceType: match.addServiceType || "LEAGUEJOURNEYS",
+                      };
+                      break;
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error("Error searching journey campaigns for targetId:", e);
+              }
+            }
+          }
+        }
+
+        // 2. Primary: Direct fetch by ID from getCampaignDatadetailsById
+        if (targetId && targetId.length > 6) {
+          try {
+            const res = await axios.get(
+              `${BASE_URL}/marketing-service/campgin/getCampaignDatadetailsById/${targetId}`
+            );
+            const apiData = res.data?.data || res.data?.response || res.data;
+            if (apiData && (apiData.campaignId || apiData.id || apiData.campaignType || apiData.imageUrls)) {
+              foundCampaign = {
+                ...apiData,
+                campaignId: apiData.campaignId || apiData.id || targetId,
+                id: apiData.id || apiData.campaignId || targetId,
+                campaignType: apiData.campaignType || foundCampaign?.campaignType || "Campaign",
+                campaignDescription: apiData.campaignDescription ?? foundCampaign?.campaignDescription ?? "",
+                campainInputType: apiData.campainInputType || foundCampaign?.campainInputType || "SERVICE",
+                imageUrls: apiData.imageUrls || apiData.images || foundCampaign?.imageUrls || [],
+                imageUrl: apiData.imageUrl || apiData.imageUrls?.[0]?.imageUrl || foundCampaign?.imageUrl || "",
+                journeyName:
+                  apiData.journeyName ||
+                  apiData.journeyObject?.journeyName ||
+                  routeState.journeyName ||
+                  foundCampaign?.journeyName ||
+                  null,
+                addServiceType:
+                  apiData.addServiceType ||
+                  routeState.addServiceType ||
+                  (routeState as any)?.campaign?.addServiceType ||
+                  foundCampaign?.addServiceType ||
+                  null,
+              };
+            }
+          } catch (apiErr) {
+            console.warn("Direct BASE_URL fetch failed, trying fallback:", apiErr);
+            try {
+              const resFallback = await axios.get(
+                `https://meta.oxyloans.com/api/marketing-service/campgin/getCampaignDatadetailsById/${targetId}`
+              );
+              const apiData =
+                resFallback.data?.data || resFallback.data?.response || resFallback.data;
+              if (apiData && (apiData.campaignId || apiData.id || apiData.campaignType || apiData.imageUrls)) {
+                foundCampaign = {
+                  ...apiData,
+                  campaignId: apiData.campaignId || apiData.id || targetId,
+                  id: apiData.id || apiData.campaignId || targetId,
+                  campaignType: apiData.campaignType || foundCampaign?.campaignType || "Campaign",
+                  campaignDescription: apiData.campaignDescription ?? foundCampaign?.campaignDescription ?? "",
+                  campainInputType: apiData.campainInputType || foundCampaign?.campainInputType || "SERVICE",
+                  imageUrls: apiData.imageUrls || apiData.images || foundCampaign?.imageUrls || [],
+                  imageUrl: apiData.imageUrl || apiData.imageUrls?.[0]?.imageUrl || foundCampaign?.imageUrl || "",
+                  journeyName:
+                    apiData.journeyName ||
+                    apiData.journeyObject?.journeyName ||
+                    routeState.journeyName ||
+                    foundCampaign?.journeyName ||
+                    null,
+                  addServiceType:
+                    apiData.addServiceType ||
+                    routeState.addServiceType ||
+                    (routeState as any)?.campaign?.addServiceType ||
+                    foundCampaign?.addServiceType ||
+                    null,
+                };
+              }
+            } catch (fallbackErr) {
+              console.error("Fallback API fetch also failed:", fallbackErr);
+            }
+          }
+        }
+
+        // 3. Fallback: If not found via direct API, check routeState and journey details
         if (!foundCampaign) {
           if (routeState.campaign) {
             foundCampaign = {
@@ -213,13 +378,12 @@ const CampaignDetails: React.FC = () => {
               addServiceType:
                 routeState.campaign.addServiceType ||
                 routeState.addServiceType ||
-                "LEAGUEJOURNEYS",
+                null,
             };
           } else {
             try {
-              const BASE_URL = (await import("../Config")).default;
               const res = await fetch(
-                `${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`,
+                `${BASE_URL}/marketing-service/campgin/getOnlyJourneyDetails`
               );
               const json = await res.json();
               const journeyList = Array.isArray(json.data)
@@ -232,7 +396,7 @@ const CampaignDetails: React.FC = () => {
                   const match = (journey.campaigns || []).find(
                     (c: any) =>
                       c.campaignId?.slice(-4) === campaignId ||
-                      c.campaignId === campaignId,
+                      c.campaignId === campaignId
                   );
                   if (match) {
                     foundCampaign = {
@@ -255,7 +419,8 @@ const CampaignDetails: React.FC = () => {
           foundCampaign &&
           (foundCampaign.campainInputType === "PRODUCT" ||
             foundCampaign.campainInputType === "SERVICE" ||
-            foundCampaign.campainInputType === "BLOG")
+            foundCampaign.campainInputType === "BLOG" ||
+            foundCampaign.campaignType)
         ) {
           setCampaign(foundCampaign);
         } else {
@@ -270,7 +435,7 @@ const CampaignDetails: React.FC = () => {
     };
 
     loadCampaign();
-  }, [campaignId]);
+  }, [campaignId, (routeState as any)?.campaignId]);
 
   useEffect(() => {
     if (campaign) handleLoadOffersAndCheckInterest();
@@ -615,12 +780,10 @@ const CampaignDetails: React.FC = () => {
     }
 
     if (
-      lowerRoute === "/main/dashboard/myservices" ||
-      lowerRoute.startsWith("/main/dashboard/myservices?") ||
-      lowerRoute === "/main/dashboard/myservices" ||
-      lowerRoute.startsWith("/main/dashboard/myservices?")
+      lowerRoute.startsWith("/main/dashboard/myservices") ||
+      lowerRoute.startsWith("/myservices")
     ) {
-      return SERVICES_ROUTE;
+      return cleanRoute;
     }
 
     return cleanRoute || SERVICES_ROUTE;
@@ -629,8 +792,9 @@ const CampaignDetails: React.FC = () => {
   const handleBack = (): void => {
     const stateServiceType = String(routeState.addServiceType || "").toUpperCase();
 
-    // League Journey details always return to the dedicated League Journeys page.
-    if (isJourney || stateServiceType === "LEAGUEJOURNEYS") {
+    // League Journey details always return to the dedicated League Journeys page,
+    // UNLESS the user explicitly opened this campaign from the Services/Products page.
+    if (!isFromServices && (isJourney || stateServiceType === "LEAGUEJOURNEYS")) {
       navigate(LEAGUE_JOURNEYS_ROUTE);
       return;
     }
@@ -855,33 +1019,38 @@ const CampaignDetails: React.FC = () => {
                   >
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
 
-                    {mediaItems.map((image, idx) => (
-                      <div
-                        key={image.imageId}
-                        className="snap-center shrink-0 basis-full w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px] flex items-start justify-center rounded-xl overflow-hidden"
-                      >
-                        {isVideoUrl(image.imageUrl ?? "") ? (
-                          <video
-                            controls
-                            className="max-w-full max-h-full w-auto h-auto self-start"
-                            preload="metadata"
-                          >
-                            <source
-                              src={image.imageUrl}
-                              type="video/mp4"
+                    {mediaItems.map((image, idx) => {
+                      const rawUrl = (image as any)?.imageUrl ?? (typeof image === "string" ? image : "");
+                      const mediaUrl = buildMediaUrl(rawUrl);
+                      const itemKey = (image as any)?.imageId || (image as any)?.imageUrl || idx;
+                      return (
+                        <div
+                          key={itemKey}
+                          className="snap-center shrink-0 basis-full w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px] flex items-start justify-center rounded-xl overflow-hidden"
+                        >
+                          {isVideoUrl(mediaUrl) ? (
+                            <video
+                              controls
+                              className="max-w-full max-h-full w-auto h-auto self-start"
+                              preload="metadata"
+                            >
+                              <source
+                                src={mediaUrl}
+                                type="video/mp4"
+                              />
+                            </video>
+                          ) : (
+                            <img
+                              src={mediaUrl}
+                              alt={`${campaign?.campaignType || "Campaign"} - ${idx + 1}`}
+                              className="w-full h-auto object-contain sm:object-cover rounded-lg"
+                              style={{ display: "block", margin: "0 auto" }}
+                              loading="lazy"
                             />
-                          </video>
-                        ) : (
-                          <img
-                            src={image.imageUrl}
-                            alt={`${campaign?.campaignType || "Campaign"} - ${idx + 1}`}
-                            className="w-full h-auto object-contain sm:object-cover rounded-lg"
-                            style={{ display: "block", margin: "0 auto" }}
-                            loading="lazy"
-                          />
-                        )}
-                      </div>
-                    ))}
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {mediaItems.length > 1 && (

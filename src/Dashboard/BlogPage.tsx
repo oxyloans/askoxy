@@ -228,27 +228,52 @@ const BlogsPage: React.FC = () => {
     }
   };
 
-  const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url);
   const isVideo = (url: string) =>
     /\.(mp4|webm|ogg|mov|m4v|avi|wmv|flv|mkv)(\?|$)/i.test(url);
+  const isImage = (url: string) => {
+    if (!url) return false;
+    return !isVideo(url);
+  };
 
   const buildMediaUrl = (url: string) => {
     if (!url) return "";
     const clean = url.trim();
     if (/^https?:\/\//i.test(clean)) return clean;
+    const hasNullPrefix =
+      clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") ||
+      clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    if (hasNullPrefix) {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return `https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`;
+    }
     const separator = clean.startsWith("/") ? "" : "/";
     return `${uploadurlwithId}${separator}${clean}`;
   };
 
   const getMediaUrl = (campaign: any) => {
-    const firstMedia =
-      campaign?.imageUrls?.[0]?.imageUrl ||
-      campaign?.imageUrls?.[0] ||
-      campaign?.imageUrl ||
-      campaign?.images?.[0]?.imageUrl ||
-      "";
+    const list =
+      Array.isArray(campaign?.imageUrls) && campaign.imageUrls.length > 0
+        ? campaign.imageUrls
+        : Array.isArray(campaign?.images) && campaign.images.length > 0
+          ? campaign.images
+          : campaign?.imageUrl
+            ? [{ imageUrl: campaign.imageUrl, status: true }]
+            : [];
 
-    if (!firstMedia) return "";
+    const activeItem =
+      list.find((img: any) => {
+        if (!img) return false;
+        if (img.status === false) return false;
+        const u = typeof img === "string" ? img : img.imageUrl || img.url || img.documentPath;
+        return typeof u === "string" && u.trim() !== "";
+      }) || list[0];
+
+    const firstMedia =
+      typeof activeItem === "string"
+        ? activeItem
+        : activeItem?.imageUrl || activeItem?.url || activeItem?.documentPath || campaign?.imageUrl || "";
+
+    if (!firstMedia || typeof firstMedia !== "string") return "";
     return buildMediaUrl(firstMedia);
   };
 
