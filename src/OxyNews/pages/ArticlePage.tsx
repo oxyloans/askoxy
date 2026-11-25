@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 import type { NewsFeedItem, Opportunity, PaperclipDetail } from "../types";
 import ArticleCard, { isDisplayableArticle } from "../components/ArticleCard";
 import { useChatContext } from "../components/ChatContext";
+import { oxynewsPath } from "../lib/oxynewsLink";
 
 const OPPORTUNITY_LABELS: Record<string, string> = {
   revenue: "Revenue", partnership: "Partnership", sales: "Sales",
@@ -226,7 +227,7 @@ function PdfModal({ url, title, onClose }: { url: string; title: string; onClose
 }
 
 export default function ArticlePage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const navigate = useNavigate();
   const { state } = useLocation();
   const feedImageUrl: string | null = (state as any)?.imageUrl ?? null;
@@ -234,8 +235,8 @@ export default function ArticlePage() {
 
   useEffect(() => {
     setResolvedImageUrl(feedImageUrl);
-  }, [id, feedImageUrl]);
-  const { openChat } = useChatContext();
+  }, [id, slug, feedImageUrl]);
+  const { openChat, setPaperclipId } = useChatContext();
   const [item, setItem] = useState<PaperclipDetail | null>(null);
   const [related, setRelated] = useState<NewsFeedItem[]>([]);
   const [feedItems, setFeedItems] = useState<NewsFeedItem[]>([]);
@@ -263,13 +264,36 @@ export default function ArticlePage() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id && !slug) return;
     setLoading(true); setError(null); setActivePerspIdx(0);
-    api.getPaperclip(id)
-      .then(setItem)
-      .catch(() => setError("Couldn't load this article."))
-      .finally(() => setLoading(false));
-  }, [id]);
+
+    async function load() {
+      try {
+        let data: PaperclipDetail | null = null;
+        if (slug) {
+          data = await api.getPaperclipBySlug(slug);
+        } else {
+          data = await api.getPaperclip(id!);
+        }
+        setItem(data);
+        // Redirect /article/<uuid> → /oxynews/<slug> only if backend returned a real slug
+        if (!slug && data?.slug) {
+          navigate(`/oxynews/${data.slug}`, { replace: true, state });
+        }
+      } catch {
+        setError("Couldn't load this article.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [id, slug]);
+
+  // Tell the layout which article the chat widget should use (slug route has no id in URL)
+  useEffect(() => {
+    setPaperclipId(item?.paperclipId ?? null);
+    return () => setPaperclipId(null);
+  }, [item?.paperclipId]);
 
   useEffect(() => {
     if (!item) return;
@@ -297,21 +321,21 @@ export default function ArticlePage() {
       .sort((x, y) => (y.o.stars ?? 0) - (x.o.stars ?? 0));
   }, [item]);
 
-  function goTo(aid?: string | null) {
-    if (!aid) return;
-    const feedImg = feedItems.find(f => f.paperclipId === aid)?.imageUrl ?? null;
-    navigate(`/article/${aid}`, { state: { imageUrl: feedImg } });
+  function goTo(target?: NewsFeedItem | null) {
+    if (!target) return;
+    navigate(oxynewsPath(target), { state: { imageUrl: target.imageUrl ?? null } });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // Canonical production article URL — always points to askoxy.ai regardless of dev/localhost
-  const canonicalUrl = `https://www.askoxy.ai/article/${id}`;
+  const canonicalUrl = item?.slug
+    ? `https://www.askoxy.ai/oxynews/${item.slug}`
+    : `https://www.askoxy.ai/article/${id ?? item?.paperclipId ?? ""}`;
 
   useEffect(() => {
     if (!item) return;
     const title = item.analysis?.articleName || item.fileName || "AskOxy News";
     const description = item.analysis?.summary?.shortSummary ?? "";
-    // Ensure absolute HTTPS image URL — required by LinkedIn (must not be localhost or relative)
     const rawImage = resolvedImageUrl || item.blogImageUrl || "";
     const image = rawImage.startsWith("http") ? rawImage : rawImage ? `https://radha-clone.s3.ap-south-1.amazonaws.com/${rawImage}` : "";
     function setMeta(property: string, content: string, attr = "property") {
@@ -320,7 +344,11 @@ export default function ArticlePage() {
       el.setAttribute("content", content);
     }
     const prevTitle = document.title;
-    document.title = title;
+    document.title = `${title} | OxyNews`;
+    setMeta("description", description.slice(0, 155), "name");
+    let canon = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canon) { canon = document.createElement("link"); canon.setAttribute("rel", "canonical"); document.head.appendChild(canon); }
+    canon.setAttribute("href", canonicalUrl);
     setMeta("og:title", title);
     setMeta("og:description", description);
     setMeta("og:image", image);
@@ -331,7 +359,38 @@ export default function ArticlePage() {
     setMeta("twitter:title", title, "name");
     setMeta("twitter:description", description, "name");
     setMeta("twitter:image", image, "name");
-    return () => { document.title = prevTitle; };
+    // JSON-LD structured data — Googlebot reads this even in SPAs
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      headline: title,
+      description: description.slice(0, 155),
+      image: image ? [image] : [],
+      url: canonicalUrl,
+      mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+      publisher: {
+        "@type": "Organization",
+        name: "OxyNews by AskOxy.AI",
+        url: "https://www.askoxy.ai",
+        logo: { "@type": "ImageObject", url: "https://www.askoxy.ai/askoxy1.ico" },
+      },
+      keywords: (item.analysis?.classification?.tags ?? []).join(", "),
+      articleSection: item.analysis?.classification?.category ?? "",
+      datePublished: item.uploadedAt ?? new Date().toISOString(),
+      dateModified: item.uploadedAt ?? new Date().toISOString(),
+    };
+    let ldScript = document.querySelector<HTMLScriptElement>('script[data-oxynews-ld]');
+    if (!ldScript) {
+      ldScript = document.createElement("script");
+      ldScript.setAttribute("type", "application/ld+json");
+      ldScript.setAttribute("data-oxynews-ld", "1");
+      document.head.appendChild(ldScript);
+    }
+    ldScript.textContent = JSON.stringify(jsonLd);
+    return () => {
+      document.title = prevTitle;
+      ldScript?.remove();
+    };
   }, [item, resolvedImageUrl, canonicalUrl]);
 
   function buildShareContent(platform: "whatsapp" | "linkedin" | "facebook" | "twitter" | "telegram" | "email") {
@@ -513,9 +572,9 @@ export default function ArticlePage() {
         {/* INLINE TOOLBAR */}
         <div className="flex items-center justify-between gap-2 py-3 mb-2">
           <div className="flex items-center gap-1.5">
-            <button onClick={() => goTo(prev?.paperclipId)} disabled={!prev}
+            <button onClick={() => goTo(prev)} disabled={!prev}
               className="min-h-[36px] px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 active:bg-slate-100 transition">← Prev</button>
-            <button onClick={() => goTo(next?.paperclipId)} disabled={!next}
+            <button onClick={() => goTo(next)} disabled={!next}
               className="min-h-[36px] px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 active:bg-slate-100 transition">Next →</button>
           </div>
           <div className="flex items-center gap-1.5">
@@ -960,9 +1019,9 @@ export default function ArticlePage() {
             Analysed by <span className="font-semibold text-slate-700">Radh<span className="text-violet-600">AI</span></span>
           </p>
           <div className="flex gap-2">
-            <button onClick={() => goTo(prev?.paperclipId)} disabled={!prev}
+            <button onClick={() => goTo(prev)} disabled={!prev}
               className="flex-1 sm:flex-none min-h-[40px] px-4 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 active:bg-slate-100">← Previous</button>
-            <button onClick={() => goTo(next?.paperclipId)} disabled={!next}
+            <button onClick={() => goTo(next)} disabled={!next}
               className="flex-1 sm:flex-none min-h-[40px] px-4 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 active:bg-slate-100">Next →</button>
           </div>
         </div>

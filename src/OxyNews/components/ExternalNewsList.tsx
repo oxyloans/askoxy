@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, fetchOpenAiArticle } from "../lib/api";
 import type { ExternalNewsArticle } from "../types";
 
 function formatDate(dateStr: string | null) {
@@ -17,6 +17,56 @@ const OPENAI_IMG = "https://images.unsplash.com/photo-1677442136019-21780ecad995
 
 function getFallbackImg(source: string) {
   return source.toLowerCase() === "openai" ? OPENAI_IMG : ANTHROPIC_IMG;
+}
+
+// Resolves the real article image for OpenAI cards (fetches once, caches in module scope)
+const imgCache = new Map<string, string>();
+
+function OpenAiCardImage({ article, fallback, badge, date }: {
+  article: ExternalNewsArticle;
+  fallback: string;
+  badge: string;
+  date: string;
+}) {
+  const [src, setSrc] = useState<string>(article.imageUrl && article.imageUrl !== OPENAI_IMG ? article.imageUrl : "");
+  const [err, setErr] = useState(false);
+  const fetched = useRef(false);
+
+  useEffect(() => {
+    if (src && src !== OPENAI_IMG) return;
+    if (fetched.current) return;
+    fetched.current = true;
+    const cached = imgCache.get(article.url);
+    if (cached) { setSrc(cached); return; }
+    fetchOpenAiArticle(article.url)
+      .then(data => {
+        const img = data?.image || "";
+        imgCache.set(article.url, img || fallback);
+        if (img) setSrc(img);
+      })
+      .catch(() => {});
+  }, [article.url]);
+
+  const imgSrc = (!err && src) ? src : fallback;
+
+  return (
+    <div className="relative h-40 overflow-hidden bg-slate-100">
+      <img
+        src={imgSrc}
+        alt={article.title}
+        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+        onError={() => setErr(true)}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      <span className={`absolute top-2 left-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow ${badge}`}>
+        {article.category || "OpenAI"}
+      </span>
+      {date && (
+        <span className="absolute bottom-2 right-2 text-[10px] font-medium text-white/80">{date}</span>
+      )}
+    </div>
+  );
 }
 
 function sortExternalArticlesByLatest(items: ExternalNewsArticle[]): ExternalNewsArticle[] {
@@ -164,28 +214,38 @@ export default function ExternalNewsList({ sourceName }: { sourceName: string })
             { border: "hover:border-teal-300",    bg: "bg-teal-50",    letter: "text-teal-200",    hover: "group-hover:text-teal-700",    badge: "bg-teal-100 text-teal-700",    icon: "group-hover:text-teal-500" },
           ];
           const c = palette[i % palette.length];
+          const isOpenAi = sourceName.toLowerCase() === "openai";
           return (
             <Link
               key={article.id}
-              to={`/news/${sourceName.toLowerCase()}/${article.id}`}
+              to={`/oxynews/${sourceName.toLowerCase()}/${article.id}`}
               className={`group flex flex-col rounded-xl border border-slate-200 bg-white shadow-card hover:shadow-lift ${c.border} transition-all overflow-hidden focus-ring`}
             >
-              <div className="relative h-44 overflow-hidden">
-                <img
-                  src={article.imageUrl || getFallbackImg(sourceName)}
-                  alt={article.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = getFallbackImg(sourceName); }}
+              {isOpenAi ? (
+                <OpenAiCardImage
+                  article={article}
+                  fallback={getFallbackImg(sourceName)}
+                  badge={c.badge}
+                  date={formatDate(article.publishedDate)}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <span className={`absolute top-2 left-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow ${c.badge}`}>
-                  {article.category || (sourceName.toLowerCase() === "openai" ? "OpenAI" : sourceName)}
-                </span>
-                <span className="absolute bottom-2 right-2 text-[10px] font-medium text-white/80">
-                  {formatDate(article.publishedDate)}
-                </span>
-              </div>
+              ) : (
+                <div className="relative h-40 overflow-hidden bg-slate-100">
+                  <img
+                    src={article.imageUrl || getFallbackImg(sourceName)}
+                    alt={article.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = getFallbackImg(sourceName); }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <span className={`absolute top-2 left-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow ${c.badge}`}>
+                    {article.category || sourceName}
+                  </span>
+                  <span className="absolute bottom-2 right-2 text-[10px] font-medium text-white/80">
+                    {formatDate(article.publishedDate)}
+                  </span>
+                </div>
+              )}
               <div className="flex flex-col flex-1 p-3 gap-2">
                 <p className={`text-sm font-semibold leading-snug text-slate-800 ${c.hover} transition-colors line-clamp-3 flex-1`}>
                   {article.title}

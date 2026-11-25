@@ -1,5 +1,5 @@
 // src/pages/ExternalArticlePage.tsx
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api, formatOpenAiArticleBlocks, fetchOpenAiArticle } from "../lib/api";
 import type { ExternalNewsArticle, OpenAiArticleData } from "../types";
@@ -220,6 +220,7 @@ const ANTHROPIC_FALLBACK_IMG = "https://i.ibb.co/qFrMxbgw/Chat-GPT-Image-Sep-28-
 
 export default function ExternalArticlePage() {
   const { sourceName, id } = useParams<{ sourceName: string; id: string }>();
+  const location = useLocation();
   const [article, setArticle] = useState<ExternalNewsArticle | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [heroImage, setHeroImage] = useState<string | null>(null);
@@ -227,6 +228,8 @@ export default function ExternalArticlePage() {
   const [contentLoading, setContentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openAiData, setOpenAiData] = useState<OpenAiArticleData | null>(null);
+  const [imgError, setImgError] = useState(false);
+  const [imgPreview, setImgPreview] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [sourceArticles, setSourceArticles] = useState<ExternalNewsArticle[]>([]);
   const [shareOpen, setShareOpen] = useState(false);
@@ -248,7 +251,7 @@ export default function ExternalArticlePage() {
     setHeroImage(null);
 
     api
-      .getExternalArticle(sourceName, Number(id))
+      .getExternalArticle(sourceName, id)
       .then((found) => {
         setArticle(found);
 
@@ -256,7 +259,7 @@ export default function ExternalArticlePage() {
           setHeroImage(found.imageUrl);
         } else {
           api
-            .getExternalArticleImage(sourceName, Number(id))
+            .getExternalArticleImage(sourceName, id as any)
             .then((img) => setHeroImage(img))
             .catch(() => setHeroImage(null));
         }
@@ -293,7 +296,7 @@ export default function ExternalArticlePage() {
 
         setContentLoading(true);
         return api
-          .getExternalArticleContent(sourceName, Number(id), found.url)
+          .getExternalArticleContent(sourceName, id as any, found.url)
           .then((body) => {
             if (body && body.trim().length > 0) {
               setContent(body);
@@ -314,7 +317,23 @@ export default function ExternalArticlePage() {
       .catch(() => setSourceArticles([]));
   }, [sourceName]);
 
-  const canonicalUrl = `https://www.askoxy.ai/news/${sourceName?.toLowerCase()}/${id}`;
+  // Redirect legacy /news/ URLs to canonical /oxynews/ on first render
+  // Also redirect old /huggingface/article?url= query-param pattern
+  useEffect(() => {
+    if (location.pathname.startsWith("/news/")) {
+      navigate(`/oxynews/${sourceName?.toLowerCase()}/${id}`, { replace: true });
+    }
+    if (location.pathname === "/huggingface/article") {
+      const params = new URLSearchParams(location.search);
+      const url = params.get("url");
+      if (url) {
+        const { urlToSlug } = require("../lib/api");
+        navigate(`/oxynews/huggingface/${urlToSlug(url)}`, { replace: true });
+      }
+    }
+  }, [location.pathname]);
+
+  const canonicalUrl = `https://www.askoxy.ai/oxynews/${sourceName?.toLowerCase()}/${id}`;
   const shareImage = heroImage || ANTHROPIC_FALLBACK_IMG;
 
   function buildShareContent(platform: "whatsapp" | "linkedin" | "facebook" | "twitter" | "telegram" | "email") {
@@ -368,9 +387,9 @@ export default function ExternalArticlePage() {
     setTimeout(() => setIsCopied(false), 2500);
   }
 
-  function goToExternalArticle(nextId?: number | null) {
+  function goToExternalArticle(nextId?: string | number | null) {
     if (!sourceName || !nextId) return;
-    navigate(`/news/${sourceName.toLowerCase()}/${nextId}`);
+    navigate(`/oxynews/${sourceName.toLowerCase()}/${nextId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -380,6 +399,31 @@ export default function ExternalArticlePage() {
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Set canonical + OG meta for Google indexing
+  useEffect(() => {
+    if (!article) return;
+    const prevTitle = document.title;
+    document.title = `${article.title} | OxyNews`;
+    function setMeta(prop: string, content: string, attr = "property") {
+      let el = document.querySelector<HTMLMetaElement>(`meta[${attr}="${prop}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, prop); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    }
+    let canon = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canon) { canon = document.createElement("link"); canon.setAttribute("rel", "canonical"); document.head.appendChild(canon); }
+    canon.setAttribute("href", canonicalUrl);
+    setMeta("og:title", article.title);
+    setMeta("og:url", canonicalUrl);
+    setMeta("og:type", "article");
+    setMeta("og:site_name", "OxyNews by AskOxy.AI");
+    if (heroImage) setMeta("og:image", heroImage);
+    setMeta("description", (article.content ?? "").slice(0, 155), "name");
+    setMeta("twitter:card", "summary_large_image", "name");
+    setMeta("twitter:title", article.title, "name");
+    if (heroImage) setMeta("twitter:image", heroImage, "name");
+    return () => { document.title = prevTitle; };
+  }, [article, heroImage, canonicalUrl]);
 
   if (loading) {
     return (
@@ -448,17 +492,6 @@ export default function ExternalArticlePage() {
           </div>
         </div>
 
-        {heroImage && (
-          <div className="mt-6 rounded-3xl overflow-hidden border border-ink/10 shadow-sm aspect-[16/9] bg-ink/5">
-            <img
-              src={heroImage}
-              alt={article.title}
-              className="w-full h-full object-cover"
-              onError={() => setHeroImage(null)}
-            />
-          </div>
-        )}
-
         <div className="mt-6 border-b border-ink/10 pb-6">
           <div className="grid gap-6 lg:gap-10 lg:grid-cols-[3fr_1fr] items-start">
             <div>
@@ -491,9 +524,21 @@ export default function ExternalArticlePage() {
                 <span className="font-medium text-amber-600">{formatDate(article.publishedDate)}</span>
               </div>
 
+              {/* Image floated right beside title — same as HuggingFace */}
+              {heroImage && !imgError && (
+                <img
+                  src={heroImage}
+                  alt={article.title}
+                  onClick={() => setImgPreview(true)}
+                  onError={() => setImgError(true)}
+                  className="float-right ml-4 mb-2 w-full sm:w-1/2 h-56 sm:h-72 rounded-xl object-cover shadow-sm hover:opacity-90 transition cursor-zoom-in"
+                />
+              )}
+
               <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-bold text-plum-dark mt-4 leading-tight">
                 {article.title}
               </h1>
+              <div className="clear-both" />
             </div>
 
             <aside className="rounded-2xl border border-ink/10 bg-white p-4 sm:p-6 shadow-sm self-start">
@@ -760,6 +805,21 @@ export default function ExternalArticlePage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* IMAGE LIGHTBOX */}
+      {imgPreview && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
+          onClick={() => setImgPreview(false)}>
+          <div className="relative w-full max-w-3xl" onClick={e => e.stopPropagation()}>
+            <img src={heroImage!} alt={article.title}
+              className="w-full max-h-[80vh] rounded-xl shadow-2xl object-contain" />
+            <button onClick={() => setImgPreview(false)}
+              className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition text-lg font-bold">
+              ✕
+            </button>
           </div>
         </div>
       )}

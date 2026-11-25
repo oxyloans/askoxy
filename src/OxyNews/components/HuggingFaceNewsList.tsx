@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, HFArticle } from "../lib/api";
+import { api, HFArticle, urlToSlug } from "../lib/api";
 
 const HF_FALLBACK = "https://huggingface.co/front/assets/huggingface_logo-noborder.svg";
 
@@ -217,7 +217,7 @@ export default function HuggingFaceNewsList() {
             <button
               key={article.url}
               type="button"
-              onClick={() => navigate(`/huggingface/article?url=${encodeURIComponent(article.url)}`)}
+              onClick={() => navigate(`/oxynews/huggingface/${urlToSlug(article.url)}`)}
               className={`group flex flex-col rounded-xl border border-slate-200 bg-white shadow-card ${c.border} hover:shadow-lift transition-all overflow-hidden text-left focus-ring`}
             >
               {/* Cover image */}

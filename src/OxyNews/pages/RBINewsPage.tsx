@@ -102,6 +102,7 @@ type RbiFeedItem = {
 function toNewsFeedItem(item: RbiFeedItem): NewsFeedItem {
   return {
     paperclipId: item.paperclipId,
+    slug: (item as any).slug ?? null,
     articleName: item.articleName,
     domain: item.domain,
     category: item.category,

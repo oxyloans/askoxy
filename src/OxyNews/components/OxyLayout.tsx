@@ -19,6 +19,10 @@ export default function OxyLayout() {
   const [chatOpen, setChatOpen] = useState(false);
   const navigate = useNavigate();
   const articleMatch = useMatch("/article/:id");
+  const slugMatch = useMatch("/oxynews/:slug");
+  const isArticle = !!(articleMatch?.params.id || slugMatch?.params.slug);
+  const [slugPaperclipId, setSlugPaperclipId] = useState<string | null>(null);
+  const chatPaperclipId = articleMatch?.params.id ?? slugPaperclipId;
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus input when search opens
@@ -62,6 +66,7 @@ export default function OxyLayout() {
         chatOpen,
         openChat: () => setChatOpen(true),
         closeChat: () => setChatOpen(false),
+        setPaperclipId: setSlugPaperclipId,
       }}
     >
       <div className="flex min-h-screen flex-col bg-gray-50">
@@ -75,7 +80,7 @@ export default function OxyLayout() {
 
                 {/* LEFT: Back button + Logo */}
                 <div className="flex shrink-0 items-center gap-2">
-                  {articleMatch?.params.id && (
+                  {isArticle && (
                     <button
                       type="button"
                       onClick={() => navigate(-1)}
@@ -124,7 +129,7 @@ export default function OxyLayout() {
                       {link.label}
                     </NavLink>
                   ))}
-                  {articleMatch?.params.id && (
+                  {isArticle && (
                     <button
                       type="button"
                       onClick={() => setChatOpen((o) => !o)}
@@ -141,7 +146,7 @@ export default function OxyLayout() {
 
                 {/* RIGHT: search bar | ask button (mobile) */}
                 <div className="flex shrink-0 items-center gap-2">
-                  {articleMatch?.params.id && (
+                  {isArticle && (
                     <button
                       type="button"
                       onClick={() => setChatOpen((o) => !o)}
@@ -154,16 +159,6 @@ export default function OxyLayout() {
                       Ask
                     </button>
                   )}
-
-                  {/* Desktop Toll Free Helpline */}
-                  {/* <a
-                    href="tel:04041897778"
-                    className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-plum transition whitespace-nowrap"
-                    title="Toll Free Helpline: 040 4189 7778 (24/7 Available)"
-                  >
-                    <PhoneCall className="h-3.5 w-3.5 text-emerald-400" />
-                    <span>Toll Free: 040 4189 7778</span>
-                  </a> */}
 
                   {/* Desktop/tablet: always-visible inline search */}
                   <form
@@ -273,7 +268,7 @@ export default function OxyLayout() {
 
         {/* ── Page content — offset by header height ── */}
         <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 mt-[160px] sm:mt-[145px] lg:mt-[130px]">
-          {articleMatch?.params.id && chatOpen ? (
+          {isArticle && chatPaperclipId && chatOpen ? (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr,380px]">
               <div className="lg:col-start-1">
                 <Outlet />
@@ -281,7 +276,7 @@ export default function OxyLayout() {
               {/* Desktop sidebar chat */}
               <div className="hidden lg:block lg:col-start-2 lg:sticky lg:top-24">
                 <ArticleChatWidget
-                  paperclipId={articleMatch.params.id}
+                  paperclipId={chatPaperclipId!}
                   open={chatOpen}
                   onClose={() => setChatOpen(false)}
                 />
@@ -293,7 +288,7 @@ export default function OxyLayout() {
         </main>
 
         {/* ── Mobile chat drawer ── */}
-        {articleMatch?.params.id && chatOpen && (
+        {isArticle && chatPaperclipId && chatOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end">
             <div
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -304,7 +299,7 @@ export default function OxyLayout() {
               style={{ maxHeight: "85dvh" }}
             >
               <ArticleChatWidget
-                paperclipId={articleMatch.params.id}
+                paperclipId={chatPaperclipId!}
                 open={chatOpen}
                 onClose={() => setChatOpen(false)}
               />
@@ -331,6 +326,14 @@ export default function OxyLayout() {
                 <p className="text-xs text-paper/60 leading-relaxed">
                   AI-powered news analysis by RadhAI. Stay ahead with opportunity signals, stakeholder insights and OxyGroup recommendations.
                 </p>
+                <a
+                  href="tel:04041897778"
+                  className="mt-1 inline-flex items-center gap-2 text-xs font-bold text-gold hover:underline"
+                  title="Toll Free: 040 4189 7778 (24/7)"
+                >
+                  <PhoneCall className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Toll Free: 040 4189 7778 (24/7)</span>
+                </a>
               </div>
 
               {/* Navigate */}
@@ -375,25 +378,10 @@ export default function OxyLayout() {
                 </ul>
               </div>
 
-              {/* Powered by & Support */}
+              {/* Powered by */}
               <div>
-                <h3 className="text-xs font-mono uppercase tracking-widest text-gold mb-3">Toll Free Helpline</h3>
-                <div className="flex flex-col gap-2 mb-4">
-                  <a
-                    href="tel:04041897778"
-                    className="flex items-center gap-2 text-sm text-paper hover:text-gold transition-colors font-bold"
-                  >
-                    <PhoneCall className="h-4 w-4 text-emerald-400" />
-                    <span>040 4189 7778</span>
-                    <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                      Toll Free · 24/7
-                    </span>
-                  </a>
-                  
-                </div>
-
-                <h3 className="text-xs font-mono uppercase tracking-widest text-gold mb-2">Powered by</h3>
-                <div className="flex flex-col gap-1.5">
+                <h3 className="text-xs font-mono uppercase tracking-widest text-gold mb-3">Powered by</h3>
+                <div className="flex flex-col gap-2">
                   <span className="text-sm text-paper/70">
                     <span className="text-paper font-semibold">Radh</span><span className="text-gold font-semibold">AI</span> — AI News Analysis
                   </span>
@@ -409,7 +397,18 @@ export default function OxyLayout() {
             {/* Bottom bar */}
             <div className="flex flex-col gap-2 py-4 text-xs text-paper/40 sm:flex-row sm:items-center sm:justify-between">
               <span>© {new Date().getFullYear()} OxyNews by AskOxy.AI. All rights reserved.</span>
-              <span>AI-analysed news. Not financial advice.</span>
+              <div className="flex items-center gap-3">
+                <a
+                  href="tel:04041897778"
+                  className="inline-flex items-center gap-1 font-semibold text-gold hover:underline"
+                  title="Call Toll Free Helpline"
+                >
+                  <PhoneCall className="h-3 w-3 text-emerald-400" />
+                  Toll Free: 040 4189 7778
+                </a>
+                <span>•</span>
+                <span>AI-analysed news. Not financial advice.</span>
+              </div>
             </div>
           </div>
         </footer>

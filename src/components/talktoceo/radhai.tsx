@@ -22,6 +22,8 @@ import {
   BarChart3,
   ShieldCheck,
   ExternalLink,
+  Phone,
+  PhoneCall,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 
@@ -560,28 +562,35 @@ const RadhAIPage: React.FC = () => {
             </div> */}
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-2 sm:hidden">
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:hidden">
             <button
               onClick={handleTalkToCEO}
-              className="flex min-h-[52px] items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-2 py-3 text-[11px] font-black text-black"
+              className="flex min-h-[48px] items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-2 py-2.5 text-[11px] font-black text-black"
             >
               <Mic size={15} />
               Talk to CEO
             </button>
             <button
               onClick={handleChatWithCEO}
-              className="flex min-h-[52px] items-center justify-center gap-1 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-2 py-3 text-[11px] font-black text-cyan-200"
+              className="flex min-h-[48px] items-center justify-center gap-1 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-2 py-2.5 text-[11px] font-black text-cyan-200"
             >
               <MessageCircle size={14} />
               Chat with CEO
             </button>
             <button
               onClick={handleWriteToUs}
-              className="flex min-h-[52px] items-center justify-center gap-1 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-2 py-3 text-[11px] font-black text-cyan-200"
+              className="flex min-h-[48px] items-center justify-center gap-1 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-2 py-2.5 text-[11px] font-black text-cyan-200"
             >
               <Mail size={14} />
               Write to CEO
             </button>
+            <a
+              href="tel:04041897778"
+              className="flex min-h-[48px] items-center justify-center gap-1 rounded-2xl border border-amber-300/40 bg-amber-300/10 px-2 py-2.5 text-[11px] font-black text-amber-200"
+            >
+              <Phone size={14} />
+              040 4189 7778
+            </a>
           </div>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg lg:mx-0">
@@ -616,28 +625,38 @@ const RadhAIPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 hidden grid-cols-3 gap-3 sm:grid">
+          <div className="mt-6 hidden grid-cols-2 lg:grid-cols-4 gap-3 sm:grid">
             <button
               onClick={handleTalkToCEO}
-              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-4 py-3 font-black text-black transition hover:scale-[1.02]"
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 font-black text-black transition hover:scale-[1.02]"
             >
               <Mic size={18} />
               Talk to CEO
             </button>
             <button
               onClick={handleChatWithCEO}
-              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-4 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
             >
               <MessageCircle size={18} />
               Chat with CEO
             </button>
             <button
               onClick={handleWriteToUs}
-              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-4 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
             >
               <Mail size={18} />
               Write to CEO
             </button>
+            <a
+              href="tel:04041897778"
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-amber-300/40 bg-amber-300/10 px-3 py-3 font-black text-amber-200 transition hover:bg-amber-300 hover:text-black cursor-pointer"
+            >
+              <Phone size={18} />
+              <span>040 4189 7778</span>
+              <span className="rounded-full bg-amber-300/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-200 uppercase">
+                Toll Free
+              </span>
+            </a>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
@@ -729,6 +748,57 @@ const RadhAIPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Floating Toll Free Helpline Button */}
+      <div
+        className="fixed bottom-4 left-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:left-4 md:left-5"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <a
+          href="tel:04041897778"
+          className="relative group flex items-center rounded-full bg-[#120f28]/95 backdrop-blur-md p-1.5 sm:pl-2 sm:pr-4 sm:py-2 text-white shadow-xl shadow-purple-950/60 border border-purple-400/30 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+          aria-label="Call Toll Free Helpline 040 4189 7778 (24/7 · 365 Days Available)"
+          title="Toll Free Helpline: 040 4189 7778 (24/7 · 365 Days Available)"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fde3cf] text-[#9a3412] shadow-sm shrink-0 group-hover:rotate-12 transition-transform">
+            <PhoneCall className="h-4.5 w-4.5" />
+          </div>
+
+          <div className="hidden sm:flex flex-col text-left leading-tight sm:ml-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-100">
+                TOLL FREE HELPLINE
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold text-cyan-400">
+                • 24/7
+              </span>
+            </div>
+
+            <span className="text-xs sm:text-[14px] font-extrabold text-white tracking-wide">
+              040 4189 7778
+            </span>
+          </div>
+
+          <div className="sm:hidden absolute bottom-full left-0 mb-2 pointer-events-none opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-200 z-50">
+            <div className="flex flex-col whitespace-nowrap rounded-xl bg-[#120f28]/95 px-3 py-1.5 text-white shadow-xl border border-purple-400/40 backdrop-blur-md">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                </span>
+                <span className="text-[10px] font-bold text-slate-100 uppercase tracking-wider">
+                  TOLL FREE • 24/7
+                </span>
+              </div>
+              <span className="text-xs font-black text-white">040 4189 7778</span>
+            </div>
+          </div>
+        </a>
+      </div>
     </div>
   );
 };

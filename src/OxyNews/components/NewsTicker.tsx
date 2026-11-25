@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { NewsFeedItem } from "../types";
+import { oxynewsPath } from "../lib/oxynewsLink";
 import { isDisplayableArticle } from "./ArticleCard";
 
 function displayTitle(item: NewsFeedItem): string {
@@ -44,7 +45,7 @@ export default function NewsTicker({ className }: { className?: string }) {
             {strip.map((item, i) => (
               <button
                 key={`${item.paperclipId}-${i}`}
-                onClick={() => navigate(`/article/${item.paperclipId}`)}
+                onClick={() => navigate(oxynewsPath(item))}
                 className="focus-ring shrink-0 flex items-center gap-3 px-5 text-sm text-paper hover:text-gold transition-colors whitespace-nowrap"
               >
                 {item.domain && (

@@ -834,28 +834,45 @@ const JobDetails: React.FC = () => {
           )}
 
           {/* Connect / Info */}
-          <section className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+          <section className="bg-white p-4 md:p-5 rounded-xl border border-gray-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
-              <h3 className="text-xl font-extrabold text-gray-900">
+              <h3 className="text-base md:text-lg font-bold text-gray-900">
                 Still have questions?
               </h3>
-              <p className="text-gray-600 mt-2 font-medium">
-                Our support team is always here to guide you through the
-                process.
+              <p className="text-xs md:text-sm text-gray-500 mt-0.5">
+                Our support team is always here to guide you through the process.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <div className="flex flex-row flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-3">
+              <a
+                href="tel:04041897778"
+                className="inline-flex items-center text-xs sm:text-sm font-semibold text-gray-800 bg-gray-50 hover:bg-gray-100 hover:border-blue-300 transition-colors border border-gray-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg cursor-pointer whitespace-nowrap shadow-2xs"
+              >
+                <Phone className="w-3.5 h-3.5 mr-1.5 text-blue-600 shrink-0" />
+                <span>040 4189 7778</span>
+                <span className="ml-1.5 text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full uppercase">
+                  Toll Free
+                </span>
+              </a>
+              <a
+                href="mailto:support@askoxy.ai"
+                className="inline-flex items-center text-xs sm:text-sm font-semibold text-gray-800 bg-gray-50 hover:bg-gray-100 hover:border-blue-300 transition-colors border border-gray-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg cursor-pointer whitespace-nowrap shadow-2xs"
+              >
+                <Mail className="w-3.5 h-3.5 mr-1.5 text-blue-600 shrink-0" />
+                <span>support@askoxy.ai</span>
+              </a>
               {!isEmpty(job.contactNumber) && (
-                <div className="flex items-center text-sm font-bold text-gray-800 bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200 px-5 py-3 rounded-xl w-full sm:w-auto justify-center">
-                  <Phone className="w-4 h-4 mr-2 text-blue-600" />
-                  {(!isEmpty(job.countryCode) ? job.countryCode + " " : "") +
-                    job.contactNumber}
-                </div>
+                <a
+                  href={`tel:${(!isEmpty(job.countryCode) ? job.countryCode : "") + job.contactNumber}`}
+                  className="inline-flex items-center text-xs sm:text-sm font-semibold text-gray-800 bg-gray-50 hover:bg-gray-100 hover:border-blue-300 transition-colors border border-gray-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg cursor-pointer whitespace-nowrap shadow-2xs"
+                >
+                  <Phone className="w-3.5 h-3.5 mr-1.5 text-blue-600 shrink-0" />
+                  <span>
+                    {(!isEmpty(job.countryCode) ? job.countryCode + " " : "") +
+                      job.contactNumber}
+                  </span>
+                </a>
               )}
-              <div className="flex items-center text-sm font-bold text-gray-800 bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200 px-5 py-3 rounded-xl w-full sm:w-auto justify-center">
-                <Mail className="w-4 h-4 mr-2 text-blue-600" />
-                support@askoxy.ai
-              </div>
             </div>
           </section>
         </div>

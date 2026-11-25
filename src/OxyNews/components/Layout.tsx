@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
-import { PhoneCall } from "lucide-react";
 import Logo from "../../assets/img/askoxylogonew.png";
 import NewsTicker from "./NewsTicker";
 import ResourceNavBar from "./ResourceNavBar";
+import { PhoneCall } from "lucide-react";
 
 const primaryLinks = [
   { to: "/oxynews", label: "Home", end: true },
@@ -130,7 +130,7 @@ export default function OxyLayout() {
         <Outlet />
       </main>
 
-      <footer className="mt-10 border-t border-ink/10 py-6">
+        <footer className="mt-10 border-t border-ink/10 py-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-3">
             <span>OxyNews by AskOxy.AI</span>
@@ -148,9 +148,7 @@ export default function OxyLayout() {
           </Link>
         </div>
       </footer>
-
-      {/* Floating Toll Free Helpline Button */}
-      <div
+        <div
         className="fixed bottom-4 left-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:left-4 md:left-5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
@@ -199,6 +197,7 @@ export default function OxyLayout() {
           </div>
         </a>
       </div>
+
     </div>
   );
 }

@@ -19,15 +19,19 @@ import type {
   IrdaiCampaignResponse,
   OpenAiNewsItem,
   OpenAiArticleData,
-  OpenAiArticleBlock,
 } from "../types";
 import { CODING_AGENTS_DATA, CodingAgentModel } from "../data/codingAgentsData";
 import { FALLBACK_RANKINGS } from "../data/rankingsFallbackData";
 
-// All OxyNews API calls go through BASE_URL/ai-automation
-// BASE_URL = https://meta.oxyloans.com/api  (live)
-//          = https://meta.oxyglobal.tech/api (staging)
+
+// AI automation base — single source of truth for all OxyNews API calls
 const AI = `${BASE_URL}/ai-automation`;
+
+const HF_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJlYzY3OTExYS1iMmIzLTQ3OTMtODZiMy00ZDIxMjg4ODZmYWYiLCJpYXQiOjE3OTU1ODY4ODksImV4cCI6MTc5NjE5MTY4OX0.3rPmNt4POStbFs5Ao45CYbutehCSgs4JrW_DEQ6F2w1nASsbEIABc2dOB7hlmFPbwbHaa5Yy2NS0Qn1Oo2T1gw";
+
+// Legacy aliases kept for any external imports
+export const BASE_URL1 = AI;
+export const RANKINGS_BASE = AI;
 
 export interface HFArticle {
   title: string;
@@ -67,10 +71,6 @@ export interface RawRankingsItem {
   rankingMetricValue: number;
 }
 
-// Keep exporting so any external import of BASE_URL1 still compiles
-export const BASE_URL1 = AI;
-export const RANKINGS_BASE = AI;
-
 export const getAccessToken = (): string | null =>
   getCustomerAccessToken() ||
   localStorage.getItem("accessToken") ||
@@ -85,12 +85,14 @@ export const getAccessToken = (): string | null =>
 
 export const getRequestHeaders = (
   headers?: HeadersInit,
-  explicitToken?: string | null
+  explicitToken?: string | null,
+  isGet = false
 ): Headers => {
   const requestHeaders = new Headers(headers);
   const accessToken = explicitToken || getAccessToken();
 
-  if (!requestHeaders.has("Content-Type")) {
+  // Don't set Content-Type on GET requests — some backends reject it
+  if (!isGet && !requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json");
   }
 
@@ -102,11 +104,29 @@ export const getRequestHeaders = (
   return requestHeaders;
 };
 
+// GET-specific headers — no Content-Type, with auth token
+const getHeaders = () => getRequestHeaders(undefined, HF_TOKEN, true);
+
+// Derive a stable SEO slug from an article URL path segment
+export function urlToSlug(url: string): string {
+  try {
+    const path = new URL(url).pathname.replace(/\/$/, "");
+    const last = path.split("/").filter(Boolean).pop() || "";
+    return last
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  } catch {
+    return url.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 80);
+  }
+}
+
 // Single request helper — always hits BASE_URL/ai-automation
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const isGet = !options?.method || options.method.toUpperCase() === "GET";
   const res = await fetch(`${AI}${path}`, {
     ...options,
-    headers: getRequestHeaders(options?.headers),
+    headers: getRequestHeaders(options?.headers, null, isGet),
   });
   if (!res.ok) {
     throw new Error(`Request failed (${res.status}): ${path}`);
@@ -132,13 +152,16 @@ export const FALLBACK_OPENAI_NEWS: OpenAiNewsItem[] = [
 export async function fetchOpenAiNews(): Promise<OpenAiNewsItem[]> {
   try {
     const res = await fetch(`${AI}/news/external/openai`, {
-      headers: getRequestHeaders(),
+      headers: getHeaders(),
     });
     if (res.ok) {
       const json = await res.json();
-      if (json?.data?.items && Array.isArray(json.data.items)) return json.data.items;
-      if (Array.isArray(json?.data)) return json.data;
-      if (Array.isArray(json)) return json;
+      const data = json?.data ?? json;
+      // { items: [...] } shape
+      if (data?.items && Array.isArray(data.items)) return data.items;
+      // { channel: { items: [...] } } shape
+      if (data?.channel?.items && Array.isArray(data.channel.items)) return data.channel.items;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {
     console.warn("fetchOpenAiNews failed:", err);
@@ -176,7 +199,7 @@ export async function fetchOpenAiArticle(articleUrl: string): Promise<OpenAiArti
   const q = new URLSearchParams({ url: articleUrl });
   try {
     const res = await fetch(`${AI}/news/external/openai/article?${q.toString()}`, {
-      headers: getRequestHeaders(),
+      headers: getHeaders(),
     });
     if (res.ok) {
       const json = await res.json();
@@ -211,6 +234,8 @@ export async function fetchRankingsModels(
   const q = new URLSearchParams({ view: normalizedView });
   if (models) q.set("models", models);
   const headers = getRequestHeaders(undefined, token);
+  // Remove Content-Type for GET
+  headers.delete("Content-Type");
 
   try {
     const res = await fetch(`${AI}/rankings/models?${q.toString()}`, { headers });
@@ -238,6 +263,26 @@ export async function fetchRankingsModels(
   } catch {}
 
   return FALLBACK_RANKINGS;
+}
+
+function toHFArticle(item: any): HFArticle {
+  return {
+    title: item.title || "Untitled",
+    url: item.url || "",
+    path: item.url || "",
+    author: item.author || item.sourceName || "Hugging Face",
+    description: item.description || item.content || item.contentText || "",
+    image: item.image || item.imageUrl || "",
+    publishedAt: item.publishedAt || item.publishedDate || "",
+    updatedAt: item.updatedAt || item.fetchedAt || "",
+    source: item.source || item.sourceName || "Hugging Face",
+    wordCount: item.wordCount || 0,
+    readingTimeMin: item.readingTimeMin || 3,
+    headings: item.headings || [],
+    images: item.images || (item.imageUrl ? [{ src: item.imageUrl, alt: item.title || "" }] : []),
+    contentHtml: item.contentHtml || item.content || "",
+    contentText: item.contentText || item.content || "",
+  };
 }
 
 function sortHFArticles(articles: HFArticle[]): HFArticle[] {
@@ -275,8 +320,8 @@ export const api = {
   getExternalNews: async (sourceName: string, page = 0, size = 20): Promise<PageResponse<ExternalNewsArticle>> => {
     if (sourceName.toLowerCase() === "openai") {
       const items = await fetchOpenAiNews();
-      const articles: ExternalNewsArticle[] = items.map((item, idx) => ({
-        id: idx + 1,
+      const articles: ExternalNewsArticle[] = items.map((item) => ({
+        id: urlToSlug(item.link) as any,
         url: item.link,
         title: item.title,
         sourceName: "openai",
@@ -300,27 +345,19 @@ export const api = {
 
     if (sourceName.toLowerCase() === "huggingface") {
       try {
-        const q = new URLSearchParams({ page: String(page), size: String(size), limit: String(size), content: "true" });
-        const res = await fetch(`${AI}/news/external/huggingface?${q.toString()}`, { headers: getRequestHeaders() });
-        if (res.ok) {
-          const body = await res.json();
-          const data = body?.data ?? body;
-          if (data && Array.isArray(data.content)) return data as PageResponse<ExternalNewsArticle>;
-          if (data && Array.isArray(data.articles)) {
-            const articles: ExternalNewsArticle[] = data.articles.map((item: any, idx: number) => ({
-              id: idx + 1, url: item.url, title: item.title, sourceName: "huggingface",
-              category: "AI", publishedDate: item.publishedAt, fetchedAt: item.updatedAt,
-              content: item.contentText || item.contentHtml || item.description, imageUrl: item.image,
-            }));
-            const start = page * size;
-            return {
-              content: articles.slice(start, start + size),
-              totalElements: data.count || articles.length,
-              totalPages: Math.ceil((data.count || articles.length) / size) || 1,
-              number: page, size, last: !data.moreAvailable && (start + size >= articles.length),
-            };
-          }
-        }
+        const hfRes = await api.getHuggingFaceList(size);
+        const articles: ExternalNewsArticle[] = hfRes.articles.map((item) => ({
+          id: urlToSlug(item.url) as any, url: item.url, title: item.title, sourceName: "huggingface",
+          category: "AI", publishedDate: item.publishedAt, fetchedAt: item.updatedAt,
+          content: item.contentText || item.contentHtml || item.description, imageUrl: item.image,
+        }));
+        const start = page * size;
+        return {
+          content: articles.slice(start, start + size),
+          totalElements: hfRes.count,
+          totalPages: Math.ceil(hfRes.count / size) || 1,
+          number: page, size, last: !hfRes.moreAvailable && (start + size >= articles.length),
+        };
       } catch {}
     }
 
@@ -363,9 +400,12 @@ export const api = {
     );
   },
 
-  getExternalArticle: async (sourceName: string, id: number) => {
+  getExternalArticle: async (sourceName: string, id: number | string) => {
     const all = await api.getAllExternalNews(sourceName);
-    let found = all.content.find((a) => a.id === id);
+    // Match by slug id (string) or numeric id, also fallback-match by URL-derived slug
+    let found = all.content.find((a) =>
+      String(a.id) === String(id) || urlToSlug(a.url) === String(id)
+    );
     if (!found && sourceName.toLowerCase() === "openai" && all.content.length > 0) found = all.content[0];
     if (!found && sourceName.toLowerCase() === "openai") {
       found = {
@@ -422,19 +462,19 @@ export const api = {
   },
 
   getRbiFeedItems: (): Promise<NewsFeedItem[]> =>
-    fetch(`${AI}/paperclip/rbi`, { headers: getRequestHeaders() })
+    fetch(`${AI}/paperclip/rbi`, { headers: getHeaders() })
       .then(res => res.json()).then(body => body?.data ?? []),
 
   getRbiCampaignPressReleases: (): Promise<RbiCampaignResponse> =>
-    fetch(`${BASE_URL}/marketing-service/campgin/press-releases-new?organizationName=RBI&type=PRESS_RELEASE`)
+    fetch(`${BASE_URL}/marketing-service/campgin/press-releases-new?organizationName=RBI&type=PRESS_RELEASE`, { headers: getHeaders() })
       .then(res => res.json()),
 
   getRbiDailyPressReleases: (): Promise<RbiCampaignResponse> =>
-    fetch(`${BASE_URL}/marketing-service/campgin/daily-press-release`)
+    fetch(`${BASE_URL}/marketing-service/campgin/daily-press-release`, { headers: getHeaders() })
       .then(res => res.json()),
 
   getIrdaiPressReleases: (): Promise<IrdaiCampaignResponse> =>
-    fetch(`${BASE_URL}/marketing-service/campgin/press-releases-new?organizationName=IRDAI&type=PRESS_RELEASE`)
+    fetch(`${BASE_URL}/marketing-service/campgin/press-releases-new?organizationName=IRDAI&type=PRESS_RELEASE`, { headers: getHeaders() })
       .then(res => res.json()),
 
   search: (query: string, page = 0, size = 12) => {
@@ -458,52 +498,29 @@ export const api = {
   getHuggingFaceList: async (limit = 30): Promise<HFListResponse> => {
     const q = new URLSearchParams({ limit: String(limit), content: "true" });
     try {
-      const res = await fetch(`${AI}/news/external/huggingface?${q.toString()}`, { headers: getRequestHeaders() });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.success !== false) {
-          const data = body.data ?? body;
+      const res = await fetch(`${AI}/news/external/huggingface?${q.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.json();
+      const data = body?.data ?? body;
 
-          if (data && Array.isArray(data.content)) {
-            const articles: HFArticle[] = data.content.map((item: any) => ({
-              title: item.title || "Untitled", url: item.url || "", path: item.url || "",
-              author: item.sourceName || item.author || "Hugging Face",
-              description: item.content || item.description || "",
-              image: item.imageUrl || item.image || "",
-              publishedAt: item.publishedDate || item.publishedAt || "",
-              updatedAt: item.fetchedAt || item.updatedAt || "",
-              source: item.sourceName || "Hugging Face",
-              wordCount: item.wordCount || 0, readingTimeMin: item.readingTimeMin || 3,
-              headings: item.headings || [],
-              images: item.images || (item.imageUrl ? [{ src: item.imageUrl, alt: item.title || "" }] : []),
-              contentHtml: item.contentHtml || item.content || "",
-              contentText: item.contentText || item.content || "",
-            }));
-            return { source: "Hugging Face", count: data.totalElements ?? articles.length, moreAvailable: !data.last, articles: sortHFArticles(articles) };
-          }
-
-          if (Array.isArray(data?.articles)) {
-            return { source: data.source || "Hugging Face", count: data.count ?? data.articles.length, moreAvailable: data.moreAvailable ?? false, articles: sortHFArticles(data.articles) };
-          }
-
-          if (Array.isArray(data)) {
-            const articles: HFArticle[] = data.map((item: any) => ({
-              title: item.title || "Untitled", url: item.url || "", path: item.url || "",
-              author: item.author || item.sourceName || "Hugging Face",
-              description: item.description || item.content || "",
-              image: item.image || item.imageUrl || "",
-              publishedAt: item.publishedAt || item.publishedDate || "",
-              updatedAt: item.updatedAt || item.fetchedAt || "",
-              source: item.source || "Hugging Face",
-              wordCount: item.wordCount || 0, readingTimeMin: item.readingTimeMin || 3,
-              headings: item.headings || [],
-              images: item.images || (item.imageUrl ? [{ src: item.imageUrl, alt: item.title || "" }] : []),
-              contentHtml: item.contentHtml || item.content || "",
-              contentText: item.contentText || item.content || "",
-            }));
-            return { source: "Hugging Face", count: articles.length, moreAvailable: false, articles: sortHFArticles(articles) };
-          }
-        }
+      // Shape 1: { content: [...], totalElements, last } (Spring Page)
+      if (data && Array.isArray(data.content)) {
+        const articles = data.content.map(toHFArticle);
+        return { source: "Hugging Face", count: data.totalElements ?? articles.length, moreAvailable: !data.last, articles: sortHFArticles(articles) };
+      }
+      // Shape 2: { articles: [...], count, moreAvailable }
+      if (data && Array.isArray(data.articles)) {
+        return { source: data.source || "Hugging Face", count: data.count ?? data.articles.length, moreAvailable: data.moreAvailable ?? false, articles: sortHFArticles(data.articles.map(toHFArticle)) };
+      }
+      // Shape 3: plain array
+      if (Array.isArray(data)) {
+        const articles = data.map(toHFArticle);
+        return { source: "Hugging Face", count: articles.length, moreAvailable: false, articles: sortHFArticles(articles) };
+      }
+      // Shape 4: top-level array (no wrapper)
+      if (Array.isArray(body)) {
+        const articles = body.map(toHFArticle);
+        return { source: "Hugging Face", count: articles.length, moreAvailable: false, articles: sortHFArticles(articles) };
       }
     } catch (err) {
       console.warn("getHuggingFaceList failed:", err);
@@ -512,40 +529,39 @@ export const api = {
   },
 
   getHuggingFaceArticle: async (url: string): Promise<HFArticle> => {
-    const q = new URLSearchParams({ url });
+    const q = new URLSearchParams({ url, content: "true" });
     try {
-      const res = await fetch(`${AI}/news/external/huggingface/article?${q.toString()}`, { headers: getRequestHeaders() });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.success !== false) {
-          const data = body.data ?? body;
-          if (typeof data === "string") {
-            return {
-              title: "Hugging Face Article", url, path: url, author: "Hugging Face",
-              description: data.slice(0, 200), image: "", publishedAt: "", updatedAt: "",
-              source: "Hugging Face", wordCount: data.split(/\s+/).length,
-              readingTimeMin: Math.ceil(data.split(/\s+/).length / 200),
-              headings: [], images: [], contentHtml: data, contentText: data,
-            };
-          }
-          if (data && typeof data === "object") {
-            return {
-              title: data.title || "Hugging Face Article", url: data.url || url,
-              path: data.path || data.url || url,
-              author: data.author || data.sourceName || "Hugging Face",
-              description: data.description || data.content || "",
-              image: data.image || data.imageUrl || "",
-              publishedAt: data.publishedAt || data.publishedDate || "",
-              updatedAt: data.updatedAt || data.fetchedAt || "",
-              source: data.source || data.sourceName || "Hugging Face",
-              wordCount: data.wordCount || 0, readingTimeMin: data.readingTimeMin || 3,
-              headings: data.headings || [],
-              images: data.images || (data.imageUrl ? [{ src: data.imageUrl, alt: data.title || "" }] : []),
-              contentHtml: data.contentHtml || data.content || "",
-              contentText: data.contentText || data.content || "",
-            };
-          }
-        }
+      const res = await fetch(`${AI}/news/external/huggingface/article?${q.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.json();
+      const data = body?.data ?? body;
+      if (typeof data === "string") {
+        return {
+          title: "Hugging Face Article", url, path: url, author: "Hugging Face",
+          description: data.slice(0, 200), image: "", publishedAt: "", updatedAt: "",
+          source: "Hugging Face", wordCount: data.split(/\s+/).length,
+          readingTimeMin: Math.ceil(data.split(/\s+/).length / 200),
+          headings: [], images: [], contentHtml: data, contentText: data,
+        };
+      }
+      if (data && typeof data === "object") {
+        return {
+          title: data.title || "Hugging Face Article",
+          url: data.url || url,
+          path: data.path || data.url || url,
+          author: data.author || data.sourceName || "Hugging Face",
+          description: data.description || data.content || data.contentText || "",
+          image: data.image || data.imageUrl || "",
+          publishedAt: data.publishedAt || data.publishedDate || "",
+          updatedAt: data.updatedAt || data.fetchedAt || "",
+          source: data.source || data.sourceName || "Hugging Face",
+          wordCount: data.wordCount || 0,
+          readingTimeMin: data.readingTimeMin || 3,
+          headings: data.headings || [],
+          images: data.images || (data.imageUrl ? [{ src: data.imageUrl, alt: data.title || "" }] : []),
+          contentHtml: data.contentHtml || data.content || "",
+          contentText: data.contentText || data.content || "",
+        };
       }
     } catch (err) {
       console.warn("getHuggingFaceArticle failed:", err);

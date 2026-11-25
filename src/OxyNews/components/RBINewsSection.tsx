@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { NewsFeedItem } from "../types";
+import { oxynewsPath } from "../lib/oxynewsLink";
 
 function isPdfName(name: string | null | undefined): boolean {
   return !!name && /\.pdf$/i.test(name.trim());
@@ -56,7 +57,7 @@ export default function RBINewsSection() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            onClick={() => navigate(`/article/${item.paperclipId}`)}
+            onClick={() => navigate(oxynewsPath(item))}
             className="group flex flex-col rounded-xl border border-slate-200 bg-white shadow-card hover:shadow-lift hover:border-blue-300 transition-all overflow-hidden cursor-pointer"
           >
             <div className="relative h-32 overflow-hidden">

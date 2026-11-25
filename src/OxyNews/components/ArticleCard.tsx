@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { NewsFeedItem } from "../types";
+import { oxynewsPath } from "../lib/oxynewsLink";
 import OpportunityMeter from "./OpportunityMeter";
 
 function timeAgo(iso: string | null) {
@@ -181,7 +182,7 @@ export default function ArticleCard({
       className="h-full rounded-xl"
     >
       <Link
-        to={`/article/${item.paperclipId}`}
+        to={oxynewsPath(item)}
         state={{ imageUrl: item.imageUrl }}
         className="group flex flex-col bg-white rounded-xl shadow-card focus-ring h-full"
         style={{ overflow: "visible" }}

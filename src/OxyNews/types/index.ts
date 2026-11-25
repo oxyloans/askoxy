@@ -1,5 +1,6 @@
 export interface NewsFeedItem {
   paperclipId: string;
+  slug?: string | null;
   articleName: string;
   fileName?: string | null;
   domain: string | null;
@@ -123,6 +124,7 @@ export interface PaperclipAnalysisResult {
 // nested under `analysis`, NOT flattened onto this object.
 export interface PaperclipDetail {
   paperclipId: string;
+  slug?: string | null;
   fileName?: string;
   feedback?: string;
   addedBy?: string;
@@ -187,7 +189,7 @@ export interface IrdaiCampaignResponse {
 }
 
 export interface ExternalNewsArticle {
-  id: number;
+  id: number | string;
   url: string;
   title: string;
   sourceName: string;

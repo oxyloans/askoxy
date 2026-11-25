@@ -1077,7 +1077,11 @@ const App: React.FC = () => {
       "/ninedaysjobprogramplan",
       "/viewjobdetails/default/ALL",
     ];
-    if (validEntryPoints.includes(location.pathname)) {
+    if (
+      validEntryPoints.includes(location.pathname) ||
+      location.pathname.startsWith("/askoxyjobs") ||
+      location.pathname.startsWith("/askoxy-jobs")
+    ) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
       localStorage.setItem("entryPoint", location.pathname);
     }
@@ -1225,48 +1229,31 @@ const App: React.FC = () => {
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
               <Route path="/oxycommunity" element={<CommunityAuthGate />} />
               <Route element={<OxyLayout />}>
-                <Route path="/oxynews" element={<OxyNewsHomePage />} />
+               <Route path="/oxynews" element={<OxyNewsHomePage />} />
+                <Route path="/oxynews/:slug" element={<ArticlePage />} />
                 <Route path="/article/:id" element={<ArticlePage />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route
                   path="/resources/:categoryId/:resourceId"
                   element={<ResourcePage />}
                 />
+                {/* Canonical SEO-friendly external news routes under /oxynews/ */}
+                <Route
+                  path="/oxynews/:sourceName/:id"
+                  element={<ExternalArticlePage />}
+                />
+                {/* Legacy /news/ routes — redirect to /oxynews/ */}
                 <Route
                   path="/news/:sourceName/:id"
                   element={<ExternalArticlePage />}
                 />
                 <Route path="/radhai-news" element={<RadhaiNewsPage />} />
                 <Route path="/rbi-news" element={<RBINewsPage />} />
-
                 <Route path="/irdai-news" element={<IRDAINewsPage />} />
-
-                <Route
-                  path="/rankings"
-                  element={
-                    <div
-                      style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px 40px",
-                      }}
-                    >
-                      <TopModelsByTask basePath="/rankings" />
-                    </div>
-                  }
-                />
-                <Route
-                  path="/rankings/:provider"
-                  element={<ProviderRankPage basePath="/rankings" />}
-                />
-                <Route
-                  path="/rankings/:provider/:model"
-                  element={<ModelRankPage basePath="/rankings" />}
-                />
-                <Route
-                  path="/rankings/:provider/:model/*"
-                  element={<ModelRankPage basePath="/rankings" />}
-                />
+                <Route path="/rankings" element={<div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 40px" }}><TopModelsByTask basePath="/rankings" /></div>} />
+                <Route path="/rankings/:provider" element={<ProviderRankPage basePath="/rankings" />} />
+                <Route path="/rankings/:provider/:model" element={<ModelRankPage basePath="/rankings" />} />
+                <Route path="/rankings/:provider/:model/*" element={<ModelRankPage basePath="/rankings" />} />
                 <Route path="/rankings/*" element={<RankingsRoutes />} />
               </Route>
               {/* OXY BFSAI Engine — full layout with fixed header */}

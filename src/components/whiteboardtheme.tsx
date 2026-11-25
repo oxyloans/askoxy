@@ -61,7 +61,7 @@ const Whiteboardtheme: React.FC = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/askoxyjobs/dd3b6af5-9783-4606-a94b-13a1113cf855";
+      const redirectPath = "/main/askoxyjobs/cad94b21-9f6d-4dc1-9283-02505af3f132";
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -141,8 +141,8 @@ const Whiteboardtheme: React.FC = () => {
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
       <img
-        src={speak1}
-        alt="Active Jobs and Total Companies"
+        src="https://i.ibb.co/MDSvTVGP/updated-7.png" 
+               alt="Active Jobs and Total Companies"
         className="h-full w-full select-none object-contain"
         draggable={false}
         decoding="async"
