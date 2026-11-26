@@ -1,6 +1,6 @@
 import React from "react";
 import { Search, Upload, FileCheck2 } from "lucide-react";
-import searchJobImg from "../../assets/img/j1.png";
+import searchJobImg from "../../assets/img/j1.webp";
 
 const JobSearchSection: React.FC = () => {
   const glossyCard =

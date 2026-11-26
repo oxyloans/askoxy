@@ -1,6 +1,6 @@
 import React from "react";
 import { Bot, Users } from "lucide-react";
-import mentoringImg from "../../assets/img/j3.png";
+import mentoringImg from "../../assets/img/j3.webp";
 
 const MentoringSection: React.FC = () => {
   const glossyCard =

@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 
 // === Image imports ===
-import s4 from "../assets/img/a3.png";
-import s7 from "../assets/img/a5.png";
-import s10 from "../assets/img/a4.png";
-import s12 from "../assets/img/a2.png";
-import s13 from "../assets/img/s13.png";
-import s14 from "../assets/img/a1.png";
-import leftImage from "../assets/img/genmain.png";
+import s4 from "../assets/img/a3.webp";
+import s7 from "../assets/img/a5.webp";
+import s10 from "../assets/img/a4.webp";
+import s12 from "../assets/img/a2.webp";
+import s13 from "../assets/img/s13.webp";
+import s14 from "../assets/img/a1.webp";
+import leftImage from "../assets/img/genmain.webp";
 
 type Tile = {
   id: string;

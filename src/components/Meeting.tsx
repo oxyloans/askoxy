@@ -1,5 +1,5 @@
 import React from 'react';
-import meeting from "../assets/img/meeting.jpeg";
+import meeting from "../assets/img/meeting.webp";
 import './Card.css';
 
 import Footer from './Footer';

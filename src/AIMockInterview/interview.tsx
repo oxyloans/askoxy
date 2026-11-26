@@ -12,7 +12,7 @@ import { ExamProctorCamera } from "./components/ExamProctorCamera";
 import Round4 from "./Round4";
 import Round5 from "./Round5";
 import Round3CodingPage from "./Round3CodingPage";
-import interviewHeroImage from "../assets/img/interviewimg.png";
+import interviewHeroImage from "../assets/img/interviewimg.webp";
 
 const FLOW_STATE_KEY = "aiMockInterviewFlowState";
 

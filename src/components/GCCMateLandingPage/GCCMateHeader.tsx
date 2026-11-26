@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Globe, Building2 } from "lucide-react";
-import Logo from "../../assets/img/askoxylogonew.png";
+import Logo from "../../assets/img/askoxylogonew.webp";
 
 const GCCMateHeader: React.FC = () => {
   const navigate = useNavigate();

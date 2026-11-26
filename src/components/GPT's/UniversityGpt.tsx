@@ -423,7 +423,7 @@ import {
   User,
 } from "lucide-react";
 
-import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import AskOxyLogo from "../../assets/img/askoxylogonew.webp";
 import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {

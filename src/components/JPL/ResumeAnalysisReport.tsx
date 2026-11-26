@@ -14,7 +14,7 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import Logo from "../../assets/img/askoxylogonew.png";
+import Logo from "../../assets/img/askoxylogonew.webp";
 import {
   downloadImprovedResume,
   getImprovementStatus,

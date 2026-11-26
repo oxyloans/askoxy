@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FaAmazon, FaShoppingCart } from "react-icons/fa";
 import { ArrowRight } from "lucide-react";
 
-import aiImage from "../assets/img/gt.jpg.jpeg";
+import aiImage from "../assets/img/gt.jpg.webp";
 
 
 const cardAnimation = {

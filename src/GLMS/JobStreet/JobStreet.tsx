@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
-import Askoxylogo from "../../assets/img/askoxylogonew.png";
+import Askoxylogo from "../../assets/img/askoxylogonew.webp";
 import { motion, AnimatePresence } from "framer-motion"; // optional animation
 const images = [
   "https://i.ibb.co/chQ2MPVX/job-street.png",

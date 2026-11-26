@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import GCCMateHeader from "./GCCMateHeader";
-import heroImage from "../../assets/img/gcc1.png";
+import heroImage from "../../assets/img/gcc1.webp";
 import {
   Building2,
   Globe2,

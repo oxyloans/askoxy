@@ -16,9 +16,9 @@ import {
 } from "recharts";
 import { AlertCircle, Loader2, Download, ArrowRight } from "lucide-react";
 import { toPng } from "html-to-image";
-import Logo from "../assets/img/askoxylogonew.png";
-import accenturelogo from "../assets/img/download.png";
-import globaltechlogo from "../assets/img/global logo.png";
+import Logo from "../assets/img/askoxylogonew.webp";
+import accenturelogo from "../assets/img/download.webp";
+import globaltechlogo from "../assets/img/global logo.webp";
 import customerApi from "../utils/axiosInstances";
 
 type StatsItem = { term: string; count: number };

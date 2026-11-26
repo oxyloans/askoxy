@@ -1,8 +1,8 @@
 import React from "react";
 import { Facebook, Instagram, LinkedinIcon } from "lucide-react";
-import PlayStore from "../assets/img/play (1).png";
+import PlayStore from "../assets/img/play (1).webp";
 
-import Logo from "../assets/img/logo.png";
+import Logo from "../assets/img/logo.webp";
 
 const QR = () => {
   return (

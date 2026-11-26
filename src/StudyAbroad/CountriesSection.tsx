@@ -8,16 +8,16 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import CanadaFlag from "../assets/img/canada.png";
-import USAFlag from "../assets/img/usa.png";
-import UKFlag from "../assets/img/uk.png";
-import AustraliaFlag from "../assets/img/australia.png";
-import NewZealandFlag from "../assets/img/newzealand.png";
-import IrelandFlag from "../assets/img/ireland.png";
-import NetherlandsFlag from "../assets/img/netherlands.png";
-import GermanyFlag from "../assets/img/germany.png";
-import FranceFlag from "../assets/img/france.png";
-import ItalyFlag from "../assets/img/italy.png";
+import CanadaFlag from "../assets/img/canada.webp";
+import USAFlag from "../assets/img/usa.webp";
+import UKFlag from "../assets/img/uk.webp";
+import AustraliaFlag from "../assets/img/australia.webp";
+import NewZealandFlag from "../assets/img/newzealand.webp";
+import IrelandFlag from "../assets/img/ireland.webp";
+import NetherlandsFlag from "../assets/img/netherlands.webp";
+import GermanyFlag from "../assets/img/germany.webp";
+import FranceFlag from "../assets/img/france.webp";
+import ItalyFlag from "../assets/img/italy.webp";
 
 interface CountryDetails {
   visaInfo: string;

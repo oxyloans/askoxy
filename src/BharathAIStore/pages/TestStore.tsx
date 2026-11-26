@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Highlighter from "../components/Highlighter";
 
-import CA3image from "../../assets/img/ca3.png";
+import CA3image from "../../assets/img/ca3.webp";
 
 // ---------- constants ----------
 const OG_IMAGE = "https://i.ibb.co/h1fpCXzw/fanofog.png";

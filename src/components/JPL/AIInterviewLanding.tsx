@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WalkInInterviewStepsModal from "../WalkInInterviewStepsModal";
-import arrow0 from "../../assets/img/arrow0.png";
-import arrow1 from "../../assets/img/arrow1.png";
-import speak1 from "../../assets/img/speak0.png";
-import speak2 from "../../assets/img/walkin.png";
+import arrow0 from "../../assets/img/arrow0.webp";
+import arrow1 from "../../assets/img/arrow1.webp";
+import speak1 from "../../assets/img/speak0.webp";
+import speak2 from "../../assets/img/walkin.webp";
 import {
   ArrowRight,
   FileText,

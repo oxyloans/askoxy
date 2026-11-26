@@ -38,7 +38,7 @@ const DashboardMain: React.FC = () => {
   const products: DashboardItem[] = [
     {
       title: "Digital Products",
-      image: "../assets/img/freerudraksha.png",
+      image: "../assets/img/freerudraksha.webp",
       description: "Browse our collection of digital digital products and resources.",
       path: "/buyRice",
       icon: <ShoppingBag className="text-purple-600" size={24} />,
@@ -49,7 +49,7 @@ const DashboardMain: React.FC = () => {
   const freeGPTs: DashboardItem[] = [
     {
       title: "AI Assistant",
-      image: "../assets/img/freerudraksha.png",
+      image: "../assets/img/freerudraksha.webp",
       description: "Try our free AI-powered assistant for various tasks.",
       path: "/services/Freechatgpt",
       icon: <Bot className="text-purple-600" size={24} />,
@@ -60,7 +60,7 @@ const DashboardMain: React.FC = () => {
   const bmvCoinItems: DashboardItem[] = [
     {
       title: "BMV Coins",
-      image: "../assets/img/freerudraksha.png",
+      image: "../assets/img/freerudraksha.webp",
       description: "Manage and track your BMV coin balance and transactions.",
       path: "/coins/dashboard",
       icon: <Coins className="text-purple-600" size={24} />,

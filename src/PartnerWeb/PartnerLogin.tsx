@@ -3,7 +3,7 @@ import { Form, Input, Button, Card, message, Spin } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { customerApi } from "../utils/axiosInstances";
-import Logo from "../assets/img/logo.png";
+import Logo from "../assets/img/logo.webp";
 import BASE_URL from "../Config";
 import { setPartnerAccessToken, setPartnerRefreshToken, getPartnerAccessToken } from "../utils/cookieUtils";
 

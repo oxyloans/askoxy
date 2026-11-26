@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import OxyGroup from "../assets/img/oxy group.png";
-import PinkFound from "../assets/img/womenempower.png";
+import OxyGroup from "../assets/img/oxy group.webp";
+import PinkFound from "../assets/img/womenempower.webp";
 
 const PdfPages = () => {
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);

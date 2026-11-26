@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import askoxyLogo from "../assets/img/askoxylogonew.png";
+import askoxyLogo from "../assets/img/askoxylogonew.webp";
 
 const oxybricks = "https://i.ibb.co/mVxsVSmY/oxybricks.png";
 const oxybricksLogo = "https://i.ibb.co/k2snG0YW/l3.png";

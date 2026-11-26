@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, CheckCircle } from "lucide-react";
-import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.webp";
 import { useNavigate } from "react-router-dom";
 function CacsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);

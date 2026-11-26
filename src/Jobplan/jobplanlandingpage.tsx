@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import DayPlan from "../assets/img/90dayplanflow.png";
+import DayPlan from "../assets/img/90dayplanflow.webp";
 import { useNavigate } from "react-router-dom";
-import Logo1 from "../assets/img/oxy1.png";
-import Logo2 from "../assets/img/oxybrick.png";
-import Logo from "../assets/img/askoxylogonew.png"
+import Logo1 from "../assets/img/oxy1.webp";
+import Logo2 from "../assets/img/oxybrick.webp";
+import Logo from "../assets/img/askoxylogonew.webp"
 import BASE_URL from "../Config";
 import customerApi from "../utils/axiosInstances";
 
@@ -931,7 +931,7 @@ export default function JobTraining90DaysPage({
     <button onClick={() => navigate("/")} className="flex items-center gap-3">
       {/* ✅ ASKOXY Logo (responsive) */}
       <img
-        src={Logo} // import Logo from "../assets/img/askoxylogonew.png";
+        src={Logo} // import Logo from "../assets/img/askoxylogonew.webp";
         alt="ASKOXY.AI"
         className="
           h-10 w-auto

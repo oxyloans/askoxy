@@ -22,7 +22,7 @@ import {
 } from "@ant-design/icons";
 import { FaAmazon } from "react-icons/fa";
 import BASE_URL from "../Config";
-import Logo from "../assets/img/askoxylogonew.png";
+import Logo from "../assets/img/askoxylogonew.webp";
 
 import {
   fetchLikesAndComments,

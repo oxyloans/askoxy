@@ -6,7 +6,7 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import Logo from "../assets/img/logo.png";
+import Logo from "../assets/img/logo.webp";
 import { stopTokenRefresh } from "../utils/tokenRefresh";
 import {
   removePartnerAccessToken,

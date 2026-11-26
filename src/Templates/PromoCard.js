@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
-import q11Image from '../assets/img/q11.jpg';
-import rdImage from '../assets/img/rd.png';
-import bgImage from '../assets/img/BG.png';
+import q11Image from '../assets/img/q11.webp';
+import rdImage from '../assets/img/rd.webp';
+import bgImage from '../assets/img/BG.webp';
 import html2canvas from 'html2canvas'; // Need to install this dependency
 
 const PromoCard = () => {

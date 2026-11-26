@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
-import Logo from "../../assets/img/askoxylogonew.png";
+import Logo from "../../assets/img/askoxylogonew.webp";
 import NewsTicker from "./NewsTicker";
 import ResourceNavBar from "./ResourceNavBar";
 import { PhoneCall } from "lucide-react";

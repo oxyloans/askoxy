@@ -2,17 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 
-import s1 from "../assets/img/s1.png";
-import s5 from "../assets/img/s5.png";
-import s6 from "../assets/img/Golden Partnership Handshake Poster.png";
-import s7 from "../assets/img/s7.png";
-import s8 from "../assets/img/s8.png";
-import s9 from "../assets/img/s9.png";
-import s10 from "../assets/img/s10.png";
-import s11 from "../assets/img/s11.png";
-import s16 from "../assets/img/s16.png";
+import s1 from "../assets/img/s1.webp";
+import s5 from "../assets/img/s5.webp";
+import s6 from "../assets/img/Golden Partnership Handshake Poster.webp";
+import s7 from "../assets/img/s7.webp";
+import s8 from "../assets/img/s8.webp";
+import s9 from "../assets/img/s9.webp";
+import s10 from "../assets/img/s10.webp";
+import s11 from "../assets/img/s11.webp";
+import s16 from "../assets/img/s16.webp";
 
-import leftImage from "../assets/img/megahero.png";
+import leftImage from "../assets/img/megahero.webp";
 
 type Tile = {
   id: string;

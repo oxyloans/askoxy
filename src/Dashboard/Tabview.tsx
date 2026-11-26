@@ -17,7 +17,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import BASE_URL from "../Config";
-import BMVICON from "../assets/img/bmvlogo.png";
+import BMVICON from "../assets/img/bmvlogo.webp";
 import customerApi from "../utils/axiosInstances";
 
 // Standalone BMV Information Modal

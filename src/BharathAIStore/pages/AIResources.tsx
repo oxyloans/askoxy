@@ -7,15 +7,15 @@ import { Modal } from "antd";
 import Highlighter from "../components/Highlighter";
 
 // ---------- Images ----------
-import Logo1 from "../../assets/img/ChatGPT Image Sep 9, 2025, 10_57_29 AM.png";
-import Logo2 from "../../assets/img/ChatGPT Image Sep 9, 2025, 10_57_35 AM.png";
-import Logo3 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_03_17 AM.png";
-import Logo4 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_07_33 AM.png";
+import Logo1 from "../../assets/img/ChatGPT Image Sep 9, 2025, 10_57_29 AM.webp";
+import Logo2 from "../../assets/img/ChatGPT Image Sep 9, 2025, 10_57_35 AM.webp";
+import Logo3 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_03_17 AM.webp";
+import Logo4 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_07_33 AM.webp";
 
-import Logo6 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_14 AM.png";
-import Logo7 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_50 AM.png";
-import Logo8 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_34_01 AM.png";
-import Logo9 from "../../assets/img/VideoImage.png";
+import Logo6 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_14 AM.webp";
+import Logo7 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_50 AM.webp";
+import Logo8 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_34_01 AM.webp";
+import Logo9 from "../../assets/img/VideoImage.webp";
 
 // ---------- Types ----------
 interface Assistant {

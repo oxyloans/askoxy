@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../Footer";
-import Legal from "../../assets/img/legal.png";
+import Legal from "../../assets/img/legal.webp";
 import { ArrowLeft } from "lucide-react";
 import Header1 from "../Header";
 import { message, Modal } from "antd";

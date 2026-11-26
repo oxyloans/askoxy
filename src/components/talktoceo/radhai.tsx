@@ -27,10 +27,10 @@ import {
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 
-import RADHAI from "../../assets/img/radhai.png";
-import TALKTOCEOLOGO from "../../assets/img/talktoceo.png";
-import ASKOXYLOGO from "../../assets/img/askoxylogonew.png";
-import ASKOXYLOGO1 from "../../assets/img/askoxylogoblack.png";
+import RADHAI from "../../assets/img/radhai.webp";
+import TALKTOCEOLOGO from "../../assets/img/talktoceo.webp";
+import ASKOXYLOGO from "../../assets/img/askoxylogonew.webp";
+import ASKOXYLOGO1 from "../../assets/img/askoxylogoblack.webp";
 
 const GOOGLE_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSd7BMOmvNIfXgpnefXGoGeqJuLp1hege82srbNmQ9E3e-Lkjg/viewform";

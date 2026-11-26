@@ -42,8 +42,8 @@ import {
   X,
 } from "lucide-react";
 
-import communityImage from "../../assets/img/community.png";
-import askoxyLogo from "../../assets/img/askoxylogonew.png";
+import communityImage from "../../assets/img/community.webp";
+import askoxyLogo from "../../assets/img/askoxylogonew.webp";
 import {
   CommunityCategoryItem,
   CommunityComment,

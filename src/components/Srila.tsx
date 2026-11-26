@@ -1,7 +1,7 @@
 import React from "react";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
 import oxy1 from "../assets/img/oxywhite.png";
-import askoxy1 from "../assets/img/ask oxy white.png";
+import askoxy1 from "../assets/img/ask oxy white.webp";
 import poojitha from "../assets/img/WhatsApp Image 2025-01-28 at 12.00.30.png";
 import srilalitha from "../assets/img/srihmt.png";
 import Kurnoolpremium from "../assets/img/Kurnool.png";
@@ -9,11 +9,11 @@ import Gajrajhmt from "../assets/img/gajrajever.png";
 import gajrajsona from "../assets/img/gajrajever.png";
 import cowbrand from "../assets/img/cowbrand.png";
 import jsrpremium from "../assets/img/jsr.png";
-import rrihmt from "../assets/img/rri.png";
+import rrihmt from "../assets/img/rri.webp";
 import sreemaateja from "../assets/img/sreemaateja.png";
 import suryajoker from "../assets/img/joker.png";
-import shubodayam from "../assets/img/shubodayam.png";
-import fivestarpremium from "../assets/img/fivestar.png";
+import shubodayam from "../assets/img/shubodayam.webp";
+import fivestarpremium from "../assets/img/fivestar.webp";
 import bawarchibrown from "../assets/img/bawarchi.png";
 
 const RiceSalePage1: React.FC = () => {

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Globe2, ShieldCheck, Users, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import HeroImage from "../../assets/img/megahero.png";
+import HeroImage from "../../assets/img/megahero.webp";
 
 const theme = {
   purple: "#8A2BE2",

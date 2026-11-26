@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import aiImage from "../assets/img/book.png";
+import aiImage from "../assets/img/book.webp";
 
 const videoLinks = [
   "https://www.youtube.com/embed/L4FEg97j0y4?si=v5TmIOZyRxi94Sxf",

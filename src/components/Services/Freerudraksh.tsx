@@ -6,10 +6,10 @@ import Header1 from "../Header"
 
 import ScrollToTop from "../ScrollToTop";
 
-import Image1 from "../../assets/img/WEBSITE (1).png";
+import Image1 from "../../assets/img/WEBSITE (1).webp";
 import { ArrowLeft } from "lucide-react";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import Image2 from "../../assets/img/R2.png";
+import Image2 from "../../assets/img/R2.webp";
 
 import Footer from "../Footer";
 import { Modal, Button, Input, message } from "antd";

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import Askoxy from "../assets/img/askoxylogonew.png";
+import Askoxy from "../assets/img/askoxylogonew.webp";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
 import axios from "axios";

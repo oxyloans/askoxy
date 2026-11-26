@@ -25,7 +25,7 @@ import { useNavigate } from "react-router-dom";
 import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
 import axios from "axios";
-import thumbnailImage from "../assets/img/thumbnail.png";
+import thumbnailImage from "../assets/img/thumbnail.webp";
 
 // Type definitions
 interface University {

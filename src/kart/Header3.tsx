@@ -4,7 +4,7 @@ import { ShoppingCart, UserCircle } from "lucide-react";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "./ValidationPopup";
-import AskOxyLogo from "../assets/img/askoxylogonew.png";
+import AskOxyLogo from "../assets/img/askoxylogonew.webp";
 
 interface HeaderProps {
   cartCount: number;

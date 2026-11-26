@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 
-import BackgroundImg from "../assets/img/climatecrisis.png";
+import BackgroundImg from "../assets/img/climatecrisis.webp";
 
 const Climatecrisis = () => {
   const [showPdf, setShowPdf] = useState(false);

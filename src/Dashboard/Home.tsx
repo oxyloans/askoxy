@@ -36,25 +36,25 @@ import checkProfileCompletion from "../until/ProfileCheck";
 import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals";
 import RiceOfferFAQs from "./Faqs";
-import ProductImg1 from "../assets/img/ricecard1.png";
-import ricecontainer1 from "../assets/img/steelcontainer.png";
-import CryptoImg1 from "../assets/img/bmvcoin.png";
+import ProductImg1 from "../assets/img/ricecard1.webp";
+import ricecontainer1 from "../assets/img/steelcontainer.webp";
+import CryptoImg1 from "../assets/img/bmvcoin.webp";
 
-import O8 from "../assets/img/silver0.png";
-import aibook from "../assets/img/aibook.png";
+import O8 from "../assets/img/silver0.webp";
+import aibook from "../assets/img/aibook.webp";
 
-import O5 from "../assets/img/cashewoffer1.png";
-import O6 from "../assets/img/35kg1.png";
-import CB1 from "../assets/img/document_Combo.png";
-import CB from "../assets/img/cashback offer png.png";
-import Cashew from "../assets/img/rakhi1.png";
-import Riceoffers from "../assets/img/rice offers.png";
-import festive from "../assets/img/silver.png";
+import O5 from "../assets/img/cashewoffer1.webp";
+import O6 from "../assets/img/35kg1.webp";
+import CB1 from "../assets/img/document_Combo.webp";
+import CB from "../assets/img/cashback offer png.webp";
+import Cashew from "../assets/img/rakhi1.webp";
+import Riceoffers from "../assets/img/rice offers.webp";
+import festive from "../assets/img/silver.webp";
 
-import gold from "../assets/img/gold.png";
-import allitems from "../assets/img/all items.png";
-import grocerie from "../assets/img/Groceries.png";
-import rice from "../assets/img/rice.png";
+import gold from "../assets/img/gold.webp";
+import allitems from "../assets/img/all items.webp";
+import grocerie from "../assets/img/Groceries.webp";
+import rice from "../assets/img/rice.webp";
 import customerApi from "../utils/axiosInstances";
 import SilverOfferTooltip, { isSilverProduct } from "../components/SilverOfferTooltip";
 

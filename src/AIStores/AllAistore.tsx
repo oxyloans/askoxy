@@ -10,7 +10,7 @@ import { useSearch } from "../BharathAIStore/context/SearchContext";
 import BASE_URL, { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 import axiosInstance from "../utils/axiosInstance";
 import axios from "axios";
-import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
+import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.webp";
 import { message } from "antd";
 
 interface StoreAgent {

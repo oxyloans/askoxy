@@ -17,16 +17,16 @@ import {
 } from "lucide-react";
 import { message, Modal } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import Logo from "../../assets/img/askoxylogonew.png";
-import oxyloansLogo from "../../assets/img/image1.png";
+import Logo from "../../assets/img/askoxylogonew.webp";
+import oxyloansLogo from "../../assets/img/image1.webp";
 
 // Image tiles
-import s4 from "../../assets/img/a3.png";
-import s7 from "../../assets/img/a5.png";
-import s10 from "../../assets/img/a4.png";
-import s12 from "../../assets/img/a2.png";
-import s13 from "../../assets/img/s14.png";
-import s14 from "../../assets/img/a1.png";
+import s4 from "../../assets/img/a3.webp";
+import s7 from "../../assets/img/a5.webp";
+import s10 from "../../assets/img/a4.webp";
+import s12 from "../../assets/img/a2.webp";
+import s13 from "../../assets/img/s14.webp";
+import s14 from "../../assets/img/a1.webp";
 
 interface WelcomeScreenProps {
   input: string;

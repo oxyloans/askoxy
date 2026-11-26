@@ -22,13 +22,13 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import AIhands from "../assets/img/ai0.png";
-import AIdata from "../assets/img/ai2.png";
-import Radha from "../assets/img/radha sir.png";
-import Rama from "../assets/img/rama mam.png";
-import Logo from "../assets/img/askoxylogoblack.png";
-import SovereignBlack from "../assets/img/bharat bfsi ai logo.png";
-import SovereignWhite from "../assets/img/bharat bfsi ai.png"
+import AIhands from "../assets/img/ai0.webp";
+import AIdata from "../assets/img/ai2.webp";
+import Radha from "../assets/img/radha sir.webp";
+import Rama from "../assets/img/rama mam.webp";
+import Logo from "../assets/img/askoxylogoblack.webp";
+import SovereignBlack from "../assets/img/bharat bfsi ai logo.webp";
+import SovereignWhite from "../assets/img/bharat bfsi ai.webp"
 
 /* -------------------------------------------------------------------------- */
 /*                              Verified URLs                                  */

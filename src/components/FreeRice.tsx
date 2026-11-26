@@ -9,18 +9,18 @@ import {
 } from "lucide-react";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
-// import Rice1 from "../assets/img/o3.png";
+// import Rice1 from "../assets/img/o3.webp";
 // import Rice2 from "../assets/img/RICEU7.png";
-// import Rice3 from "../assets/img/35kg1.png";
-// import Rice4 from "../assets/img/26kg.png";
-import AskOxyLogo from "../assets/img/askoxylogonew.png";
-// import Retro from "../assets/img/retro.png";
-// import O5 from "../assets/img/tb1.png";
+// import Rice3 from "../assets/img/35kg1.webp";
+// import Rice4 from "../assets/img/26kg.webp";
+import AskOxyLogo from "../assets/img/askoxylogonew.webp";
+// import Retro from "../assets/img/retro.webp";
+// import O5 from "../assets/img/tb1.webp";
 
 import Rice4 from "../assets/img/3 (4).png";
-import Rice2 from "../assets/img/3 (2).png";
-import Rice3 from "../assets/img/3 (1).png";
-import Rice1 from "../assets/img/3 (3).png";
+import Rice2 from "../assets/img/3 (2).webp";
+import Rice3 from "../assets/img/3 (1).webp";
+import Rice1 from "../assets/img/3 (3).webp";
 
 // Campaign Base URL - ensure this is correct
 const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/freerice";

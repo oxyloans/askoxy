@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import AskOxyLogo from "../assets/img/askoxylogonew.png";
-import Template1Image from "../assets/img/template1.png";
-import Template2Image from "../assets/img/template2.png";
+import AskOxyLogo from "../assets/img/askoxylogonew.webp";
+import Template1Image from "../assets/img/template1.webp";
+import Template2Image from "../assets/img/template2.webp";
 
 interface Template {
   id: number;

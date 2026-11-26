@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "antd";
-import Logo from "../assets/img/askoxylogonew.png";
+import Logo from "../assets/img/askoxylogonew.webp";
 import BASE_URL, { uploadurlwithId } from "../Config";
 import "./FreelancerList.css";
 import { FiArrowRight } from "react-icons/fi";

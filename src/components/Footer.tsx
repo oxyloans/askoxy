@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6"; // Updated Twitter (X) logo
 import { SiThreads } from "react-icons/si"; // Threads icon
-import Logo from "../assets/img/askoxylogonew.png";
+import Logo from "../assets/img/askoxylogonew.webp";
 
 const Footer: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);

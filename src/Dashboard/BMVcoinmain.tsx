@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import BMV from "../assets/img/bmvcoin.png";
+import BMV from "../assets/img/bmvcoin.webp";
 
 const BMVCOIN = () => {
 

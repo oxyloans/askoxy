@@ -16,26 +16,26 @@ import {
 import Header1 from "../Header"
 
 // Import all testimonial images
-import I1 from "../../assets/img/testimonial1.png";
-import I2 from "../../assets/img/testimonial2.png";
-import I3 from "../../assets/img/testimonial3.png";
-import I4 from "../../assets/img/testimonial4.png";
-import I5 from "../../assets/img/testimonial5.png";
-import I6 from "../../assets/img/testimonial6.png";
-import I7 from "../../assets/img/testimonial7.png";
-import I8 from "../../assets/img/testimonial8.png";
-import I9 from "../../assets/img/testimonial9.png";
-import I10 from "../../assets/img/testimonial10.png";
-import I11 from "../../assets/img/testimonial11.png";
-import I12 from "../../assets/img/testimonial12.png";
-import I13 from "../../assets/img/testimonial13.png";
-import I14 from "../../assets/img/testimonial14.png";
-import I15 from "../../assets/img/testimonial15.png";
-import I16 from "../../assets/img/testimonial16.png";
-import I17 from "../../assets/img/testimonial17.png";
-import I18 from "../../assets/img/testimonial18.png";
-import I19 from "../../assets/img/testimonial19.png";
-import RBILicense from "../../assets/img/RBI.png";
+import I1 from "../../assets/img/testimonial1.webp";
+import I2 from "../../assets/img/testimonial2.webp";
+import I3 from "../../assets/img/testimonial3.webp";
+import I4 from "../../assets/img/testimonial4.webp";
+import I5 from "../../assets/img/testimonial5.webp";
+import I6 from "../../assets/img/testimonial6.webp";
+import I7 from "../../assets/img/testimonial7.webp";
+import I8 from "../../assets/img/testimonial8.webp";
+import I9 from "../../assets/img/testimonial9.webp";
+import I10 from "../../assets/img/testimonial10.webp";
+import I11 from "../../assets/img/testimonial11.webp";
+import I12 from "../../assets/img/testimonial12.webp";
+import I13 from "../../assets/img/testimonial13.webp";
+import I14 from "../../assets/img/testimonial14.webp";
+import I15 from "../../assets/img/testimonial15.webp";
+import I16 from "../../assets/img/testimonial16.webp";
+import I17 from "../../assets/img/testimonial17.webp";
+import I18 from "../../assets/img/testimonial18.webp";
+import I19 from "../../assets/img/testimonial19.webp";
+import RBILicense from "../../assets/img/RBI.webp";
 
 const OxyLoans: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'lend' | 'borrow' | 'lendAndEarn'>('lend');

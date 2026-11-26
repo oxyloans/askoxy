@@ -4,7 +4,7 @@ import Header1 from "../Header";
 import Footer from "../Footer";
 import { message, Modal } from "antd";
 import { ArrowLeft, Scan } from "lucide-react";
-import Freesample from "../../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png";
+import Freesample from "../../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.webp";
 import {
   checkUserInterest,
   submitInterest,

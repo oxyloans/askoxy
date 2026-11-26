@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import CELEBSHIELD from "../assets/img/celeblogo.png";
+import CELEBSHIELD from "../assets/img/celeblogo.webp";
 
 // ===== Replace these with real URLs =====
 const HEROVIDEO = "https://youtu.be/FR0y9kmy2eY";

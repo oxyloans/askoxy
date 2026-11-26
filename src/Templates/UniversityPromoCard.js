@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import html2canvas from 'html2canvas'; // Need to install this dependency
 import './UniversityPromo.css';
-import rdImage from '../assets/img/rd.png';
+import rdImage from '../assets/img/rd.webp';
 
 const UniversityPromoCard = () => {
   const cardRef = useRef(null);

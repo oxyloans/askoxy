@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Machine from '../../assets/img/manufacturing.png'
+import Machine from '../../assets/img/manufacturing.webp'
 import Header1 from "../Header"
 const MachinesManufacturingServices = () => {
   // Add any logic or state you need here, if necessary.

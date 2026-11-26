@@ -3,8 +3,8 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PhoneCall } from "lucide-react";
 import { useSearch } from "../context/SearchContext";
-import Logo from "../../assets/img/bharatAI.png";
-import Logo1 from "../../assets/img/logo1lion.png";
+import Logo from "../../assets/img/bharatAI.webp";
+import Logo1 from "../../assets/img/logo1lion.webp";
 
 const getInitials = (nameOrEmail?: string) => {
   if (!nameOrEmail) return "";

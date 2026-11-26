@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { message } from "antd";
 import { useCaseRoutes } from "../Routes/useCaseRoutes";
-import Askoxylogo from "../../../assets/img/askoxylogonew.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.webp";
 import {
   Menu,
   X,

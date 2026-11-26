@@ -10,7 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.webp";
 import { navigateToStudentArea } from "./studentNavigation";
 
 function StudyAbroadHeroSection() {

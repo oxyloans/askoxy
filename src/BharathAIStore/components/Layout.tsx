@@ -9,7 +9,7 @@
 //   FaSlideshare,
 //   FaHandsHelping,
 // } from "react-icons/fa";
-// import Logo from "../../assets/img/bharatAI.png";
+// import Logo from "../../assets/img/bharatAI.webp";
 
 // const { Header, Sider, Content, Footer } = Layout;
 // const { useBreakpoint } = Grid;
@@ -330,7 +330,7 @@ import {
   FaHandsHelping,
   FaTachometerAlt,
 } from "react-icons/fa";
-import Logo from "../../assets/img/bharatAI.png";
+import Logo from "../../assets/img/bharatAI.webp";
 
 const { Header, Sider, Content, Footer } = Layout;
 const { useBreakpoint } = Grid;

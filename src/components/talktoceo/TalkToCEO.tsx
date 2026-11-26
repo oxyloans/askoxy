@@ -15,7 +15,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-import TALKTOCEOLOGO from "../../assets/img/talktoceo.png";
+import TALKTOCEOLOGO from "../../assets/img/talktoceo.webp";
 
 const TalkToCEO: React.FC = () => {
   const navigate = useNavigate();

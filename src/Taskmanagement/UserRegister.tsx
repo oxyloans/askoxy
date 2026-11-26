@@ -10,7 +10,7 @@ import {
   LockOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import taskbg from "../assets/img/taskbg.png";
+import taskbg from "../assets/img/taskbg.webp";
 import OtpInput from "./OtpInput";
 
 interface RegisterResponse {

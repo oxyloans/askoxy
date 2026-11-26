@@ -30,8 +30,8 @@ import BASE_URL from "../../Config";
 import { customerApi as axios } from "../../utils/axiosInstances";
 import { ArrowRight, X } from "lucide-react";
 import VendorCreationModal from "../components/VendorCreationModal";
-import SRJImage from "../../assets/img/SRJ1.jpg";
-import CardBased from "../../assets/img/BS.jpg";
+import SRJImage from "../../assets/img/SRJ1.webp";
+import CardBased from "../../assets/img/BS.webp";
 
 /* =========================================================
  * Theme (WHITE + subtle 3D) & Limits

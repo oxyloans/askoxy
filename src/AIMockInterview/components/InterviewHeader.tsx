@@ -1,4 +1,4 @@
-import logo from "../../assets/img/askoxylogonew.png";
+import logo from "../../assets/img/askoxylogonew.webp";
 
 interface InterviewHeaderProps {
   theme: "light" | "dark";

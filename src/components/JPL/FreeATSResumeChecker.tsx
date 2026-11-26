@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { UploadCloud } from "lucide-react";
-import Logo from "../../assets/img/askoxylogonew.png";
+import Logo from "../../assets/img/askoxylogonew.webp";
 import "./FreeATSResumeChecker.css";
 import {
   ATS_API_BASE,

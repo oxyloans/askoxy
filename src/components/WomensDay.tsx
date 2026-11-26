@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./WomensDay.css";
-import WomensDay2025 from "../assets/img/WhatsApp Image 2025-03-08 at 12.08.11.png";
+import WomensDay2025 from "../assets/img/WhatsApp Image 2025-03-08 at 12.08.11.webp";
 
 interface WomensDayProps {
   pdfUrl?: string;

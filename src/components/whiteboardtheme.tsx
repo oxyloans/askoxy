@@ -3,20 +3,20 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import WalkInInterviewStepsModal from "./WalkInInterviewStepsModal";
 
-import web1 from "../assets/img/web1.png";
-import web2 from "../assets/img/web2.png";
-import web3 from "../assets/img/web3.png";
-import web31 from "../assets/img/web3.11.png";
-import web4 from "../assets/img/web4.png";
-import web5 from "../assets/img/web5.png";
-import arrow0 from "../assets/img/arrow0.png";
-import arrow1 from "../assets/img/arrow1.png";
-import speak0 from "../assets/img/speak0.png";
-import speak1 from "../assets/img/speak1.jpg.jpeg";
-import line1 from "../assets/img/line1.png";
-import line2 from "../assets/img/line2.png";
-import line3 from "../assets/img/line3.png";
-import line4 from "../assets/img/line4.png";
+import web1 from "../assets/img/web1.webp";
+import web2 from "../assets/img/web2.webp";
+import web3 from "../assets/img/web3.webp";
+import web31 from "../assets/img/web3.11.webp";
+import web4 from "../assets/img/web4.webp";
+import web5 from "../assets/img/web5.webp";
+import arrow0 from "../assets/img/arrow0.webp";
+import arrow1 from "../assets/img/arrow1.webp";
+import speak0 from "../assets/img/speak0.webp";
+import speak1 from "../assets/img/speak1.jpg.webp";
+import line1 from "../assets/img/line1.webp";
+import line2 from "../assets/img/line2.webp";
+import line3 from "../assets/img/line3.webp";
+import line4 from "../assets/img/line4.webp";
 import BASE_URL from "../Config";
 
 const fadeUp = {

@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFMSRoutes } from "../Routes/useFMSRoutes";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogonew.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.webp";
 import { Menu, X } from "react-feather";
 import { Sparkles } from "lucide-react";
 

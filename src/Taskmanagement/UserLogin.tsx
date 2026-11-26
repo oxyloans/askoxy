@@ -19,7 +19,7 @@ import {
   ExclamationCircleOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import taskbg from "../assets/img/taskbg.png";
+import taskbg from "../assets/img/taskbg.webp";
 
 const { Title, Paragraph } = Typography;
 

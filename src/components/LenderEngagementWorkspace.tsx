@@ -43,7 +43,7 @@ import {
 
 import BASE_URL from "../Config";
 import { customerApi } from "../utils/axiosInstance";
-import RADHAI from "../assets/img/radhai.png";
+import RADHAI from "../assets/img/radhai.webp";
 
 type MainTab =
   | "callbacks"

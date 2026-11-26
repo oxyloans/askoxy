@@ -8,7 +8,7 @@ import {
   Building2,
   Users,
 } from "lucide-react";
-import Logo from "../../assets/img/askoxylogonew.png";
+import Logo from "../../assets/img/askoxylogonew.webp";
 
 const JPLHeader: React.FC = () => {
   const navigate = useNavigate();

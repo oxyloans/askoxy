@@ -14,8 +14,8 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/img/image1.png";
-import Logo1 from "../assets/img/askoxylogonew.png";
+import logo from "../assets/img/image1.webp";
+import Logo1 from "../assets/img/askoxylogonew.webp";
 
 type Lang = "en" | "te";
 

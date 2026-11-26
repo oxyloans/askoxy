@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { Globe, X, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
-import Logo from "../assets/img/askoxylogonew.png";
+import Logo from "../assets/img/askoxylogonew.webp";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { navigateToStudentArea } from "./studentNavigation";

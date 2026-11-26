@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FaArrowRight } from "react-icons/fa";
-import OxyGroup from "../assets/img/oxy group.png";
-import PinkFound from "../assets/img/womenempower.png";
+import OxyGroup from "../assets/img/oxy group.webp";
+import PinkFound from "../assets/img/womenempower.webp";
 
 interface Presentation {
   title: string;

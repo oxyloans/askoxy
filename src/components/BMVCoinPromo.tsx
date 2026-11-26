@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import coinImage from "../assets/img/BMVCOIN1.png";
+import coinImage from "../assets/img/BMVCOIN1.webp";
 
 const BMVCoinPromo: React.FC = () => {
   const navigate = useNavigate();

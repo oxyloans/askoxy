@@ -3,14 +3,14 @@ import { motion } from "framer-motion";
 import { FaLinkedinIn } from "react-icons/fa";
 
 // Images
-import Radha from "../assets/img/radha.png";
-import Rama from "../assets/img/rama.png";
-import Sneha from "../assets/img/sneha.png";
-import Subash from "../assets/img/subbu.png";
-import Chakri from "../assets/img/jags.png";
-import Srinivas from "../assets/img/yadavalli srinivas.png";
-import Ramesh from "../assets/img/ramesh.png";
-import Narendra from "../assets/img/narendra.png";
+import Radha from "../assets/img/radha.webp";
+import Rama from "../assets/img/rama.webp";
+import Sneha from "../assets/img/sneha.webp";
+import Subash from "../assets/img/subbu.webp";
+import Chakri from "../assets/img/jags.webp";
+import Srinivas from "../assets/img/yadavalli srinivas.webp";
+import Ramesh from "../assets/img/ramesh.webp";
+import Narendra from "../assets/img/narendra.webp";
 
 const teamMembers = [
   {

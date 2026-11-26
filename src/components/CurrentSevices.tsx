@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import Buy26 from "../assets/img/RICEU9.png"
-import BUY10 from "../assets/img/RICEU10.jpg";
+import Buy26 from "../assets/img/RICEU9.webp"
+import BUY10 from "../assets/img/RICEU10.webp";
 const ResponsiveGallery = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState(

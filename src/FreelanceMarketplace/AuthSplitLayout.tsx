@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import signinImg from "../assets/img/Freelancer.png";
-import logo from "../assets/img/askoxylogonew.png";
+import signinImg from "../assets/img/Freelancer.webp";
+import logo from "../assets/img/askoxylogonew.webp";
 
 interface AuthSplitLayoutProps {
   children: React.ReactNode;

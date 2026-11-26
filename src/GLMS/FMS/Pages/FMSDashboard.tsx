@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogonew.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.webp";
 import { Menu, X } from "react-feather";
 const useCases = [
   {

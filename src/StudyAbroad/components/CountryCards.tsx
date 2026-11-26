@@ -13,16 +13,16 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { countryCards } from "../data/internshipData";
-import FallbackImg from "../../assets/img/megahero.png";
+import FallbackImg from "../../assets/img/megahero.webp";
 
-import hongkongImg from "../../assets/img/hongkong.png";
-import japanImg from "../../assets/img/japan.png";
-import mauritiusImg from "../../assets/img/ma.png";
-import nzImg from "../../assets/img/nz.png";
-import spainImg from "../../assets/img/spain.png";
-import uaeImg from "../../assets/img/uae.png";
-import usaImg from "../../assets/img/usa.png";
-import franceImg from "../../assets/img/france.png";
+import hongkongImg from "../../assets/img/hongkong.webp";
+import japanImg from "../../assets/img/japan.webp";
+import mauritiusImg from "../../assets/img/ma.webp";
+import nzImg from "../../assets/img/nz.webp";
+import spainImg from "../../assets/img/spain.webp";
+import uaeImg from "../../assets/img/uae.webp";
+import usaImg from "../../assets/img/usa.webp";
+import franceImg from "../../assets/img/france.webp";
 
 type Country = (typeof countryCards)[0];
 type ApplyForm = {

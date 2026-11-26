@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import Askoxy from "../assets/img/askoxylogonew.png";
+import Askoxy from "../assets/img/askoxylogonew.webp";
 
 interface HeaderProps {
   onNavClick: (id: "home" | "videos" | "usecases") => void;

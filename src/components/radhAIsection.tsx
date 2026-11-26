@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 
-import AI1 from "../assets/img/AI1.png";
+import AI1 from "../assets/img/AI1.webp";
 
 const RadhAISection: React.FC = () => {
   const navigate = useNavigate();

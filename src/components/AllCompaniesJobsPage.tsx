@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import BASE_URL, { uploadurlwithId } from "../Config";
-import Logo from "../assets/img/askoxylogonew.png";
+import Logo from "../assets/img/askoxylogonew.webp";
 import Footer from "./Footer";
 import {
   AlertCircle,

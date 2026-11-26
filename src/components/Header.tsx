@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Header.css";
-import Logo from "../assets/img/askoxylogonew.png";
-import SignInIcon from "../assets/img/signin.png";
+import Logo from "../assets/img/askoxylogonew.webp";
+import SignInIcon from "../assets/img/signin.webp";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

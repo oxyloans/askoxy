@@ -8,6 +8,7 @@ import { initEnhancedTracking } from "./utils/enhancedTracking";
 import { useTaskTokenExpiry } from "./utils/taskTokenManager";
 import { initGA, trackPage } from "./utils/analytics";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
+import DynamicSEO from "./seo/DynamicSEO";
 
 // ─── Route Components Converted to Lazy for Performance & Bundle Splitting ───
 const SalariedBorrowerChatPage = lazy(() => import("./components/SalariedBorrowerChatPage"));
@@ -87,6 +88,7 @@ const RankingsRoutes = lazy(() =>
 );
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
+const TaskProgramPage = lazy(() => import("./components/TaskProgramPage"));
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
 const NinetyDayPlanPage = lazy(() => import("./components/NinetyDayPlanPage"));
 const NineDaysInsideAfterLogin = lazy(
@@ -901,7 +903,7 @@ const LoadingSpinner = React.memo(() => {
         {/* Logo */}
         <div className="oxy-logo-wrap">
           <img
-            src={require("./assets/img/askoxylogonew.png")}
+            src={require("./assets/img/askoxylogonew.webp")}
             alt="AskOxy"
             style={{ height: 56, objectFit: "contain", display: "block" }}
           />
@@ -1076,6 +1078,7 @@ const App: React.FC = () => {
       "/studentlogin",
       "/ninedaysjobprogramplan",
       "/viewjobdetails/default/ALL",
+      "/task"
     ];
     if (
       validEntryPoints.includes(location.pathname) ||
@@ -1128,7 +1131,8 @@ const App: React.FC = () => {
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
       currentPath.startsWith("/taskupdated") ||
-      currentPath.startsWith("/email-campaign") ||
+      currentPath.startsWith("/email-campaign") ||currentPath.startsWith("/task") ||
+      
       currentPath.startsWith("/leaveapproval") ||
       currentPath.startsWith("/leavestatus") ||
       currentPath.startsWith("/all-statuses") ||
@@ -1229,7 +1233,14 @@ const App: React.FC = () => {
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
               <Route path="/oxycommunity" element={<CommunityAuthGate />} />
               <Route element={<OxyLayout />}>
-               <Route path="/oxynews" element={<OxyNewsHomePage />} />
+              <Route
+  path="/oxynews"
+  element={
+    <DynamicSEO>
+      <OxyNewsHomePage />
+    </DynamicSEO>
+  }
+/>
                 <Route path="/oxynews/:slug" element={<ArticlePage />} />
                 <Route path="/article/:id" element={<ArticlePage />} />
                 <Route path="/explore" element={<ExplorePage />} />
@@ -2735,6 +2746,10 @@ const App: React.FC = () => {
                   }
                 />
               </Route>
+
+              {/* ✅ TASK 90-Day Job Program */}
+              <Route path="/task" element={<TaskProgramPage />} />
+              <Route path="/task-program" element={<Navigate to="/task" replace />} />
 
               {/* ✅ LANDING */}
               {/* ===================================================== */}

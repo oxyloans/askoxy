@@ -2,10 +2,10 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import oxyloansLogo from "../assets/img/image1.png";
-import oxybricksLogo from "../assets/img/image2.png";
-import bmvcoinLogo from "../assets/img/image4.png";
-import oxyfoundationLogo from "../assets/img/image5.png";
+import oxyloansLogo from "../assets/img/image1.webp";
+import oxybricksLogo from "../assets/img/image2.webp";
+import bmvcoinLogo from "../assets/img/image4.webp";
+import oxyfoundationLogo from "../assets/img/image5.webp";
 
 const companies = [
   { logo: oxyloansLogo, name: "OXY Loans", link: "https://oxyloans.com/" },

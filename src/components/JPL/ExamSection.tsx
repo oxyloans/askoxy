@@ -1,6 +1,6 @@
 import React from "react";
 import { Brain, FileCheck2, Send, RotateCcw } from "lucide-react";
-import examImg from "../../assets/img/j2.png";
+import examImg from "../../assets/img/j2.webp";
 
 const AIExamSection: React.FC = () => {
   const glossyCard =

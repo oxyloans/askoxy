@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Users, ArrowLeft, ChevronDown, Globe, Loader2 } from 'lucide-react';
 import axios from 'axios';
-import Student1 from "../assets/img/page1.png"; // Character illustration
-import mapbw from "../assets/img/mapbw.png"; // Map background
+import Student1 from "../assets/img/page1.webp"; // Character illustration
+import mapbw from "../assets/img/mapbw.webp"; // Map background
 import { Link } from 'react-router-dom';
 
 interface StudyAbroadHeaderProps {

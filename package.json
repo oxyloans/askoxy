@@ -85,7 +85,8 @@
     "start": "react-scripts --max_old_space_size=8192 start",
     "build": "cross-env GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true DISABLE_WEBPACK_CACHE=true node --max_old_space_size=8192 node_modules/react-scripts/scripts/build.js",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "generate:sitemap": "node scripts/generate-sitemap.cjs"
   },
   "eslintConfig": {
     "extends": [
@@ -119,6 +120,7 @@
     "@types/sockjs-client": "^1.5.4",
     "@types/xlsx": "^0.0.35",
     "cross-env": "^7.0.3",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.11",
     "typescript": "^4.9.5"
   }

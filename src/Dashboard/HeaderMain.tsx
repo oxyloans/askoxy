@@ -4,7 +4,7 @@ import { FaUserCircle } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import ValidationPopup from "../kart/ValidationPopup";
-import AskOxyLogo from "../assets/img/askoxylogoblack.png";
+import AskOxyLogo from "../assets/img/askoxylogoblack.webp";
 import { CartContext } from "../until/CartContext";
 import SearchBar from "../kart/SearchBar";
 import BASE_URL from "../Config";

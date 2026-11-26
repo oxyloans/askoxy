@@ -5,7 +5,7 @@ import Header1 from "../Header";
 import Footer from "../Footer";
 import { message, Modal } from "antd";
 import { ArrowLeft, PlayCircleIcon, UsersIcon } from "lucide-react";
-import FG from "../../assets/img/genai.png";
+import FG from "../../assets/img/genai.webp";
 import {
   checkUserInterest,
   submitInterest,

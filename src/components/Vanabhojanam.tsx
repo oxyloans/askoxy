@@ -12,12 +12,12 @@ import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
 import axios from "axios";
 
-import img1 from "../assets/img/image1.png";
-import img2 from "../assets/img/image2.png";
-import img3 from "../assets/img/image3.png";
-import img4 from "../assets/img/image4.png";
-import img5 from "../assets/img/image5.png";
-import img6 from "../assets/img/image6.png";
+import img1 from "../assets/img/image1.webp";
+import img2 from "../assets/img/image2.webp";
+import img3 from "../assets/img/image3.webp";
+import img4 from "../assets/img/image4.webp";
+import img5 from "../assets/img/image5.webp";
+import img6 from "../assets/img/image6.webp";
 import { Modal, Button, Input,message } from "antd";
 import customerApi from "../utils/axiosInstances";
 const images = [

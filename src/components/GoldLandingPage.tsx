@@ -13,7 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo1 from "../assets/img/askoxylogonew.png";
+import Logo1 from "../assets/img/askoxylogonew.webp";
 
 const platformUrl = "https://www.oxygold.ai/";
 const platformRedirectPath = "/platform-redirect?target=oxygold";

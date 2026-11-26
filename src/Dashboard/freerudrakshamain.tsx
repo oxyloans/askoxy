@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShoppingBag, Coins, Bot, Settings, X, Mail, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Image1 from "../assets/img/WEBSITE (1).png";
-import Image2 from "../assets/img/R2.png";
+import Image1 from "../assets/img/WEBSITE (1).webp";
+import Image2 from "../assets/img/R2.webp";
 import { Modal, Button, Input, message, Form } from "antd";
 import Footer from '../components/Footer';
 import  BASE_URL  from "../Config";

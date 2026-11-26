@@ -8,13 +8,13 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "./Footer";
-import AskOxyLogo from "../assets/img/askoxylogonew.png";
-import O5 from "../assets/img/cashewoffer1.png";
-import O6 from "../assets/img/35kg1.png";
-import CB from "../assets/img/cashback offer png.png";
-import Cashew from "../assets/img/rakhi1.png";
-import Riceoffers from "../assets/img/rice offers.png";
-import festive from "../assets/img/silver0.png";
+import AskOxyLogo from "../assets/img/askoxylogonew.webp";
+import O5 from "../assets/img/cashewoffer1.webp";
+import O6 from "../assets/img/35kg1.webp";
+import CB from "../assets/img/cashback offer png.webp";
+import Cashew from "../assets/img/rakhi1.webp";
+import Riceoffers from "../assets/img/rice offers.webp";
+import festive from "../assets/img/silver0.webp";
 
 const LOGIN_URL = "/whatsapplogin";
 

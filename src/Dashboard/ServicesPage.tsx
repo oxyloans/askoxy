@@ -14,7 +14,7 @@ import Footer from "../components/Footer";
 import Loader from "../components/Loader";
 
 import { message, Pagination } from "antd";
-import VideoImage from "../assets/img/Videothumb.png";
+import VideoImage from "../assets/img/Videothumb.webp";
 import {
   fetchCampaigns,
   fetchCampaignsByInputType,

@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import askOxyLogo from "../../assets/img/askoxylogonew.png";
-import oxyLoansLogo from "../../assets/img/image1.png";
+import askOxyLogo from "../../assets/img/askoxylogonew.webp";
+import oxyLoansLogo from "../../assets/img/image1.webp";
 
 const platformUrl = "https://oxyloans.com/";
 const platformRedirectPath = "/platform-redirect?target=oxyloans";

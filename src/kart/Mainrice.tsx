@@ -5,17 +5,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Footer from "../components/Footer";
 import Categories from "./categories";
-import rice1 from "../assets/img/ricecard1.png";
-import offer1 from "../assets/img/off1.png";
-import offer2 from "../assets/img/off2.png";
-import offer3 from "../assets/img/off3.png";
-import offer4 from "../assets/img/off4.png";
-import offer5 from "../assets/img/off5.png";
-import offer6 from "../assets/img/off6.png";
-import offer7 from "../assets/img/off7.png";
-import offer8 from "../assets/img/off8.png";
-import oxybricksBanner from "../assets/img/oxybricksbanner.png";
-import aiBookBanner from "../assets/img/aibookbanner.png";
+import rice1 from "../assets/img/ricecard1.webp";
+import offer1 from "../assets/img/off1.webp";
+import offer2 from "../assets/img/off2.webp";
+import offer3 from "../assets/img/off3.webp";
+import offer4 from "../assets/img/off4.webp";
+import offer5 from "../assets/img/off5.webp";
+import offer6 from "../assets/img/off6.webp";
+import offer7 from "../assets/img/off7.webp";
+import offer8 from "../assets/img/off8.webp";
+import oxybricksBanner from "../assets/img/oxybricksbanner.webp";
+import aiBookBanner from "../assets/img/aibookbanner.webp";
 
 import { CartContext } from "../until/CartContext";
 

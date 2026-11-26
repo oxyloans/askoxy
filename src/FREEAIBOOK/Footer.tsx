@@ -7,7 +7,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
-import Askoxy from "../assets/img/askoxylogonew.png";
+import Askoxy from "../assets/img/askoxylogonew.webp";
 import { useNavigate } from "react-router-dom";
 
 const Footer: React.FC = () => {

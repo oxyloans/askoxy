@@ -2,21 +2,21 @@
 import React, { useState } from "react";
 
 // ✅ Import images
-import A1 from "../../assets/img/award1.jpg";
-import A2 from "../../assets/img/award2.jpg";
-import A3 from "../../assets/img/award3.jpg";
-import A4 from "../../assets/img/award4.jpg";
-import A5 from "../../assets/img/award5.jpg";
-import A6 from "../../assets/img/award6.jpg";
-import A7 from "../../assets/img/award7.jpg";
-import A8 from "../../assets/img/award8.jpg";
-import A9 from "../../assets/img/award9.jpg";
-import A10 from "../../assets/img/award10.jpg";
-import A11 from "../../assets/img/award11.jpg";
-import A12 from "../../assets/img/award12.jpg";
-import A14 from "../../assets/img/award14.jpg";
-import A15 from "../../assets/img/award16.jpg";
-import A16 from "../../assets/img/award17.jpg";
+import A1 from "../../assets/img/award1.webp";
+import A2 from "../../assets/img/award2.webp";
+import A3 from "../../assets/img/award3.webp";
+import A4 from "../../assets/img/award4.webp";
+import A5 from "../../assets/img/award5.webp";
+import A6 from "../../assets/img/award6.webp";
+import A7 from "../../assets/img/award7.webp";
+import A8 from "../../assets/img/award8.webp";
+import A9 from "../../assets/img/award9.webp";
+import A10 from "../../assets/img/award10.webp";
+import A11 from "../../assets/img/award11.webp";
+import A12 from "../../assets/img/award12.webp";
+import A14 from "../../assets/img/award14.webp";
+import A15 from "../../assets/img/award16.webp";
+import A16 from "../../assets/img/award17.webp";
 
 interface SafeImageProps {
   src: string;

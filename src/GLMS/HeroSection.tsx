@@ -1,7 +1,7 @@
 // import React from "react";
 // import { ArrowRight, BookOpen, Briefcase, Compass } from "lucide-react";
 // import { useNavigate } from "react-router-dom";
-// import RadhakrishnaImg from "../assets/img/radha sir.png";
+// import RadhakrishnaImg from "../assets/img/radha sir.webp";
 // import { FaLinkedin } from "react-icons/fa";
 
 // function HeroSection() {

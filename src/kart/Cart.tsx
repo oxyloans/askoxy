@@ -56,7 +56,7 @@ import {
 } from "./agentComboDisplay";
 import AgentComboPricingSummary from "./AgentComboPricingSummary";
 import { getActiveCombos } from "../ChatScreen/agentApi";
-import cart_banner from "../assets/img/cart_banner.png"
+import cart_banner from "../assets/img/cart_banner.webp"
 
 interface Address {
   id?: string;

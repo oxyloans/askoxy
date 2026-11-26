@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import Logo from "../../assets/img/bharatAI.png";
+import Logo from "../../assets/img/bharatAI.webp";
 import {
   Mail,
   Phone,

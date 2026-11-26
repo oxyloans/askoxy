@@ -12,7 +12,7 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-import RADHAI from "../../assets/img/radhai.png";
+import RADHAI from "../../assets/img/radhai.webp";
 type LanguageCode = "te" | "en" | "hi";
 
 

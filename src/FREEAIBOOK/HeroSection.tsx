@@ -3,13 +3,13 @@ import { BookOpen, ArrowRight, MapPinIcon, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../Config";
-import aiImage from "../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.png";
+import aiImage from "../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.webp";
 import { message, Modal } from "antd";
 import { motion } from "framer-motion";
 
-import Mission from "../assets/img/Mission Million.png";
-import Billion from "../assets/img/AI Hub.png";
-import Jobstreet from "../assets/img/ChatGPT Image Aug 23, 2025, 03_21_01 PM (3).png";
+import Mission from "../assets/img/Mission Million.webp";
+import Billion from "../assets/img/AI Hub.webp";
+import Jobstreet from "../assets/img/ChatGPT Image Aug 23, 2025, 03_21_01 PM (3).webp";
 const FreeAIBookHome: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

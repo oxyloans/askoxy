@@ -47,7 +47,7 @@ import {
   type ComboPricingResult,
 } from "./agentComboDisplay";
 import AgentComboPricingSummary from "./AgentComboPricingSummary";
-import checkoutBannerImg from "../assets/img/checkout_summary_banner.jpg";
+import checkoutBannerImg from "../assets/img/checkout_summary_banner.webp";
 
 interface CartItem {
   itemId: string;

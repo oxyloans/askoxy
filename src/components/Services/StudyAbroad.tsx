@@ -12,17 +12,17 @@ import {
 } from "react-icons/fa";
 import Header1 from "../Header";
 import { useNavigate } from "react-router-dom";
-import Univ1 from "../../assets/img/Univ1.png";
-import Univ2 from "../../assets/img/univ2.png";
-import Univ3 from "../../assets/img/univ3.png";
-import Univ4 from "../../assets/img/univ4.png";
-import Univ5 from "../../assets/img/univ5.png";
-import img1 from "../../assets/img/1.1.png";
-import img2 from "../../assets/img/1.2.png";
-import img3 from "../../assets/img/1.3.png";
-import img4 from "../../assets/img/1.4.png";
-import img5 from "../../assets/img/1.5.png";
-import img6 from "../../assets/img/1.6.png";
+import Univ1 from "../../assets/img/Univ1.webp";
+import Univ2 from "../../assets/img/univ2.webp";
+import Univ3 from "../../assets/img/univ3.webp";
+import Univ4 from "../../assets/img/univ4.webp";
+import Univ5 from "../../assets/img/univ5.webp";
+import img1 from "../../assets/img/1.1.webp";
+import img2 from "../../assets/img/1.2.webp";
+import img3 from "../../assets/img/1.3.webp";
+import img4 from "../../assets/img/1.4.webp";
+import img5 from "../../assets/img/1.5.webp";
+import img6 from "../../assets/img/1.6.webp";
 import Footer from "../Footer";
 import { message, Modal } from "antd";
 import {
