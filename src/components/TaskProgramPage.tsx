@@ -17,6 +17,10 @@ import {
   Info,
   Share2,
   Sparkles,
+  Calendar,
+  Clock,
+  MapPin,
+  Megaphone,
 } from "lucide-react";
 
 // Verified specification links & assets
@@ -31,6 +35,8 @@ const POSTER_FALLBACK_URL = "/task-askoxy-banner.jpg";
 const FAQ_IMAGE_URL =
   "https://i.ibb.co/9kQSbf7F/FAQ-Characters-with-Colorful-Foliage-1.png";
 const FAQ_FALLBACK_URL = "/faq-characters.png";
+const VENUE_MAP_URL =
+  "https://www.google.com/maps/place/ASKOXY.AI/@17.4966888,78.3733189,17z/data=!3m1!4b1!4m6!3m5!1s0x3bcb93fa81f87af1:0x7147306b8c3477dd!8m2!3d17.4966888!4d78.3733189!16s%2Fg%2F11xfdc4xr7?entry=ttu&g_ep=EgoyMDI2MTEyMy4wIKXMDSoASAFQAw%3D%3D";
 
 // Executive Framer Motion Animation Variants
 const fadeInUp = {
@@ -161,17 +167,22 @@ const TaskProgramPage: React.FC = () => {
   }, []);
 
   const handleCopy = (text: string, label: string) => {
+    const shareableText =
+      text.startsWith("http") || text.startsWith("mailto:")
+        ? text
+        : `${window.location.origin}${text}`;
+
     const copySuccess = () => {
       setCopiedLink(label);
       setTimeout(() => setCopiedLink(null), 2500);
     };
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(copySuccess).catch(() => {
-        fallbackCopy(text);
+      navigator.clipboard.writeText(shareableText).then(copySuccess).catch(() => {
+        fallbackCopy(shareableText);
       });
     } else {
-      fallbackCopy(text);
+      fallbackCopy(shareableText);
     }
 
     function fallbackCopy(str: string) {
@@ -415,6 +426,136 @@ const TaskProgramPage: React.FC = () => {
               <span>Apply Now</span>
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1.5" />
             </motion.a>
+          </motion.div>
+        </section>
+
+        {/* =======================================================================
+            UPCOMING WALK-IN DRIVE – 28 NOVEMBER 2026
+        ======================================================================= */}
+        <section
+          id="walkin-drive"
+          className="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24"
+        >
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            variants={fadeInUp}
+            className="rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 p-6 sm:p-8 lg:p-10 shadow-sm relative overflow-hidden space-y-6 sm:space-y-8"
+          >
+            {/* Header pill & Title */}
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 border border-rose-200 px-3.5 py-1 text-xs font-bold text-rose-700 shadow-2xs">
+                <Megaphone className="h-3.5 w-3.5 text-rose-600 animate-pulse" />
+                <span>Special Announcement</span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5 flex-wrap">
+                <span>📢 UPCOMING WALK-IN DRIVE – 28 NOVEMBER 2026</span>
+              </h2>
+
+              <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-4xl">
+                You are invited to attend this walk-in drive for the{" "}
+                <span className="font-bold text-indigo-700">
+                  final selection process
+                </span>{" "}
+                of the{" "}
+                <span className="font-bold text-slate-900">
+                  TASK &lt;&gt; ASKOXY.AI Free 90-Day Training &amp; Job-Assured Program
+                </span>
+                .
+              </p>
+            </div>
+
+            {/* Walk-in Drive Details Grid */}
+            <div className="space-y-4">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-indigo-600" />
+                <span>Walk-in Drive Details</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
+                {/* Date */}
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs flex items-start gap-4 hover:border-indigo-300 hover:shadow-md transition-all flex-1"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shrink-0 border border-indigo-100">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Date
+                    </p>
+                    <p className="font-bold text-sm sm:text-base text-slate-900 leading-snug">
+                      Saturday, 28 November 2026
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Time */}
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs flex items-start gap-4 hover:border-purple-300 hover:shadow-md transition-all flex-1"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 shrink-0 border border-purple-100">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Time
+                    </p>
+                    <p className="font-bold text-sm sm:text-base text-slate-900 leading-snug">
+                      9:30 AM – 6:00 PM
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Venue */}
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between hover:border-emerald-300 hover:shadow-md transition-all flex-1 gap-3"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0 border border-emerald-100">
+                      <MapPin className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Venue
+                      </p>
+                      <p className="font-bold text-sm sm:text-base text-slate-900 leading-snug">
+                        D-Side, Miyapur Metro Station, Hyderabad
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <a
+                      href={VENUE_MAP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 text-xs font-bold border border-emerald-200/80 transition shadow-2xs group"
+                    >
+                      <span>View on Google Maps</span>
+                      <ExternalLink className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                    </a>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="rounded-xl bg-amber-50/90 border border-amber-200 p-4 text-xs sm:text-sm text-amber-950 flex items-start gap-2.5 shadow-2xs">
+              <Info className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+              <p>
+                <strong>Note:</strong> Students who have already attended the
+                previous walk-in drive do not need to attend again.
+              </p>
+            </div>
           </motion.div>
         </section>
 
@@ -755,10 +896,10 @@ const TaskProgramPage: React.FC = () => {
               </div>
 
               {/* MOBILE & TABLET ROADMAP (lg:hidden): Connected Vertical Timeline */}
-              <div className="block lg:hidden relative pl-6 sm:pl-8 space-y-6">
-                {/* Vertical Spine Progress Track */}
+              <div className="block lg:hidden relative space-y-5 sm:space-y-6">
+                {/* Continuous Vertical Spine Track aligned with center of nodes */}
                 <div
-                  className="absolute left-2.5 sm:left-3.5 top-3 bottom-3 w-0.5 bg-gradient-to-b from-indigo-500 via-indigo-300 to-emerald-500 rounded-full"
+                  className="absolute left-[19px] sm:left-[21px] top-5 bottom-5 w-0.5 bg-gradient-to-b from-indigo-500 via-indigo-300 to-emerald-500 rounded-full pointer-events-none"
                   aria-hidden="true"
                 />
 
@@ -771,67 +912,79 @@ const TaskProgramPage: React.FC = () => {
                       whileInView="visible"
                       viewport={{ once: true, margin: "-30px" }}
                       variants={fadeInUp}
-                      className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs"
+                      className="relative flex items-start gap-3.5 sm:gap-5"
                     >
-                      {/* Timeline Dot Indicator on the track */}
-                      <div
-                        className={`absolute -left-[27px] sm:-left-[35px] top-5 flex h-6 w-6 items-center justify-center rounded-full text-white text-[11px] font-bold ring-4 ring-slate-50 shadow-xs ${
-                          isFinal ? "bg-emerald-600" : "bg-indigo-600"
+                      {/* Timeline Node Badge aligned directly on the vertical track */}
+                      <motion.div
+                        whileHover={{ scale: 1.08 }}
+                        className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl text-white text-xs sm:text-sm font-black shrink-0 z-10 shadow-xs ring-4 ring-slate-50 ${
+                          isFinal
+                            ? "bg-emerald-600 ring-emerald-50"
+                            : "bg-indigo-600 ring-indigo-50"
                         }`}
                       >
-                        {step.number}
-                      </div>
+                        0{step.number}
+                      </motion.div>
 
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-2.5">
-                          <span
-                            className={`text-xs font-bold uppercase tracking-wider ${
-                              isFinal ? "text-emerald-700" : "text-indigo-600"
-                            }`}
-                          >
-                            {step.stageLabel}
-                          </span>
+                      {/* Step Card Content */}
+                      <div
+                        className={`flex-1 flex flex-col justify-between rounded-2xl border bg-white p-4 sm:p-6 shadow-xs hover:shadow-md transition-shadow ${
+                          isFinal
+                            ? "border-emerald-200 hover:border-emerald-300"
+                            : "border-slate-200 hover:border-indigo-300"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span
+                              className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${
+                                isFinal ? "text-emerald-700" : "text-indigo-600"
+                              }`}
+                            >
+                              {step.stageLabel}
+                            </span>
+                          </div>
+
+                          <h3 className="font-bold text-base sm:text-lg text-slate-900 leading-snug">
+                            Step {step.number}: {step.title}
+                          </h3>
+
+                          <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            {step.description}
+                          </p>
                         </div>
 
-                        <h3 className="font-bold text-base text-slate-900">
-                          Step {step.number}: {step.title}
-                        </h3>
-
-                        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                          {step.description}
-                        </p>
+                        {step.link && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                            <a
+                              href={step.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 text-xs font-semibold transition min-h-[36px]"
+                            >
+                              <span>Open Application Link</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                            <button
+                              onClick={() => handleCopy(step.link!, "Step 1 Mobile URL")}
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 text-xs font-medium transition min-h-[36px]"
+                              title="Copy Application Link"
+                            >
+                              {copiedLink === "Step 1 Mobile URL" ? (
+                                <>
+                                  <Check className="h-3 w-3 text-emerald-600" />
+                                  <span className="text-emerald-700 font-semibold">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3 w-3" />
+                                  <span>Copy Link</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </div>
-
-                      {step.link && (
-                        <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                          <a
-                            href={step.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 text-xs font-semibold transition"
-                          >
-                            <span>Open Application Link</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                          <button
-                            onClick={() => handleCopy(step.link!, "Step 1 Mobile URL")}
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 text-xs font-medium transition"
-                            title="Copy Application Link"
-                          >
-                            {copiedLink === "Step 1 Mobile URL" ? (
-                              <>
-                                <Check className="h-3 w-3 text-emerald-600" />
-                                <span className="text-emerald-700 font-semibold">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="h-3 w-3" />
-                                <span>Copy Link</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      )}
                     </motion.div>
                   );
                 })}
@@ -856,24 +1009,24 @@ const TaskProgramPage: React.FC = () => {
               <span>Important Instructions</span>
             </h2>
 
-            <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed list-disc list-inside sm:list-none sm:space-y-3">
-              <li className="flex items-start gap-2.5 group">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 hidden sm:inline transition-transform group-hover:scale-110" />
+            <ul className="space-y-3 text-xs sm:text-sm text-slate-700 leading-relaxed">
+              <li className="flex items-start gap-3 group">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 transition-transform group-hover:scale-110" />
                 <span>The assessment can be attempted only once.</span>
               </li>
-              <li className="flex items-start gap-2.5 group">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 hidden sm:inline transition-transform group-hover:scale-110" />
+              <li className="flex items-start gap-3 group">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 transition-transform group-hover:scale-110" />
                 <span>Your assessment score will not affect the final selection.</span>
               </li>
-              <li className="flex items-start gap-2.5 group">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 hidden sm:inline transition-transform group-hover:scale-110" />
+              <li className="flex items-start gap-3 group">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 transition-transform group-hover:scale-110" />
                 <span>
                   Students who have already completed the assessment do not need to
                   apply again or retake it.
                 </span>
               </li>
-              <li className="flex items-start gap-2.5 group">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 hidden sm:inline transition-transform group-hover:scale-110" />
+              <li className="flex items-start gap-3 group">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 transition-transform group-hover:scale-110" />
                 <span>
                   Always use your TASK-registered mobile number to log in.
                 </span>
@@ -912,7 +1065,7 @@ const TaskProgramPage: React.FC = () => {
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               href="#communities"
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition shrink-0 min-h-[44px]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition shrink-0 min-h-[44px] w-full sm:w-auto"
             >
               <span>Join Communities</span>
               <ArrowDown className="h-4 w-4" />
@@ -981,7 +1134,7 @@ const TaskProgramPage: React.FC = () => {
                     onClick={() =>
                       handleCopy(WHATSAPP_GROUP_URL, "WhatsApp Group")
                     }
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 text-xs font-medium transition min-h-[38px]"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 text-xs font-semibold transition min-h-[42px] w-full"
                   >
                     {copiedLink === "WhatsApp Group" ? (
                       <>
@@ -1035,7 +1188,7 @@ const TaskProgramPage: React.FC = () => {
                     onClick={() =>
                       handleCopy(WHATSAPP_CHANNEL_URL, "WhatsApp Channel")
                     }
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 text-xs font-medium transition min-h-[38px]"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 text-xs font-semibold transition min-h-[42px] w-full"
                   >
                     {copiedLink === "WhatsApp Channel" ? (
                       <>
@@ -1089,7 +1242,7 @@ const TaskProgramPage: React.FC = () => {
                     onClick={() =>
                       handleCopy(LINKEDIN_GROUP_URL, "LinkedIn Group")
                     }
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 text-xs font-medium transition min-h-[38px]"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 text-xs font-semibold transition min-h-[42px] w-full"
                   >
                     {copiedLink === "LinkedIn Group" ? (
                       <>

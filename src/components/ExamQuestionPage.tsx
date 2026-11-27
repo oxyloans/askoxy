@@ -334,13 +334,13 @@ const ExamQuestionPage: React.FC = () => {
             </span>
           </div>
 
-          <button
+          {/* <button
             type="button"
             onClick={confirmLeaveExam}
             className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-semibold px-2.5 py-1 rounded-lg border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
           >
             Leave Exam
-          </button>
+          </button> */}
         </div>
 
         <h2 className="text-lg font-semibold leading-snug text-slate-800 tracking-wide">

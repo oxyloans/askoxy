@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { sharedApi as axios } from "../utils/axiosInstances";
-import { Layout, Select, Table, Modal, Spin, Button } from "antd";
+import { Layout, Select, Table, Modal, Spin, Button, Image } from "antd";
+import { FileOutlined } from "@ant-design/icons";
 import Sider from "./Sider";
 import BASE_URL from "../Config";
 
@@ -28,9 +29,10 @@ interface Query {
     resolvedOn: string;
     resolvedBy: string;
   }>;
-  userQueryDocumentStatus: {
-    userDocumentId: string;
-    filePath: string;
+  userQueryDocumentStatus?: {
+    userDocumentId?: string;
+    filePath?: string;
+    fileName?: string;
   };
 }
 
@@ -48,6 +50,16 @@ const AllQueries: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+
+  const getFileExtension = (filePath?: string | null): string => {
+    if (!filePath) return "";
+    try {
+      const cleanUrl = filePath.split("?")[0].split("#")[0];
+      return cleanUrl.split(".").pop()?.toLowerCase() || "";
+    } catch {
+      return "";
+    }
+  };
   // const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
@@ -336,6 +348,104 @@ const AllQueries: React.FC = () => {
 
   const handleOnChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComments(e.target.value);
+  };
+
+  const renderDocumentContent = () => {
+    if (!selectedFilePath) return null;
+    const ext = getFileExtension(selectedFilePath);
+
+    // Image formats: .png, .jpg, .jpeg, .gif, .webp, .svg, .bmp, etc.
+    if (
+      ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "ico"].includes(ext)
+    ) {
+      return (
+        <div className="flex justify-center items-center bg-slate-50 p-3 rounded-xl border border-slate-200 min-h-[300px]">
+          <Image
+            src={selectedFilePath}
+            alt="User Document"
+            style={{
+              maxHeight: "68vh",
+              objectFit: "contain",
+              borderRadius: "8px",
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Video formats: .mp4, .webm, .ogg, .mov, .m4v, .avi, etc.
+    if (["mp4", "webm", "ogg", "mov", "m4v", "avi", "mkv"].includes(ext)) {
+      return (
+        <div className="flex justify-center items-center bg-black rounded-xl overflow-hidden shadow-xs">
+          <video
+            controls
+            src={selectedFilePath}
+            className="w-full max-h-[68vh] rounded-xl"
+            preload="metadata"
+          >
+            Your browser does not support video playback.
+          </video>
+        </div>
+      );
+    }
+
+    // Audio formats: .mp3, .wav, .m4a, .aac, .ogg
+    if (["mp3", "wav", "m4a", "aac"].includes(ext)) {
+      return (
+        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center space-y-4">
+          <audio controls src={selectedFilePath} className="w-full" />
+        </div>
+      );
+    }
+
+    // PDF formats: .pdf
+    if (ext === "pdf") {
+      return (
+        <div className="w-full h-[68vh] rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
+          <iframe
+            src={selectedFilePath}
+            title="User Document"
+            className="w-full h-full border-none"
+          />
+        </div>
+      );
+    }
+
+    // Word, Excel, PowerPoint, Text & other Office formats
+    if (
+      [
+        "doc",
+        "docx",
+        "rtf",
+        "odt",
+        "xls",
+        "xlsx",
+        "csv",
+        "ppt",
+        "pptx",
+        "txt",
+      ].includes(ext)
+    ) {
+      return (
+        <div className="w-full h-[68vh] rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
+          <iframe
+            src={`https://docs.google.com/viewer?url=${encodeURIComponent(
+              selectedFilePath
+            )}&embedded=true`}
+            title="User Document"
+            className="w-full h-full border-none bg-white"
+          />
+        </div>
+      );
+    }
+
+    // Generic / Other Document types
+    return (
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center space-y-2">
+        <FileOutlined className="text-5xl text-slate-500 mb-2" />
+        <p className="text-sm font-medium text-slate-600">User Document</p>
+      </div>
+    );
   };
 
   return (
@@ -630,21 +740,21 @@ const AllQueries: React.FC = () => {
           </div>
         </div>
       )}
+
       <Modal
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         title="User Document"
-        width={400} // smaller width
-        bodyStyle={{ maxHeight: "400px", overflowY: "auto" }} // limit height
+        width={750}
+        centered
+        bodyStyle={{
+          maxHeight: "75vh",
+          overflowY: "auto",
+          padding: "16px 20px",
+        }}
       >
-        {selectedFilePath && (
-          <img
-            src={selectedFilePath}
-            alt="User Document"
-            style={{ width: "100%", borderRadius: 8 }}
-          />
-        )}
+        {renderDocumentContent()}
       </Modal>
     </div>
   );
