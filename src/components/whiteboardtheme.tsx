@@ -54,14 +54,14 @@ const Whiteboardtheme: React.FC = () => {
   );
   const LOGIN_URL = "/whatsapplogin";
   const LOANS_WALKIN_ROUTE = "/main/dashboard/products?type=SILVER";
-  const LOANS_WALKIN_IMAGE_URL =
-    "https://i.ibb.co/sdC06xj1/silver.png";
+  const LOANS_WALKIN_IMAGE_URL = "https://i.ibb.co/sdC06xj1/silver.png";
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
   const handleSignIn = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/askoxyjobs/cad94b21-9f6d-4dc1-9283-02505af3f132";
+      const redirectPath =
+        "/main/askoxyjobs/e3e8602e-bd9c-42a7-8e30-fd398d32dbcf";
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -141,8 +141,8 @@ const Whiteboardtheme: React.FC = () => {
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
       <img
-        src="https://i.ibb.co/MDSvTVGP/updated-7.png" 
-               alt="Active Jobs and Total Companies"
+        src={speak1}
+        alt="Active Jobs and Total Companies"
         className="h-full w-full select-none object-contain"
         draggable={false}
         decoding="async"
@@ -323,10 +323,7 @@ const Whiteboardtheme: React.FC = () => {
                 </div>
 
                 <div className="relative ml-auto flex h-[174px] w-[148px] flex-col items-center">
-                  <div
-                    className="flex h-[148px] w-[148px] items-center justify-center"
-
-                  >
+                  <div className="flex h-[148px] w-[148px] items-center justify-center">
                     {jobsCountCard()}
                   </div>
                   <img
@@ -423,19 +420,21 @@ const Whiteboardtheme: React.FC = () => {
                           delay: index * 0.08,
                           ease: "easeOut",
                         }}
-                        className={`relative flex w-full items-end justify-center rounded-[24px] ${card.big
+                        className={`relative flex w-full items-end justify-center rounded-[24px] ${
+                          card.big
                             ? "h-[120px] sm:h-[220px] md:h-[250px] lg:h-[350px]"
                             : "h-[108px] sm:h-[190px] md:h-[210px] lg:h-[270px]"
-                          }`}
+                        }`}
                       >
                         <motion.img
                           src={card.image}
                           alt={card.league}
                           decoding="async"
-                          className={`relative z-10 w-full object-contain ${card.big
+                          className={`relative z-10 w-full object-contain ${
+                            card.big
                               ? "max-w-[118px] sm:max-w-[200px] md:max-w-[180px] lg:max-w-[305px]"
                               : "max-w-[106px] sm:max-w-[165px] md:max-w-[145px] lg:max-w-[224px]"
-                            }`}
+                          }`}
                           style={{
                             filter: isActive ? card.hoverShadow : card.shadow,
                           }}

@@ -666,7 +666,9 @@ const WhatsappLogin: React.FC = () => {
       const returnedAccessToken =
         response.data?.accessToken || (response.data as any)?.mobileNumber;
       const returnedRefreshToken =
-        response.data?.refreshToken || response.data?.mobileOtpSession;
+        response.data?.refreshToken ||
+        response.data?.mobileOtpSession ||
+        (response.data as any)?.refresh_token;
 
       if (
         returnedAccessToken &&
@@ -681,6 +683,12 @@ const WhatsappLogin: React.FC = () => {
         if (returnedRefreshToken) {
           setRefreshToken(returnedRefreshToken);
           store.dispatch(updateRefreshToken(returnedRefreshToken));
+          try {
+            localStorage.setItem("refreshToken", returnedRefreshToken);
+            sessionStorage.setItem("refreshToken", returnedRefreshToken);
+          } catch (e) {
+            // ignore
+          }
         }
 
         localStorage.setItem("primaryType", primaryType);

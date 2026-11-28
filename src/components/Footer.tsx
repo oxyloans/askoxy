@@ -7,7 +7,6 @@ import {
   MapPin,
   Mail,
   Phone,
-  
   Youtube,
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6"; // Updated Twitter (X) logo
@@ -227,7 +226,12 @@ const Footer: React.FC = () => {
                     </div>
 
                     {info.type === "map" ? (
-                      <a href={info.content} target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-gray-600 leading-tight">
+                      <a
+                        href={info.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs sm:text-sm text-gray-600 leading-tight"
+                      >
                         {info.content}
                       </a>
                     ) : (
@@ -255,18 +259,26 @@ const Footer: React.FC = () => {
                     {contactInfo
                       .filter((info) => info.type === "phone")
                       .map((phone, index, arr) => {
-                        const isTollFree = phone.content.includes("040 4189 7778");
+                        const isTollFree =
+                          phone.content.includes("040 4189 7778");
                         return (
-                          <span key={index} className="inline-flex items-center">
+                          <span
+                            key={index}
+                            className="inline-flex items-center"
+                          >
                             {isTollFree ? (
                               <a
                                 href={`tel:${phone.content.replace(/\s+/g, "")}`}
-                                className="inline-flex items-center gap-1 text-xs sm:text-sm font-extrabold text-slate-900 bg-amber-100 hover:bg-amber-200/90 px-2 py-0.5 rounded-full border border-amber-300 transition-colors duration-200 whitespace-nowrap shadow-xs"
+                                className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-bold text-[#0d2e63] bg-[#f0f6ff] hover:bg-white px-2.5 py-1 rounded-full border border-[#5b7fa8]/60 transition-all duration-200 whitespace-nowrap shadow-xs"
                                 title="Toll Free: 040 4189 7778"
                               >
-                                <span>{phone.content}</span>
-                                <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded-full">
-                                  Toll Free
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span>Toll Free: {phone.content}</span>
+                                <span className="text-[10px] font-bold bg-[#eaf8ee] text-[#16a34a] border border-[#bbf7d0]/60 px-2 py-0.5 rounded-full ml-0.5">
+                                  24/7
                                 </span>
                               </a>
                             ) : (
@@ -278,7 +290,9 @@ const Footer: React.FC = () => {
                               </a>
                             )}
                             {index < arr.length - 1 && (
-                              <span className="text-gray-500 text-xs sm:text-sm ml-1 mr-0.5">,</span>
+                              <span className="text-gray-500 text-xs sm:text-sm ml-1 mr-0.5">
+                                ,
+                              </span>
                             )}
                           </span>
                         );

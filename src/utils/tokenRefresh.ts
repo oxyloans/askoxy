@@ -1,6 +1,6 @@
 import BASE_URL from "../Config";
 import { store } from "../store";
-import { updateAccessToken, updateRefreshToken, logout } from "../store/authSlice";
+import { updateAccessToken, updateRefreshToken } from "../store/authSlice";
 import {
   getRefreshToken,
   setRefreshToken,
@@ -54,8 +54,17 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 
       const data = await response.json();
 
-      const newAccessToken = data.accessToken || data.mobileNumber;
-      const newRefreshToken = data.refreshToken || data.mobileOtpSession;
+      const newAccessToken =
+        data.accessToken ||
+        data.mobileNumber ||
+        data.token ||
+        data.access_token ||
+        data.data?.accessToken;
+      const newRefreshToken =
+        data.refreshToken ||
+        data.mobileOtpSession ||
+        data.refresh_token ||
+        data.data?.refreshToken;
 
       if (!newAccessToken || typeof newAccessToken !== "string") {
         throw new Error("Refresh token returned no access token");
@@ -63,6 +72,12 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 
       setCustomerAccessToken(newAccessToken);
       store.dispatch(updateAccessToken(newAccessToken));
+      try {
+        localStorage.setItem("accessToken", newAccessToken);
+        localStorage.setItem("token", newAccessToken);
+      } catch (e) {
+        // ignore
+      }
 
       if (newRefreshToken && typeof newRefreshToken === "string") {
         setRefreshToken(newRefreshToken);
@@ -70,8 +85,10 @@ export const refreshAccessToken = async (): Promise<boolean> => {
       }
 
       return true;
-    } catch {
-      store.dispatch(logout());
+    } catch (error) {
+      console.warn("Background customer token refresh failed:", error);
+      // DO NOT dispatch logout() here! A background refresh failure or temporary
+      // network blip must NOT clear active user session or kick user to /whatsapplogin.
       return false;
     } finally {
       pendingRefresh = null;
@@ -273,8 +290,8 @@ export const startTokenRefresh = (): void => {
   stopTokenRefresh();
   if (!getRefreshToken()) return;
 
-  refreshAccessToken(); // immediate call on start
-
+  // Do not call refreshAccessToken() immediately on start; the user just logged in or
+  // already has a valid token. Refresh every 5 minutes while active.
   refreshTokenInterval = setInterval(() => {
     refreshAccessToken();
   }, 5 * 60 * 1000); // every 5 minutes
@@ -288,4 +305,7 @@ export const stopTokenRefresh = (): void => {
 };
 
 export const isAuthenticated = (): boolean =>
-  !!(store.getState().auth.accessToken && getRefreshToken());
+  !!(
+    (store.getState().auth.accessToken || localStorage.getItem("accessToken")) &&
+    getRefreshToken()
+  );

@@ -1,15 +1,16 @@
 import { useEffect } from "react";
 import { useAppSelector } from "../store/hooks";
 import { startTokenRefresh, stopTokenRefresh } from "./tokenRefresh";
-import { getRefreshToken } from "./cookieUtils";
+import { getRefreshToken, getCustomerAccessToken } from "./cookieUtils";
 
 export const useTokenRefresh = (): void => {
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const reduxToken = useAppSelector((state) => state.auth.accessToken);
+  const isAuth = !!(reduxToken || getCustomerAccessToken());
 
   useEffect(() => {
     const refreshToken = getRefreshToken();
 
-    if (!accessToken || !refreshToken) {
+    if (!isAuth || !refreshToken) {
       stopTokenRefresh();
       return;
     }
@@ -19,5 +20,5 @@ export const useTokenRefresh = (): void => {
     return () => {
       stopTokenRefresh();
     };
-  }, [accessToken]);
+  }, [isAuth]);
 };

@@ -7,10 +7,14 @@ export const cookieUtils = {
   },
 
   get(name: string): string | null {
-    const match = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(`${name}=`));
-    return match ? decodeURIComponent(match.split("=")[1]) : null;
+    const cookies = document.cookie.split(";");
+    for (let c of cookies) {
+      c = c.trim();
+      if (c.startsWith(`${name}=`)) {
+        return decodeURIComponent(c.substring(name.length + 1));
+      }
+    }
+    return null;
   },
 
   remove(name: string): void {
@@ -41,19 +45,55 @@ export const COOKIE_KEYS = {
 } as const;
 
 // ─── Customer ─────────────────────────────────────────────────────────────────
-export const getRefreshToken = (): string | null =>
-  cookieUtils.get(COOKIE_KEYS.customerRefresh);
-export const setRefreshToken = (token: string): void =>
-  cookieUtils.set(COOKIE_KEYS.customerRefresh, token);
-export const removeRefreshToken = (): void =>
-  cookieUtils.remove(COOKIE_KEYS.customerRefresh);
+export const getRefreshToken = (): string | null => {
+  return (
+    cookieUtils.get(COOKIE_KEYS.customerRefresh) ||
+    sessionStorage.getItem("refreshToken") ||
+    localStorage.getItem("refreshToken")
+  );
+};
 
-export const getCustomerAccessToken = (): string | null =>
-  cookieUtils.get(COOKIE_KEYS.customerAccess);
-export const setCustomerAccessToken = (token: string): void =>
+export const setRefreshToken = (token: string): void => {
+  cookieUtils.set(COOKIE_KEYS.customerRefresh, token);
+  try {
+    sessionStorage.setItem("refreshToken", token);
+    localStorage.setItem("refreshToken", token);
+  } catch (e) {
+    // Ignore storage quota/security errors
+  }
+};
+
+export const removeRefreshToken = (): void => {
+  cookieUtils.remove(COOKIE_KEYS.customerRefresh);
+  try {
+    sessionStorage.removeItem("refreshToken");
+    localStorage.removeItem("refreshToken");
+  } catch (e) {
+    // Ignore
+  }
+};
+
+export const getCustomerAccessToken = (): string | null => {
+  return (
+    cookieUtils.get(COOKIE_KEYS.customerAccess) ||
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("accessToken")
+  );
+};
+
+export const setCustomerAccessToken = (token: string): void => {
   cookieUtils.set(COOKIE_KEYS.customerAccess, token);
-export const removeCustomerAccessToken = (): void =>
+  try {
+    localStorage.setItem("accessToken", token);
+    localStorage.setItem("token", token);
+  } catch (e) {
+    // Ignore
+  }
+};
+
+export const removeCustomerAccessToken = (): void => {
   cookieUtils.remove(COOKIE_KEYS.customerAccess);
+};
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 export const getAdminAccessToken = (): string | null =>

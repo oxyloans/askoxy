@@ -17,13 +17,9 @@ import {
   Info,
   Share2,
   Sparkles,
-  Calendar,
-  Clock,
-  MapPin,
-  Megaphone,
+
 } from "lucide-react";
 
-// Verified specification links & assets
 const APPLICATION_URL = "/main/askoxyjobs/21c55606-ba1a-4700-84a8-d57d1a68fe4e";
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/K8l3PAW4HUr4URyVlARq3C";
 const WHATSAPP_CHANNEL_URL =
@@ -38,7 +34,7 @@ const FAQ_FALLBACK_URL = "/faq-characters.png";
 const VENUE_MAP_URL =
   "https://www.google.com/maps/place/ASKOXY.AI/@17.4966888,78.3733189,17z/data=!3m1!4b1!4m6!3m5!1s0x3bcb93fa81f87af1:0x7147306b8c3477dd!8m2!3d17.4966888!4d78.3733189!16s%2Fg%2F11xfdc4xr7?entry=ttu&g_ep=EgoyMDI2MTEyMy4wIKXMDSoASAFQAw%3D%3D";
 
-// Executive Framer Motion Animation Variants
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -59,10 +55,7 @@ const staggerContainer = {
   },
 };
 
-const cardHover = {
-  rest: { y: 0, transition: { duration: 0.25, ease: "easeOut" } },
-  hover: { y: -5, transition: { duration: 0.25, ease: "easeOut" } },
-};
+
 
 interface StepItem {
   number: number;
@@ -429,10 +422,8 @@ const TaskProgramPage: React.FC = () => {
           </motion.div>
         </section>
 
-        {/* =======================================================================
-            UPCOMING WALK-IN DRIVE – 28 NOVEMBER 2026
-        ======================================================================= */}
-        <section
+       
+        {/* <section
           id="walkin-drive"
           className="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24"
         >
@@ -443,7 +434,7 @@ const TaskProgramPage: React.FC = () => {
             variants={fadeInUp}
             className="rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 p-6 sm:p-8 lg:p-10 shadow-sm relative overflow-hidden space-y-6 sm:space-y-8"
           >
-            {/* Header pill & Title */}
+            
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 border border-rose-200 px-3.5 py-1 text-xs font-bold text-rose-700 shadow-2xs">
                 <Megaphone className="h-3.5 w-3.5 text-rose-600 animate-pulse" />
@@ -467,7 +458,7 @@ const TaskProgramPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Walk-in Drive Details Grid */}
+          
             <div className="space-y-4">
               <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-indigo-600" />
@@ -475,7 +466,7 @@ const TaskProgramPage: React.FC = () => {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
-                {/* Date */}
+              
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2 }}
@@ -494,7 +485,7 @@ const TaskProgramPage: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Time */}
+                
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2 }}
@@ -513,7 +504,7 @@ const TaskProgramPage: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Venue */}
+              
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2 }}
@@ -548,7 +539,7 @@ const TaskProgramPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Note */}
+           
             <div className="rounded-xl bg-amber-50/90 border border-amber-200 p-4 text-xs sm:text-sm text-amber-950 flex items-start gap-2.5 shadow-2xs">
               <Info className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
               <p>
@@ -557,7 +548,7 @@ const TaskProgramPage: React.FC = () => {
               </p>
             </div>
           </motion.div>
-        </section>
+        </section> */}
 
         {/* =======================================================================
             HOW TO APPLY – ROADMAP UI (Interactive Animated Workflow)

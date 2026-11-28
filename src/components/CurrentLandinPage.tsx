@@ -19,7 +19,7 @@ const OurPeople = lazy(() => import("./OurTeam"));
 const PdfPages = lazy(() => import("./Presentation"));
 const Footer = lazy(() => import("./Footer"));
 const WalkInInterviewStepsModal = lazy(
-  () => import("./WalkInInterviewStepsModal")
+  () => import("./WalkInInterviewStepsModal"),
 );
 
 const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
@@ -60,7 +60,7 @@ const LazySection: React.FC<{
           observer.disconnect();
         }
       },
-      { rootMargin: "400px 0px" }
+      { rootMargin: "400px 0px" },
     );
 
     if (containerRef.current) {
@@ -79,7 +79,10 @@ const LazySection: React.FC<{
   }, [fallbackDelay]);
 
   return (
-    <div ref={containerRef} style={{ minHeight: isVisible ? undefined : minHeight }}>
+    <div
+      ref={containerRef}
+      style={{ minHeight: isVisible ? undefined : minHeight }}
+    >
       {isVisible ? (
         <Suspense fallback={<SectionPlaceholder minHeight={minHeight} />}>
           {children}
@@ -177,68 +180,48 @@ const CurrentLandingPage: React.FC = () => {
         </LazySection>
       </main>
 
-      {/* Floating Toll Free Helpline Button */}
+      {/* Floating Toll Free Helpline Button (Left side) - Matching Whiteboard Theme */}
       <div
-        className="fixed bottom-4 left-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:left-4 md:left-5"
+        className="fixed bottom-3.5 left-3 z-[9999] pointer-events-auto flex items-center translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-4 sm:left-4 md:bottom-5 md:left-5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <a
           href="tel:04041897778"
-          className="relative group flex items-center rounded-full bg-[#120f28]/95 backdrop-blur-md p-1.5 sm:pl-2 sm:pr-4 sm:py-2 text-white shadow-xl shadow-purple-950/60 border border-purple-400/30 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+          className="relative group flex items-center h-10 sm:h-11 md:h-12 rounded-full bg-[#f0f6ff]/95 hover:bg-white backdrop-blur-md p-1 sm:pl-1.5 sm:pr-3.5 sm:py-1.5 md:pl-2 md:pr-4 border-2 border-[#5b7fa8]/70 hover:border-[#3b82f6] shadow-lg shadow-blue-900/10 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer select-none"
           aria-label="Call Toll Free Helpline 040 4189 7778 (24/7 · 365 Days Available)"
           title="Toll Free Helpline: 040 4189 7778 (24/7 · 365 Days Available)"
         >
-          {/* Peach/Orange circular phone icon */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fde3cf] text-[#9a3412] shadow-sm shrink-0 group-hover:rotate-12 transition-transform">
-            <PhoneCall className="h-4.5 w-4.5" />
-          </div>
+          {/* Phone icon circle with green live blinking dot */}
+          <div className="relative flex h-8 w-8 sm:h-8.5 sm:w-8.5 md:h-9 md:w-9 items-center justify-center rounded-full bg-[#dce8fa] text-[#1e40af] shadow-xs shrink-0 group-hover:rotate-12 transition-transform">
+            <PhoneCall className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-[#1e40af]" />
 
-          {/* Text block: hidden on mobile (< sm), visible on sm and up */}
-          <div className="hidden sm:flex flex-col text-left leading-tight sm:ml-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-              </span>
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-100">
-                TOLL FREE HELPLINE
-              </span>
-              <span className="text-[10px] sm:text-[11px] font-bold text-cyan-400">
-                • 24/7
-              </span>
-            </div>
-
-            <span className="text-xs sm:text-[14px] font-extrabold text-white tracking-wide">
-              040 4189 7778
+            {/* Animated pulsing green dot at top-right of icon */}
+            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-white"></span>
             </span>
           </div>
 
-          {/* Floating Tooltip on hover for mobile view */}
-          <div className="sm:hidden absolute bottom-full left-0 mb-2 pointer-events-none opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-200 z-50">
-            <div className="flex flex-col whitespace-nowrap rounded-xl bg-[#120f28]/95 px-3 py-1.5 text-white shadow-xl border border-purple-400/40 backdrop-blur-md">
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-                </span>
-                <span className="text-[10px] font-bold text-slate-100 uppercase tracking-wider">
-                  TOLL FREE • 24/7
-                </span>
-              </div>
-              <span className="text-xs font-black text-white">040 4189 7778</span>
-            </div>
+          {/* Text block: hidden on small mobile (< sm), visible on sm (tablet/desktop) */}
+          <div className="hidden sm:flex items-center gap-2 md:gap-2.5 ml-2 mr-1 whitespace-nowrap">
+            <span className="text-xs sm:text-[13px] md:text-sm font-bold text-[#0d2e63] tracking-tight">
+              Toll Free: 040 4189 7778
+            </span>
+            <span className="rounded-full bg-[#eaf8ee] px-2.5 py-0.5 text-[11px] font-bold text-[#16a34a] border border-[#bbf7d0]/60">
+              24/7
+            </span>
           </div>
         </a>
       </div>
 
-      {/* Floating "We Are Hiring" button */}
+      {/* Floating "We Are Hiring" button (Right side) - Exactly aligned on the same bottom level */}
       <div
-        className="fixed bottom-4 right-3 z-[9999] pointer-events-auto translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-5 sm:right-4 md:right-5"
+        className="fixed bottom-3.5 right-3 z-[9999] pointer-events-auto flex items-center translate-y-0 opacity-100 transition-transform duration-300 sm:bottom-4 sm:right-4 md:bottom-5 md:right-5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <button
           onClick={() => setIsWalkInModalOpen(true)}
-          className="transition-transform duration-300 hover:scale-105 active:scale-95"
+          className="flex items-center transition-transform duration-300 hover:scale-105 active:scale-95 cursor-pointer border-0 bg-transparent p-0"
           aria-label="We are hiring"
           title="We are hiring"
           type="button"
@@ -246,7 +229,7 @@ const CurrentLandingPage: React.FC = () => {
           <img
             src={ASK_OXY_ICON_URL}
             alt="We are hiring"
-            className="h-11 w-auto select-none sm:h-12 md:h-14 lg:h-16"
+            className="h-10 sm:h-11 md:h-12 w-auto select-none drop-shadow-md block"
             draggable={false}
             loading="lazy"
             decoding="async"
